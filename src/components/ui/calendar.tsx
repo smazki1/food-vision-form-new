@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -53,9 +52,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // Use the lowercase first letter as per react-day-picker's type definition
-        iconLeft: (props) => <ChevronLeft className="h-4 w-4" {...props} />,
-        iconRight: (props) => <ChevronRight className="h-4 w-4" {...props} />,
+        Head: ({ name, ...props }) => (
+          <div {...props}>{name}</div>
+        ),
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
       }}
       {...props}
     />
