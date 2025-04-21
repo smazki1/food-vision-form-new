@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    allowedHosts: true, // Changed from 'all' string to true boolean to match expected type
+    allowedHosts: true,
   },
   plugins: [
     react(),
@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['@radix-ui/react-tooltip']
+    include: ['@radix-ui/react-tooltip', 'uuid']
   },
 }));
+
