@@ -90,7 +90,7 @@ export const DishItem: React.FC<DishItemProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`dish-image-${dish.id}`}>תמונת ייחוס</Label>
+          <Label htmlFor={`dish-image-${dish.id}`}>תמונות ייחוס</Label>
           <div className="flex items-center gap-2">
             <Input
               id={`dish-image-${dish.id}`}
@@ -133,9 +133,10 @@ export const DishItem: React.FC<DishItemProps> = ({
             files={dish.referenceImages || []}
             onRemove={handleRemoveImage}
           />
-          <p className="text-xs text-muted-foreground">
-            מקסימום 5MB, עד 4 תמונות בפורמט תמונה
-          </p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>הצג מספר זויות שונות וברורות של המנה, בלבד ללא פרטים נוספים</p>
+            <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>
+          </div>
         </div>
       </div>
     </div>

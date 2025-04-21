@@ -97,9 +97,7 @@ export const CocktailItem: React.FC<CocktailItemProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`cocktail-image-${cocktail.id}`}>
-            תמונת ייחוס
-          </Label>
+          <Label htmlFor={`cocktail-image-${cocktail.id}`}>תמונות ייחוס</Label>
           <div className="flex items-center gap-2">
             <Input
               id={`cocktail-image-${cocktail.id}`}
@@ -146,9 +144,10 @@ export const CocktailItem: React.FC<CocktailItemProps> = ({
             files={cocktail.referenceImages || []}
             onRemove={handleRemoveImage}
           />
-          <p className="text-xs text-muted-foreground">
-            מקסימום 5MB, עד 4 תמונות בפורמט תמונה
-          </p>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>הצג מספר זויות שונות וברורות של הקוקטייל, בלבד ללא פרטים נוספים</p>
+            <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>
+          </div>
         </div>
       </div>
     </div>
