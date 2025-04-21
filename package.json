@@ -2,20 +2,42 @@
   "name": "food-vision",
   "private": true,
   "version": "1.0.0",
-  "workspaces": [
-    "loveable-monorepo/form",
-    "loveable-monorepo/form/landing"
-  ],
+  "type": "module",
   "scripts": {
-    "dev:form": "npm run dev -w food-vision-form",
-    "dev:landing": "npm run dev -w food-vision-landing",
-    "build:form": "npm run build -w food-vision-form",
-    "build:landing": "npm run build -w food-vision-landing",
-    "build": "npm run build:form && npm run build:landing",
-    "dev": "concurrently \"npm run dev:form\" \"npm run dev:landing\"",
-    "vercel-build": "npm run build"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-toast": "^1.2.1",
+    "@supabase/supabase-js": "^2.49.4",
+    "@tanstack/react-query": "^5.56.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.462.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.0",
+    "sonner": "^1.5.0",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^22.5.5",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.9.0",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.9",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.11",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1"
   }
 }
