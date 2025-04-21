@@ -53,17 +53,19 @@ interface SheetContentProps
   VariantProps<typeof sheetVariants> {
     className?: string;
     children?: React.ReactNode;
+    style?: React.CSSProperties;
 }
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, style, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      style={style}
       {...props}
     >
       {children}
