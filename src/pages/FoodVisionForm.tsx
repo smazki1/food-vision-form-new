@@ -130,9 +130,17 @@ const FoodVisionForm: React.FC = () => {
             handleSubmit={handleSubmit}
           />
         </div>
+
+        <div className="mt-6 text-center">
+          <Button
+            type="button"
+            className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-lg px-8 py-6"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "שולח..." : "שלח טופס"}
+          </Button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default FoodVisionForm;
