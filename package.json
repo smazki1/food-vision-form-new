@@ -1,5 +1,5 @@
 {
-  "name": "loveable-monorepo",
+  "name": "food-vision",
   "private": true,
   "version": "1.0.0",
   "workspaces": [
@@ -7,10 +7,10 @@
     "loveable-monorepo/form/landing"
   ],
   "scripts": {
-    "dev:form": "npm run dev -w loveable-monorepo/form",
-    "dev:landing": "npm run dev -w loveable-monorepo/form/landing",
-    "build:form": "npm run build -w loveable-monorepo/form",
-    "build:landing": "npm run build -w loveable-monorepo/form/landing",
+    "dev:form": "npm run dev -w food-vision-form",
+    "dev:landing": "npm run dev -w food-vision-landing",
+    "build:form": "npm run build -w food-vision-form",
+    "build:landing": "npm run build -w food-vision-landing",
     "build": "npm run build:form && npm run build:landing",
     "dev": "concurrently \"npm run dev:form\" \"npm run dev:landing\"",
     "vercel-build": "npm run build"

@@ -1,7 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd loveable-monorepo/form && npm install && npm run build && cd landing && npm install && npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "loveable-monorepo/form/dist",
+  "installCommand": "npm install",
   "routes": [
     {
       "src": "/form/(.*)",
