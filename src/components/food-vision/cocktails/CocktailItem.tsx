@@ -159,6 +159,14 @@ export const CocktailItem: React.FC<CocktailItemProps> = ({
               <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>
             </div>
           </div>
+
+          <Button
+            type="button"
+            onClick={() => document.getElementById('add-cocktail-button')?.click()}
+            className="w-full mt-6 bg-[#F3752B] hover:bg-[#F3752B]/90"
+          >
+            הוסף/י קוקטייל נוסף
+          </Button>
         </div>
       )}
     </div>

@@ -148,6 +148,14 @@ export const DrinkItem: React.FC<DrinkItemProps> = ({
               <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>
             </div>
           </div>
+
+          <Button
+            type="button"
+            onClick={() => document.getElementById('add-drink-button')?.click()}
+            className="w-full mt-6 bg-[#F3752B] hover:bg-[#F3752B]/90"
+          >
+            הוסף/י משקה נוסף
+          </Button>
         </div>
       )}
     </div>

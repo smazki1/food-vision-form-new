@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Trash2, ImageIcon, ChevronDown } from "lucide-react";
 import { FoodItem } from "@/types/food-vision";
 import { FilePreviewGrid } from "../FilePreviewGrid";
+
 interface DishItemProps {
   dish: FoodItem;
   index: number;
@@ -13,6 +14,7 @@ interface DishItemProps {
   onChange: (id: string, field: keyof FoodItem, value: string) => void;
   onFileChange: (id: string, files: File[] | undefined) => void;
 }
+
 export const DishItem: React.FC<DishItemProps> = ({
   dish,
   index,
@@ -21,10 +23,12 @@ export const DishItem: React.FC<DishItemProps> = ({
   onFileChange
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+
   const handleRemoveImage = (removeIdx: number) => {
     const newFiles = dish.referenceImages?.filter((_, idx) => idx !== removeIdx) || [];
     onFileChange(dish.id, newFiles.length ? newFiles : undefined);
   };
+
   return <div className="p-4 border border-input rounded-md mb-4 bg-white">
       <div className="flex justify-between items-center mb-4 cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <h3 className="font-medium flex items-center gap-2">
@@ -91,6 +95,14 @@ export const DishItem: React.FC<DishItemProps> = ({
               <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>
             </div>
           </div>
+
+          <Button
+            type="button"
+            onClick={() => document.getElementById('add-dish-button')?.click()}
+            className="w-full mt-6 bg-[#F3752B] hover:bg-[#F3752B]/90"
+          >
+            הוסף/י מנה נוספת
+          </Button>
         </div>}
     </div>;
 };
