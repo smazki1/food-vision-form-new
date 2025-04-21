@@ -53,8 +53,10 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        // Fixed the component declaration by removing the IconLeft/IconRight properties
+        // and using render functions directly
+        IconLeft: ChevronLeft,
+        IconRight: ChevronRight,
       }}
       {...props}
     />
