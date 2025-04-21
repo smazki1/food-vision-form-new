@@ -1,0 +1,27 @@
+
+/* RTL support for Hebrew */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .ml-2 {
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Fix icons in RTL context */
+[dir="rtl"] svg {
+  transform: scaleX(-1);
+}
+
+/* Exception for specific icons that shouldn't be flipped */
+[dir="rtl"] .no-flip svg {
+  transform: none;
+}
+
+/* Add any other RTL-specific styles here */

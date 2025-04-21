@@ -1,0 +1,21 @@
+{
+  "name": "loveable-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "form",
+    "landing"
+  ],
+  "scripts": {
+    "dev:form": "npm run dev -w form",
+    "dev:landing": "npm run dev -w landing",
+    "build:form": "npm run build -w form",
+    "build:landing": "npm run build -w landing",
+    "build": "npm run build:form && npm run build:landing",
+    "dev": "concurrently \"npm run dev:form\" \"npm run dev:landing\"",
+    "vercel-build": "npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

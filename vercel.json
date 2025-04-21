@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "builds": [
+    {
+      "src": "landing/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "cd landing && npm install && npm run build",
+        "outputDirectory": "landing/dist"
+      }
+    },
+    {
+      "src": "form/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "buildCommand": "cd form && npm install && npm run build",
+        "outputDirectory": "form/dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/form/(.*)",
+      "dest": "/form/dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/landing/dist/$1"
+    }
+  ]
+} 
