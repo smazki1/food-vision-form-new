@@ -120,23 +120,9 @@ const FoodVisionForm: React.FC = () => {
 
           <FormNavigation
             activeTab={activeTab}
-            onNext={() => {
-              const tabs = ["client", "dishes", "cocktails", "drinks", "additional"];
-              const currentIndex = tabs.indexOf(activeTab);
-              if (currentIndex < tabs.length - 1) {
-                setActiveTab(tabs[currentIndex + 1]);
-              }
-            }}
-            onPrev={() => {
-              const tabs = ["client", "dishes", "cocktails", "drinks", "additional"];
-              const currentIndex = tabs.indexOf(activeTab);
-              if (currentIndex > 0) {
-                setActiveTab(tabs[currentIndex - 1]);
-              }
-            }}
-            isLastTab={activeTab === "additional"}
-            onSubmit={handleSubmit}
+            setActiveTab={setActiveTab}
             isSubmitting={isSubmitting}
+            handleSubmit={handleSubmit}
           />
         </div>
       </div>
