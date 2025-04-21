@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -179,7 +180,11 @@ const ClientDetails: React.FC = () => {
                     <CollapsibleFoodItem
                       key={dish.dish_id}
                       title={`מנה ${index + 1}: ${dish.name}`}
-                      {...dish}
+                      name={dish.name}
+                      ingredients={dish.ingredients}
+                      description={dish.description}
+                      notes={dish.notes}
+                      images={dish.reference_image_urls}
                     />
                   ))}
                   <Button
@@ -211,7 +216,11 @@ const ClientDetails: React.FC = () => {
                     <CollapsibleFoodItem
                       key={cocktail.cocktail_id}
                       title={`קוקטייל ${index + 1}: ${cocktail.name}`}
-                      {...cocktail}
+                      name={cocktail.name}
+                      ingredients={cocktail.ingredients}
+                      description={cocktail.description}
+                      notes={cocktail.notes}
+                      images={cocktail.reference_image_urls}
                     />
                   ))}
                   <Button
@@ -243,7 +252,11 @@ const ClientDetails: React.FC = () => {
                     <CollapsibleFoodItem
                       key={drink.drink_id}
                       title={`משקה ${index + 1}: ${drink.name}`}
-                      {...drink}
+                      name={drink.name}
+                      ingredients={drink.ingredients}
+                      description={drink.description}
+                      notes={drink.notes}
+                      images={drink.reference_image_urls}
                     />
                   ))}
                   <Button

@@ -16,7 +16,7 @@ interface FoodItemProps {
   ingredients: string;
   description: string;
   notes: string;
-  images: string[];
+  images?: string[];
 }
 
 export const CollapsibleFoodItem: React.FC<FoodItemProps> = ({
@@ -25,7 +25,7 @@ export const CollapsibleFoodItem: React.FC<FoodItemProps> = ({
   ingredients,
   description,
   notes,
-  images,
+  images = [], // Provide default empty array if images is undefined
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -66,7 +66,7 @@ export const CollapsibleFoodItem: React.FC<FoodItemProps> = ({
                 <ChevronDown className="h-4 w-4" />
               )}
             </CollapsibleTrigger>
-            {images.length > 0 && (
+            {images && images.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
