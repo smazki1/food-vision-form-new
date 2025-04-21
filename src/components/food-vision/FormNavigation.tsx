@@ -7,34 +7,59 @@ import { Database } from "lucide-react";
 interface FormNavigationProps {
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
+  onNext?: () => void;
+  onPrev?: () => void;
+  isLastTab?: boolean;
+  onSubmit?: () => void;
   isSubmitting: boolean;
-  handleSubmit: () => void;
   isSubmitDisabled?: boolean;
+  handleSubmit?: () => void;
 }
 
 const FormNavigation: React.FC<FormNavigationProps> = ({
   activeTab,
   setActiveTab,
+  onNext,
+  onPrev,
+  isLastTab = false,
+  onSubmit,
   isSubmitting,
-  handleSubmit,
   isSubmitDisabled = false,
+  handleSubmit,
 }) => {
   const moveToPreviousTab = () => {
-    if (activeTab === "dishes") setActiveTab("client");
-    else if (activeTab === "cocktails") setActiveTab("dishes");
-    else if (activeTab === "drinks") setActiveTab("cocktails");
-    else if (activeTab === "additional") setActiveTab("drinks");
+    if (onPrev) {
+      onPrev();
+    } else {
+      if (activeTab === "dishes") setActiveTab("client");
+      else if (activeTab === "cocktails") setActiveTab("dishes");
+      else if (activeTab === "drinks") setActiveTab("cocktails");
+      else if (activeTab === "additional") setActiveTab("drinks");
+    }
   };
 
   const moveToNextTab = () => {
-    if (activeTab === "client") setActiveTab("dishes");
-    else if (activeTab === "dishes") setActiveTab("cocktails");
-    else if (activeTab === "cocktails") setActiveTab("drinks");
-    else if (activeTab === "drinks") setActiveTab("additional");
+    if (onNext) {
+      onNext();
+    } else {
+      if (activeTab === "client") setActiveTab("dishes");
+      else if (activeTab === "dishes") setActiveTab("cocktails");
+      else if (activeTab === "cocktails") setActiveTab("drinks");
+      else if (activeTab === "drinks") setActiveTab("additional");
+    }
+  };
+
+  const handleFormSubmit = () => {
+    // Call either onSubmit or handleSubmit (for backward compatibility)
+    if (onSubmit) {
+      onSubmit();
+    } else if (handleSubmit) {
+      handleSubmit();
+    }
   };
 
   const isFirstTab = activeTab === "client";
-  const isLastTab = activeTab === "additional";
+  const isLastTabValue = isLastTab || activeTab === "additional";
 
   return (
     <div className="px-4 py-4 bg-white shadow-sm border-t w-full mt-auto">
@@ -49,14 +74,14 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
             הקודם
           </Button>
           
-          {!isLastTab ? (
+          {!isLastTabValue ? (
             <Button type="button" onClick={moveToNextTab} disabled={isSubmitting}>
               הבא
             </Button>
           ) : (
             <Button 
               type="button" 
-              onClick={handleSubmit} 
+              onClick={handleFormSubmit} 
               disabled={isSubmitting || isSubmitDisabled}
             >
               {isSubmitting ? "שולח..." : "שלח טופס"}
