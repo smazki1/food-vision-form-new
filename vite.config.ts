@@ -20,7 +20,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    include: ['@radix-ui/react-tooltip', 'uuid']
+    include: ['@radix-ui/react-tooltip']
   },
 }));
-

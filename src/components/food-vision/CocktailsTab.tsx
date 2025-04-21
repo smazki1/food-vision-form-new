@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { FoodItem } from "@/types/food-vision";
 import { PlusCircle } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import { generateId } from "@/utils/generateId";
 import { CocktailsList } from "./cocktails/CocktailsList";
 
 interface CocktailsTabProps {
@@ -13,13 +14,13 @@ interface CocktailsTabProps {
 const CocktailsTab: React.FC<CocktailsTabProps> = ({ cocktails, setCocktails }) => {
   const addCocktail = () => {
     if (cocktails.length >= 50) {
-      return; // Max limit reached
+      return;
     }
     
     setCocktails([
       ...cocktails,
       {
-        id: uuidv4(),
+        id: generateId(),
         name: "",
         ingredients: "",
         description: "",

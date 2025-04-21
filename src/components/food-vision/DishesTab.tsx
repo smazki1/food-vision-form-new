@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
+import { generateId } from "@/utils/generateId";
 import { DishesList } from "./dishes/DishesList";
 import { FoodItem } from "@/types/food-vision";
 
@@ -13,13 +14,13 @@ interface DishesTabProps {
 const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
   const addDish = () => {
     if (dishes.length >= 100) {
-      return; // Max limit reached
+      return;
     }
     
     setDishes([
       ...dishes,
       {
-        id: uuidv4(),
+        id: generateId(),
         name: "",
         ingredients: "",
         description: "",
