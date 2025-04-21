@@ -8,6 +8,7 @@ import DrinksTab from "@/components/food-vision/DrinksTab";
 import AdditionalDetailsTab from "@/components/food-vision/AdditionalDetailsTab";
 import FormNavigation from "@/components/food-vision/FormNavigation";
 import { useFoodVisionForm } from "@/hooks/use-food-vision-form";
+import { Button } from "@/components/ui/button";
 
 const FoodVisionForm: React.FC = () => {
   const {
@@ -144,3 +145,6 @@ const FoodVisionForm: React.FC = () => {
       </div>
     </div>
   );
+};
+
+export default FoodVisionForm;
