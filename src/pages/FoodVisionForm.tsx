@@ -40,9 +40,14 @@ const FoodVisionForm: React.FC = () => {
   return (
     <div dir="rtl" className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto px-4 py-8">
-        <header className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-[#8B1E3F]">פוד-ויז'ן AI</h1>
-          <p className="text-muted-foreground mt-2">
+        <header 
+          className="mb-8 text-center py-4 rounded-lg"
+          style={{
+            background: 'linear-gradient(90deg, #F97316 0%, #ea384c 100%)'
+          }}
+        >
+          <h1 className="text-3xl font-bold text-white">פוד-ויז'ן AI</h1>
+          <p className="text-white/90 mt-2">
             תמונות מרהיבות למסעדות בטכנולוגיית AI
           </p>
         </header>

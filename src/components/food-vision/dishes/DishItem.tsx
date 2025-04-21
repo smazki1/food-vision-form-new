@@ -58,14 +58,13 @@ export const DishItem: React.FC<DishItemProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor={`dish-ingredients-${dish.id}`}>
-            רשימת מרכיבים עיקריים *
+            רשימת מרכיבים עיקריים
           </Label>
           <Textarea
             id={`dish-ingredients-${dish.id}`}
             value={dish.ingredients}
             onChange={(e) => onChange(dish.id, "ingredients", e.target.value)}
-            placeholder="הזן/י את המרכיבים העיקריים"
-            required
+            placeholder="הזן/י את המרכיבים העיקריים (אופציונלי)"
           />
         </div>
 
