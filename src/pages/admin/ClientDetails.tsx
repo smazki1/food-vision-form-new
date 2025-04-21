@@ -1,168 +1,35 @@
 
-import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, PlusCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 import { CollapsibleFoodItem } from "@/components/admin/CollapsibleFoodItem";
-
-type ClientData = {
-  client: {
-    client_id: string;
-    restaurant_name: string;
-    contact_name: string;
-    phone: string;
-    email: string;
-    created_at: string;
-  } | null;
-  dishes: Array<{
-    dish_id: string;
-    name: string;
-    ingredients: string;
-    description: string;
-    notes: string;
-    reference_image_urls: string[];
-  }>;
-  cocktails: Array<{
-    cocktail_id: string;
-    name: string;
-    ingredients: string;
-    description: string;
-    notes: string;
-    reference_image_urls: string[];
-  }>;
-  drinks: Array<{
-    drink_id: string;
-    name: string;
-    ingredients: string;
-    description: string;
-    notes: string;
-    reference_image_urls: string[];
-  }>;
-  additionalDetails: {
-    visual_style: string;
-    brand_colors: string;
-    general_notes: string;
-    branding_materials_url: string;
-  } | null;
-};
+import { ClientHeader } from "@/components/admin/client-details/ClientHeader";
+import { ClientInfo } from "@/components/admin/client-details/ClientInfo";
+import { useClientDetails } from "@/hooks/use-client-details";
 
 const ClientDetails: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
-  const [clientData, setClientData] = useState<ClientData>({
-    client: null,
-    dishes: [],
-    cocktails: [],
-    drinks: [],
-    additionalDetails: null,
-  });
-  const [loading, setLoading] = useState(true);
+  const { clientData, loading } = useClientDetails(clientId);
 
-  useEffect(() => {
-    if (clientId) {
-      fetchClientData(clientId);
-    }
-  }, [clientId]);
+  if (loading) {
+    return <div>טוען...</div>;
+  }
 
-  const fetchClientData = async (id: string) => {
-    try {
-      setLoading(true);
-      
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("client_id", id)
-        .single();
-      
-      if (clientError) throw clientError;
-
-      const { data: dishes, error: dishesError } = await supabase
-        .from("dishes")
-        .select("*")
-        .eq("client_id", id);
-      
-      if (dishesError) throw dishesError;
-
-      const { data: cocktails, error: cocktailsError } = await supabase
-        .from("cocktails")
-        .select("*")
-        .eq("client_id", id);
-      
-      if (cocktailsError) throw cocktailsError;
-
-      const { data: drinks, error: drinksError } = await supabase
-        .from("drinks")
-        .select("*")
-        .eq("client_id", id);
-      
-      if (drinksError) throw drinksError;
-
-      const { data: additionalDetails, error: detailsError } = await supabase
-        .from("additional_details")
-        .select("*")
-        .eq("client_id", id)
-        .single();
-      
-      setClientData({
-        client,
-        dishes: dishes || [],
-        cocktails: cocktails || [],
-        drinks: drinks || [],
-        additionalDetails: additionalDetails || null,
-      });
-    } catch (error) {
-      console.error("Error fetching client data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("he-IL");
-  };
+  if (!clientData.client) {
+    return <div>לא נמצא לקוח</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Link to="/admin/clients">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">{clientData.client?.restaurant_name}</h1>
-      </div>
+      <ClientHeader restaurantName={clientData.client.restaurant_name} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-1">
-          <CardHeader>
-            <CardTitle>פרטי לקוח</CardTitle>
-            <CardDescription>
-              נוצר בתאריך {formatDate(clientData.client?.created_at)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-sm">שם מסעדה</h3>
-                <p>{clientData.client?.restaurant_name}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">איש קשר</h3>
-                <p>{clientData.client?.contact_name}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">טלפון</h3>
-                <p>{clientData.client?.phone}</p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm">אימייל</h3>
-                <p>{clientData.client?.email}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="md:col-span-1">
+          <ClientInfo client={clientData.client} />
+        </div>
 
         <div className="md:col-span-2">
           <Tabs defaultValue="dishes">
@@ -264,7 +131,7 @@ const ClientDetails: React.FC = () => {
                     onClick={() => window.location.href = '/'}
                   >
                     <PlusCircle className="h-4 w-4 ml-2" />
-                    הוסף משקה חדשה
+                    הוסף משקה חדש
                   </Button>
                 </div>
               ) : (
@@ -275,7 +142,7 @@ const ClientDetails: React.FC = () => {
                     onClick={() => window.location.href = '/'}
                   >
                     <PlusCircle className="h-4 w-4 ml-2" />
-                    הוסף משקה חדשה
+                    הוסף משקה חדש
                   </Button>
                 </div>
               )}
@@ -325,7 +192,9 @@ const ClientDetails: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-muted-foreground">לא נוספו פרטים נוספים</div>
+                    <div className="text-center py-4 text-muted-foreground">
+                      לא נוספו פרטים נוספים
+                    </div>
                   )}
                 </CardContent>
               </Card>
