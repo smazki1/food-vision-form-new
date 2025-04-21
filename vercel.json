@@ -4,11 +4,11 @@
   "outputDirectory": "dist",
   "builds": [
     {
-      "src": "loveable-monorepo/landing/package.json",
+      "src": "loveable-monorepo/form/landing/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "buildCommand": "cd loveable-monorepo/landing && npm install && npm run build",
-        "outputDirectory": "loveable-monorepo/landing/dist"
+        "buildCommand": "cd loveable-monorepo/form/landing && npm install && npm run build",
+        "outputDirectory": "loveable-monorepo/form/landing/dist"
       }
     },
     {
@@ -27,7 +27,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/loveable-monorepo/landing/dist/$1"
+      "dest": "/loveable-monorepo/form/landing/dist/$1"
     }
   ]
 } 
