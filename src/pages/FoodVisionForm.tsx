@@ -120,7 +120,6 @@ const FoodVisionForm: React.FC = () => {
 
           <FormNavigation
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
             onNext={() => {
               const tabs = ["client", "dishes", "cocktails", "drinks", "additional"];
               const currentIndex = tabs.indexOf(activeTab);

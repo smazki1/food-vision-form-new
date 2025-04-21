@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -8,10 +9,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 // Simple admin authentication for demonstration purposes
 // In a production environment, use Supabase auth with proper role management
-const ADMIN_CREDENTIALS = [
-  { username: "admin", password: "food-vision-2025" },
-  { username: "avifrid121@gmail.com", password: "Bmm12345!!" }
-];
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "food-vision-2025";
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -23,12 +22,9 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Check against both admin credentials
-    const isValidAdmin = ADMIN_CREDENTIALS.some(
-      admin => admin.username === username && admin.password === password
-    );
-
-    if (isValidAdmin) {
+    // Simple authentication check
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      // Store admin session in localStorage
       localStorage.setItem("adminAuthenticated", "true");
       toast.success("התחברת בהצלחה");
       navigate("/admin/dashboard");
