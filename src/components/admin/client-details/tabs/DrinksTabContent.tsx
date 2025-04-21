@@ -1,8 +1,6 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { CollapsibleFoodItem } from "@/components/admin/CollapsibleFoodItem";
+import { BaseItemList } from "../shared/BaseItemList";
 
 interface DrinksTabContentProps {
   drinks: Array<{
@@ -16,41 +14,17 @@ interface DrinksTabContentProps {
 }
 
 export const DrinksTabContent: React.FC<DrinksTabContentProps> = ({ drinks }) => {
+  const formattedDrinks = drinks.map(drink => ({
+    id: drink.drink_id,
+    ...drink
+  }));
+
   return (
-    <>
-      {drinks.length > 0 ? (
-        <div className="space-y-4">
-          {drinks.map((drink, index) => (
-            <CollapsibleFoodItem
-              key={drink.drink_id}
-              title={`משקה ${index + 1}: ${drink.name}`}
-              name={drink.name}
-              ingredients={drink.ingredients}
-              description={drink.description}
-              notes={drink.notes}
-              images={drink.reference_image_urls}
-            />
-          ))}
-          <Button
-            className="w-full bg-[#F3752B] hover:bg-[#F3752B]/90 mt-4"
-            onClick={() => window.location.href = '/'}
-          >
-            <PlusCircle className="h-4 w-4 ml-2" />
-            הוסף משקה חדש
-          </Button>
-        </div>
-      ) : (
-        <div className="text-center py-8 space-y-4">
-          <p className="text-muted-foreground">לא נוספו משקאות</p>
-          <Button
-            className="bg-[#F3752B] hover:bg-[#F3752B]/90"
-            onClick={() => window.location.href = '/'}
-          >
-            <PlusCircle className="h-4 w-4 ml-2" />
-            הוסף משקה חדש
-          </Button>
-        </div>
-      )}
-    </>
+    <BaseItemList
+      items={formattedDrinks}
+      itemType="drink"
+      itemTypeHebrew="משקה"
+      onAddClick={() => window.location.href = '/'}
+    />
   );
 };
