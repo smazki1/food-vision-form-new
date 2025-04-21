@@ -1,13 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PlusCircle } from "lucide-react";
+import { CollapsibleFoodItem } from "@/components/admin/CollapsibleFoodItem";
 
 type ClientData = {
   client: {
@@ -71,7 +69,6 @@ const ClientDetails: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch client details
       const { data: client, error: clientError } = await supabase
         .from("clients")
         .select("*")
@@ -80,7 +77,6 @@ const ClientDetails: React.FC = () => {
       
       if (clientError) throw clientError;
 
-      // Fetch dishes
       const { data: dishes, error: dishesError } = await supabase
         .from("dishes")
         .select("*")
@@ -88,7 +84,6 @@ const ClientDetails: React.FC = () => {
       
       if (dishesError) throw dishesError;
 
-      // Fetch cocktails
       const { data: cocktails, error: cocktailsError } = await supabase
         .from("cocktails")
         .select("*")
@@ -96,7 +91,6 @@ const ClientDetails: React.FC = () => {
       
       if (cocktailsError) throw cocktailsError;
 
-      // Fetch drinks
       const { data: drinks, error: drinksError } = await supabase
         .from("drinks")
         .select("*")
@@ -104,15 +98,12 @@ const ClientDetails: React.FC = () => {
       
       if (drinksError) throw drinksError;
 
-      // Fetch additional details
       const { data: additionalDetails, error: detailsError } = await supabase
         .from("additional_details")
         .select("*")
         .eq("client_id", id)
         .single();
       
-      // Not throwing error for additional details as it might not exist
-
       setClientData({
         client,
         dishes: dishes || [],
@@ -131,77 +122,6 @@ const ClientDetails: React.FC = () => {
     return new Date(dateString).toLocaleDateString("he-IL");
   };
 
-  const FoodItemCard = ({ 
-    name, 
-    ingredients, 
-    description, 
-    notes, 
-    images 
-  }: { 
-    name: string; 
-    ingredients: string; 
-    description: string; 
-    notes: string; 
-    images: string[] 
-  }) => (
-    <Card className="mb-4">
-      <CardHeader>
-        <CardTitle>{name}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {ingredients && (
-            <div>
-              <h4 className="font-semibold mb-1">מרכיבים:</h4>
-              <p>{ingredients}</p>
-            </div>
-          )}
-          
-          {description && (
-            <div>
-              <h4 className="font-semibold mb-1">תיאור:</h4>
-              <p>{description}</p>
-            </div>
-          )}
-          
-          {notes && (
-            <div>
-              <h4 className="font-semibold mb-1">הערות:</h4>
-              <p>{notes}</p>
-            </div>
-          )}
-          
-          {images && images.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">תמונות:</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {images.map((url, index) => (
-                  <div key={index} className="relative rounded-md overflow-hidden border">
-                    <AspectRatio ratio={4/3}>
-                      <img 
-                        src={url} 
-                        alt={`${name} ${index + 1}`}
-                        className="object-cover w-full h-full" 
-                      />
-                    </AspectRatio>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  if (loading) {
-    return <div className="flex justify-center items-center h-full">טוען נתונים...</div>;
-  }
-
-  if (!clientData.client) {
-    return <div className="text-center py-8">לקוח לא נמצא</div>;
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
@@ -210,7 +130,7 @@ const ClientDetails: React.FC = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <h1 className="text-3xl font-bold tracking-tight">{clientData.client.restaurant_name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{clientData.client?.restaurant_name}</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -218,26 +138,26 @@ const ClientDetails: React.FC = () => {
           <CardHeader>
             <CardTitle>פרטי לקוח</CardTitle>
             <CardDescription>
-              נוצר בתאריך {formatDate(clientData.client.created_at)}
+              נוצר בתאריך {formatDate(clientData.client?.created_at)}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div>
                 <h3 className="font-semibold text-sm">שם מסעדה</h3>
-                <p>{clientData.client.restaurant_name}</p>
+                <p>{clientData.client?.restaurant_name}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">איש קשר</h3>
-                <p>{clientData.client.contact_name}</p>
+                <p>{clientData.client?.contact_name}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">טלפון</h3>
-                <p>{clientData.client.phone}</p>
+                <p>{clientData.client?.phone}</p>
               </div>
               <div>
                 <h3 className="font-semibold text-sm">אימייל</h3>
-                <p>{clientData.client.email}</p>
+                <p>{clientData.client?.email}</p>
               </div>
             </div>
           </CardContent>
@@ -254,52 +174,97 @@ const ClientDetails: React.FC = () => {
             
             <TabsContent value="dishes">
               {clientData.dishes.length > 0 ? (
-                clientData.dishes.map((dish) => (
-                  <FoodItemCard
-                    key={dish.dish_id}
-                    name={dish.name}
-                    ingredients={dish.ingredients}
-                    description={dish.description}
-                    notes={dish.notes}
-                    images={dish.reference_image_urls}
-                  />
-                ))
+                <div className="space-y-4">
+                  {clientData.dishes.map((dish, index) => (
+                    <CollapsibleFoodItem
+                      key={dish.dish_id}
+                      title={`מנה ${index + 1}: ${dish.name}`}
+                      {...dish}
+                    />
+                  ))}
+                  <Button
+                    className="w-full bg-[#F3752B] hover:bg-[#F3752B]/90 mt-4"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף מנה חדשה
+                  </Button>
+                </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">לא נוספו מנות</div>
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">לא נוספו מנות</p>
+                  <Button
+                    className="bg-[#F3752B] hover:bg-[#F3752B]/90"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף מנה חדשה
+                  </Button>
+                </div>
               )}
             </TabsContent>
             
             <TabsContent value="cocktails">
               {clientData.cocktails.length > 0 ? (
-                clientData.cocktails.map((cocktail) => (
-                  <FoodItemCard
-                    key={cocktail.cocktail_id}
-                    name={cocktail.name}
-                    ingredients={cocktail.ingredients}
-                    description={cocktail.description}
-                    notes={cocktail.notes}
-                    images={cocktail.reference_image_urls}
-                  />
-                ))
+                <div className="space-y-4">
+                  {clientData.cocktails.map((cocktail, index) => (
+                    <CollapsibleFoodItem
+                      key={cocktail.cocktail_id}
+                      title={`קוקטייל ${index + 1}: ${cocktail.name}`}
+                      {...cocktail}
+                    />
+                  ))}
+                  <Button
+                    className="w-full bg-[#F3752B] hover:bg-[#F3752B]/90 mt-4"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף קוקטייל חדש
+                  </Button>
+                </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">לא נוספו קוקטיילים</div>
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">לא נוספו קוקטיילים</p>
+                  <Button
+                    className="bg-[#F3752B] hover:bg-[#F3752B]/90"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף קוקטייל חדש
+                  </Button>
+                </div>
               )}
             </TabsContent>
             
             <TabsContent value="drinks">
               {clientData.drinks.length > 0 ? (
-                clientData.drinks.map((drink) => (
-                  <FoodItemCard
-                    key={drink.drink_id}
-                    name={drink.name}
-                    ingredients={drink.ingredients}
-                    description={drink.description}
-                    notes={drink.notes}
-                    images={drink.reference_image_urls}
-                  />
-                ))
+                <div className="space-y-4">
+                  {clientData.drinks.map((drink, index) => (
+                    <CollapsibleFoodItem
+                      key={drink.drink_id}
+                      title={`משקה ${index + 1}: ${drink.name}`}
+                      {...drink}
+                    />
+                  ))}
+                  <Button
+                    className="w-full bg-[#F3752B] hover:bg-[#F3752B]/90 mt-4"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף משקה חדשה
+                  </Button>
+                </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">לא נוספו משקאות</div>
+                <div className="text-center py-8 space-y-4">
+                  <p className="text-muted-foreground">לא נוספו משקאות</p>
+                  <Button
+                    className="bg-[#F3752B] hover:bg-[#F3752B]/90"
+                    onClick={() => window.location.href = '/'}
+                  >
+                    <PlusCircle className="h-4 w-4 ml-2" />
+                    הוסף משקה חדשה
+                  </Button>
+                </div>
               )}
             </TabsContent>
             
