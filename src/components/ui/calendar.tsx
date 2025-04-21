@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DayPicker, type NavbarProps } from "react-day-picker";
+import { DayPicker, type NavProps } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -14,7 +14,7 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }: CalendarProps) {
-  const Navbar = ({ onPreviousClick, onNextClick }: NavbarProps) => {
+  const Navbar = ({ onPreviousClick, onNextClick }: NavProps) => {
     return (
       <div className="space-x-1 flex items-center">
         <button
@@ -78,7 +78,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Navbar
+        nav: Navbar
       }}
       {...props}
     />
