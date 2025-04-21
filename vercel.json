@@ -1,31 +1,15 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "loveable-monorepo/form/landing/package.json",
-      "use": "@vercel/static",
-      "config": {
-        "buildCommand": "cd loveable-monorepo/form/landing && npm install && npm run build",
-        "outputDirectory": "dist"
-      }
-    },
-    {
-      "src": "loveable-monorepo/form/package.json",
-      "use": "@vercel/static",
-      "config": {
-        "buildCommand": "cd loveable-monorepo/form && npm install && npm run build",
-        "outputDirectory": "dist"
-      }
-    }
-  ],
+  "buildCommand": "cd loveable-monorepo/form && npm install && npm run build && cd landing && npm install && npm run build",
+  "outputDirectory": "loveable-monorepo/form/dist",
   "routes": [
     {
       "src": "/form/(.*)",
-      "dest": "/loveable-monorepo/form/dist/$1"
+      "dest": "/form/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "/loveable-monorepo/form/landing/dist/$1"
+      "dest": "/landing/$1"
     }
   ]
 } 

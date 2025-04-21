@@ -3,14 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "workspaces": [
-    "form",
-    "landing"
+    "loveable-monorepo/form",
+    "loveable-monorepo/form/landing"
   ],
   "scripts": {
-    "dev:form": "npm run dev -w form",
-    "dev:landing": "npm run dev -w landing",
-    "build:form": "npm run build -w form",
-    "build:landing": "npm run build -w landing",
+    "dev:form": "npm run dev -w loveable-monorepo/form",
+    "dev:landing": "npm run dev -w loveable-monorepo/form/landing",
+    "build:form": "npm run build -w loveable-monorepo/form",
+    "build:landing": "npm run build -w loveable-monorepo/form/landing",
     "build": "npm run build:form && npm run build:landing",
     "dev": "concurrently \"npm run dev:form\" \"npm run dev:landing\"",
     "vercel-build": "npm run build"
