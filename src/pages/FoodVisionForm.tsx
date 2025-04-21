@@ -47,9 +47,7 @@ const FoodVisionForm: React.FC = () => {
         <div className="bg-white rounded-lg shadow-md p-6">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="w-full grid grid-cols-5 mb-8">
-              <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                פרטי לקוח
-              </TabsTrigger>
+              <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">פרטי המסעדה</TabsTrigger>
               <TabsTrigger value="dishes" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
                 מנות
               </TabsTrigger>
