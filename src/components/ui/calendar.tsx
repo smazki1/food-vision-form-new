@@ -53,7 +53,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // The correct property names are iconLeft and iconRight (lowercase first letter)
+        // Use the lowercase first letter as per react-day-picker's type definition
         iconLeft: (props) => <ChevronLeft className="h-4 w-4" {...props} />,
         iconRight: (props) => <ChevronRight className="h-4 w-4" {...props} />,
       }}
