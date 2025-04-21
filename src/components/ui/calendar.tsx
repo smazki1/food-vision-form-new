@@ -78,7 +78,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        nav: Navbar
+        Nav: Navbar
       }}
       {...props}
     />
