@@ -25,6 +25,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
         ingredients: "",
         description: "",
         notes: "",
+        referenceImages: [],
       },
     ]);
   };

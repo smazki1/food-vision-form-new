@@ -18,16 +18,19 @@ export const DishesList: React.FC<DishesListProps> = ({
   onFileChange,
   onAddNew,
 }) => {
+  // Ensure dishes is always an array
+  const safeItems = Array.isArray(dishes) ? dishes : [];
+
   return (
     <div>
-      {dishes.length === 0 ? (
+      {safeItems.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">
           לא נוספו מנות עדיין. לחץ/י על "הוסף/י מנה" כדי להתחיל.
         </p>
       ) : (
-        dishes.map((dish, index) => (
+        safeItems.map((dish, index) => (
           <DishItem
-            key={dish.id}
+            key={dish.id || index}
             dish={dish}
             index={index}
             onDelete={onDelete}
