@@ -8,6 +8,7 @@ interface DrinksListProps {
   onDelete: (id: string) => void;
   onChange: (id: string, field: keyof FoodItem, value: string) => void;
   onFileChange: (id: string, files: File[] | undefined) => void;
+  onAddNew: () => void;
 }
 
 export const DrinksList: React.FC<DrinksListProps> = ({
@@ -15,14 +16,8 @@ export const DrinksList: React.FC<DrinksListProps> = ({
   onDelete,
   onChange,
   onFileChange,
+  onAddNew,
 }) => {
-  const addDrink = () => {
-    const addButton = document.getElementById('add-drink-button');
-    if (addButton) {
-      addButton.click();
-    }
-  };
-
   return (
     <div>
       {drinks.length === 0 ? (
@@ -38,7 +33,7 @@ export const DrinksList: React.FC<DrinksListProps> = ({
             onDelete={onDelete}
             onChange={onChange}
             onFileChange={onFileChange}
-            onAddNew={addDrink}
+            onAddNew={onAddNew}
           />
         ))
       )}

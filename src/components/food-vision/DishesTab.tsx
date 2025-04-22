@@ -82,6 +82,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
         onDelete={removeDish}
         onChange={handleDishChange}
         onFileChange={handleFileChange}
+        onAddNew={addDish}
       />
     </div>
   );

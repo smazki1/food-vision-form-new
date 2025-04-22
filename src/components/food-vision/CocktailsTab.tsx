@@ -82,6 +82,7 @@ const CocktailsTab: React.FC<CocktailsTabProps> = ({ cocktails, setCocktails }) 
         onDelete={removeCocktail}
         onChange={handleCocktailChange}
         onFileChange={handleFileChange}
+        onAddNew={addCocktail}
       />
     </div>
   );

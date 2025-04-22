@@ -2,13 +2,13 @@
 import React from "react";
 import { DishItem } from "./DishItem";
 import { FoodItem } from "@/types/food-vision";
-import { generateId } from "@/utils/generateId";
 
 interface DishesListProps {
   dishes: FoodItem[];
   onDelete: (id: string) => void;
   onChange: (id: string, field: keyof FoodItem, value: string) => void;
   onFileChange: (id: string, files: File[] | undefined) => void;
+  onAddNew: () => void;
 }
 
 export const DishesList: React.FC<DishesListProps> = ({
@@ -16,14 +16,8 @@ export const DishesList: React.FC<DishesListProps> = ({
   onDelete,
   onChange,
   onFileChange,
+  onAddNew,
 }) => {
-  const addDish = () => {
-    const addButton = document.getElementById('add-dish-button');
-    if (addButton) {
-      addButton.click();
-    }
-  };
-
   return (
     <div>
       {dishes.length === 0 ? (
@@ -39,7 +33,7 @@ export const DishesList: React.FC<DishesListProps> = ({
             onDelete={onDelete}
             onChange={onChange}
             onFileChange={onFileChange}
-            onAddNew={addDish}
+            onAddNew={onAddNew}
           />
         ))
       )}
