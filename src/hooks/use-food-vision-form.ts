@@ -13,6 +13,7 @@ export const useFoodVisionForm = () => {
     phoneNumber: "",
     email: "",
   });
+  // Initialize with empty arrays to prevent null/undefined
   const [dishes, setDishes] = useState<FoodItem[]>([]);
   const [cocktails, setCocktails] = useState<FoodItem[]>([]);
   const [drinks, setDrinks] = useState<FoodItem[]>([]);
@@ -44,7 +45,7 @@ export const useFoodVisionForm = () => {
         });
       }
       
-      // Validate and set dishes
+      // Validate and set dishes - ensure we always set an array
       if (Array.isArray(parsedForm.dishes)) {
         setDishes(parsedForm.dishes.map((dish: any) => ({
           id: dish.id || generateId(),
@@ -52,7 +53,7 @@ export const useFoodVisionForm = () => {
           ingredients: dish.ingredients || "",
           description: dish.description || "",
           notes: dish.notes || "",
-          referenceImages: dish.referenceImages || [],
+          referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : [],
         })));
       } else {
         setDishes([]);
@@ -66,7 +67,7 @@ export const useFoodVisionForm = () => {
           ingredients: cocktail.ingredients || "",
           description: cocktail.description || "",
           notes: cocktail.notes || "",
-          referenceImages: cocktail.referenceImages || [],
+          referenceImages: Array.isArray(cocktail.referenceImages) ? cocktail.referenceImages : [],
         })));
       } else {
         setCocktails([]);
@@ -80,7 +81,7 @@ export const useFoodVisionForm = () => {
           ingredients: drink.ingredients || "",
           description: drink.description || "",
           notes: drink.notes || "",
-          referenceImages: drink.referenceImages || [],
+          referenceImages: Array.isArray(drink.referenceImages) ? drink.referenceImages : [],
         })));
       } else {
         setDrinks([]);
@@ -110,9 +111,9 @@ export const useFoodVisionForm = () => {
     try {
       const formData = {
         clientDetails,
-        dishes,
-        cocktails,
-        drinks,
+        dishes: Array.isArray(dishes) ? dishes : [],
+        cocktails: Array.isArray(cocktails) ? cocktails : [],
+        drinks: Array.isArray(drinks) ? drinks : [],
         additionalDetails,
       };
       localStorage.setItem("foodVisionForm", JSON.stringify(formData));

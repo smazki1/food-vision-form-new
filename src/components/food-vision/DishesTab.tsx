@@ -12,30 +12,35 @@ interface DishesTabProps {
 }
 
 const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
+  // Ensure we're working with an array
+  const safeDishes = Array.isArray(dishes) ? dishes : [];
+  
   const addDish = () => {
-    if (dishes.length >= 100) {
+    if (safeDishes.length >= 100) {
       return;
     }
     
-    setDishes((currentDishes) => [
-      ...(Array.isArray(currentDishes) ? currentDishes : []),
-      {
-        id: generateId(),
-        name: "",
-        ingredients: "",
-        description: "",
-        notes: "",
-        referenceImages: [],
-      },
-    ]);
+    const newDish = {
+      id: generateId(),
+      name: "",
+      ingredients: "",
+      description: "",
+      notes: "",
+      referenceImages: [],
+    };
+    
+    setDishes(currentDishes => {
+      // Make sure we're always working with arrays
+      const currentArray = Array.isArray(currentDishes) ? currentDishes : [];
+      return [...currentArray, newDish];
+    });
   };
 
   const removeDish = (id: string) => {
-    setDishes((currentDishes) => 
-      Array.isArray(currentDishes) 
-        ? currentDishes.filter((dish) => dish.id !== id) 
-        : []
-    );
+    setDishes(currentDishes => {
+      const currentArray = Array.isArray(currentDishes) ? currentDishes : [];
+      return currentArray.filter(dish => dish.id !== id);
+    });
   };
 
   const handleDishChange = (
@@ -43,27 +48,22 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
     field: keyof FoodItem,
     value: string
   ) => {
-    setDishes((currentDishes) =>
-      Array.isArray(currentDishes) 
-        ? currentDishes.map((dish) =>
-            dish.id === id ? { ...dish, [field]: value } : dish
-          )
-        : []
-    );
+    setDishes(currentDishes => {
+      const currentArray = Array.isArray(currentDishes) ? currentDishes : [];
+      return currentArray.map(dish =>
+        dish.id === id ? { ...dish, [field]: value } : dish
+      );
+    });
   };
 
   const handleFileChange = (id: string, files: File[] | undefined) => {
-    setDishes((currentDishes) =>
-      Array.isArray(currentDishes) 
-        ? currentDishes.map((dish) =>
-            dish.id === id ? { ...dish, referenceImages: files || [] } : dish
-          )
-        : []
-    );
+    setDishes(currentDishes => {
+      const currentArray = Array.isArray(currentDishes) ? currentDishes : [];
+      return currentArray.map(dish =>
+        dish.id === id ? { ...dish, referenceImages: files || [] } : dish
+      );
+    });
   };
-
-  // Ensure dishes is always an array
-  const safeDishes = Array.isArray(dishes) ? dishes : [];
 
   return (
     <div className="space-y-6 animate-fade-in">
