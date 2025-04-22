@@ -18,8 +18,10 @@ export const DishesList: React.FC<DishesListProps> = ({
   onFileChange,
   onAddNew,
 }) => {
-  // Ensure we're working with an array
+  // Ensure we're working with a valid array
   const safeItems = Array.isArray(dishes) ? dishes : [];
+  
+  console.log("DishesList rendered with items:", safeItems);
 
   return (
     <div>

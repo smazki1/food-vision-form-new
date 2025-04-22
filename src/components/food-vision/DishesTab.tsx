@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { generateId } from "@/utils/generateId";
@@ -12,8 +12,18 @@ interface DishesTabProps {
 }
 
 const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
-  // Ensure we're working with an array
+  // Ensure dishes is always an array
+  useEffect(() => {
+    if (!Array.isArray(dishes)) {
+      console.log("Dishes is not an array, initializing to empty array");
+      setDishes([]);
+    }
+  }, [dishes, setDishes]);
+  
+  // Ensure we're working with an array for all operations
   const safeDishes = Array.isArray(dishes) ? dishes : [];
+  
+  console.log("DishesTab rendered with dishes:", safeDishes);
   
   const addDish = () => {
     if (safeDishes.length >= 100) {

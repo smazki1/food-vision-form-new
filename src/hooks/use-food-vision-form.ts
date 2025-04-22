@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
 import { toast } from "sonner";
@@ -13,10 +12,12 @@ export const useFoodVisionForm = () => {
     phoneNumber: "",
     email: "",
   });
-  // Initialize with empty arrays to prevent null/undefined
+  
+  // Initialize with empty arrays to prevent null/undefined issues
   const [dishes, setDishes] = useState<FoodItem[]>([]);
   const [cocktails, setCocktails] = useState<FoodItem[]>([]);
   const [drinks, setDrinks] = useState<FoodItem[]>([]);
+  
   const [additionalDetails, setAdditionalDetails] = useState<AdditionalDetails>({
     visualStyle: "",
     brandColors: "",
@@ -28,12 +29,19 @@ export const useFoodVisionForm = () => {
   useEffect(() => {
     try {
       const savedForm = localStorage.getItem("foodVisionForm");
-      if (!savedForm) return;
+      if (!savedForm) {
+        console.log("No saved form found");
+        return;
+      }
 
       const parsedForm = JSON.parse(savedForm);
+      console.log("Loaded form data:", parsedForm);
       
       // Validate the structure of loaded data
-      if (typeof parsedForm !== 'object') throw new Error('Invalid form data structure');
+      if (typeof parsedForm !== 'object') {
+        console.error("Invalid form data structure");
+        throw new Error('Invalid form data structure');
+      }
       
       // Validate and set client details
       if (parsedForm.clientDetails && typeof parsedForm.clientDetails === 'object') {
@@ -45,7 +53,7 @@ export const useFoodVisionForm = () => {
         });
       }
       
-      // Validate and set dishes - ensure we always set an array
+      // Ensure dishes is always an array, even if the saved data is invalid
       if (Array.isArray(parsedForm.dishes)) {
         setDishes(parsedForm.dishes.map((dish: any) => ({
           id: dish.id || generateId(),
@@ -56,6 +64,7 @@ export const useFoodVisionForm = () => {
           referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : [],
         })));
       } else {
+        console.log("Dishes is not an array in saved form, initializing to empty array");
         setDishes([]);
       }
       

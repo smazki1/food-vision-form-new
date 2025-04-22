@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ClientDetailsTab from "@/components/food-vision/ClientDetailsTab";
 import DishesTab from "@/components/food-vision/DishesTab";
@@ -8,7 +8,6 @@ import DrinksTab from "@/components/food-vision/DrinksTab";
 import AdditionalDetailsTab from "@/components/food-vision/AdditionalDetailsTab";
 import FormNavigation from "@/components/food-vision/FormNavigation";
 import { useFoodVisionForm } from "@/hooks/use-food-vision-form";
-import { Button } from "@/components/ui/button";
 
 const FoodVisionForm: React.FC = () => {
   const {
@@ -28,9 +27,19 @@ const FoodVisionForm: React.FC = () => {
     handleSubmit
   } = useFoodVisionForm();
   
+  // Add console.log to track data
+  useEffect(() => {
+    console.log("FoodVisionForm rendered with activeTab:", activeTab);
+    console.log("Dishes data:", dishes);
+  }, [activeTab, dishes]);
+  
   const handleTabChange = (nextTab: string) => {
+    console.log("Tab changing from", activeTab, "to", nextTab);
     setActiveTab(nextTab);
   };
+  
+  // Ensure dishes is always an array
+  const safeDishes = Array.isArray(dishes) ? dishes : [];
   
   return (
     <div dir="rtl" className="min-h-screen bg-background">
@@ -69,7 +78,7 @@ const FoodVisionForm: React.FC = () => {
             </TabsContent>
 
             <TabsContent value="dishes">
-              <DishesTab dishes={dishes || []} setDishes={setDishes} />
+              <DishesTab dishes={safeDishes} setDishes={setDishes} />
             </TabsContent>
 
             <TabsContent value="cocktails">

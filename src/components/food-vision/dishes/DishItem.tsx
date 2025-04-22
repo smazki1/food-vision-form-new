@@ -27,7 +27,7 @@ export const DishItem: React.FC<DishItemProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   
-  // Ensure dish has required properties
+  // Ensure dish has required properties - defensive programming
   const safeDish = {
     id: dish?.id || "",
     name: dish?.name || "",
@@ -36,6 +36,8 @@ export const DishItem: React.FC<DishItemProps> = ({
     notes: dish?.notes || "",
     referenceImages: Array.isArray(dish?.referenceImages) ? dish.referenceImages : []
   };
+  
+  console.log("DishItem rendered for dish:", safeDish);
 
   const handleRemoveImage = (removeIdx: number) => {
     const newFiles = safeDish.referenceImages?.filter((_, idx) => idx !== removeIdx) || [];

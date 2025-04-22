@@ -14,7 +14,10 @@ interface DishesTabContentProps {
 }
 
 export const DishesTabContent: React.FC<DishesTabContentProps> = ({ dishes }) => {
-  const formattedDishes = dishes.map(dish => ({
+  // Ensure dishes is always an array
+  const safeDishes = Array.isArray(dishes) ? dishes : [];
+  
+  const formattedDishes = safeDishes.map(dish => ({
     id: dish.dish_id,
     ...dish
   }));
