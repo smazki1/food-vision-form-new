@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ClientDetailsTab from "@/components/food-vision/ClientDetailsTab";
@@ -27,7 +26,9 @@ const FoodVisionForm: React.FC = () => {
     handleSubmit
   } = useFoodVisionForm();
   
-  // Add console.log to track data
+  const [submissionStatus, setSubmissionStatus] = React.useState<"success" | "error" | null>(null);
+  const [submissionMessage, setSubmissionMessage] = React.useState<string>("");
+
   useEffect(() => {
     console.log("FoodVisionForm rendered with activeTab:", activeTab);
     console.log("Dishes data:", dishes);
@@ -38,15 +39,30 @@ const FoodVisionForm: React.FC = () => {
     setActiveTab(nextTab);
   };
   
-  // Ensure dishes is always an array
   const safeDishes = Array.isArray(dishes) ? dishes.map(dish => ({
     ...dish,
     referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : []
   })) : [];
-  
+
+  const customHandleSubmit = async () => {
+    setSubmissionStatus(null);
+    setSubmissionMessage("");
+    try {
+      await handleSubmit();
+      setSubmissionStatus("success");
+      setSubmissionMessage("תודה! הטופס נשלח בהצלחה. נחזור אליך תוך 24 שעות.");
+    } catch (error) {
+      setSubmissionStatus("error");
+      setSubmissionMessage("אירעה שגיאה בעת שליחת הטופס. אנא נסה שוב.");
+    }
+  };
+
+  const tabLabelClass =
+    "data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-sm sm:text-base px-1 sm:px-3 py-2 rounded transition font-semibold whitespace-nowrap text-center flex-1 items-center justify-center";
+
   return (
     <div dir="rtl" className="min-h-screen bg-background">
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-2 sm:px-4 py-8">
         <header className="mb-8 text-center py-4 rounded-lg" style={{
           background: 'linear-gradient(90deg, #F97316 0%, #ea384c 100%)'
         }}>
@@ -55,49 +71,41 @@ const FoodVisionForm: React.FC = () => {
             תמונות מרהיבות למסעדות בטכנולוגיית AI
           </p>
         </header>
-
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-2 sm:p-6">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full grid grid-cols-5 mb-8">
-              <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                פרטי המסעדה
-              </TabsTrigger>
-              <TabsTrigger value="dishes" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                מנות
-              </TabsTrigger>
-              <TabsTrigger value="cocktails" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                קוקטיילים
-              </TabsTrigger>
-              <TabsTrigger value="drinks" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                שתייה
-              </TabsTrigger>
-              <TabsTrigger value="additional" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white">
-                פרטים נוספים
-              </TabsTrigger>
+            <TabsList className="w-full grid grid-cols-5 mb-6 gap-2">
+              <TabsTrigger value="client" className={tabLabelClass}>פרטי המסעדה</TabsTrigger>
+              <TabsTrigger value="dishes" className={tabLabelClass}>מנות</TabsTrigger>
+              <TabsTrigger value="cocktails" className={tabLabelClass}>קוקטיילים</TabsTrigger>
+              <TabsTrigger value="drinks" className={tabLabelClass}>שתייה</TabsTrigger>
+              <TabsTrigger value="additional" className={tabLabelClass}>פרטים נוספים</TabsTrigger>
             </TabsList>
-
             <TabsContent value="client">
               <ClientDetailsTab clientDetails={clientDetails} setClientDetails={setClientDetails} />
             </TabsContent>
-
             <TabsContent value="dishes">
               <DishesTab dishes={safeDishes} setDishes={setDishes} />
             </TabsContent>
-
             <TabsContent value="cocktails">
               <CocktailsTab cocktails={cocktails || []} setCocktails={setCocktails} />
             </TabsContent>
-
             <TabsContent value="drinks">
               <DrinksTab drinks={drinks || []} setDrinks={setDrinks} />
             </TabsContent>
-
             <TabsContent value="additional">
               <AdditionalDetailsTab additionalDetails={additionalDetails} setAdditionalDetails={setAdditionalDetails} />
             </TabsContent>
           </Tabs>
-
-          <FormNavigation activeTab={activeTab} setActiveTab={setActiveTab} isSubmitting={isSubmitting} handleSubmit={handleSubmit} />
+          <FormNavigation
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isSubmitting={isSubmitting}
+            handleSubmit={customHandleSubmit}
+            submissionStatus={submissionStatus}
+            submissionMessage={submissionMessage}
+            setSubmissionStatus={setSubmissionStatus}
+            setSubmissionMessage={setSubmissionMessage}
+          />
         </div>
       </div>
     </div>

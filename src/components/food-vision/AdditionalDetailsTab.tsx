@@ -26,15 +26,13 @@ const AdditionalDetailsTab: React.FC<AdditionalDetailsTabProps> = ({
       brandingMaterials: file
     }));
   };
+  // Improve guideline text for file upload
   return <div className="space-y-6 animate-fade-in">
       <div className="bg-muted/20 p-4 rounded-md mb-6">
         <p className="text-sm text-muted-foreground px-0">כל דבר נוסף שהיית רוצה להוסיף (הערות / חומרי מיתוג / לוגו וכו׳)</p>
       </div>
 
       <div className="space-y-4">
-        
-
-        
 
         <div className="space-y-2">
           <Label htmlFor="brandingMaterials">חומרי מיתוג</Label>
@@ -46,28 +44,31 @@ const AdditionalDetailsTab: React.FC<AdditionalDetailsTabProps> = ({
               e.target.value = "";
               return;
             }
-            handleFileChange(file);
+            setAdditionalDetails(prev => ({
+              ...prev,
+              brandingMaterials: file
+            }));
           }} className="hidden" />
             <Button type="button" variant="outline" onClick={() => {
             document.getElementById("brandingMaterials")?.click();
-          }} className="px-[222px]">
+          }} className="px-[122px] sm:px-[222px]">
               <ImageIcon className="h-4 w-4 ml-2" />
               {additionalDetails.brandingMaterials ? "החלף קובץ" : "העלה קבצי מיתוג"}
             </Button>
-            {additionalDetails.brandingMaterials && <span className="text-sm text-muted-foreground">
+            {additionalDetails.brandingMaterials && <span className="text-xs sm:text-sm text-muted-foreground">
                 {additionalDetails.brandingMaterials.name}
               </span>}
           </div>
-          <p className="text-xs text-muted-foreground">
-            מקסימום 10MB, פורמט תמונה או PDF
-          </p>
+          {/* Improved guideline */}
+          <div className="text-xs text-muted-foreground px-1">
+            <p>קבצים נתמכים: תמונה (jpg, jpeg, png, webp) או PDF. עד 10MB.</p>
+          </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="generalNotes">הערות כלליות</Label>
-          <Textarea id="generalNotes" value={additionalDetails.generalNotes} onChange={e => handleChange("generalNotes", e.target.value)} placeholder="הוסף הערות כלליות או בקשות מיוחדות" className="min-h-[150px]" />
+          <Textarea id="generalNotes" value={additionalDetails.generalNotes} onChange={e => setAdditionalDetails(prev => ({...prev, generalNotes: e.target.value}))} placeholder="הוסף הערות כלליות או בקשות מיוחדות" className="min-h-[120px]" />
         </div>
       </div>
     </div>;
-};
 export default AdditionalDetailsTab;
