@@ -26,12 +26,7 @@ const FoodVisionForm: React.FC = () => {
     handleSubmit
   } = useFoodVisionForm();
   const handleTabChange = (nextTab: string) => {
-    const tabs = ["client", "dishes", "cocktails", "drinks", "additional"];
-    const currentIndex = tabs.indexOf(activeTab);
-    const nextIndex = tabs.indexOf(nextTab);
-    if (Math.abs(currentIndex - nextIndex) === 1) {
-      setActiveTab(nextTab);
-    }
+    setActiveTab(nextTab);
   };
   return <div dir="rtl" className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto px-4 py-8">
