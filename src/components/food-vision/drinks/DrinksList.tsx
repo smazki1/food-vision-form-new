@@ -1,3 +1,4 @@
+
 import React from "react";
 import { DrinkItem } from "./DrinkItem";
 import { FoodItem } from "@/types/food-vision";
@@ -15,26 +16,32 @@ export const DrinksList: React.FC<DrinksListProps> = ({
   onChange,
   onFileChange,
 }) => {
-  if (drinks.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        לא נוספו משקאות עדיין. לחץ/י על "הוסף/י שתייה" כדי להתחיל.
-      </div>
-    );
-  }
+  const addDrink = () => {
+    const addButton = document.getElementById('add-drink-button');
+    if (addButton) {
+      addButton.click();
+    }
+  };
 
   return (
-    <>
-      {drinks.map((drink, index) => (
-        <DrinkItem
-          key={drink.id}
-          drink={drink}
-          index={index}
-          onDelete={onDelete}
-          onChange={onChange}
-          onFileChange={onFileChange}
-        />
-      ))}
-    </>
+    <div>
+      {drinks.length === 0 ? (
+        <p className="text-center py-8 text-muted-foreground">
+          לא נוספו שתיות עדיין. לחץ/י על "הוסף/י שתייה" כדי להתחיל.
+        </p>
+      ) : (
+        drinks.map((drink, index) => (
+          <DrinkItem
+            key={drink.id}
+            drink={drink}
+            index={index}
+            onDelete={onDelete}
+            onChange={onChange}
+            onFileChange={onFileChange}
+            onAddNew={addDrink}
+          />
+        ))
+      )}
+    </div>
   );
 };

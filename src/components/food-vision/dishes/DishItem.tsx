@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ interface DishItemProps {
   onDelete: (id: string) => void;
   onChange: (id: string, field: keyof FoodItem, value: string) => void;
   onFileChange: (id: string, files: File[] | undefined) => void;
+  onAddNew: () => void;
 }
 
 export const DishItem: React.FC<DishItemProps> = ({
@@ -20,7 +22,8 @@ export const DishItem: React.FC<DishItemProps> = ({
   index,
   onDelete,
   onChange,
-  onFileChange
+  onFileChange,
+  onAddNew
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -51,17 +54,17 @@ export const DishItem: React.FC<DishItemProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`dish-ingredients-${dish.id}`}> רשימת מרכיבים עיקריים (אופציונלי)</Label>
+            <Label htmlFor={`dish-ingredients-${dish.id}`}> רשימת מרכיבים עיקריים (אופציונלי)</Label>
             <Textarea id={`dish-ingredients-${dish.id}`} value={dish.ingredients} onChange={e => onChange(dish.id, "ingredients", e.target.value)} placeholder="הזן/י את המרכיבים העיקריים (אופציונלי)" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`dish-description-${dish.id}`}>תיאור קצר (אופציונלי)</Label>
+            <Label htmlFor={`dish-description-${dish.id}`}>תיאור קצר (אופציונלי)</Label>
             <Textarea id={`dish-description-${dish.id}`} value={dish.description} onChange={e => onChange(dish.id, "description", e.target.value)} placeholder="הזן/י תיאור קצר כולל מרכיבים (אופציונלי)" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`dish-notes-${dish.id}`}>(אופציונלי) הערות מיוחדות</Label>
+            <Label htmlFor={`dish-notes-${dish.id}`}>(אופציונלי) הערות מיוחדות</Label>
             <Textarea id={`dish-notes-${dish.id}`} value={dish.notes} onChange={e => onChange(dish.id, "notes", e.target.value)} placeholder="הזן/י הערות מיוחדות" />
           </div>
 
@@ -98,7 +101,10 @@ export const DishItem: React.FC<DishItemProps> = ({
 
           <Button
             type="button"
-            onClick={() => document.getElementById('add-dish-button')?.click()}
+            onClick={(e) => {
+              e.preventDefault();
+              onAddNew();
+            }}
             className="w-full mt-6 bg-[#F3752B] hover:bg-[#F3752B]/90"
           >
             הוסף/י מנה נוספת

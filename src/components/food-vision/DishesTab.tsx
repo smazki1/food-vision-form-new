@@ -66,6 +66,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
           מספר המנות שנוספו: {dishes.length}
         </p>
         <Button
+          id="add-dish-button"
           type="button"
           onClick={addDish}
           className="bg-[#F3752B] hover:bg-[#F3752B]/90"

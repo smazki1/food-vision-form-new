@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ interface DrinkItemProps {
   onDelete: (id: string) => void;
   onChange: (id: string, field: keyof FoodItem, value: string) => void;
   onFileChange: (id: string, files: File[] | undefined) => void;
+  onAddNew: () => void;
 }
 
 export const DrinkItem: React.FC<DrinkItemProps> = ({
@@ -21,6 +23,7 @@ export const DrinkItem: React.FC<DrinkItemProps> = ({
   onDelete,
   onChange,
   onFileChange,
+  onAddNew,
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   const handleRemoveImage = (removeIdx: number) => {
@@ -151,7 +154,10 @@ export const DrinkItem: React.FC<DrinkItemProps> = ({
 
           <Button
             type="button"
-            onClick={() => document.getElementById('add-drink-button')?.click()}
+            onClick={(e) => {
+              e.preventDefault();
+              onAddNew();
+            }}
             className="w-full mt-6 bg-[#F3752B] hover:bg-[#F3752B]/90"
           >
             הוסף/י משקה נוסף

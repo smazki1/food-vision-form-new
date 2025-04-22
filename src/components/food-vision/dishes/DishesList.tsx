@@ -1,6 +1,8 @@
+
 import React from "react";
 import { DishItem } from "./DishItem";
 import { FoodItem } from "@/types/food-vision";
+import { generateId } from "@/utils/generateId";
 
 interface DishesListProps {
   dishes: FoodItem[];
@@ -15,26 +17,32 @@ export const DishesList: React.FC<DishesListProps> = ({
   onChange,
   onFileChange,
 }) => {
-  if (dishes.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        לא נוספו מנות עדיין. לחץ/י על "הוסף/י מנה" כדי להתחיל.
-      </div>
-    );
-  }
+  const addDish = () => {
+    const addButton = document.getElementById('add-dish-button');
+    if (addButton) {
+      addButton.click();
+    }
+  };
 
   return (
-    <>
-      {dishes.map((dish, index) => (
-        <DishItem
-          key={dish.id}
-          dish={dish}
-          index={index}
-          onDelete={onDelete}
-          onChange={onChange}
-          onFileChange={onFileChange}
-        />
-      ))}
-    </>
+    <div>
+      {dishes.length === 0 ? (
+        <p className="text-center py-8 text-muted-foreground">
+          לא נוספו מנות עדיין. לחץ/י על "הוסף/י מנה" כדי להתחיל.
+        </p>
+      ) : (
+        dishes.map((dish, index) => (
+          <DishItem
+            key={dish.id}
+            dish={dish}
+            index={index}
+            onDelete={onDelete}
+            onChange={onChange}
+            onFileChange={onFileChange}
+            onAddNew={addDish}
+          />
+        ))
+      )}
+    </div>
   );
 };

@@ -66,6 +66,7 @@ const DrinksTab: React.FC<DrinksTabProps> = ({ drinks, setDrinks }) => {
           מספר המשקאות שנוספו: {drinks.length}
         </p>
         <Button
+          id="add-drink-button"
           type="button"
           onClick={addDrink}
           className="bg-[#F3752B] hover:bg-[#F3752B]/90"

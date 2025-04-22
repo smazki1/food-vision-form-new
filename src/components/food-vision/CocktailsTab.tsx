@@ -66,6 +66,7 @@ const CocktailsTab: React.FC<CocktailsTabProps> = ({ cocktails, setCocktails }) 
           מספר הקוקטיילים שנוספו: {cocktails.length}
         </p>
         <Button
+          id="add-cocktail-button"
           type="button"
           onClick={addCocktail}
           className="bg-[#F3752B] hover:bg-[#F3752B]/90"
