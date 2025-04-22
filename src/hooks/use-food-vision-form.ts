@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
 import { toast } from "sonner";
@@ -53,6 +54,8 @@ export const useFoodVisionForm = () => {
           notes: dish.notes || "",
           referenceImages: dish.referenceImages || [],
         })));
+      } else {
+        setDishes([]);
       }
       
       // Validate and set cocktails
@@ -65,6 +68,8 @@ export const useFoodVisionForm = () => {
           notes: cocktail.notes || "",
           referenceImages: cocktail.referenceImages || [],
         })));
+      } else {
+        setCocktails([]);
       }
       
       // Validate and set drinks
@@ -77,6 +82,8 @@ export const useFoodVisionForm = () => {
           notes: drink.notes || "",
           referenceImages: drink.referenceImages || [],
         })));
+      } else {
+        setDrinks([]);
       }
       
       // Validate and set additional details
@@ -91,6 +98,10 @@ export const useFoodVisionForm = () => {
       console.error("Error loading saved form:", error);
       // Clear potentially corrupted data
       localStorage.removeItem("foodVisionForm");
+      // Initialize with empty arrays
+      setDishes([]);
+      setCocktails([]);
+      setDrinks([]);
     }
   }, []);
 
@@ -125,9 +136,9 @@ export const useFoodVisionForm = () => {
       // Prepare complete form data for webhook
       const completeFormData = {
         clientDetails,
-        dishes,
-        cocktails,
-        drinks,
+        dishes: Array.isArray(dishes) ? dishes : [],
+        cocktails: Array.isArray(cocktails) ? cocktails : [],
+        drinks: Array.isArray(drinks) ? drinks : [],
         additionalDetails
       };
 
@@ -165,11 +176,11 @@ export const useFoodVisionForm = () => {
     setActiveTab,
     clientDetails,
     setClientDetails,
-    dishes,
+    dishes: Array.isArray(dishes) ? dishes : [],
     setDishes,
-    cocktails,
+    cocktails: Array.isArray(cocktails) ? cocktails : [],
     setCocktails,
-    drinks,
+    drinks: Array.isArray(drinks) ? drinks : [],
     setDrinks,
     additionalDetails,
     setAdditionalDetails,

@@ -17,8 +17,8 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
       return;
     }
     
-    setDishes([
-      ...dishes,
+    setDishes((currentDishes) => [
+      ...(Array.isArray(currentDishes) ? currentDishes : []),
       {
         id: generateId(),
         name: "",
@@ -31,7 +31,11 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
   };
 
   const removeDish = (id: string) => {
-    setDishes(dishes.filter((dish) => dish.id !== id));
+    setDishes((currentDishes) => 
+      Array.isArray(currentDishes) 
+        ? currentDishes.filter((dish) => dish.id !== id) 
+        : []
+    );
   };
 
   const handleDishChange = (
@@ -39,20 +43,27 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
     field: keyof FoodItem,
     value: string
   ) => {
-    setDishes(
-      dishes.map((dish) =>
-        dish.id === id ? { ...dish, [field]: value } : dish
-      )
+    setDishes((currentDishes) =>
+      Array.isArray(currentDishes) 
+        ? currentDishes.map((dish) =>
+            dish.id === id ? { ...dish, [field]: value } : dish
+          )
+        : []
     );
   };
 
   const handleFileChange = (id: string, files: File[] | undefined) => {
-    setDishes(
-      dishes.map((dish) =>
-        dish.id === id ? { ...dish, referenceImages: files } : dish
-      )
+    setDishes((currentDishes) =>
+      Array.isArray(currentDishes) 
+        ? currentDishes.map((dish) =>
+            dish.id === id ? { ...dish, referenceImages: files || [] } : dish
+          )
+        : []
     );
   };
+
+  // Ensure dishes is always an array
+  const safeDishes = Array.isArray(dishes) ? dishes : [];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -64,14 +75,14 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
 
       <div className="flex flex-col sm:flex-row justify-center sm:justify-between items-center gap-4 mb-4">
         <p className="text-sm font-medium text-center">
-          מספר המנות שנוספו: {dishes.length}
+          מספר המנות שנוספו: {safeDishes.length}
         </p>
         <Button
           id="add-dish-button"
           type="button"
           onClick={addDish}
           className="bg-[#F3752B] hover:bg-[#F3752B]/90"
-          disabled={dishes.length >= 100}
+          disabled={safeDishes.length >= 100}
         >
           <PlusCircle className="h-4 w-4 ml-2" />
           הוסף/י מנה
@@ -79,7 +90,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
       </div>
 
       <DishesList
-        dishes={dishes}
+        dishes={safeDishes}
         onDelete={removeDish}
         onChange={handleDishChange}
         onFileChange={handleFileChange}
