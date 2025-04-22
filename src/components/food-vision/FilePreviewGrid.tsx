@@ -14,11 +14,16 @@ export const FilePreviewGrid: React.FC<FilePreviewGridProps> = ({
   onRemove,
   size = 100,
 }) => {
-  if (!files?.length) return null;
+  // Safety check: ensure files is an array and filter out any invalid items
+  const safeFiles = Array.isArray(files) ? files.filter(file => 
+    file && typeof file === 'object' && file instanceof File
+  ) : [];
+  
+  if (!safeFiles.length) return null;
 
   return (
     <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2">
-      {files.map((file, idx) => (
+      {safeFiles.map((file, idx) => (
         <div key={idx} className="relative group">
           <img
             src={URL.createObjectURL(file)}

@@ -27,20 +27,27 @@ export const DishItem: React.FC<DishItemProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(true);
   
-  // Ensure dish has required properties - defensive programming
+  // Ensure dish has required properties with proper defaults
   const safeDish = {
     id: dish?.id || "",
     name: dish?.name || "",
     ingredients: dish?.ingredients || "",
     description: dish?.description || "",
     notes: dish?.notes || "",
-    referenceImages: Array.isArray(dish?.referenceImages) ? dish.referenceImages : []
+    referenceImages: Array.isArray(dish?.referenceImages) ? 
+      dish.referenceImages.filter(img => img instanceof File) : []
   };
   
-  console.log("DishItem rendered for dish:", safeDish);
+  console.log(`DishItem ${index} rendered with referenceImages:`, 
+    Array.isArray(safeDish.referenceImages) ? safeDish.referenceImages.length : 'not an array');
 
   const handleRemoveImage = (removeIdx: number) => {
-    const newFiles = safeDish.referenceImages?.filter((_, idx) => idx !== removeIdx) || [];
+    if (!Array.isArray(safeDish.referenceImages)) {
+      console.error("referenceImages is not an array");
+      return;
+    }
+    
+    const newFiles = safeDish.referenceImages.filter((_, idx) => idx !== removeIdx);
     onFileChange(safeDish.id, newFiles.length ? newFiles : undefined);
   };
 
@@ -118,7 +125,10 @@ export const DishItem: React.FC<DishItemProps> = ({
                 accept="image/*" 
                 multiple 
                 onChange={e => {
-                  const files = Array.from(e.target.files || []);
+                  const fileList = e.target.files;
+                  if (!fileList || fileList.length === 0) return;
+                  
+                  const files = Array.from(fileList);
                   const validFiles = files.filter(file => {
                     if (file.size > 5 * 1024 * 1024) {
                       alert("גודל הקובץ גדול מ-5MB");
@@ -126,7 +136,13 @@ export const DishItem: React.FC<DishItemProps> = ({
                     }
                     return true;
                   });
-                  onFileChange(safeDish.id, validFiles.length > 0 ? validFiles : undefined);
+                  
+                  if (validFiles.length > 0) {
+                    onFileChange(safeDish.id, validFiles);
+                  }
+                  
+                  // Clear the input value to allow uploading the same file again
+                  e.target.value = '';
                 }} 
                 className="hidden" 
               />
@@ -138,15 +154,25 @@ export const DishItem: React.FC<DishItemProps> = ({
                 }}
               >
                 <ImageIcon className="h-4 w-4 ml-2" />
-                {safeDish.referenceImages?.length ? "החלף/י תמונות" : "העלה/י תמונות"}
+                {Array.isArray(safeDish.referenceImages) && safeDish.referenceImages.length 
+                  ? "החלף/י תמונות" 
+                  : "העלה/י תמונות"
+                }
               </Button>
-              {safeDish.referenceImages?.length ? (
+              {Array.isArray(safeDish.referenceImages) && safeDish.referenceImages.length > 0 ? (
                 <span className="text-sm text-muted-foreground">
                   {safeDish.referenceImages.length} תמונות נבחרו
                 </span>
               ) : null}
             </div>
-            <FilePreviewGrid files={safeDish.referenceImages || []} onRemove={handleRemoveImage} />
+            
+            {Array.isArray(safeDish.referenceImages) && safeDish.referenceImages.length > 0 && (
+              <FilePreviewGrid 
+                files={safeDish.referenceImages} 
+                onRemove={handleRemoveImage} 
+              />
+            )}
+            
             <div className="text-xs text-muted-foreground space-y-1">
               <p>הצג/י מספר זויות שונות וברורות של המנה ללא פרטים נוספים</p>
               <p className="text-[11px] opacity-75">מקסימום 5MB לתמונה, עד 4 תמונות</p>

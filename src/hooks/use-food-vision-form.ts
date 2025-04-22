@@ -13,7 +13,7 @@ export const useFoodVisionForm = () => {
     email: "",
   });
   
-  // Initialize with empty arrays to prevent null/undefined issues
+  // Always initialize with empty arrays
   const [dishes, setDishes] = useState<FoodItem[]>([]);
   const [cocktails, setCocktails] = useState<FoodItem[]>([]);
   const [drinks, setDrinks] = useState<FoodItem[]>([]);
@@ -24,6 +24,9 @@ export const useFoodVisionForm = () => {
     generalNotes: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Flag to track if the form has been initialized from localStorage
+  const [initialized, setInitialized] = useState(false);
 
   // Load saved form data from localStorage with validation
   useEffect(() => {
@@ -31,6 +34,7 @@ export const useFoodVisionForm = () => {
       const savedForm = localStorage.getItem("foodVisionForm");
       if (!savedForm) {
         console.log("No saved form found");
+        setInitialized(true);
         return;
       }
 
@@ -40,6 +44,7 @@ export const useFoodVisionForm = () => {
       // Validate the structure of loaded data
       if (typeof parsedForm !== 'object') {
         console.error("Invalid form data structure");
+        setInitialized(true);
         throw new Error('Invalid form data structure');
       }
       
@@ -53,16 +58,19 @@ export const useFoodVisionForm = () => {
         });
       }
       
-      // Ensure dishes is always an array, even if the saved data is invalid
+      // Validate and set dishes (ensuring proper File objects)
       if (Array.isArray(parsedForm.dishes)) {
-        setDishes(parsedForm.dishes.map((dish: any) => ({
+        // Note: File objects can't be serialized to localStorage
+        // So we're just keeping the basic dish data without files
+        const loadedDishes = parsedForm.dishes.map((dish: any) => ({
           id: dish.id || generateId(),
           name: dish.name || "",
           ingredients: dish.ingredients || "",
           description: dish.description || "",
           notes: dish.notes || "",
-          referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : [],
-        })));
+          referenceImages: [], // Reset images as they can't be stored in localStorage
+        }));
+        setDishes(loadedDishes);
       } else {
         console.log("Dishes is not an array in saved form, initializing to empty array");
         setDishes([]);
@@ -70,28 +78,30 @@ export const useFoodVisionForm = () => {
       
       // Validate and set cocktails
       if (Array.isArray(parsedForm.cocktails)) {
-        setCocktails(parsedForm.cocktails.map((cocktail: any) => ({
+        const loadedCocktails = parsedForm.cocktails.map((cocktail: any) => ({
           id: cocktail.id || generateId(),
           name: cocktail.name || "",
           ingredients: cocktail.ingredients || "",
           description: cocktail.description || "",
           notes: cocktail.notes || "",
-          referenceImages: Array.isArray(cocktail.referenceImages) ? cocktail.referenceImages : [],
-        })));
+          referenceImages: [], // Reset images
+        }));
+        setCocktails(loadedCocktails);
       } else {
         setCocktails([]);
       }
       
       // Validate and set drinks
       if (Array.isArray(parsedForm.drinks)) {
-        setDrinks(parsedForm.drinks.map((drink: any) => ({
+        const loadedDrinks = parsedForm.drinks.map((drink: any) => ({
           id: drink.id || generateId(),
           name: drink.name || "",
           ingredients: drink.ingredients || "",
           description: drink.description || "",
           notes: drink.notes || "",
-          referenceImages: Array.isArray(drink.referenceImages) ? drink.referenceImages : [],
-        })));
+          referenceImages: [], // Reset images
+        }));
+        setDrinks(loadedDrinks);
       } else {
         setDrinks([]);
       }
@@ -104,6 +114,8 @@ export const useFoodVisionForm = () => {
           generalNotes: parsedForm.additionalDetails.generalNotes || "",
         });
       }
+      
+      setInitialized(true);
     } catch (error) {
       console.error("Error loading saved form:", error);
       // Clear potentially corrupted data
@@ -112,24 +124,61 @@ export const useFoodVisionForm = () => {
       setDishes([]);
       setCocktails([]);
       setDrinks([]);
+      setInitialized(true);
     }
   }, []);
 
+  // Initialize dishes with one empty item if necessary after initialization
+  useEffect(() => {
+    if (initialized && Array.isArray(dishes) && dishes.length === 0) {
+      setDishes([{
+        id: generateId(),
+        name: "",
+        ingredients: "",
+        description: "",
+        notes: "",
+        referenceImages: []
+      }]);
+    }
+  }, [initialized, dishes]);
+
   // Save form data to localStorage with error handling
   useEffect(() => {
+    if (!initialized) return;
+    
     try {
+      // Create a serializable version of the form data (without File objects)
+      const serializableDishes = Array.isArray(dishes) ? dishes.map(dish => ({
+        ...dish,
+        referenceImages: [] // Don't attempt to serialize File objects
+      })) : [];
+      
+      const serializableCocktails = Array.isArray(cocktails) ? cocktails.map(cocktail => ({
+        ...cocktail,
+        referenceImages: []
+      })) : [];
+      
+      const serializableDrinks = Array.isArray(drinks) ? drinks.map(drink => ({
+        ...drink,
+        referenceImages: []
+      })) : [];
+      
       const formData = {
         clientDetails,
-        dishes: Array.isArray(dishes) ? dishes : [],
-        cocktails: Array.isArray(cocktails) ? cocktails : [],
-        drinks: Array.isArray(drinks) ? drinks : [],
-        additionalDetails,
+        dishes: serializableDishes,
+        cocktails: serializableCocktails,
+        drinks: serializableDrinks,
+        additionalDetails: {
+          ...additionalDetails,
+          brandingMaterials: undefined // Don't attempt to serialize File objects
+        },
       };
+      
       localStorage.setItem("foodVisionForm", JSON.stringify(formData));
     } catch (error) {
       console.error("Error saving form data:", error);
     }
-  }, [clientDetails, dishes, cocktails, drinks, additionalDetails]);
+  }, [initialized, clientDetails, dishes, cocktails, drinks, additionalDetails]);
 
   const handleSubmit = async () => {
     // Validate required fields

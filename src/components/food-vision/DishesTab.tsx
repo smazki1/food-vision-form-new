@@ -18,7 +18,7 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
       console.log("Dishes is not an array, initializing to empty array");
       setDishes([]);
     }
-  }, [dishes, setDishes]);
+  }, []);
   
   // Ensure we're working with an array for all operations
   const safeDishes = Array.isArray(dishes) ? dishes : [];
@@ -70,10 +70,21 @@ const DishesTab: React.FC<DishesTabProps> = ({ dishes, setDishes }) => {
     setDishes(currentDishes => {
       const currentArray = Array.isArray(currentDishes) ? currentDishes : [];
       return currentArray.map(dish =>
-        dish.id === id ? { ...dish, referenceImages: files || [] } : dish
+        dish.id === id ? { 
+          ...dish, 
+          // Make sure we always store a valid array of files
+          referenceImages: Array.isArray(files) ? files : [] 
+        } : dish
       );
     });
   };
+
+  // If empty, initialize with one empty dish
+  useEffect(() => {
+    if (Array.isArray(dishes) && dishes.length === 0) {
+      addDish();
+    }
+  }, [dishes]);
 
   return (
     <div className="space-y-6 animate-fade-in">

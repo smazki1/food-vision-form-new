@@ -39,7 +39,10 @@ const FoodVisionForm: React.FC = () => {
   };
   
   // Ensure dishes is always an array
-  const safeDishes = Array.isArray(dishes) ? dishes : [];
+  const safeDishes = Array.isArray(dishes) ? dishes.map(dish => ({
+    ...dish,
+    referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : []
+  })) : [];
   
   return (
     <div dir="rtl" className="min-h-screen bg-background">
