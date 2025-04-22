@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database } from "lucide-react";
+import { Database, Loader } from "lucide-react";
 
 interface FormNavigationProps {
   activeTab: string;
@@ -59,7 +59,12 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
               onClick={handleSubmit} 
               disabled={isSubmitting || isSubmitDisabled}
             >
-              {isSubmitting ? "שולח..." : "שלח טופס"}
+              {isSubmitting ? (
+                <span className="flex gap-2 items-center">
+                  <Loader className="animate-spin" />
+                  שולח...
+                </span>
+              ) : "שלח טופס"}
             </Button>
           )}
         </div>
