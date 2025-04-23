@@ -19,13 +19,14 @@ export const useFoodVisionSubmit = ({
   setIsSubmitting
 }: any) => {
   return useCallback(async () => {
+    // Validate required fields
     if (!clientDetails.restaurantName ||
         !clientDetails.contactName ||
         !clientDetails.phoneNumber ||
         !clientDetails.email) {
-      toast("אנא מלא את כל שדות החובה בכרטיסיית פרטי הלקוח");
+      toast.error("אנא מלא את כל שדות החובה בכרטיסיית פרטי הלקוח");
       setActiveTab("client");
-      return;
+      return { success: false, message: "חסרים שדות חובה" };
     }
     setIsSubmitting(true);
     try {
@@ -53,9 +54,11 @@ export const useFoodVisionSubmit = ({
         brandColors: "",
         generalNotes: "",
       });
+      return { success: true };
     } catch (error) {
       console.error("Error submitting form:", error);
       toast.error("אירעה שגיאה בעת שליחת הטופס. אנא נסה שוב מאוחר יותר.");
+      return { success: false, message: "שגיאת שרת" };
     } finally {
       setIsSubmitting(false);
     }

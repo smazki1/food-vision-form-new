@@ -9,6 +9,8 @@ import AdditionalDetailsTab from "@/components/food-vision/AdditionalDetailsTab"
 import FormNavigation from "@/components/food-vision/FormNavigation";
 import { useFoodVisionForm } from "@/hooks/use-food-vision-form";
 import ThankYouModal from "@/components/food-vision/ThankYouModal";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const FoodVisionForm: React.FC = () => {
   const {
@@ -25,6 +27,17 @@ const FoodVisionForm: React.FC = () => {
   const [showThankYou, setShowThankYou] = useState(false);
   const [submitProgressMsg, setSubmitProgressMsg] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isFormValid, setIsFormValid] = useState(true);
+
+  // Scroll to error message if it exists
+  useEffect(() => {
+    if (submitError) {
+      const errorElement = document.getElementById('form-error-message');
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [submitError]);
 
   useEffect(() => {
     if (isSubmitting) {
@@ -35,13 +48,39 @@ const FoodVisionForm: React.FC = () => {
     }
   }, [isSubmitting]);
 
+  // Validate form before submission
+  const validateForm = () => {
+    if (!clientDetails.restaurantName ||
+        !clientDetails.contactName ||
+        !clientDetails.phoneNumber ||
+        !clientDetails.email) {
+      setIsFormValid(false);
+      setSubmitError("אנא מלא את כל שדות החובה בכרטיסיית פרטי הלקוח");
+      setActiveTab("client");
+      return false;
+    }
+    return true;
+  };
+
   // Overwrite handleSubmit for custom handling
   const handleFormSubmit = async () => {
+    // Reset previous error states
     setSubmitError(null);
+    setIsFormValid(true);
+    
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+    
     setSubmitProgressMsg("התהליך יכול לקחת מספר שניות. נא לא לצאת מהעמוד.");
     try {
-      await handleSubmit();
-      setShowThankYou(true);
+      const result = await handleSubmit();
+      if (result && result.success) {
+        setShowThankYou(true);
+      } else if (result && !result.success) {
+        setSubmitError(result.message || "אירעה שגיאה בעת שליחת הטופס");
+      }
     } catch (err: any) {
       setSubmitError("אירעה שגיאה בעת שליחת הטופס. אנא נסה שוב מאוחר יותר.");
     } finally {
@@ -53,6 +92,8 @@ const FoodVisionForm: React.FC = () => {
 
   const handleTabChange = (nextTab: string) => {
     setActiveTab(nextTab);
+    // Clear any validation errors when changing tabs
+    setSubmitError(null);
   };
 
   const safeDishes = Array.isArray(dishes)
@@ -75,6 +116,17 @@ const FoodVisionForm: React.FC = () => {
         </header>
 
         <div className="bg-white rounded-lg shadow-md p-6">
+          {/* Validation Error Alert - More visible */}
+          {submitError && (
+            <div 
+              id="form-error-message"
+              className="bg-red-50 border-2 border-red-300 text-red-800 p-4 rounded-lg mb-6 animate-pulse flex items-center gap-3"
+            >
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <span className="font-medium">{submitError}</span>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="w-full grid grid-cols-5 mb-8">
               <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
@@ -118,11 +170,6 @@ const FoodVisionForm: React.FC = () => {
                 {submitProgressMsg}
               </div>
             )}
-            {submitError && (
-              <div className="bg-red-50 border border-destructive rounded p-2 w-full text-center text-destructive text-base font-bold shadow-sm transition-all animate-pulse">
-                {submitError}
-              </div>
-            )}
           </div>
 
           <FormNavigation
@@ -130,10 +177,11 @@ const FoodVisionForm: React.FC = () => {
             setActiveTab={setActiveTab}
             isSubmitting={isSubmitting}
             handleSubmit={handleFormSubmit}
+            isSubmitDisabled={!isFormValid}
           />
         </div>
       </div>
-      {/* Thank You Modal */}
+      {/* Thank You Modal - Only shown after successful submission */}
       <ThankYouModal open={showThankYou} onClose={handleCloseThankYou} />
     </div>
   );
