@@ -33,7 +33,7 @@ export const ImageUploadGrid: React.FC<ImageUploadGridProps> = ({
     }
 
     onImagesChange([...images, ...validFiles]);
-    e.target.value = ''; // Reset input
+    e.target.value = ""; // Reset input
   };
 
   const removeImage = (index: number) => {
@@ -41,12 +41,27 @@ export const ImageUploadGrid: React.FC<ImageUploadGridProps> = ({
     onImagesChange(newImages);
   };
 
+  // New: Guidance block for users (Hebrew, stylized, mobile-friendly)
+  const guidance = (
+    <div className="mb-3 p-3 rounded-md border bg-[#fff3da] text-[#ff8b1d] text-sm sm:text-base font-medium leading-relaxed shadow-sm">
+      <strong className="block text-[#c94d0a] font-bold text-base mb-1">הנחיות להעלאת תמונות:</strong>
+      <ul className="list-disc pr-4 space-y-0.5 text-xs sm:text-base">
+        <li>ניתן להעלות עד 4 תמונות לכל מנה.</li>
+        <li>מומלץ לצלם באור טבעי, מזווית שמחמיאה למנה (מבט מלמעלה או בזווית 45°).</li>
+        <li>אנא ודאו שהתמונה ברורה – אם יש רקע רועש, שימו את המנה על רקע חלק או מפה <span role="img" aria-label="smile">😊</span></li>
+        <li>פורמטים נתמכים: JPG, PNG</li>
+        <li>משקל מקסימלי לתמונה: 5MB</li>
+      </ul>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
+      {guidance}
       <div className="flex items-center gap-2">
         <Input
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png"
           multiple
           onChange={handleFileChange}
           className="hidden"
@@ -66,7 +81,6 @@ export const ImageUploadGrid: React.FC<ImageUploadGridProps> = ({
           {images.length} / {maxImages} תמונות
         </span>
       </div>
-
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {images.map((file, index) => (

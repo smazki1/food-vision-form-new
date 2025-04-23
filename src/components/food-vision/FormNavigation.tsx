@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Database, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 
 interface FormNavigationProps {
   activeTab: string;
@@ -38,8 +38,8 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
 
   return (
     <div className="px-4 py-4 bg-white shadow-sm border-t w-full mt-auto">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col items-center w-full">
+        <div className="flex items-center gap-4 w-full justify-center">
           <Button
             type="button"
             variant="outline"
@@ -48,31 +48,41 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
           >
             הקודם
           </Button>
-          
           {!isLastTab ? (
-            <Button type="button" onClick={moveToNextTab} disabled={isSubmitting}>
+            <Button
+              type="button"
+              onClick={moveToNextTab}
+              disabled={isSubmitting}
+            >
               הבא
             </Button>
           ) : (
-            <Button 
-              type="button" 
-              onClick={handleSubmit} 
+            <Button
+              type="button"
+              onClick={handleSubmit}
               disabled={isSubmitting || isSubmitDisabled}
             >
               {isSubmitting ? (
                 <span className="flex gap-2 items-center">
                   <Loader className="animate-spin" />
-                  שולח...
+                  שלח טופס
                 </span>
-              ) : "שלח טופס"}
+              ) : (
+                "שלח טופס"
+              )}
             </Button>
           )}
         </div>
-        
-        <Link to="/admin" className="text-sm text-muted-foreground hover:text-primary flex items-center">
-          <Database className="h-3 w-3 mr-1" />
-          אזור ניהול
-        </Link>
+        {/* Move Admin button here, less prominent */}
+        <div className="mt-4">
+          <Link
+            to="/admin"
+            className="text-xs text-muted-foreground border px-3 py-1 rounded hover:text-primary hover:border-primary flex items-center"
+            tabIndex={isSubmitting ? -1 : 0}
+          >
+            אזור ניהול
+          </Link>
+        </div>
       </div>
     </div>
   );
