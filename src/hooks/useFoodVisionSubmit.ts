@@ -28,7 +28,10 @@ export const useFoodVisionSubmit = ({
       setActiveTab("client");
       return { success: false, message: "חסרים שדות חובה" };
     }
+    
+    // Begin submission process
     setIsSubmitting(true);
+    
     try {
       const completeFormData = {
         clientDetails,
@@ -37,8 +40,11 @@ export const useFoodVisionSubmit = ({
         drinks: Array.isArray(drinks) ? drinks : [],
         additionalDetails
       };
+      
+      // Trigger webhook to send data
       await triggerMakeWebhook(completeFormData);
-      toast.success("תודה! הטופס נשלח בהצלחה. נחזור אליך תוך 24 שעות.");
+      
+      // Clear form data after successful submission
       localStorage.removeItem("foodVisionForm");
       setClientDetails({
         restaurantName: "",
@@ -54,6 +60,9 @@ export const useFoodVisionSubmit = ({
         brandColors: "",
         generalNotes: "",
       });
+      
+      // Show success message
+      toast.success("תודה! הטופס נשלח בהצלחה. נחזור אליך תוך 24 שעות.");
       return { success: true };
     } catch (error) {
       console.error("Error submitting form:", error);

@@ -29,6 +29,18 @@ const FoodVisionForm: React.FC = () => {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFormValid, setIsFormValid] = useState(true);
 
+  // Check if client details are valid
+  useEffect(() => {
+    const isValid = Boolean(
+      clientDetails.restaurantName &&
+      clientDetails.contactName &&
+      clientDetails.phoneNumber &&
+      clientDetails.email
+    );
+    setIsFormValid(isValid);
+    console.log("Form validation state:", { isValid, clientDetails });
+  }, [clientDetails]);
+
   // Scroll to error message if it exists
   useEffect(() => {
     if (submitError) {
@@ -177,7 +189,7 @@ const FoodVisionForm: React.FC = () => {
             setActiveTab={setActiveTab}
             isSubmitting={isSubmitting}
             handleSubmit={handleFormSubmit}
-            isSubmitDisabled={!isFormValid}
+            isSubmitDisabled={false}
           />
         </div>
       </div>

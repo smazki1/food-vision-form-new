@@ -36,6 +36,9 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
   const isFirstTab = activeTab === "client";
   const isLastTab = activeTab === "additional";
 
+  // Debug log to check why the button might be disabled
+  console.log('Submit button state:', { isSubmitting, isSubmitDisabled });
+
   return (
     <div className="px-4 py-4 bg-white shadow-sm border-t w-full mt-auto">
       <div className="flex flex-col items-center w-full">
@@ -60,7 +63,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || isSubmitDisabled}
+              disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <span className="flex gap-2 items-center">
