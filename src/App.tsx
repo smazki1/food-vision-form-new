@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import FoodVisionForm from "./pages/FoodVisionForm";
+import PromoLandingPage from "./pages/PromoLandingPage";
 import React from 'react';
 
 // Admin pages
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<FoodVisionForm />} />
+              <Route path="/promo" element={<PromoLandingPage />} />
               
               {/* Admin routes */}
               <Route path="/admin" element={<AdminLogin />} />
