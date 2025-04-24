@@ -5,22 +5,33 @@ import { Link } from "react-router-dom";
 const PromoLandingPage = () => {
   return (
     <div className="min-h-screen bg-white text-right rtl" dir="rtl">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <section className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            תמונות מקצועיות למסעדות - בלי צלם, בלי סטודיו, בלי כאב ראש
+      {/* Hero Section */}
+      <section 
+        className="relative h-screen flex items-center justify-center text-white"
+        style={{
+          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7)), url('/lovable-uploads/1b001582-18c0-4dda-8734-52496542e5a1.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            תמונות מרהיבות למסעדות - בלי צלם,<br />
+            בלי סטודיו, בלי כאב ראש
           </h1>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
             הטכנולוגיה החדשנית שמאפשרת לבעלי מסעדות ליצור תמונות מקצועיות במחיר שכל עסק יכול להרשות לעצמו
           </p>
           <Link 
             to="/"
-            className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center justify-center px-8 py-4 text-lg font-medium rounded-md text-white bg-[#f97316] hover:bg-[#f97316]/90 transition-colors"
           >
-            התחל עכשיו
+            קבל דוגמא מותאמת למסעדה שלך
           </Link>
-        </section>
+        </div>
+      </section>
 
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Benefits Section */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">יתרונות המערכת</h2>
