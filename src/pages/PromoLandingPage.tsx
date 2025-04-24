@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import GalleryCarousel from "@/components/promo/GalleryCarousel";
@@ -9,7 +10,7 @@ const PromoLandingPage = () => {
       <section 
         className="relative h-screen flex items-center justify-center text-white bg-cover bg-center transition-all duration-300"
         style={{
-          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/c50a1c5c-2fa9-4fdc-aa84-00665a402a8e.png')"
+          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/fe01098f-59b9-4d84-b387-deaace6bc703.png')"
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 text-center z-10">

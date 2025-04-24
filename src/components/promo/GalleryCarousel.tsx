@@ -1,22 +1,27 @@
 
 import React from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
 const images = [
   {
-    url: "/lovable-uploads/c50a1c5c-2fa9-4fdc-aa84-00665a402a8e.png",
-    caption: "חוויה קולינרית יוצאת דופן"
+    url: "/lovable-uploads/fe01098f-59b9-4d84-b387-deaace6bc703.png",
+    caption: "אווירה יוקרתית"
   },
   {
-    url: "/lovable-uploads/1b001582-18c0-4dda-8734-52496542e5a1.png",
-    caption: "אווירה מושלמת"
+    url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
+    caption: "מנות שף מיוחדות"
   },
+  {
+    url: "https://images.unsplash.com/photo-1472396961693-142e6e269027",
+    caption: "מטבח מודרני"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1493962853295-0fd70327578a",
+    caption: "חוויה קולינרית"
+  },
+  {
+    url: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1",
+    caption: "אווירה מושלמת"
+  }
 ];
 
 const GalleryCarousel = () => {
@@ -27,26 +32,23 @@ const GalleryCarousel = () => {
           הגלריה שלנו
         </h2>
         
-        <Carousel className="w-full max-w-5xl mx-auto">
-          <CarouselContent>
-            {images.map((image, index) => (
-              <CarouselItem key={index}>
-                <div className="relative aspect-[16/9] overflow-hidden rounded-xl">
-                  <img
-                    src={image.url}
-                    alt={image.caption}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/30 flex items-end justify-center p-6">
-                    <p className="text-white text-xl font-medium">{image.caption}</p>
-                  </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="text-white bg-black/50 hover:bg-black/70 border-none -left-4" />
-          <CarouselNext className="text-white bg-black/50 hover:bg-black/70 border-none -right-4" />
-        </Carousel>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {images.map((image, index) => (
+            <div 
+              key={index} 
+              className="group relative aspect-square overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl"
+            >
+              <img
+                src={image.url}
+                alt={image.caption}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-6">
+                <p className="text-white text-lg font-medium text-center">{image.caption}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
