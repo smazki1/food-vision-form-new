@@ -1,26 +1,52 @@
 
 import React from "react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
-const images = [
+const galleries = [
   {
-    url: "/lovable-uploads/fe01098f-59b9-4d84-b387-deaace6bc703.png",
-    caption: "אווירה יוקרתית"
+    title: "אווירה יוקרתית",
+    images: [
+      {
+        url: "/lovable-uploads/fe01098f-59b9-4d84-b387-deaace6bc703.png",
+        caption: "אחרי"
+      },
+      {
+        url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
+        caption: "לפני"
+      }
+    ]
   },
   {
-    url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
-    caption: "מנות שף מיוחדות"
+    title: "מטבח מודרני",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1472396961693-142e6e269027",
+        caption: "אחרי"
+      },
+      {
+        url: "https://images.unsplash.com/photo-1493962853295-0fd70327578a",
+        caption: "לפני"
+      }
+    ]
   },
   {
-    url: "https://images.unsplash.com/photo-1472396961693-142e6e269027",
-    caption: "מטבח מודרני"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1493962853295-0fd70327578a",
-    caption: "חוויה קולינרית"
-  },
-  {
-    url: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1",
-    caption: "אווירה מושלמת"
+    title: "חוויה קולינרית",
+    images: [
+      {
+        url: "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1",
+        caption: "אחרי"
+      },
+      {
+        url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9",
+        caption: "לפני"
+      }
+    ]
   }
 ];
 
@@ -33,19 +59,34 @@ const GalleryCarousel = () => {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {images.map((image, index) => (
+          {galleries.map((gallery, index) => (
             <div 
               key={index} 
-              className="group relative aspect-square overflow-hidden rounded-xl shadow-md transition-all duration-300 hover:shadow-xl"
+              className="group relative shadow-md transition-all duration-300 hover:shadow-xl rounded-xl overflow-hidden"
             >
-              <img
-                src={image.url}
-                alt={image.caption}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-6">
-                <p className="text-white text-lg font-medium text-center">{image.caption}</p>
-              </div>
+              <Carousel className="w-full">
+                <CarouselContent>
+                  {gallery.images.map((image, imageIndex) => (
+                    <CarouselItem key={imageIndex}>
+                      <div className="relative aspect-square">
+                        <img
+                          src={image.url}
+                          alt={`${gallery.title} - ${image.caption}`}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-end justify-center p-6">
+                          <div className="text-center">
+                            <h3 className="text-white text-lg font-bold mb-2">{gallery.title}</h3>
+                            <p className="text-white text-sm font-medium">{image.caption}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="text-white bg-black/50 hover:bg-black/70 border-none" />
+                <CarouselNext className="text-white bg-black/50 hover:bg-black/70 border-none" />
+              </Carousel>
             </div>
           ))}
         </div>
