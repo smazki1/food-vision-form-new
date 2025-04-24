@@ -1,15 +1,15 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
+import GalleryCarousel from "@/components/promo/GalleryCarousel";
 
 const PromoLandingPage = () => {
   return (
     <div className="min-h-screen bg-white text-right rtl" dir="rtl">
-      {/* Hero Section - Improved contrast and responsiveness */}
+      {/* Hero Section - Updated with new background and improved styling */}
       <section 
         className="relative h-screen flex items-center justify-center text-white bg-cover bg-center transition-all duration-300"
         style={{
-          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/1b001582-18c0-4dda-8734-52496542e5a1.png')"
+          backgroundImage: "linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8)), url('/lovable-uploads/c50a1c5c-2fa9-4fdc-aa84-00665a402a8e.png')"
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 text-center z-10">
@@ -18,7 +18,7 @@ const PromoLandingPage = () => {
             בלי סטודיו, בלי כאב ראש
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl mb-10 max-w-3xl mx-auto font-light leading-relaxed">
-            הטכנולוגיה החדשנית שמאפשרת לבעלי מסעדות ליצור תמונות מקצועיות במחיר שכל עסק יכול להרשות לעצמו
+            הטכנולוגיה החדשנית שמאפשרת לבעלי מסעדות ליצור תמונות מקצועיות במחיר שכל עסק יכול להרש��ת לעצמו
           </p>
           <Link 
             to="/"
@@ -28,6 +28,9 @@ const PromoLandingPage = () => {
           </Link>
         </div>
       </section>
+
+      {/* Gallery Section */}
+      <GalleryCarousel />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-16">
         {/* Benefits Section - Enhanced cards with shadows and hover effects */}
