@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
@@ -34,7 +33,6 @@ const uploadFileToStorage = async (file: File): Promise<string | null> => {
 
 export const triggerMakeWebhook = async (formData: FormData) => {
   try {
-    // First, save client details to get client_id
     const { data: clientData, error: clientError } = await supabase
       .from('clients')
       .insert({
@@ -50,7 +48,6 @@ export const triggerMakeWebhook = async (formData: FormData) => {
 
     const client_id = clientData.client_id;
 
-    // Upload and save dishes with multiple images
     const dishPromises = formData.dishes.map(async (dish) => {
       const imageUrls = [];
       if (dish.referenceImages) {
@@ -73,7 +70,6 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       await supabase.from('dishes').insert(dishes);
     }
 
-    // Upload and save cocktails with multiple images
     const cocktailPromises = formData.cocktails.map(async (cocktail) => {
       const imageUrls = [];
       if (cocktail.referenceImages) {
@@ -96,7 +92,6 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       await supabase.from('cocktails').insert(cocktails);
     }
 
-    // Upload and save drinks with multiple images
     const drinkPromises = formData.drinks.map(async (drink) => {
       const imageUrls = [];
       if (drink.referenceImages) {
@@ -119,7 +114,6 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       await supabase.from('drinks').insert(drinks);
     }
 
-    // Upload branding materials and save additional details
     const brandingMaterialsUrl = formData.additionalDetails.brandingMaterials 
       ? await uploadFileToStorage(formData.additionalDetails.brandingMaterials) 
       : null;
@@ -132,7 +126,6 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       general_notes: formData.additionalDetails.generalNotes
     });
 
-    // Format data for Make.com webhook
     const webhookPayload = {
       restaurant_name: formData.clientDetails.restaurantName,
       contact_name: formData.clientDetails.contactName,
@@ -176,11 +169,29 @@ export const triggerMakeWebhook = async (formData: FormData) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Webhook error: ${response.status} ${response.statusText}`);
+      console.error('Original webhook error:', response.status, response.statusText);
+    }
+
+    try {
+      const newWebhookResponse = await fetch('https://hook.eu2.make.com/cnsjuuxruo9guhu23d7fh7p655qrnngo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+
+      if (!newWebhookResponse.ok) {
+        console.error('New webhook error:', newWebhookResponse.status, newWebhookResponse.statusText);
+      } else {
+        console.log('New webhook triggered successfully');
+      }
+    } catch (webhookError) {
+      console.error('Error triggering new webhook:', webhookError);
     }
 
     toast.success('Form submitted successfully');
-    console.log('Webhook response:', await response.text());
+    console.log('Webhook responses processed');
     return true;
   } catch (error) {
     console.error('Error processing form submission:', error);
