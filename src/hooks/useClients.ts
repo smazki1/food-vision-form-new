@@ -1,7 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types/client";
+import { Client, ClientStatus } from "@/types/client";
 
 interface UseClientsOptions {
   searchTerm?: string;
@@ -17,9 +17,12 @@ export function useClients({ searchTerm = "", statusFilter = "" }: UseClientsOpt
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Apply status filter if selected
+      // Apply status filter if selected and is a valid status
       if (statusFilter && statusFilter !== "הכל") {
-        query = query.eq("client_status", statusFilter);
+        // Validate the status filter is one of the allowed enum values
+        if (["פעיל", "לא פעיל", "בהמתנה"].includes(statusFilter)) {
+          query = query.eq("client_status", statusFilter as ClientStatus);
+        }
       }
 
       // Apply search term if entered
