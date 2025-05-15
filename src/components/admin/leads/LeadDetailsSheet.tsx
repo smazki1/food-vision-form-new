@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Lead, LEAD_STATUS_OPTIONS } from "@/types/lead";
 import { useForm, Controller } from "react-hook-form";
@@ -196,8 +195,8 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
       // Create new client
       await createClientFromLead(
         lead,
-        selectedPackage.id,
-        selectedPackage.servingsCount
+        selectedPackage.package_id,
+        selectedPackage.total_servings
       );
 
       // Update lead status
@@ -578,16 +577,16 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
             <div className="grid grid-cols-1 gap-4">
               {MOCK_PACKAGES.map((pkg) => (
                 <Card 
-                  key={pkg.id}
+                  key={pkg.package_id}
                   className={`cursor-pointer transition-all ${
-                    selectedPackage?.id === pkg.id ? "border-primary ring-2 ring-primary" : ""
+                    selectedPackage?.package_id === pkg.package_id ? "border-primary ring-2 ring-primary" : ""
                   }`}
                   onClick={() => setSelectedPackage(pkg)}
                 >
                   <CardHeader className="pb-2">
                     <CardTitle className="text-lg flex justify-between">
-                      {pkg.name}
-                      <Badge variant="outline">{pkg.servingsCount} מנות</Badge>
+                      {pkg.package_name}
+                      <Badge variant="outline">{pkg.total_servings} מנות</Badge>
                     </CardTitle>
                     <CardDescription>
                       {pkg.description}

@@ -2,9 +2,8 @@
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Client, ClientStatus } from "@/types/client";
-import { getPackageName } from "./clientApi"; // This may be a circular import - we'll address this later if needed
 
-export async function getClientDetails(clientId: string): Promise<Client | null> {
+export async function getClientById(clientId: string): Promise<Client | null> {
   const { data, error } = await supabase
     .from("clients")
     .select("*")
@@ -19,7 +18,7 @@ export async function getClientDetails(clientId: string): Promise<Client | null>
   return data as Client;
 }
 
-export async function updateClientDetails(
+export async function updateClient(
   clientId: string,
   updates: Partial<Client>
 ): Promise<Client> {
@@ -36,6 +35,17 @@ export async function updateClientDetails(
   }
 
   return data as Client;
+}
+
+export async function getClientDetails(clientId: string): Promise<Client | null> {
+  return getClientById(clientId);
+}
+
+export async function updateClientDetails(
+  clientId: string,
+  updates: Partial<Client>
+): Promise<Client> {
+  return updateClient(clientId, updates);
 }
 
 export async function addServingsToClient(
@@ -73,15 +83,32 @@ export async function addServingsToClient(
   return data as Client;
 }
 
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("email")
+    .eq("email", email)
+    .limit(1);
+
+  if (error) {
+    console.error("Error checking email existence:", error);
+    throw error;
+  }
+
+  return data && data.length > 0;
+}
+
 export async function createUserAccountForClient(
   clientId: string,
-  email: string,
-  password: string
-): Promise<{ userId: string }> {
+  email: string
+): Promise<{ userId: string; client: Client; tempPassword: string }> {
+  // Generate a random temporary password
+  const tempPassword = Math.random().toString(36).slice(-8);
+
   // First create the user in Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
-    password,
+    password: tempPassword,
     email_confirm: true, // Auto-confirm email
   });
 
@@ -106,7 +133,11 @@ export async function createUserAccountForClient(
     throw clientError;
   }
 
-  return { userId: user.id };
+  return { 
+    userId: user.id,
+    client: clientData as Client,
+    tempPassword
+  };
 }
 
 export async function getPackageName(packageId: string | null): Promise<string | null> {
