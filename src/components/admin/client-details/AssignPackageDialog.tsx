@@ -109,6 +109,8 @@ export function AssignPackageDialog({
     { value: "partial", label: "חלקי" }
   ];
 
+  const filteredPackages = packages.filter((pkg) => pkg.is_active);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -138,6 +140,7 @@ export function AssignPackageDialog({
                       }
                     }}
                     defaultValue={field.value}
+                    value={field.value || undefined} // Ensure we never pass empty string as value
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -146,15 +149,15 @@ export function AssignPackageDialog({
                     </FormControl>
                     <SelectContent>
                       {isLoading ? (
-                        <PackagesLoadingState />
+                        <div className="p-2 text-sm">טוען חבילות...</div>
+                      ) : filteredPackages.length > 0 ? (
+                        filteredPackages.map((pkg) => (
+                          <SelectItem key={pkg.package_id} value={pkg.package_id || "no-id"}>
+                            {pkg.package_name} - ₪{pkg.price}
+                          </SelectItem>
+                        ))
                       ) : (
-                        packages
-                          .filter((pkg) => pkg.is_active)
-                          .map((pkg) => (
-                            <SelectItem key={pkg.package_id} value={pkg.package_id}>
-                              {pkg.package_name} - ₪{pkg.price}
-                            </SelectItem>
-                          ))
+                        <div className="p-2 text-sm text-muted-foreground">לא נמצאו חבילות פעילות</div>
                       )}
                     </SelectContent>
                   </Select>
@@ -197,7 +200,7 @@ export function AssignPackageDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>סטטוס תשלום</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="בחר סטטוס תשלום" />
