@@ -194,6 +194,54 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          contact_name: string
+          created_at: string
+          email: string
+          free_sample_package_active: boolean
+          id: string
+          last_updated_at: string
+          lead_source: Database["public"]["Enums"]["lead_source_type"] | null
+          lead_status: Database["public"]["Enums"]["lead_status_type"]
+          notes: string | null
+          phone_number: string
+          reminder_at: string | null
+          reminder_details: string | null
+          restaurant_name: string
+        }
+        Insert: {
+          contact_name: string
+          created_at?: string
+          email: string
+          free_sample_package_active?: boolean
+          id?: string
+          last_updated_at?: string
+          lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
+          lead_status?: Database["public"]["Enums"]["lead_status_type"]
+          notes?: string | null
+          phone_number: string
+          reminder_at?: string | null
+          reminder_details?: string | null
+          restaurant_name: string
+        }
+        Update: {
+          contact_name?: string
+          created_at?: string
+          email?: string
+          free_sample_package_active?: boolean
+          id?: string
+          last_updated_at?: string
+          lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
+          lead_status?: Database["public"]["Enums"]["lead_status_type"]
+          notes?: string | null
+          phone_number?: string
+          reminder_at?: string | null
+          reminder_details?: string | null
+          restaurant_name?: string
+        }
+        Relationships: []
+      }
       visual_styles: {
         Row: {
           created_at: string
@@ -223,7 +271,17 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      lead_source_type: "אתר" | "הפניה" | "פייסבוק" | "אינסטגרם" | "אחר"
+      lead_status_type:
+        | "ליד חדש"
+        | "פנייה ראשונית בוצעה"
+        | "מעוניין"
+        | "לא מעוניין"
+        | "נקבעה פגישה/שיחה"
+        | "הדגמה בוצעה"
+        | "הצעת מחיר נשלחה"
+        | "ממתין לתשובה"
+        | "הפך ללקוח"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -338,6 +396,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lead_source_type: ["אתר", "הפניה", "פייסבוק", "אינסטגרם", "אחר"],
+      lead_status_type: [
+        "ליד חדש",
+        "פנייה ראשונית בוצעה",
+        "מעוניין",
+        "לא מעוניין",
+        "נקבעה פגישה/שיחה",
+        "הדגמה בוצעה",
+        "הצעת מחיר נשלחה",
+        "ממתין לתשובה",
+        "הפך ללקוח",
+      ],
+    },
   },
 } as const

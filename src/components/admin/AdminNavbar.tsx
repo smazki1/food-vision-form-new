@@ -1,47 +1,83 @@
 
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Database, Search, Users, Home, FileText, BarChart2 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { 
+  Home, 
+  Users, 
+  FileText, 
+  BarChart4, 
+  UserPlus
+} from "lucide-react";
+
+const navItems = [
+  {
+    title: "Dashboard",
+    icon: Home,
+    href: "/admin/dashboard",
+  },
+  {
+    title: "לידים",
+    icon: UserPlus,
+    href: "/admin/leads",
+  },
+  {
+    title: "לקוחות",
+    icon: Users,
+    href: "/admin/clients",
+  },
+  {
+    title: "הגשות",
+    icon: FileText,
+    href: "/admin/submissions",
+  },
+  {
+    title: "אנליטיקס",
+    icon: BarChart4,
+    href: "/admin/analytics",
+  },
+];
 
 const AdminNavbar: React.FC = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    localStorage.removeItem("adminAuthenticated");
-    navigate("/admin");
-  };
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   return (
-    <nav className="bg-primary text-primary-foreground p-4 flex flex-col h-full">
-      <div className="flex items-center mb-8">
-        <Database className="mr-2 h-6 w-6" />
-        <h1 className="text-xl font-bold">Food Vision Admin</h1>
-      </div>
-      
-      <div className="space-y-2 flex-1">
-        <Link to="/admin/dashboard" className="flex items-center p-2 rounded-md hover:bg-primary/80">
-          <Home className="mr-2 h-5 w-5" />
-          <span>דף הבית</span>
-        </Link>
-        <Link to="/admin/clients" className="flex items-center p-2 rounded-md hover:bg-primary/80">
-          <Users className="mr-2 h-5 w-5" />
-          <span>לקוחות</span>
-        </Link>
-        <Link to="/admin/submissions" className="flex items-center p-2 rounded-md hover:bg-primary/80">
-          <FileText className="mr-2 h-5 w-5" />
-          <span>הגשות</span>
-        </Link>
-        <Link to="/admin/analytics" className="flex items-center p-2 rounded-md hover:bg-primary/80">
-          <BarChart2 className="mr-2 h-5 w-5" />
-          <span>אנליטיקס</span>
-        </Link>
-      </div>
-      
-      <div className="mt-auto">
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          התנתקות
-        </Button>
+    <nav className="hidden border-r bg-background lg:block">
+      <div className="flex h-full flex-col gap-2">
+        <div className="flex h-14 items-center border-b px-4">
+          <Link
+            to="/admin/dashboard"
+            className="flex items-center gap-2 font-semibold"
+          >
+            <img
+              src="/favicon.ico"
+              alt="Food Vision AI"
+              className="h-6 w-6"
+            />
+            <span>Food Vision AI</span>
+          </Link>
+        </div>
+        <div className="flex-1 overflow-auto py-2">
+          <div className="grid gap-1 px-2">
+            {navItems.map((item) => {
+              const isActive = currentPath === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all ${
+                    isActive
+                      ? "bg-secondary text-secondary-foreground"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-secondary-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.title}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </nav>
   );

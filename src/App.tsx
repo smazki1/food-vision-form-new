@@ -15,6 +15,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import ClientsList from "./pages/admin/ClientsList";
 import ClientDetails from "./pages/admin/ClientDetails";
 import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
+import LeadsManagement from "./pages/admin/LeadsManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,6 +42,7 @@ const App: React.FC = () => {
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route path="dashboard" element={<Dashboard />} />
+                <Route path="leads" element={<LeadsManagement />} />
                 <Route path="clients" element={<ClientsList />} />
                 <Route path="clients/:clientId" element={<ClientDetails />} />
                 <Route path="submissions" element={<ClientsList />} /> {/* Reusing ClientsList for now */}
