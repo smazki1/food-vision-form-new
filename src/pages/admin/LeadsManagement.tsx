@@ -22,19 +22,25 @@ const LeadsManagement: React.FC = () => {
   const [remindersToday, setRemindersToday] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(false);
   
+  // Sorting state
+  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  
   // Lead form state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentLead, setCurrentLead] = useState<Lead | undefined>(undefined);
   const [formLoading, setFormLoading] = useState(false);
 
-  // Get leads with filters
+  // Get leads with filters and sorting
   const { leads, loading, addLead, updateLead, deleteLead } = useLeads({
     searchTerm,
     leadStatus,
     leadSource,
     dateFilter,
     onlyReminders,
-    remindersToday
+    remindersToday,
+    sortBy,
+    sortDirection
   });
   
   const handleCreateLead = () => {
@@ -97,6 +103,17 @@ const LeadsManagement: React.FC = () => {
     setRemindersToday(false);
   };
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      // Toggle direction if clicking the same field
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new field and default to descending order
+      setSortBy(field);
+      setSortDirection("desc");
+    }
+  };
+
   // Count active filters
   const activeFiltersCount = [
     leadStatus !== "all", 
@@ -156,6 +173,9 @@ const LeadsManagement: React.FC = () => {
         loading={loading}
         searchTerm={searchTerm}
         activeFiltersCount={activeFiltersCount}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSort={handleSort}
         onEdit={handleEditLead}
         onDelete={handleDeleteLead}
         onConvertToClient={handleConvertToClient}

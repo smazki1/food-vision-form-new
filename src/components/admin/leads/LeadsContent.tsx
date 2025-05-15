@@ -10,6 +10,9 @@ interface LeadsContentProps {
   loading: boolean;
   searchTerm: string;
   activeFiltersCount: number;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  onSort: (field: string) => void;
   onEdit: (lead: Lead) => void;
   onDelete: (id: string) => void;
   onConvertToClient: (lead: Lead) => void;
@@ -20,6 +23,9 @@ export const LeadsContent: React.FC<LeadsContentProps> = ({
   loading,
   searchTerm,
   activeFiltersCount,
+  sortBy,
+  sortDirection,
+  onSort,
   onEdit,
   onDelete,
   onConvertToClient,
@@ -48,6 +54,9 @@ export const LeadsContent: React.FC<LeadsContentProps> = ({
           onDelete={onDelete}
           onConvertToClient={onConvertToClient}
           isLoading={loading}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSort={onSort}
         />
       </CardContent>
     </Card>

@@ -1,21 +1,12 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Lead, LeadStatus, LeadSource } from "@/types/lead";
-
-interface LeadsFilter {
-  searchTerm?: string;
-  leadStatus?: LeadStatus | "all";
-  leadSource?: LeadSource | "all";
-  dateFilter?: "today" | "this-week" | "this-month" | "all";
-  onlyReminders?: boolean;
-  remindersToday?: boolean;
-}
+import { LeadsFilter } from "@/types/filters";
 
 export const fetchLeads = async (filters?: LeadsFilter) => {
   let query = supabase
     .from("leads")
-    .select("*")
-    .order("created_at", { ascending: false });
+    .select("*");
   
   // Apply filters if provided
   if (filters) {
@@ -78,6 +69,19 @@ export const fetchLeads = async (filters?: LeadsFilter) => {
         .gte("reminder_at", today.toISOString())
         .lt("reminder_at", tomorrow.toISOString());
     }
+    
+    // Apply sorting
+    if (filters.sortBy) {
+      query = query.order(filters.sortBy, { 
+        ascending: filters.sortDirection === "asc"
+      });
+    } else {
+      // Default sort by created_at descending
+      query = query.order("created_at", { ascending: false });
+    }
+  } else {
+    // Default sort by created_at descending if no filters provided
+    query = query.order("created_at", { ascending: false });
   }
 
   const { data, error } = await query;

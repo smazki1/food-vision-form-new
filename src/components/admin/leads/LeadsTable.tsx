@@ -10,12 +10,14 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
 import { StatusBadge } from "./StatusBadge";
 import { ReminderCell } from "./ReminderCell";
 import { ActionsCell } from "./ActionsCell";
 import { DeleteLeadDialog } from "./DeleteLeadDialog";
 import { LeadsTableLoadingState } from "./LeadsTableLoadingState";
 import { LeadsEmptyState } from "./LeadsEmptyState";
+import { Button } from "@/components/ui/button";
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -23,6 +25,9 @@ interface LeadsTableProps {
   onDelete: (id: string) => void;
   onConvertToClient: (lead: Lead) => void;
   isLoading: boolean;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
+  onSort: (field: string) => void;
 }
 
 const LeadsTable: React.FC<LeadsTableProps> = ({
@@ -31,6 +36,9 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   onDelete,
   onConvertToClient,
   isLoading,
+  sortBy = "",
+  sortDirection = "desc",
+  onSort,
 }) => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
@@ -52,6 +60,27 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
     return format(new Date(dateString), "dd/MM/yyyy");
   };
 
+  const renderSortIcon = (field: string) => {
+    if (sortBy !== field) return null;
+    return sortDirection === "asc" ? (
+      <ArrowUpAZ className="w-4 h-4 mr-1" />
+    ) : (
+      <ArrowDownAZ className="w-4 h-4 mr-1" />
+    );
+  };
+
+  const renderSortableHeader = (field: string, label: string) => (
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      className="p-0 font-medium flex items-center hover:bg-transparent hover:text-primary" 
+      onClick={() => onSort(field)}
+    >
+      {renderSortIcon(field)}
+      {label}
+    </Button>
+  );
+
   if (isLoading) {
     return <LeadsTableLoadingState />;
   }
@@ -66,13 +95,13 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>שם מסעדה</TableHead>
-              <TableHead>איש קשר</TableHead>
-              <TableHead>טלפון</TableHead>
-              <TableHead>סטטוס</TableHead>
-              <TableHead>תאריך יצירה</TableHead>
-              <TableHead>תאריך עדכון</TableHead>
-              <TableHead>תזכורת</TableHead>
+              <TableHead>{renderSortableHeader("restaurant_name", "שם מסעדה")}</TableHead>
+              <TableHead>{renderSortableHeader("contact_name", "איש קשר")}</TableHead>
+              <TableHead>{renderSortableHeader("phone_number", "טלפון")}</TableHead>
+              <TableHead>{renderSortableHeader("lead_status", "סטטוס")}</TableHead>
+              <TableHead>{renderSortableHeader("created_at", "תאריך יצירה")}</TableHead>
+              <TableHead>{renderSortableHeader("last_updated_at", "תאריך עדכון")}</TableHead>
+              <TableHead>{renderSortableHeader("reminder_at", "תזכורת")}</TableHead>
               <TableHead>פעולות</TableHead>
             </TableRow>
           </TableHeader>

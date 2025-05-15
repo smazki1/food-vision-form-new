@@ -8,4 +8,6 @@ export interface LeadsFilter {
   dateFilter?: "today" | "this-week" | "this-month" | "all";
   onlyReminders?: boolean;
   remindersToday?: boolean;
+  sortBy?: string;
+  sortDirection?: "asc" | "desc";
 }
