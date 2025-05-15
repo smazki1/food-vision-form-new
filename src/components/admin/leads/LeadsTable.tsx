@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { Lead, LeadStatus } from "@/types/lead";
 import { Button } from "@/components/ui/button";
 import { 
@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, MoreHorizontal, Trash2, Calendar } from "lucide-react";
+import { Edit, MoreHorizontal, Trash2, UserPlus, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
@@ -34,7 +34,7 @@ interface LeadsTableProps {
   leads: Lead[];
   onEdit: (lead: Lead) => void;
   onDelete: (id: string) => void;
-  onStatusChange: (id: string, status: LeadStatus) => void;
+  onConvertToClient: (lead: Lead) => void;
   isLoading: boolean;
 }
 
@@ -42,11 +42,11 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
   onEdit,
   onDelete,
-  onStatusChange,
+  onConvertToClient,
   isLoading,
 }) => {
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [leadToDelete, setLeadToDelete] = React.useState<string | null>(null);
 
   const handleDeleteClick = (id: string) => {
     setLeadToDelete(id);
@@ -64,21 +64,21 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   const getStatusBadgeVariant = (status: LeadStatus) => {
     switch (status) {
       case "ליד חדש":
-        return "default";
+        return "blue";
       case "פנייה ראשונית בוצעה":
         return "outline";
       case "מעוניין":
-        return "secondary";
+        return "green";
       case "לא מעוניין":
         return "destructive";
       case "נקבעה פגישה/שיחה":
-        return "blue";
+        return "secondary";
       case "הדגמה בוצעה":
-        return "green";
+        return "blue";
       case "הצעת מחיר נשלחה":
         return "purple";
       case "ממתין לתשובה":
-        return "yellow";
+        return "warning";
       case "הפך ללקוח":
         return "success";
       default:
@@ -90,8 +90,44 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
     return format(new Date(dateString), "dd/MM/yyyy");
   };
 
+  const isReminderOverdue = (reminderDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const reminder = new Date(reminderDate);
+    reminder.setHours(0, 0, 0, 0);
+    
+    return reminder < today;
+  };
+
+  const isReminderToday = (reminderDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const reminder = new Date(reminderDate);
+    reminder.setHours(0, 0, 0, 0);
+    
+    return reminder.getTime() === today.getTime();
+  };
+
+  const getReminderStyles = (reminderDate: string) => {
+    if (isReminderOverdue(reminderDate)) {
+      return "text-destructive font-bold";
+    }
+    if (isReminderToday(reminderDate)) {
+      return "text-blue-600 font-bold";
+    }
+    return "";
+  };
+
   if (isLoading) {
-    return <div className="flex justify-center py-8">טוען...</div>;
+    return (
+      <div className="space-y-2">
+        {Array(5).fill(0).map((_, i) => (
+          <div key={i} className="h-16 w-full bg-muted/30 rounded-md animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   if (leads.length === 0) {
@@ -101,7 +137,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
           לא נמצאו לידים
         </p>
         <p className="text-center text-muted-foreground">
-          צור ליד חדש כדי להתחיל
+          הוסף ליד חדש כדי להתחיל
         </p>
       </div>
     );
@@ -116,12 +152,11 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
               <TableHead>שם מסעדה</TableHead>
               <TableHead>איש קשר</TableHead>
               <TableHead>טלפון</TableHead>
-              <TableHead>אימייל</TableHead>
               <TableHead>סטטוס</TableHead>
-              <TableHead>מקור</TableHead>
               <TableHead>תאריך יצירה</TableHead>
+              <TableHead>תאריך עדכון</TableHead>
               <TableHead>תזכורת</TableHead>
-              <TableHead className="text-left">פעולות</TableHead>
+              <TableHead>פעולות</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -130,20 +165,21 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableCell className="font-medium">{lead.restaurant_name}</TableCell>
                 <TableCell>{lead.contact_name}</TableCell>
                 <TableCell>{lead.phone_number}</TableCell>
-                <TableCell>{lead.email}</TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadgeVariant(lead.lead_status) as any}>
+                  <Badge variant={getStatusBadgeVariant(lead.lead_status)}>
                     {lead.lead_status}
                   </Badge>
                 </TableCell>
-                <TableCell>{lead.lead_source || "-"}</TableCell>
                 <TableCell>{formatDate(lead.created_at)}</TableCell>
+                <TableCell>{formatDate(lead.last_updated_at)}</TableCell>
                 <TableCell>
-                  {lead.reminder_at && (
-                    <div className="flex items-center gap-1">
+                  {lead.reminder_at ? (
+                    <div className={`flex items-center gap-1 ${getReminderStyles(lead.reminder_at)}`}>
                       <Calendar className="h-4 w-4" />
                       {formatDate(lead.reminder_at)}
                     </div>
+                  ) : (
+                    "-"
                   )}
                 </TableCell>
                 <TableCell>
@@ -162,6 +198,12 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                         <Trash2 className="mr-2 h-4 w-4" />
                         מחיקה
                       </DropdownMenuItem>
+                      {lead.lead_status !== "הפך ללקוח" && (
+                        <DropdownMenuItem onClick={() => onConvertToClient(lead)}>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          המר ללקוח
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

@@ -13,10 +13,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Plus, Search } from "lucide-react";
-import EmptyState from "@/components/EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 const LeadsManagement: React.FC = () => {
-  const { leads, loading, addLead, updateLead, deleteLead, updateLeadStatus } = useLeads();
+  const { leads, loading, addLead, updateLead, deleteLead } = useLeads();
   
   const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -43,6 +45,21 @@ const LeadsManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleDeleteLead = async (id: string) => {
+    try {
+      await deleteLead(id);
+      toast.success("הליד נמחק בהצלחה");
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      toast.error("שגיאה במחיקת הליד");
+    }
+  };
+
+  const handleConvertToClient = (lead: Lead) => {
+    // This is a placeholder for future implementation (Section 1.2.2)
+    toast.info("המרת ליד ללקוח תיושם בהמשך");
+  };
+
   const handleCloseForm = () => {
     setIsFormOpen(false);
     setCurrentLead(undefined);
@@ -54,14 +71,17 @@ const LeadsManagement: React.FC = () => {
       
       if (currentLead) {
         await updateLead(currentLead.id, data);
+        toast.success("הליד עודכן בהצלחה");
       } else {
         await addLead(data);
+        toast.success("ליד חדש נוצר בהצלחה");
       }
       
       setIsFormOpen(false);
       setCurrentLead(undefined);
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("שגיאה בשמירת הליד");
     } finally {
       setFormLoading(false);
     }
@@ -88,24 +108,29 @@ const LeadsManagement: React.FC = () => {
         </div>
       </div>
 
-      {leads.length === 0 && !loading ? (
-        <EmptyState
-          title="אין לידים"
-          description="טרם נוצרו לידים במערכת. צור ליד חדש כדי להתחיל."
-          action={
-            <Button onClick={handleCreateLead}>
-              <Plus className="mr-2 h-4 w-4" /> צור ליד חדש
-            </Button>
-          }
-        />
+      {loading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
       ) : (
-        <LeadsTable
-          leads={filteredLeads}
-          onEdit={handleEditLead}
-          onDelete={deleteLead}
-          onStatusChange={updateLeadStatus}
-          isLoading={loading}
-        />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle>לידים</CardTitle>
+            <CardDescription>
+              רשימת כל הלידים במערכת ({leads.length})
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LeadsTable
+              leads={filteredLeads}
+              onEdit={handleEditLead}
+              onDelete={handleDeleteLead}
+              onConvertToClient={handleConvertToClient}
+              isLoading={loading}
+            />
+          </CardContent>
+        </Card>
       )}
 
       <Sheet open={isFormOpen} onOpenChange={setIsFormOpen}>
