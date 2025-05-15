@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Client } from "@/types/client";
+import { User } from "@supabase/supabase-js";
 
 // Fetch a single client by ID
 export const getClientById = async (clientId: string) => {
@@ -40,6 +41,11 @@ export const createUserAccountForClient = async (clientId: string, email: string
   });
 
   if (authError) throw authError;
+  
+  // Ensure we have a user object and properly type it
+  if (!authData || !authData.user) {
+    throw new Error("Failed to create user account");
+  }
   
   // Update client record with user_auth_id
   const { data: clientData, error: clientError } = await supabase
