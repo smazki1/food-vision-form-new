@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Edit, MoreHorizontal, Trash2, UserPlus, Calendar } from "lucide-react";
+import { Edit, MoreHorizontal, Trash2, UserPlus, Calendar, AlertCircle, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
@@ -64,23 +64,23 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
   const getStatusBadgeVariant = (status: LeadStatus) => {
     switch (status) {
       case "ליד חדש":
-        return "blue";
+        return "new-lead";
       case "פנייה ראשונית בוצעה":
-        return "outline";
+        return "initial-contact";
       case "מעוניין":
-        return "green";
+        return "interested";
       case "לא מעוניין":
-        return "destructive";
+        return "not-interested";
       case "נקבעה פגישה/שיחה":
-        return "secondary";
+        return "meeting-scheduled";
       case "הדגמה בוצעה":
-        return "blue";
+        return "demo-completed";
       case "הצעת מחיר נשלחה":
-        return "purple";
+        return "quote-sent";
       case "ממתין לתשובה":
-        return "warning";
+        return "awaiting-response";
       case "הפך ללקוח":
-        return "success";
+        return "converted";
       default:
         return "default";
     }
@@ -110,14 +110,14 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
     return reminder.getTime() === today.getTime();
   };
 
-  const getReminderStyles = (reminderDate: string) => {
+  const getReminderIcon = (reminderDate: string) => {
     if (isReminderOverdue(reminderDate)) {
-      return "text-destructive font-bold";
+      return <AlertCircle className="h-4 w-4 text-destructive mr-1" />;
     }
     if (isReminderToday(reminderDate)) {
-      return "text-blue-600 font-bold";
+      return <Clock className="h-4 w-4 text-blue-600 mr-1" />;
     }
-    return "";
+    return <Calendar className="h-4 w-4 text-muted-foreground mr-1" />;
   };
 
   if (isLoading) {
@@ -174,8 +174,8 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableCell>{formatDate(lead.last_updated_at)}</TableCell>
                 <TableCell>
                   {lead.reminder_at ? (
-                    <div className={`flex items-center gap-1 ${getReminderStyles(lead.reminder_at)}`}>
-                      <Calendar className="h-4 w-4" />
+                    <div className="flex items-center">
+                      {getReminderIcon(lead.reminder_at)}
                       {formatDate(lead.reminder_at)}
                     </div>
                   ) : (
