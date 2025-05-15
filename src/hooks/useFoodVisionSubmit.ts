@@ -3,6 +3,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { triggerMakeWebhook } from "@/utils/webhook-trigger";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
+import { createBatchSubmissions } from "@/api/submissionApi";
+import { getClientRemainingServings } from "@/api/submissionApi";
 
 export const useFoodVisionSubmit = ({
   clientDetails,
@@ -16,7 +18,8 @@ export const useFoodVisionSubmit = ({
   setCocktails,
   setDrinks,
   setAdditionalDetails,
-  setIsSubmitting
+  setIsSubmitting,
+  clientId
 }: any) => {
   return useCallback(async () => {
     // Validate required fields
@@ -27,6 +30,27 @@ export const useFoodVisionSubmit = ({
       toast.error("אנא מלא את כל שדות החובה בכרטיסיית פרטי הלקוח");
       setActiveTab("client");
       return { success: false, message: "חסרים שדות חובה" };
+    }
+    
+    // Calculate total new items being submitted
+    const totalNewItems = 
+      (Array.isArray(dishes) ? dishes.length : 0) + 
+      (Array.isArray(cocktails) ? cocktails.length : 0) + 
+      (Array.isArray(drinks) ? drinks.length : 0);
+    
+    // If client is authenticated, check if they have enough servings
+    if (clientId) {
+      try {
+        const remainingServings = await getClientRemainingServings(clientId);
+        
+        if (remainingServings < totalNewItems) {
+          toast.error(`אין מספיק מנות בחבילה. נותרו ${remainingServings} מנות, אך ניסית להגיש ${totalNewItems} פריטים.`);
+          return { success: false, message: "אין מספיק מנות בחבילה" };
+        }
+      } catch (error) {
+        console.error("Error checking remaining servings:", error);
+        // Continue with submission as the trigger will enforce servings check
+      }
     }
     
     // Begin submission process
@@ -41,8 +65,34 @@ export const useFoodVisionSubmit = ({
         additionalDetails
       };
       
-      // Trigger webhook to send data
-      await triggerMakeWebhook(completeFormData);
+      // Trigger webhook to send data (which will create the items in respective tables)
+      const result = await triggerMakeWebhook(completeFormData);
+      
+      // If user is authenticated, create submissions for each new item
+      if (clientId && result) {
+        // Prepare items for batch submission creation
+        const itemsForSubmission = [
+          ...(Array.isArray(dishes) ? dishes.map(dish => ({
+            originalItemId: dish.id,
+            itemType: "dish" as const,
+            itemName: dish.name
+          })) : []),
+          ...(Array.isArray(cocktails) ? cocktails.map(cocktail => ({
+            originalItemId: cocktail.id,
+            itemType: "cocktail" as const,
+            itemName: cocktail.name
+          })) : []),
+          ...(Array.isArray(drinks) ? drinks.map(drink => ({
+            originalItemId: drink.id,
+            itemType: "drink" as const,
+            itemName: drink.name
+          })) : [])
+        ];
+        
+        if (itemsForSubmission.length > 0) {
+          await createBatchSubmissions(clientId, itemsForSubmission);
+        }
+      }
       
       // Clear form data after successful submission
       localStorage.removeItem("foodVisionForm");
@@ -83,6 +133,7 @@ export const useFoodVisionSubmit = ({
     setCocktails,
     setDrinks,
     setAdditionalDetails,
-    setIsSubmitting
+    setIsSubmitting,
+    clientId
   ]);
 };

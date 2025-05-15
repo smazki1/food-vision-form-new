@@ -6,13 +6,46 @@ import DishesTab from "@/components/food-vision/DishesTab";
 import CocktailsTab from "@/components/food-vision/CocktailsTab";
 import DrinksTab from "@/components/food-vision/DrinksTab";
 import AdditionalDetailsTab from "@/components/food-vision/AdditionalDetailsTab";
+import SubmissionsTab from "@/components/food-vision/SubmissionsTab";
+import RemainingServingsCard from "@/components/food-vision/RemainingServingsCard";
 import FormNavigation from "@/components/food-vision/FormNavigation";
 import { useFoodVisionForm } from "@/hooks/use-food-vision-form";
+import { useSubmissions } from "@/hooks/useSubmissions";
 import ThankYouModal from "@/components/food-vision/ThankYouModal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const FoodVisionForm: React.FC = () => {
+  // Hard-coded client ID for demo purposes
+  // In a real implementation, this would come from authentication
+  const [clientId, setClientId] = useState<string | undefined>(undefined);
+  const [authenticating, setAuthenticating] = useState(true);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // In a real app, we would fetch the client_id associated with this user
+          // For demo purposes, we could hard-code a client_id for testing
+          // setClientId("some-client-id-from-authenticated-user");
+          console.log("User authenticated:", user);
+        } else {
+          console.log("No authenticated user found");
+        }
+        setAuthenticating(false);
+      } catch (error) {
+        console.error("Auth error:", error);
+        setAuthenticating(false);
+      }
+    }
+    
+    checkAuth();
+  }, []);
+
   const {
     activeTab, setActiveTab,
     clientDetails, setClientDetails,
@@ -22,6 +55,9 @@ const FoodVisionForm: React.FC = () => {
     additionalDetails, setAdditionalDetails,
     isSubmitting, handleSubmit
   } = useFoodVisionForm();
+
+  // Get submissions and remaining servings for the client
+  const { submissions, remainingServings, loading: loadingSubmissions } = useSubmissions(clientId);
 
   // Modal & alert UX states
   const [showThankYou, setShowThankYou] = useState(false);
@@ -87,7 +123,10 @@ const FoodVisionForm: React.FC = () => {
     
     setSubmitProgressMsg("התהליך יכול לקחת מספר שניות. נא לא לצאת מהעמוד.");
     try {
-      const result = await handleSubmit();
+      const result = await handleSubmit({
+        clientId: clientId // Pass the client ID to the submit handler
+      });
+      
       if (result && result.success) {
         setShowThankYou(true);
       } else if (result && !result.success) {
@@ -127,6 +166,15 @@ const FoodVisionForm: React.FC = () => {
           </p>
         </header>
 
+        {clientId && !authenticating && (
+          <div className="mb-6">
+            <RemainingServingsCard 
+              remainingServings={remainingServings} 
+              loading={loadingSubmissions} 
+            />
+          </div>
+        )}
+
         <div className="bg-white rounded-lg shadow-md p-6">
           {/* Validation Error Alert - More visible */}
           {submitError && (
@@ -140,7 +188,7 @@ const FoodVisionForm: React.FC = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full grid grid-cols-5 mb-8">
+            <TabsList className="w-full grid grid-cols-6 mb-8">
               <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
                 פרטי המסעדה
               </TabsTrigger>
@@ -156,6 +204,11 @@ const FoodVisionForm: React.FC = () => {
               <TabsTrigger value="additional" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
                 פרטים נוספים
               </TabsTrigger>
+              {clientId && (
+                <TabsTrigger value="submissions" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+                  הגשות
+                </TabsTrigger>
+              )}
             </TabsList>
 
             <TabsContent value="client">
@@ -173,6 +226,11 @@ const FoodVisionForm: React.FC = () => {
             <TabsContent value="additional">
               <AdditionalDetailsTab additionalDetails={additionalDetails} setAdditionalDetails={setAdditionalDetails} />
             </TabsContent>
+            {clientId && (
+              <TabsContent value="submissions">
+                <SubmissionsTab submissions={submissions} loading={loadingSubmissions} />
+              </TabsContent>
+            )}
           </Tabs>
 
           {/* Submission progress/Error messages */}
@@ -189,7 +247,7 @@ const FoodVisionForm: React.FC = () => {
             setActiveTab={setActiveTab}
             isSubmitting={isSubmitting}
             handleSubmit={handleFormSubmit}
-            isSubmitDisabled={false}
+            isSubmitDisabled={clientId && remainingServings <= 0}
           />
         </div>
       </div>

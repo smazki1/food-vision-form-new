@@ -133,6 +133,72 @@ export type Database = {
           },
         ]
       }
+      customer_submissions: {
+        Row: {
+          assigned_editor_id: string | null
+          assigned_package_id_at_submission: string | null
+          client_id: string
+          edit_history: Json | null
+          final_approval_timestamp: string | null
+          internal_team_notes: string | null
+          item_name_at_submission: string
+          item_type: string
+          main_processed_image_url: string | null
+          original_item_id: string
+          processed_image_urls: string[] | null
+          submission_id: string
+          submission_status: string
+          uploaded_at: string
+        }
+        Insert: {
+          assigned_editor_id?: string | null
+          assigned_package_id_at_submission?: string | null
+          client_id: string
+          edit_history?: Json | null
+          final_approval_timestamp?: string | null
+          internal_team_notes?: string | null
+          item_name_at_submission: string
+          item_type: string
+          main_processed_image_url?: string | null
+          original_item_id: string
+          processed_image_urls?: string[] | null
+          submission_id?: string
+          submission_status?: string
+          uploaded_at?: string
+        }
+        Update: {
+          assigned_editor_id?: string | null
+          assigned_package_id_at_submission?: string | null
+          client_id?: string
+          edit_history?: Json | null
+          final_approval_timestamp?: string | null
+          internal_team_notes?: string | null
+          item_name_at_submission?: string
+          item_type?: string
+          main_processed_image_url?: string | null
+          original_item_id?: string
+          processed_image_urls?: string[] | null
+          submission_id?: string
+          submission_status?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_submissions_assigned_package_id_at_submission_fkey"
+            columns: ["assigned_package_id_at_submission"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["package_id"]
+          },
+          {
+            foreignKeyName: "customer_submissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       dishes: {
         Row: {
           client_id: string

@@ -59,20 +59,36 @@ export const useFoodVisionForm = () => {
     saveToStorage,
   ]);
 
-  const handleSubmit = useFoodVisionSubmit({
+  const handleSubmit = useCallback(async (options = {}) => {
+    const submitHandler = useFoodVisionSubmit({
+      clientDetails,
+      dishes,
+      cocktails,
+      drinks,
+      additionalDetails,
+      setActiveTab,
+      setClientDetails,
+      setDishes,
+      setCocktails,
+      setDrinks,
+      setAdditionalDetails,
+      setIsSubmitting,
+      clientId: options.clientId, // Pass clientId if available
+    });
+
+    return submitHandler();
+  }, [
     clientDetails,
     dishes,
     cocktails,
     drinks,
     additionalDetails,
-    setActiveTab,
     setClientDetails,
     setDishes,
     setCocktails,
     setDrinks,
-    setAdditionalDetails,
-    setIsSubmitting,
-  });
+    setAdditionalDetails
+  ]);
 
   return {
     activeTab,

@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
@@ -31,22 +32,43 @@ const uploadFileToStorage = async (file: File): Promise<string | null> => {
   }
 }
 
-export const triggerMakeWebhook = async (formData: FormData) => {
+export const triggerMakeWebhook = async (formData: FormData): Promise<boolean> => {
   try {
-    const { data: clientData, error: clientError } = await supabase
+    // First, check if client already exists by email to prevent duplicates
+    const { data: existingClients } = await supabase
       .from('clients')
-      .insert({
-        restaurant_name: formData.clientDetails.restaurantName,
-        contact_name: formData.clientDetails.contactName,
-        phone: formData.clientDetails.phoneNumber,
-        email: formData.clientDetails.email
-      })
-      .select()
-      .single();
+      .select('client_id, remaining_servings')
+      .eq('email', formData.clientDetails.email)
+      .limit(1);
+      
+    let client_id: string;
+    
+    // If client doesn't exist, create a new one
+    if (!existingClients || existingClients.length === 0) {
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .insert({
+          restaurant_name: formData.clientDetails.restaurantName,
+          contact_name: formData.clientDetails.contactName,
+          phone: formData.clientDetails.phoneNumber,
+          email: formData.clientDetails.email
+        })
+        .select()
+        .single();
 
-    if (clientError) throw clientError;
-
-    const client_id = clientData.client_id;
+      if (clientError) throw clientError;
+      client_id = clientData.client_id;
+    } else {
+      // Use existing client ID
+      client_id = existingClients[0].client_id;
+      console.log("Using existing client:", client_id);
+      
+      // If client has no remaining servings, we might want to prevent submission in a production app
+      if (existingClients[0].remaining_servings <= 0) {
+        console.warn("Client has no remaining servings:", client_id);
+        // Note: In a production app, you'd implement further logic here
+      }
+    }
 
     const dishPromises = formData.dishes.map(async (dish) => {
       const imageUrls = [];
@@ -66,8 +88,11 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       };
     });
     const dishes = await Promise.all(dishPromises);
+    let dishIds: string[] = [];
     if (dishes.length > 0) {
-      await supabase.from('dishes').insert(dishes);
+      const { data: insertedDishes, error } = await supabase.from('dishes').insert(dishes).select('dish_id');
+      if (error) throw error;
+      dishIds = insertedDishes.map(dish => dish.dish_id);
     }
 
     const cocktailPromises = formData.cocktails.map(async (cocktail) => {
@@ -88,8 +113,11 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       };
     });
     const cocktails = await Promise.all(cocktailPromises);
+    let cocktailIds: string[] = [];
     if (cocktails.length > 0) {
-      await supabase.from('cocktails').insert(cocktails);
+      const { data: insertedCocktails, error } = await supabase.from('cocktails').insert(cocktails).select('cocktail_id');
+      if (error) throw error;
+      cocktailIds = insertedCocktails.map(cocktail => cocktail.cocktail_id);
     }
 
     const drinkPromises = formData.drinks.map(async (drink) => {
@@ -110,8 +138,11 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       };
     });
     const drinks = await Promise.all(drinkPromises);
+    let drinkIds: string[] = [];
     if (drinks.length > 0) {
-      await supabase.from('drinks').insert(drinks);
+      const { data: insertedDrinks, error } = await supabase.from('drinks').insert(drinks).select('drink_id');
+      if (error) throw error;
+      drinkIds = insertedDrinks.map(drink => drink.drink_id);
     }
 
     const brandingMaterialsUrl = formData.additionalDetails.brandingMaterials 
@@ -131,26 +162,30 @@ export const triggerMakeWebhook = async (formData: FormData) => {
       contact_name: formData.clientDetails.contactName,
       phone: formData.clientDetails.phoneNumber,
       email: formData.clientDetails.email,
-      dishes: dishes.map(d => ({
+      client_id: client_id,
+      dishes: dishes.map((d, i) => ({
         name: d.name,
         ingredients: d.ingredients,
         description: d.description,
         notes: d.notes,
-        reference_image_urls: d.reference_image_urls
+        reference_image_urls: d.reference_image_urls,
+        id: dishIds[i] || null
       })),
-      cocktails: cocktails.map(c => ({
+      cocktails: cocktails.map((c, i) => ({
         name: c.name,
         ingredients: c.ingredients,
         description: c.description,
         notes: c.notes,
-        reference_image_urls: c.reference_image_urls
+        reference_image_urls: c.reference_image_urls,
+        id: cocktailIds[i] || null
       })),
-      drinks: drinks.map(d => ({
+      drinks: drinks.map((d, i) => ({
         name: d.name,
         ingredients: d.ingredients,
         description: d.description,
         notes: d.notes,
-        reference_image_urls: d.reference_image_urls
+        reference_image_urls: d.reference_image_urls,
+        id: drinkIds[i] || null
       })),
       additional_details: {
         visual_style: formData.additionalDetails.visualStyle,

@@ -15,6 +15,7 @@ import Dashboard from "./pages/admin/Dashboard";
 import ClientsList from "./pages/admin/ClientsList";
 import ClientDetails from "./pages/admin/ClientDetails";
 import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
+import SubmissionsPage from "./pages/admin/SubmissionsPage"; // Added new import
 import LeadsManagement from "./pages/admin/LeadsManagement";
 import AlertsDashboard from "./pages/admin/AlertsDashboard";
 import PackagesManagementPage from "./pages/admin/PackagesManagementPage";
@@ -48,9 +49,9 @@ const App: React.FC = () => {
                 <Route path="clients" element={<ClientsList />} />
                 <Route path="clients/:clientId" element={<ClientDetails />} />
                 <Route path="alerts" element={<AlertsDashboard />} />
-                <Route path="submissions" element={<ClientsList />} /> {/* Reusing ClientsList for now */}
+                <Route path="submissions" element={<SubmissionsPage />} /> {/* Updated to use new component */}
                 <Route path="analytics" element={<SubmissionsAnalytics />} />
-                <Route path="packages" element={<PackagesManagementPage />} /> {/* New route for package management */}
+                <Route path="packages" element={<PackagesManagementPage />} />
               </Route>
               
               {/* 404 route */}
