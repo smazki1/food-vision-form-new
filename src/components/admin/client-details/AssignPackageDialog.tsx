@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { usePackages } from "@/hooks/usePackages";
 import { Client } from "@/types/client";
 import { Package } from "@/types/package";
-import { PackagesLoadingState } from "@/components/admin/packages/components/PackagesLoadingState";
+import PackagesLoadingState from "@/components/admin/packages/components/PackagesLoadingState";
 
 // Define the form schema with Zod
 const assignPackageSchema = z.object({

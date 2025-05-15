@@ -1,90 +1,93 @@
 
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getClientById, updateClient } from "@/api/clientApi";
+import { useState, useEffect, useCallback } from "react";
+import { getClientDetails, updateClientDetails as updateClient, addServingsToClient } from "@/api/clientApi";
 import { Client } from "@/types/client";
 import { toast } from "sonner";
 
-export function useClientDetails(clientId?: string) {
-  const queryClient = useQueryClient();
-  const [isEditMode, setIsEditMode] = useState(false);
+export const useClientDetails = (clientId?: string) => {
+  const [client, setClient] = useState<Client | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [isAddingServings, setIsAddingServings] = useState<boolean>(false);
 
-  // Fetch client data
-  const {
-    data: client,
-    isLoading,
-    error
-  } = useQuery({
-    queryKey: ["client", clientId],
-    queryFn: () => getClientById(clientId!),
-    enabled: !!clientId,
-  });
-
-  // Update client mutation
-  const updateClientMutation = useMutation({
-    mutationFn: (updates: Partial<Client>) => updateClient(clientId!, updates),
-    onSuccess: (updatedClient) => {
-      queryClient.setQueryData(["client", clientId], updatedClient);
-      setIsEditMode(false);
-      toast.success("פרטי הלקוח עודכנו בהצלחה");
-    },
-    onError: (error) => {
-      console.error("Error updating client:", error);
-      toast.error("שגיאה בעדכון פרטי הלקוח");
-    },
-  });
-
-  // Add servings mutation
-  const addServingsMutation = useMutation({
-    mutationFn: (amount: number) => {
-      if (!client) throw new Error("Client data not available");
-      return updateClient(clientId!, {
-        remaining_servings: client.remaining_servings + amount,
-        internal_notes: client.internal_notes 
-          ? `${client.internal_notes}\n[${new Date().toLocaleString('he-IL')}] נוספו ${amount} מנות באופן ידני.`
-          : `[${new Date().toLocaleString('he-IL')}] נוספו ${amount} מנות באופן ידני.`
-      });
-    },
-    onSuccess: (updatedClient) => {
-      queryClient.setQueryData(["client", clientId], updatedClient);
-      toast.success("המנות נוספו בהצלחה");
-    },
-    onError: (error) => {
-      console.error("Error adding servings:", error);
-      toast.error("שגיאה בהוספת מנות");
-    },
-  });
-
-  // Check if client has a user account
-  const hasUserAccount = !!client?.user_auth_id;
-
-  // Toggle edit mode
-  const toggleEditMode = () => setIsEditMode(prev => !prev);
-
-  // Update client details
-  const updateClientDetails = (data: Partial<Client>) => {
-    updateClientMutation.mutate(data);
-  };
-
-  // Add servings
-  const addServings = (amount: number) => {
-    if (amount <= 0) {
-      toast.error("יש להזין מספר חיובי של מנות");
+  const fetchClientData = useCallback(async () => {
+    if (!clientId) {
+      setLoading(false);
       return;
     }
-    addServingsMutation.mutate(amount);
+
+    try {
+      setLoading(true);
+      const clientData = await getClientDetails(clientId);
+      setClient(clientData);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error("Failed to fetch client details"));
+      toast.error("שגיאה בטעינת פרטי הלקוח");
+    } finally {
+      setLoading(false);
+    }
+  }, [clientId]);
+
+  // Function to refresh client data
+  const refreshClientData = useCallback(async () => {
+    await fetchClientData();
+  }, [fetchClientData]);
+
+  useEffect(() => {
+    fetchClientData();
+  }, [fetchClientData]);
+
+  const toggleEditMode = () => setIsEditMode(!isEditMode);
+
+  const updateClientDetails = async (data: Partial<Client>) => {
+    if (!clientId || !client) return;
+
+    try {
+      setIsUpdating(true);
+      const updatedClient = await updateClient(clientId, data);
+      setClient(updatedClient);
+      setIsEditMode(false);
+      toast.success("פרטי הלקוח עודכנו בהצלחה");
+    } catch (err) {
+      console.error("Error updating client details:", err);
+      toast.error("שגיאה בעדכון פרטי הלקוח");
+    } finally {
+      setIsUpdating(false);
+    }
   };
+
+  const addServings = async (amount: number) => {
+    if (!clientId || !client) return;
+
+    try {
+      setIsAddingServings(true);
+      const updatedClient = await addServingsToClient(clientId, amount);
+      setClient(updatedClient);
+      toast.success(`${amount} מנות נוספו בהצלחה`);
+    } catch (err) {
+      console.error("Error adding servings:", err);
+      toast.error("שגיאה בהוספת מנות");
+    } finally {
+      setIsAddingServings(false);
+    }
+  };
+
+  const hasUserAccount = !!client?.user_auth_id;
 
   return {
     client,
-    loading: isLoading,
+    loading,
     error,
     isEditMode,
     toggleEditMode,
     updateClientDetails,
     addServings,
     hasUserAccount,
-    isUpdating: updateClientMutation.isPending,
-    isAddingServings: addServingsMutation.isPending
+    isUpdating,
+    isAddingServings,
+    refreshClientData
   };
-}
+};
