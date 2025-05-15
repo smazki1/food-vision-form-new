@@ -1,3 +1,4 @@
+
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -46,7 +47,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
       is_active: packageToEdit.is_active,
       max_edits_per_serving: packageToEdit.max_edits_per_serving,
       max_processing_time_days: packageToEdit.max_processing_time_days || null,
-      features_tags: packageToEdit.features_tags?.join(", ") || ""
+      features_tags: packageToEdit.features_tags ? packageToEdit.features_tags.join(", ") : ""
     } : {
       package_name: "",
       description: "",
@@ -62,7 +63,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
   const createMutation = useMutation({
     mutationFn: (data: PackageFormValues) => {
       // Convert form data to match the Package type
-      const packageData: Omit<Package, "created_at" | "package_id" | "updated_at"> = {
+      const packageData = {
         package_name: data.package_name,
         description: data.description,
         total_servings: data.total_servings,
@@ -70,7 +71,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
         is_active: data.is_active,
         max_edits_per_serving: data.max_edits_per_serving,
         max_processing_time_days: data.max_processing_time_days || undefined,
-        features_tags: data.features_tags as unknown as string[] || []
+        features_tags: data.features_tags || []
       };
       
       return createPackage(packageData);
@@ -91,7 +92,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
       if (!packageToEdit) throw new Error("No package to edit");
       
       // Convert form data to match the Package type
-      const packageData: Partial<Package> = {
+      const packageData = {
         package_name: data.package_name,
         description: data.description,
         total_servings: data.total_servings,
@@ -99,7 +100,7 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
         is_active: data.is_active,
         max_edits_per_serving: data.max_edits_per_serving,
         max_processing_time_days: data.max_processing_time_days || undefined,
-        features_tags: data.features_tags as unknown as string[] || []
+        features_tags: data.features_tags || []
       };
       
       return updatePackage(packageToEdit.package_id, packageData);
