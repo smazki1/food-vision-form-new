@@ -17,6 +17,7 @@ import ClientDetails from "./pages/admin/ClientDetails";
 import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
 import LeadsManagement from "./pages/admin/LeadsManagement";
 import AlertsDashboard from "./pages/admin/AlertsDashboard";
+import PackagesManagementPage from "./pages/admin/PackagesManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,6 +50,7 @@ const App: React.FC = () => {
                 <Route path="alerts" element={<AlertsDashboard />} />
                 <Route path="submissions" element={<ClientsList />} /> {/* Reusing ClientsList for now */}
                 <Route path="analytics" element={<SubmissionsAnalytics />} />
+                <Route path="packages" element={<PackagesManagementPage />} /> {/* New route for package management */}
               </Route>
               
               {/* 404 route */}

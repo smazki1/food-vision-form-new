@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getPackageName } from "@/api/clientApi";
+import { getPackageById } from "@/api/packageApi";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ClientsPackageNameProps {
@@ -9,15 +9,15 @@ interface ClientsPackageNameProps {
 }
 
 const ClientsPackageName: React.FC<ClientsPackageNameProps> = ({ packageId }) => {
-  const { data: packageName, isLoading } = useQuery({
+  const { data: packageData, isLoading } = useQuery({
     queryKey: ["package", packageId],
-    queryFn: () => getPackageName(packageId),
+    queryFn: () => getPackageById(packageId as string),
     enabled: !!packageId,
   });
 
   if (isLoading) return <Skeleton className="h-5 w-24" />;
   
-  return <span>{packageName || "לא מוגדר"}</span>;
+  return <span>{packageData?.package_name || "לא מוגדר"}</span>;
 };
 
 export default ClientsPackageName;

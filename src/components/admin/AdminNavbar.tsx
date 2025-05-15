@@ -7,7 +7,8 @@ import {
   FileText, 
   BarChart4, 
   UserPlus,
-  Bell
+  Bell,
+  Package
 } from "lucide-react";
 
 const navItems = [
@@ -35,6 +36,11 @@ const navItems = [
     title: "הגשות",
     icon: FileText,
     href: "/admin/submissions",
+  },
+  {
+    title: "חבילות",
+    icon: Package,
+    href: "/admin/packages",
   },
   {
     title: "אנליטיקס",

@@ -263,6 +263,48 @@ export type Database = {
         }
         Relationships: []
       }
+      service_packages: {
+        Row: {
+          created_at: string
+          description: string | null
+          features_tags: string[] | null
+          is_active: boolean
+          max_edits_per_serving: number
+          max_processing_time_days: number | null
+          package_id: string
+          package_name: string
+          price: number
+          total_servings: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features_tags?: string[] | null
+          is_active?: boolean
+          max_edits_per_serving?: number
+          max_processing_time_days?: number | null
+          package_id?: string
+          package_name: string
+          price?: number
+          total_servings?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features_tags?: string[] | null
+          is_active?: boolean
+          max_edits_per_serving?: number
+          max_processing_time_days?: number | null
+          package_id?: string
+          package_name?: string
+          price?: number
+          total_servings?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       visual_styles: {
         Row: {
           created_at: string

@@ -1,22 +1,28 @@
 
-import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types/client";
 import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { Client, ClientStatus } from "@/types/client";
+import { getPackageName } from "./clientApi"; // This may be a circular import - we'll address this later if needed
 
-// Fetch a single client by ID
-export const getClientById = async (clientId: string) => {
+export async function getClientDetails(clientId: string): Promise<Client | null> {
   const { data, error } = await supabase
     .from("clients")
     .select("*")
     .eq("client_id", clientId)
     .single();
 
-  if (error) throw error;
-  return data as Client;
-};
+  if (error) {
+    console.error("Error fetching client details:", error);
+    throw error;
+  }
 
-// Update a client's details
-export const updateClient = async (clientId: string, updates: Partial<Client>) => {
+  return data as Client;
+}
+
+export async function updateClientDetails(
+  clientId: string,
+  updates: Partial<Client>
+): Promise<Client> {
   const { data, error } = await supabase
     .from("clients")
     .update(updates)
@@ -24,70 +30,99 @@ export const updateClient = async (clientId: string, updates: Partial<Client>) =
     .select()
     .single();
 
-  if (error) throw error;
-  return data as Client;
-};
+  if (error) {
+    console.error("Error updating client details:", error);
+    throw error;
+  }
 
-// Create a user account for a client
-export const createUserAccountForClient = async (clientId: string, email: string) => {
-  // Generate a random password
-  const tempPassword = Math.random().toString(36).slice(-8);
-  
-  // Create auth user
+  return data as Client;
+}
+
+export async function addServingsToClient(
+  clientId: string,
+  servingsToAdd: number
+): Promise<Client> {
+  // First get the current servings count
+  const { data: client, error: fetchError } = await supabase
+    .from("clients")
+    .select("remaining_servings")
+    .eq("client_id", clientId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching client servings:", fetchError);
+    throw fetchError;
+  }
+
+  const currentServings = client.remaining_servings;
+  const newServingsCount = currentServings + servingsToAdd;
+
+  // Update with the new count
+  const { data, error: updateError } = await supabase
+    .from("clients")
+    .update({ remaining_servings: newServingsCount })
+    .eq("client_id", clientId)
+    .select()
+    .single();
+
+  if (updateError) {
+    console.error("Error updating client servings:", updateError);
+    throw updateError;
+  }
+
+  return data as Client;
+}
+
+export async function createUserAccountForClient(
+  clientId: string,
+  email: string,
+  password: string
+): Promise<{ userId: string }> {
+  // First create the user in Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
-    password: tempPassword,
-    email_confirm: true, // Skip email confirmation for admin-created users
+    password,
+    email_confirm: true, // Auto-confirm email
   });
 
-  if (authError) throw authError;
-  
-  // Ensure we have a user object and properly type it
-  if (!authData || !authData.user) {
-    throw new Error("Failed to create user account");
+  if (authError) {
+    console.error("Error creating user account:", authError);
+    throw authError;
   }
-  
-  // Use explicit casting to User type to resolve the typing issue
+
+  // Cast authData.user to User type
   const user = authData.user as User;
   
-  // Update client record with user_auth_id
+  // Then update the client record with the auth user ID
   const { data: clientData, error: clientError } = await supabase
     .from("clients")
     .update({ user_auth_id: user.id })
     .eq("client_id", clientId)
     .select()
     .single();
-    
-  if (clientError) throw clientError;
-  
-  return {
-    user,
-    client: clientData as Client,
-    tempPassword
-  };
-};
 
-// Check if email is already registered as a user
-export const checkEmailExists = async (email: string) => {
-  const { data, error } = await supabase.auth.admin.listUsers();
-  
-  if (error) throw error;
-  
-  return data.users.some(user => user.email === email);
-};
+  if (clientError) {
+    console.error("Error linking user to client:", clientError);
+    throw clientError;
+  }
 
-// Fetch packages for clients
-export const getPackages = async () => {
-  // This is a placeholder for when real package data is available
-  // For now, we use the mock data from the types/package.ts file
-  return import("@/types/package").then(module => module.MOCK_PACKAGES);
-};
+  return { userId: user.id };
+}
 
-// Get package name by id
-export const getPackageName = async (packageId: string | null) => {
-  if (!packageId) return "לא מוגדר";
-  
-  const packages = await getPackages();
-  const pkg = packages.find(p => p.id === packageId);
-  return pkg ? pkg.name : packageId;
-};
+export async function getPackageName(packageId: string | null): Promise<string | null> {
+  if (!packageId) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from("service_packages")
+      .select("package_name")
+      .eq("package_id", packageId)
+      .single();
+
+    if (error) throw error;
+    return data?.package_name || null;
+  } catch (error) {
+    console.error("Error fetching package name:", error);
+    return null;
+  }
+}
