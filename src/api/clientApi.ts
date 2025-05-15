@@ -27,6 +27,46 @@ export const updateClient = async (clientId: string, updates: Partial<Client>) =
   return data as Client;
 };
 
+// Create a user account for a client
+export const createUserAccountForClient = async (clientId: string, email: string) => {
+  // Generate a random password
+  const tempPassword = Math.random().toString(36).slice(-8);
+  
+  // Create auth user
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: tempPassword,
+    email_confirm: true, // Skip email confirmation for admin-created users
+  });
+
+  if (authError) throw authError;
+  
+  // Update client record with user_auth_id
+  const { data: clientData, error: clientError } = await supabase
+    .from("clients")
+    .update({ user_auth_id: authData.user.id })
+    .eq("client_id", clientId)
+    .select()
+    .single();
+    
+  if (clientError) throw clientError;
+  
+  return {
+    user: authData.user,
+    client: clientData as Client,
+    tempPassword
+  };
+};
+
+// Check if email is already registered as a user
+export const checkEmailExists = async (email: string) => {
+  const { data, error } = await supabase.auth.admin.listUsers();
+  
+  if (error) throw error;
+  
+  return data.users.some(user => user.email === email);
+};
+
 // Fetch packages for clients
 export const getPackages = async () => {
   // This is a placeholder for when real package data is available

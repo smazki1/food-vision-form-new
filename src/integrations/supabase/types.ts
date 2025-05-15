@@ -58,6 +58,7 @@ export type Database = {
           phone: string
           remaining_servings: number
           restaurant_name: string
+          user_auth_id: string | null
         }
         Insert: {
           client_id?: string
@@ -72,6 +73,7 @@ export type Database = {
           phone: string
           remaining_servings?: number
           restaurant_name: string
+          user_auth_id?: string | null
         }
         Update: {
           client_id?: string
@@ -86,6 +88,7 @@ export type Database = {
           phone?: string
           remaining_servings?: number
           restaurant_name?: string
+          user_auth_id?: string | null
         }
         Relationships: []
       }

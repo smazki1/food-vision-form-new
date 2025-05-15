@@ -14,6 +14,7 @@ export type Client = {
   remaining_servings: number;
   last_activity_at: string;
   internal_notes: string | null;
+  user_auth_id: string | null;
 };
 
 export type ClientStatus = Database["public"]["Enums"]["client_status_type"];

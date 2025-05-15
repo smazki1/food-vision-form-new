@@ -6,15 +6,19 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit } from "lucide-react";
 import { Client } from "@/types/client";
 
 interface ClientInfoProps {
   client: Client;
+  onEdit?: () => void;
 }
 
-export const ClientInfo: React.FC<ClientInfoProps> = ({ client }) => {
+export const ClientInfo: React.FC<ClientInfoProps> = ({ client, onEdit }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("he-IL");
   };
@@ -35,10 +39,19 @@ export const ClientInfo: React.FC<ClientInfoProps> = ({ client }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>פרטי לקוח</CardTitle>
-        <CardDescription>
-          נוצר בתאריך {formatDate(client.created_at)}
-        </CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>פרטי לקוח</CardTitle>
+            <CardDescription>
+              נוצר בתאריך {formatDate(client.created_at)}
+            </CardDescription>
+          </div>
+          {onEdit && (
+            <Button variant="ghost" size="icon" onClick={onEdit}>
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -78,6 +91,16 @@ export const ClientInfo: React.FC<ClientInfoProps> = ({ client }) => {
               <p className="text-muted-foreground">{client.internal_notes}</p>
             </div>
           )}
+          <div>
+            <h3 className="font-semibold text-sm">חשבון משתמש</h3>
+            <p>
+              {client.user_auth_id ? (
+                <Badge variant="outline" className="bg-green-50">קיים</Badge>
+              ) : (
+                <Badge variant="outline" className="bg-red-50">לא קיים</Badge>
+              )}
+            </p>
+          </div>
         </div>
       </CardContent>
     </Card>
