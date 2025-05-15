@@ -26,7 +26,8 @@ const ClientDetails: React.FC = () => {
     addServings,
     hasUserAccount,
     isUpdating,
-    isAddingServings
+    isAddingServings,
+    refreshClientData
   } = useClientDetails(clientId);
 
   if (loading) {
@@ -58,6 +59,7 @@ const ClientDetails: React.FC = () => {
                 client={client} 
                 onAddServings={addServings}
                 isAddingServings={isAddingServings}
+                onClientUpdate={refreshClientData}
               />
               
               {!hasUserAccount && (
@@ -69,7 +71,7 @@ const ClientDetails: React.FC = () => {
               <PlaceholderCard
                 title="היסטוריית חבילות"
                 description="רשימת החבילות שהלקוח היה מנוי עליהן"
-                message="היסטוריית חבילות תהיה זמינה לאחר הטמעת מודול 2 (ניהול חבילות)"
+                message="היסטוריית חבילות תהיה זמינה בגרסה הבאה"
                 icon={<History className="h-12 w-12 opacity-20" />}
               />
               

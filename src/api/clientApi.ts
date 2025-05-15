@@ -1,4 +1,3 @@
-
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { Client, ClientStatus } from "@/types/client";
@@ -138,6 +137,58 @@ export async function createUserAccountForClient(
     client: clientData as Client,
     tempPassword
   };
+}
+
+export async function assignPackageToClient(
+  clientId: string,
+  packageId: string,
+  servingsCount: number,
+  notes?: string,
+  expirationDate?: Date
+): Promise<Client> {
+  // Create the updates object with the required fields
+  const updates: Partial<Client> = {
+    current_package_id: packageId,
+    remaining_servings: servingsCount,
+  };
+
+  // If there are notes, prepend them to the existing internal notes or create new ones
+  if (notes) {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("internal_notes")
+      .eq("client_id", clientId)
+      .single();
+
+    const currentNotes = currentClient?.internal_notes || "";
+    const timestamp = new Date().toLocaleString("he-IL");
+    const formattedNote = `[${timestamp} - הקצאת חבילה] ${notes}`;
+    
+    updates.internal_notes = currentNotes 
+      ? `${formattedNote}\n\n${currentNotes}`
+      : formattedNote;
+  }
+
+  // TODO: In the future, we might want to add fields like:
+  // - package_assigned_at
+  // - current_package_expires_at
+  // - payment_status
+  // For now, we're just using the existing fields
+
+  // Perform the update
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updates)
+    .eq("client_id", clientId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error assigning package to client:", error);
+    throw error;
+  }
+
+  return data as Client;
 }
 
 export async function getPackageName(packageId: string | null): Promise<string | null> {
