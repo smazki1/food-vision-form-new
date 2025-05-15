@@ -1,4 +1,3 @@
-
 import React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -37,32 +36,25 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
   const isEditMode = !!packageToEdit;
   const queryClient = useQueryClient();
   
+  // Define form with proper type casting
   const form = useForm<PackageFormValues>({
     resolver: zodResolver(packageFormSchema),
-    defaultValues: isEditMode ? {
-      package_name: packageToEdit.package_name,
-      description: packageToEdit.description || "",
-      total_servings: packageToEdit.total_servings,
-      price: packageToEdit.price,
-      is_active: packageToEdit.is_active,
-      max_edits_per_serving: packageToEdit.max_edits_per_serving,
-      max_processing_time_days: packageToEdit.max_processing_time_days || null,
-      features_tags: packageToEdit.features_tags ? packageToEdit.features_tags.join(", ") : ""
-    } : {
-      package_name: "",
-      description: "",
-      total_servings: 0,
-      price: 0,
-      is_active: true,
-      max_edits_per_serving: 1,
-      max_processing_time_days: null,
-      features_tags: ""
+    defaultValues: {
+      package_name: isEditMode ? packageToEdit.package_name : "",
+      description: isEditMode ? packageToEdit.description || "" : "",
+      total_servings: isEditMode ? packageToEdit.total_servings : 0,
+      price: isEditMode ? packageToEdit.price : 0,
+      is_active: isEditMode ? packageToEdit.is_active : true,
+      max_edits_per_serving: isEditMode ? packageToEdit.max_edits_per_serving : 1,
+      max_processing_time_days: isEditMode ? packageToEdit.max_processing_time_days || null : null,
+      // Convert array to comma-separated string for the form input
+      features_tags: isEditMode && packageToEdit.features_tags ? packageToEdit.features_tags.join(", ") : ""
     }
   });
   
   const createMutation = useMutation({
     mutationFn: (data: PackageFormValues) => {
-      // Convert form data to match the Package type
+      // The transform in the zod schema will convert the string to an array
       const packageData = {
         package_name: data.package_name,
         description: data.description,
@@ -91,7 +83,6 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
     mutationFn: (data: PackageFormValues) => {
       if (!packageToEdit) throw new Error("No package to edit");
       
-      // Convert form data to match the Package type
       const packageData = {
         package_name: data.package_name,
         description: data.description,
