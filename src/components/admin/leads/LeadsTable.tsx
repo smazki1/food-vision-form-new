@@ -107,7 +107,11 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
           </TableHeader>
           <TableBody>
             {leads.map((lead) => (
-              <TableRow key={lead.id}>
+              <TableRow 
+                key={lead.id} 
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => onEdit(lead)}
+              >
                 <TableCell className="font-medium">{lead.restaurant_name}</TableCell>
                 <TableCell>{lead.contact_name}</TableCell>
                 <TableCell>{lead.phone_number}</TableCell>
@@ -119,7 +123,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                 <TableCell>
                   <ReminderCell reminderDate={lead.reminder_at} />
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <ActionsCell 
                     lead={lead} 
                     onEdit={onEdit} 

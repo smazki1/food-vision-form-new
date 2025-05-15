@@ -4,13 +4,14 @@ import { useLeads } from "@/hooks/useLeads";
 import { Lead, LeadStatus, LeadSource } from "@/types/lead";
 import { toast } from "sonner";
 
-// Import our newly created components
+// Import our components
 import { LeadsHeader } from "@/components/admin/leads/LeadsHeader";
 import { LeadSearchBar } from "@/components/admin/leads/filters/LeadSearchBar";
 import { LeadsFilterPopover } from "@/components/admin/leads/filters/LeadsFilterPopover";
 import { ActiveFiltersBadges } from "@/components/admin/leads/filters/ActiveFiltersBadges";
 import { LeadsContent } from "@/components/admin/leads/LeadsContent";
 import { LeadFormSheet } from "@/components/admin/leads/LeadFormSheet";
+import { LeadDetailsSheet } from "@/components/admin/leads/LeadDetailsSheet";
 
 const LeadsManagement: React.FC = () => {
   // State for filters
@@ -30,6 +31,10 @@ const LeadsManagement: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentLead, setCurrentLead] = useState<Lead | undefined>(undefined);
   const [formLoading, setFormLoading] = useState(false);
+  
+  // Lead details state
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Get leads with filters and sorting
   const { leads, loading, addLead, updateLead, deleteLead } = useLeads({
@@ -53,6 +58,11 @@ const LeadsManagement: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleViewLead = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsDetailsOpen(true);
+  };
+
   const handleDeleteLead = async (id: string) => {
     try {
       await deleteLead(id);
@@ -63,8 +73,9 @@ const LeadsManagement: React.FC = () => {
   };
 
   const handleConvertToClient = (lead: Lead) => {
-    // This is a placeholder for future implementation (Section 1.2.2)
-    toast.info("המרת ליד ללקוח תיושם בהמשך");
+    setSelectedLead(lead);
+    setIsDetailsOpen(true);
+    // The conversion functionality is handled in the details sheet
   };
 
   const handleCloseForm = () => {
@@ -91,6 +102,24 @@ const LeadsManagement: React.FC = () => {
       // Toast is handled in the mutation
     } finally {
       setFormLoading(false);
+    }
+  };
+  
+  const handleUpdateLead = async (id: string, updates: Partial<Lead>) => {
+    try {
+      await updateLead(id, updates);
+      
+      // Update the selected lead with new data if it matches
+      if (selectedLead && selectedLead.id === id) {
+        setSelectedLead({
+          ...selectedLead,
+          ...updates,
+          last_updated_at: new Date().toISOString()
+        });
+      }
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      throw error;
     }
   };
 
@@ -189,6 +218,14 @@ const LeadsManagement: React.FC = () => {
         onSubmit={handleFormSubmit}
         onCancel={handleCloseForm}
         isLoading={formLoading}
+      />
+      
+      {/* Lead Details Sheet */}
+      <LeadDetailsSheet
+        isOpen={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        lead={selectedLead}
+        onUpdate={handleUpdateLead}
       />
     </div>
   );
