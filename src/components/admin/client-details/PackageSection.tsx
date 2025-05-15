@@ -53,7 +53,7 @@ export function PackageSection({
         onClientUpdate();
       }
     } catch (error) {
-      console.error("Error assigning package:", error);
+      console.error("Error assigning package to client:", error);
       toast.error("אירעה שגיאה בהקצאת החבילה");
     } finally {
       setIsAssigning(false);

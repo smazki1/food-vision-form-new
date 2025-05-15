@@ -1,9 +1,10 @@
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import * as z from "zod";
-import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -47,7 +48,7 @@ import PackagesLoadingState from "@/components/admin/packages/components/Package
 const assignPackageSchema = z.object({
   packageId: z.string().min(1, { message: "יש לבחור חבילה" }),
   servingsCount: z.coerce.number().int().min(0, { message: "יש להזין מספר מנות תקין" }),
-  paymentStatus: z.enum(["שולם", "טרם שולם", "חלקי"]),
+  paymentStatus: z.enum(["paid", "unpaid", "partial"]),
   notes: z.string().optional(),
   expirationDate: z.date().optional(),
 });
@@ -79,7 +80,7 @@ export function AssignPackageDialog({
     defaultValues: {
       packageId: client.current_package_id || "",
       servingsCount: client.remaining_servings || 0,
-      paymentStatus: "טרם שולם",
+      paymentStatus: "unpaid",
       notes: "",
     },
   });
@@ -100,6 +101,13 @@ export function AssignPackageDialog({
   const onSubmit = async (values: AssignPackageFormValues) => {
     await onAssignPackage(values);
   };
+
+  // Map payment status values to display text
+  const paymentStatusOptions = [
+    { value: "paid", label: "שולם" },
+    { value: "unpaid", label: "טרם שולם" },
+    { value: "partial", label: "חלקי" }
+  ];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -196,9 +204,11 @@ export function AssignPackageDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="שולם">שולם</SelectItem>
-                      <SelectItem value="טרם שולם">טרם שולם</SelectItem>
-                      <SelectItem value="חלקי">חלקי</SelectItem>
+                      {paymentStatusOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
