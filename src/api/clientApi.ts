@@ -47,10 +47,13 @@ export const createUserAccountForClient = async (clientId: string, email: string
     throw new Error("Failed to create user account");
   }
   
+  // Use explicit casting to User type to resolve the typing issue
+  const user = authData.user as User;
+  
   // Update client record with user_auth_id
   const { data: clientData, error: clientError } = await supabase
     .from("clients")
-    .update({ user_auth_id: authData.user.id })
+    .update({ user_auth_id: user.id })
     .eq("client_id", clientId)
     .select()
     .single();
@@ -58,7 +61,7 @@ export const createUserAccountForClient = async (clientId: string, email: string
   if (clientError) throw clientError;
   
   return {
-    user: authData.user,
+    user,
     client: clientData as Client,
     tempPassword
   };
