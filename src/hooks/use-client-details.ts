@@ -1,7 +1,15 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ClientData } from "@/types/admin";
+import { Client } from "@/types/client";
+
+export type ClientData = {
+  client: Client | null;
+  dishes: any[];
+  cocktails: any[];
+  drinks: any[];
+  additionalDetails: any | null;
+};
 
 export const useClientDetails = (clientId: string | undefined) => {
   const [clientData, setClientData] = useState<ClientData>({

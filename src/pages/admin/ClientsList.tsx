@@ -6,15 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Eye } from "lucide-react";
-
-type Client = {
-  client_id: string;
-  restaurant_name: string;
-  contact_name: string;
-  phone: string;
-  email: string;
-  created_at: string;
-};
+import { Client, CLIENT_STATUS_OPTIONS } from "@/types/client";
+import { Badge } from "@/components/ui/badge";
+import EmptyState from "@/components/EmptyState";
 
 const ClientsList: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
@@ -32,7 +26,7 @@ const ClientsList: React.FC = () => {
       const { data, error } = await supabase
         .from("clients")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("last_activity_at", { ascending: false });
 
       if (error) throw error;
       setClients(data || []);
@@ -52,6 +46,19 @@ const ClientsList: React.FC = () => {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("he-IL");
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "פעיל":
+        return "success";
+      case "לא פעיל":
+        return "destructive";
+      case "בהמתנה":
+        return "warning";
+      default:
+        return "secondary";
+    }
   };
 
   return (
@@ -80,14 +87,16 @@ const ClientsList: React.FC = () => {
               <TableHead>איש קשר</TableHead>
               <TableHead>טלפון</TableHead>
               <TableHead>אימייל</TableHead>
-              <TableHead>תאריך</TableHead>
+              <TableHead>סטטוס</TableHead>
+              <TableHead>מנות שנותרו</TableHead>
+              <TableHead>פעילות אחרונה</TableHead>
               <TableHead className="text-left">פעולות</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   טוען נתונים...
                 </TableCell>
               </TableRow>
@@ -98,7 +107,13 @@ const ClientsList: React.FC = () => {
                   <TableCell>{client.contact_name}</TableCell>
                   <TableCell>{client.phone}</TableCell>
                   <TableCell>{client.email}</TableCell>
-                  <TableCell>{formatDate(client.created_at)}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(client.client_status) as any}>
+                      {client.client_status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{client.remaining_servings}</TableCell>
+                  <TableCell>{formatDate(client.last_activity_at)}</TableCell>
                   <TableCell>
                     <Button
                       variant="ghost"
@@ -112,8 +127,11 @@ const ClientsList: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
-                  לא נמצאו לקוחות
+                <TableCell colSpan={8} className="h-24">
+                  <EmptyState
+                    title="לא נמצאו לקוחות"
+                    description="לא נמצאו לקוחות התואמים לחיפוש שלך."
+                  />
                 </TableCell>
               </TableRow>
             )}

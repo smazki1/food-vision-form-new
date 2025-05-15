@@ -47,26 +47,44 @@ export type Database = {
       clients: {
         Row: {
           client_id: string
+          client_status: Database["public"]["Enums"]["client_status_type"]
           contact_name: string
           created_at: string
+          current_package_id: string | null
           email: string
+          internal_notes: string | null
+          last_activity_at: string
+          original_lead_id: string | null
           phone: string
+          remaining_servings: number
           restaurant_name: string
         }
         Insert: {
           client_id?: string
+          client_status?: Database["public"]["Enums"]["client_status_type"]
           contact_name: string
           created_at?: string
+          current_package_id?: string | null
           email: string
+          internal_notes?: string | null
+          last_activity_at?: string
+          original_lead_id?: string | null
           phone: string
+          remaining_servings?: number
           restaurant_name: string
         }
         Update: {
           client_id?: string
+          client_status?: Database["public"]["Enums"]["client_status_type"]
           contact_name?: string
           created_at?: string
+          current_package_id?: string | null
           email?: string
+          internal_notes?: string | null
+          last_activity_at?: string
+          original_lead_id?: string | null
           phone?: string
+          remaining_servings?: number
           restaurant_name?: string
         }
         Relationships: []
@@ -271,6 +289,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      client_status_type: "פעיל" | "לא פעיל" | "בהמתנה"
       lead_source_type: "אתר" | "הפניה" | "פייסבוק" | "אינסטגרם" | "אחר"
       lead_status_type:
         | "ליד חדש"
@@ -397,6 +416,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      client_status_type: ["פעיל", "לא פעיל", "בהמתנה"],
       lead_source_type: ["אתר", "הפניה", "פייסבוק", "אינסטגרם", "אחר"],
       lead_status_type: [
         "ליד חדש",
