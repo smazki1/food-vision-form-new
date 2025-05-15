@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AssignPackageDialog } from "./AssignPackageDialog";
+import { AssignPackageDialog } from "../client-details/assign-package";
 import { BadgePlus, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AddServingsForm } from "./AddServingsForm";
@@ -119,3 +119,4 @@ export function PackageSection({
     </>
   );
 }
+
