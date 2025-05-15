@@ -6,7 +6,8 @@ import {
   Users, 
   FileText, 
   BarChart4, 
-  UserPlus
+  UserPlus,
+  Bell
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +25,11 @@ const navItems = [
     title: "לקוחות",
     icon: Users,
     href: "/admin/clients",
+  },
+  {
+    title: "התראות",
+    icon: Bell,
+    href: "/admin/alerts",
   },
   {
     title: "הגשות",
