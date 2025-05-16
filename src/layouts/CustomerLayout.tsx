@@ -4,7 +4,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useClientAuth } from "@/hooks/useClientAuth";
-import { Home, Package, Image, User, LogOut } from "lucide-react";
+import { Home, Package, Image, User, LogOut, Gallery } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -88,6 +88,17 @@ export function CustomerLayout() {
             <Link to="/customer/submissions">
               <Image className="ml-2 h-4 w-4" />
               המנות שלי
+            </Link>
+          </Button>
+          
+          <Button
+            variant={isActive("/customer/gallery") ? "default" : "ghost"}
+            className="justify-start"
+            asChild
+          >
+            <Link to="/customer/gallery">
+              <Gallery className="ml-2 h-4 w-4" />
+              הגלריה שלי
             </Link>
           </Button>
 
