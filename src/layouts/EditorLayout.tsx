@@ -5,18 +5,18 @@ import EditorSidebar from "@/components/editor/EditorSidebar";
 import EditorMobileNav from "@/components/editor/EditorMobileNav";
 import { useEditorAuth } from "@/hooks/useEditorAuth";
 import { NotificationCenter } from "@/components/admin/notifications/NotificationCenter";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const EditorLayout: React.FC = () => {
-  const { isEditor, isLoading } = useEditorAuth();
-  const isMobile = useMobile();
+  const { isAuthenticated, isChecking: isLoading, handleLogout } = useEditorAuth();
+  const isMobile = useIsMobile();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">טוען...</div>;
   }
   
-  if (!isEditor) {
+  if (!isAuthenticated) {
     return null;
   }
   
@@ -24,15 +24,13 @@ const EditorLayout: React.FC = () => {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar for desktop */}
       <div className="hidden md:block border-r">
-        <EditorSidebar />
+        <EditorSidebar onLogout={handleLogout} />
       </div>
       
       {/* Mobile navigation */}
       {isMobile && (
         <EditorMobileNav 
-          isOpen={isSidebarOpen} 
-          onClose={() => setIsSidebarOpen(false)} 
-          onOpen={() => setIsSidebarOpen(true)}
+          onLogout={handleLogout}
         />
       )}
       
