@@ -1,6 +1,7 @@
 
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import App from './App.tsx';
 import './index.css';
 import './rtl.css';
@@ -21,5 +22,6 @@ if (!rootElement) throw new Error('Root element not found');
 createRoot(rootElement).render(
   <QueryClientProvider client={queryClient}>
     <App />
+    <Toaster position="top-center" richColors closeButton />
   </QueryClientProvider>
 );
