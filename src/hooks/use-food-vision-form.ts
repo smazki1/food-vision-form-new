@@ -7,6 +7,10 @@ import { useFoodVisionLocalStorage } from "./useFoodVisionLocalStorage";
 import { useEnsureAtLeastOneDish } from "./useFoodVisionItemsInit";
 import { useFoodVisionSubmit } from "./useFoodVisionSubmit";
 
+interface SubmitOptions {
+  clientId?: string;
+}
+
 export const useFoodVisionForm = () => {
   const [activeTab, setActiveTab] = useState("client");
   const { clientDetails, setClientDetails } = useClientDetails();
@@ -59,7 +63,7 @@ export const useFoodVisionForm = () => {
     saveToStorage,
   ]);
 
-  const handleSubmit = useCallback(async (options = {}) => {
+  const handleSubmit = useCallback(async (options: SubmitOptions = {}) => {
     const submitHandler = useFoodVisionSubmit({
       clientDetails,
       dishes,

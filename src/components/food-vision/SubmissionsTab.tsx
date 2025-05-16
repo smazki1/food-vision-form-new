@@ -1,36 +1,43 @@
 
 import React from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Submission } from "@/api/submissionApi";
 import { formatDate } from "@/utils/formatDate";
+import { Submission } from "@/api/submissionApi";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SubmissionsTabProps {
   submissions: Submission[];
-  loading: boolean;
+  loading?: boolean;
 }
 
-// Map submission status to appropriate badge color
+// Function to get appropriate badge variant based on status
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case "ממתינה לעיבוד":
-      return "secondary";
+      return "warning" as const;
     case "בעיבוד":
-      return "warning";
+      return "blue" as const;
     case "מוכנה להצגה":
-      return "info";
+      return "success" as const;
     case "הערות התקבלו":
-      return "default";
+      return "purple" as const;
     case "הושלמה ואושרה":
-      return "success";
+      return "secondary" as const;
     default:
-      return "outline";
+      return "default" as const;
   }
 };
 
-// Map item type to Hebrew display text
-const getItemTypeText = (type: string) => {
+// Function to get Hebrew item type name
+const getItemTypeDisplay = (type: string): string => {
   switch (type) {
     case "dish":
       return "מנה";
@@ -39,87 +46,62 @@ const getItemTypeText = (type: string) => {
     case "drink":
       return "משקה";
     default:
-      return "פריט";
+      return type;
   }
 };
 
-const SubmissionsTab: React.FC<SubmissionsTabProps> = ({ submissions, loading }) => {
+const SubmissionsTab: React.FC<SubmissionsTabProps> = ({ submissions, loading = false }) => {
   if (loading) {
     return (
       <div className="space-y-4">
+        <h3 className="text-lg font-medium mb-4">הגשות קודמות</h3>
         {Array.from({ length: 3 }).map((_, index) => (
-          <Card key={index} className="w-full">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-1/3" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-full mb-2" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
+          <div key={index} className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+          </div>
         ))}
       </div>
     );
   }
 
-  if (!submissions.length) {
+  if (!submissions || submissions.length === 0) {
     return (
-      <div className="text-center p-8">
-        <h3 className="text-lg font-medium">אין הגשות עדיין</h3>
-        <p className="text-muted-foreground mt-2">
-          ההגשות שלך יופיעו כאן לאחר שתגיש מנות, קוקטיילים או משקאות לעיבוד.
-        </p>
+      <div className="text-center py-10">
+        <p className="text-muted-foreground">אין לך הגשות קודמות</p>
+        <p className="text-muted-foreground mt-2">הגש מנות חדשות כדי לראות אותן כאן</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="bg-muted/20 p-4 rounded-md mb-6">
-        <p className="text-sm text-muted-foreground text-center">
-          רשימת ההגשות שלך - סטטוס הגשות וההיסטוריה של עיבודים קודמים
-        </p>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium mb-4">הגשות קודמות</h3>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>שם פריט</TableHead>
+              <TableHead>סוג</TableHead>
+              <TableHead>תאריך העלאה</TableHead>
+              <TableHead>סטטוס</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {submissions.map((submission) => (
+              <TableRow key={submission.submission_id}>
+                <TableCell className="font-medium">{submission.item_name_at_submission}</TableCell>
+                <TableCell>{getItemTypeDisplay(submission.item_type)}</TableCell>
+                <TableCell dir="ltr" className="text-right">{formatDate(submission.uploaded_at)}</TableCell>
+                <TableCell>
+                  <Badge variant={getStatusBadgeVariant(submission.submission_status)}>
+                    {submission.submission_status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
-
-      {submissions.map((submission) => (
-        <Card key={submission.submission_id} className="w-full">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-md">{submission.item_name_at_submission}</CardTitle>
-              <Badge variant={getStatusBadgeVariant(submission.submission_status)}>
-                {submission.submission_status}
-              </Badge>
-            </div>
-            <CardDescription>
-              סוג: {getItemTypeText(submission.item_type)} | 
-              הוגש בתאריך: {formatDate(submission.uploaded_at)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {submission.processed_image_urls && submission.processed_image_urls.length > 0 ? (
-              <div className="mt-2">
-                <p className="text-sm font-medium mb-2">תמונות זמינות:</p>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {submission.processed_image_urls.map((url, idx) => (
-                    <img
-                      key={idx}
-                      src={url}
-                      alt={`עיבוד ${idx + 1} של ${submission.item_name_at_submission}`}
-                      className="w-full h-24 object-cover rounded-md"
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {submission.submission_status === "ממתינה לעיבוד" || submission.submission_status === "בעיבוד" 
-                  ? "התמונות יהיו זמינות לאחר עיבוד."
-                  : "אין תמונות זמינות."}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 };
