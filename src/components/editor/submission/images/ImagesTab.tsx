@@ -1,9 +1,9 @@
 
 import React from "react";
 import { Separator } from "@/components/ui/separator";
-import OriginalImagesSection from "./images/OriginalImagesSection";
-import ProcessedImagesSection from "./images/ProcessedImagesSection";
-import ImageQualityGuide from "./images/ImageQualityGuide";
+import OriginalImagesSection from "./OriginalImagesSection";
+import ProcessedImagesSection from "./ProcessedImagesSection";
+import ImageQualityGuide from "./ImageQualityGuide";
 
 interface ImagesTabProps {
   submission: any;

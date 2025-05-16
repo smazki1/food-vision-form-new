@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
@@ -25,7 +26,7 @@ import {
 import SubmissionHeader from "@/components/editor/submission/SubmissionHeader";
 import LightboxDialog from "@/components/editor/submission/LightboxDialog";
 import SubmissionSidebar from "@/components/editor/submission/SubmissionSidebar";
-import ImagesTab from "@/components/editor/submission/ImagesTab";
+import ImagesTab from "@/components/editor/submission/images"; // Updated import path
 import ClientFeedbackTab from "@/components/editor/submission/ClientFeedbackTab";
 import InternalNotesTab from "@/components/editor/submission/InternalNotesTab";
 
