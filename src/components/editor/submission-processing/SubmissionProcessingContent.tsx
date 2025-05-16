@@ -8,6 +8,7 @@ import ImagesTabContent from "./tabs/ImagesTabContent";
 import ClientFeedbackTabContent from "./tabs/ClientFeedbackTabContent";
 import InternalNotesTabContent from "./tabs/InternalNotesTabContent";
 import { ProcessingInfoTab } from "./tabs/ProcessingInfoTab";
+import { useMaxEdits } from "./hooks/useMaxEdits";
 
 interface SubmissionProcessingContentProps {
   submission: Submission | null;
@@ -36,6 +37,9 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
   if (isLoading || !submission) {
     return <div className="p-6">טוען...</div>;
   }
+
+  // Get max edits allowed based on package
+  const { maxEdits, currentEditCount } = useMaxEdits(submission);
 
   return (
     <div className="p-6">
@@ -74,7 +78,7 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
         <TabsContent value="feedback">
           <ClientFeedbackTabContent 
             submission={submission}
-            maxEdits={3} // Default value
+            maxEdits={maxEdits}
             responseToClient={responseToClient}
             setResponseToClient={setResponseToClient}
           />
