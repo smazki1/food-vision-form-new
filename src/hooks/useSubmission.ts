@@ -1,6 +1,6 @@
 
 import { useSubmissionData } from "./submission/useSubmissionData";
-import { useSubmissionStatusUpdate } from "./submission/useSubmissionStatus";
+import { useSubmissionStatusTracking } from "./useSubmissionStatusTracking";
 import { useImageManagement } from "./submission/useImageManagement";
 import { useInternalNotes } from "./submission/useInternalNotes";
 import { useEditRequest } from "./submission/useEditRequest";
@@ -18,21 +18,22 @@ export function useSubmission(submissionId?: string) {
     error
   } = useSubmissionData(submissionId);
   
-  const { updateSubmissionStatus } = useSubmissionStatusUpdate(submission, setSubmission);
+  const { updateStatus } = useSubmissionStatusTracking();
   const { addProcessedImage, removeProcessedImage, setMainProcessedImage } = 
     useImageManagement(submission, setSubmission);
   const { addInternalNote } = useInternalNotes(submission, setSubmission);
   const { requestEdit, respondToClientFeedback } = useEditRequest(submission, setSubmission);
   const { getMaxEditsAllowed } = usePackageDetails();
   
-  const updateStatus = {
-    mutate: async ({ submissionId, status }: { submissionId: string, status: any }) => {
-      if (submission?.submission_id === submissionId) {
-        return await updateSubmissionStatus(status);
-      }
-      return false;
-    },
-    isLoading: false, // For API compatibility
+  // Legacy compatibility
+  const updateSubmissionStatus = async (status: any) => {
+    if (submission?.submission_id) {
+      return await updateStatus.mutateAsync({
+        submissionId: submission.submission_id,
+        status: status
+      });
+    }
+    return false;
   };
 
   return {
@@ -48,7 +49,7 @@ export function useSubmission(submissionId?: string) {
     requestEdit,
     respondToClientFeedback,
     getMaxEditsAllowed,
-    updateStatus, // For API compatibility
-    isUpdating: false, // For API compatibility
+    updateStatus,
+    isUpdating: updateStatus.isPending,
   };
 }

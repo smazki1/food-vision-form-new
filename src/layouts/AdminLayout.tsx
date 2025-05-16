@@ -4,6 +4,7 @@ import { useNavigate, Outlet } from "react-router-dom";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import { toast } from "sonner";
 import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
+import { NotificationCenter } from "@/components/admin/notifications/NotificationCenter";
 
 const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
@@ -79,6 +80,9 @@ const AdminLayout: React.FC = () => {
       </div>
       
       <div className="flex-1 overflow-auto">
+        <div className="flex justify-end items-center border-b px-6 py-2">
+          <NotificationCenter />
+        </div>
         <div className="p-6">
           <Outlet />
         </div>
