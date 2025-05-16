@@ -15,6 +15,8 @@ export type Client = {
   last_activity_at: string;
   internal_notes: string | null;
   user_auth_id: string | null;
+  email_notifications?: boolean;
+  app_notifications?: boolean;
 };
 
 export type ClientStatus = Database["public"]["Enums"]["client_status_type"];

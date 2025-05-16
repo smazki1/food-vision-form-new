@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
@@ -246,7 +245,7 @@ export function SubmissionDetailsPage() {
           )}
           
           {canDownload && (
-            <Button variant="success" onClick={handleDownloadImages}>
+            <Button variant="secondary" onClick={handleDownloadImages}>
               <Download className="ml-2 h-4 w-4" />
               הורד תמונות
             </Button>

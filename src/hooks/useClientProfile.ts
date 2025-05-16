@@ -67,7 +67,7 @@ export function useClientProfile() {
         ...clientProfile, 
         email_notifications: emailNotifications,
         app_notifications: appNotifications
-      });
+      } as Client);
       
       return true;
     } catch (err) {

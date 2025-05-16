@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Submission } from "@/api/submissionApi";
+import { Submission, SubmissionStatus } from "@/api/submissionApi";
 
 export function useSubmission(submissionId?: string) {
   const [submission, setSubmission] = useState<Submission | null>(null);
@@ -39,7 +39,7 @@ export function useSubmission(submissionId?: string) {
     fetchSubmission();
   }, [submissionId]);
 
-  const updateSubmissionStatus = async (status: string) => {
+  const updateSubmissionStatus = async (status: SubmissionStatus) => {
     if (!submissionId) return false;
     
     try {
