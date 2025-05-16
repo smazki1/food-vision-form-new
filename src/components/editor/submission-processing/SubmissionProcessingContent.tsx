@@ -1,118 +1,65 @@
 
 import React, { useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSubmission } from "@/hooks/useSubmission";
 import { Submission } from "@/api/submissionApi";
-import { ImagesTabContent, ClientFeedbackTabContent, InternalNotesTabContent } from "./tabs";
-import ActionButtons from "./ActionButtons";
-import { useMaxEdits } from "./hooks/useMaxEdits";
+import { ActionButtons } from "./ActionButtons";
+import { ImagesTabContent } from "./tabs/ImagesTabContent";
+import { ClientFeedbackTabContent } from "./tabs/ClientFeedbackTabContent";
+import { InternalNotesTabContent } from "./tabs/InternalNotesTabContent";
+import { ProcessingInfoTab } from "./tabs/ProcessingInfoTab";
 
 interface SubmissionProcessingContentProps {
-  submission: Submission;
-  handleSelectMainImage: (imageUrl: string) => Promise<boolean>;
-  handleRemoveProcessedImage: (imageUrl: string) => Promise<boolean>;
-  addProcessedImage: (url: string) => Promise<boolean>;
-  addInternalNote: (note: string) => Promise<boolean>;
-  respondToClientFeedback: (response: string, processedImages: string[]) => Promise<boolean>;
-  setLightboxImage: (imageUrl: string | null) => void;
+  submission: Submission | null;
+  isLoading: boolean;
 }
 
 const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = ({
   submission,
-  handleSelectMainImage,
-  handleRemoveProcessedImage,
-  addProcessedImage,
-  addInternalNote,
-  respondToClientFeedback,
-  setLightboxImage
+  isLoading,
 }) => {
-  const [responseToClient, setResponseToClient] = useState("");
-  const maxEdits = useMaxEdits(submission, async () => 3); // Assume default max edits is 3
+  const [activeTab, setActiveTab] = useState("images");
   
-  const handleSaveProgress = () => {
-    toast.success("התקדמות נשמרה בהצלחה");
-  };
+  if (isLoading || !submission) {
+    return <div className="p-6">טוען...</div>;
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-2xl">
-              {submission.item_name_at_submission}
-            </CardTitle>
-            <CardDescription>
-              מסעדה: {submission.clients?.restaurant_name}
-            </CardDescription>
-          </div>
-          <Badge variant={
-            submission.submission_status === "ממתינה לעיבוד" ? "warning" :
-            submission.submission_status === "בעיבוד" ? "blue" :
-            submission.submission_status === "מוכנה להצגה" ? "success" :
-            submission.submission_status === "הערות התקבלו" ? "purple" :
-            submission.submission_status === "הושלמה ואושרה" ? "secondary" :
-            "default"
-          }>
-            {submission.submission_status}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="images" className="mb-6">
-          <TabsList className="mb-2">
-            <TabsTrigger value="images">תמונות</TabsTrigger>
-            <TabsTrigger value="client-feedback">משוב הלקוח</TabsTrigger>
-            <TabsTrigger value="internal-notes">הערות פנימיות</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="images">
-            <ImagesTabContent 
-              submission={submission}
-              handleSelectMainImage={handleSelectMainImage}
-              handleRemoveProcessedImage={handleRemoveProcessedImage}
-              addProcessedImage={addProcessedImage}
-              setLightboxImage={setLightboxImage}
-            />
-          </TabsContent>
-          
-          <TabsContent value="client-feedback">
-            <ClientFeedbackTabContent 
-              submission={submission}
-              maxEdits={maxEdits}
-              responseToClient={responseToClient}
-              setResponseToClient={setResponseToClient}
-            />
-          </TabsContent>
-          
-          <TabsContent value="internal-notes">
-            <InternalNotesTabContent 
-              internalTeamNotes={submission.internal_team_notes}
-              onAddNote={addInternalNote}
-            />
-          </TabsContent>
-        </Tabs>
+    <div className="p-6">
+      <div className="mb-6">
+        <h2 className="text-3xl font-bold mb-1">{submission.item_name_at_submission}</h2>
+        <p className="text-muted-foreground">
+          {submission.clients?.restaurant_name} | {submission.submission_status}
+        </p>
+      </div>
+      
+      <ActionButtons submission={submission} />
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="mb-4">
+          <TabsTrigger value="images">תמונות</TabsTrigger>
+          <TabsTrigger value="feedback">משוב לקוח</TabsTrigger>
+          <TabsTrigger value="notes">הערות פנימיות</TabsTrigger>
+          <TabsTrigger value="info">מידע למעבד</TabsTrigger>
+        </TabsList>
         
-        <ActionButtons 
-          submission={submission}
-          responseToClient={responseToClient}
-          respondToClientFeedback={respondToClientFeedback}
-          onSaveProgress={handleSaveProgress}
-        />
-      </CardContent>
-    </Card>
+        <TabsContent value="images">
+          <ImagesTabContent submission={submission} />
+        </TabsContent>
+        
+        <TabsContent value="feedback">
+          <ClientFeedbackTabContent submission={submission} />
+        </TabsContent>
+        
+        <TabsContent value="notes">
+          <InternalNotesTabContent submission={submission} />
+        </TabsContent>
+        
+        <TabsContent value="info">
+          <ProcessingInfoTab submission={submission} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

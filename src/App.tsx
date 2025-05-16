@@ -17,6 +17,7 @@ import ClientsList from './pages/admin/ClientsList';
 import ClientDetails from './pages/admin/ClientDetails';
 import AdminLogin from './pages/AdminLogin';
 import SubmissionsPage from './pages/admin/SubmissionsPage';
+import SubmissionsQueuePage from './pages/admin/SubmissionsQueuePage';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import SubmissionsAnalytics from './pages/admin/SubmissionsAnalytics';
 import UserManagementPage from './pages/admin/UserManagementPage';
@@ -50,6 +51,7 @@ function App() {
           <Route path="clients" element={<ClientsList />} />
           <Route path="clients/:clientId" element={<ClientDetails />} />
           <Route path="submissions" element={<SubmissionsPage />} />
+          <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
           <Route path="alerts" element={<AlertsDashboard />} />
           <Route path="analytics" element={<SubmissionsAnalytics />} />
           <Route path="users" element={<UserManagementPage />} />
