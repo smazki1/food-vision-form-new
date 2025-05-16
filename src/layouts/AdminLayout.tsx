@@ -18,6 +18,8 @@ const AdminLayout: React.FC = () => {
       if (!adminAuth) {
         console.log("Not authenticated as admin, redirecting to login");
         navigate("/admin-login");
+      } else {
+        console.log("Admin authentication confirmed");
       }
     };
     

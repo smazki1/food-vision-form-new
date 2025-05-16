@@ -23,6 +23,7 @@ const AdminLogin: React.FC = () => {
   useEffect(() => {
     const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
     if (isAuthenticated && location.pathname === "/admin-login") {
+      console.log("Already authenticated, redirecting to dashboard");
       navigate("/admin/dashboard");
     }
   }, [navigate, location]);
@@ -30,6 +31,10 @@ const AdminLogin: React.FC = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Clear any previous authentication to ensure a clean slate
+    localStorage.removeItem("adminAuthenticated");
+    console.log("Attempting admin login with:", { username });
 
     // Simple authentication check
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
