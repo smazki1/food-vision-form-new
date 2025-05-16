@@ -97,7 +97,12 @@ export function ClientsOverview({ statusData, packageData, loading }: ClientsOve
             <div className="flex flex-col">
               <h4 className="text-sm font-medium text-center mb-2">לפי סטטוס</h4>
               <div className="h-48">
-                <ChartContainer className="h-48 w-full">
+                <ChartContainer 
+                  className="h-48 w-full" 
+                  config={{
+                    status: { theme: { light: "#94a3b8", dark: "#94a3b8" } },
+                  }}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -128,7 +133,12 @@ export function ClientsOverview({ statusData, packageData, loading }: ClientsOve
             <div className="flex flex-col">
               <h4 className="text-sm font-medium text-center mb-2">לפי חבילה</h4>
               <div className="h-48">
-                <ChartContainer className="h-48 w-full">
+                <ChartContainer 
+                  className="h-48 w-full"
+                  config={{
+                    package: { theme: { light: "#3b82f6", dark: "#3b82f6" } },
+                  }}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie

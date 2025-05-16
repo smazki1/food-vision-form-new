@@ -136,7 +136,6 @@ export function LeadsFunnel({ data, loading }: LeadsFunnelProps) {
                 <Tooltip content={customTooltip} />
                 <Bar
                   dataKey="count"
-                  nameKey="status"
                   fill="var(--color-new)"
                   radius={[4, 4, 4, 4]}
                   fillOpacity={0.9}

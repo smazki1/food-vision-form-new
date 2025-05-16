@@ -113,7 +113,10 @@ export function SubmissionQueue({
                         </div>
                         <span className="text-muted-foreground">{item.count} מנות</span>
                       </div>
-                      <Progress value={percentage} className="h-2" indicatorClassName={getStatusColor(item.status)} />
+                      <Progress 
+                        value={percentage} 
+                        className={`h-2 bg-gray-100`} 
+                      />
                     </div>
                   );
               })}

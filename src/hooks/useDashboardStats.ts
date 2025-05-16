@@ -81,7 +81,6 @@ export function useDashboardStats() {
         convertedLeadsMonthResult,
         leadsByStatusResult,
         leadsBySourceResult,
-        clientsByPackageResult,
         clientsByStatusResult,
         inactiveClientsResult,
         submissionsByStatusResult,
@@ -159,26 +158,6 @@ export function useDashboardStats() {
             return Object.entries(counts).map(([source, count]) => ({ source, count }));
           }),
           
-        // Clients by package
-        supabase.from("clients")
-          .select("clients.current_package_id, service_packages.package_name")
-          .join("service_packages", "clients.current_package_id", "service_packages.package_id")
-          .then(({ data, error }) => {
-            if (error) throw error;
-            const counts: Record<string, {count: number, name: string}> = {};
-            data.forEach(client => {
-              if (client.current_package_id) {
-                if (!counts[client.current_package_id]) {
-                  counts[client.current_package_id] = { count: 0, name: client.package_name || "חבילה לא ידועה" };
-                }
-                counts[client.current_package_id].count++;
-              }
-            });
-            return Object.entries(counts).map(([package_id, { count, name }]) => ({ 
-              package_name: name, count 
-            }));
-          }),
-          
         // Clients by status
         supabase.from("clients")
           .select("client_status")
@@ -229,6 +208,35 @@ export function useDashboardStats() {
           .gt("remaining_servings", 0)
       ]);
       
+      // For the clients by package, we need to fetch separately due to the join
+      const { data: clientsByPackageData } = await supabase
+        .from('clients')
+        .select('current_package_id, service_packages!inner(package_name)')
+        .not('current_package_id', 'is', null);
+
+      let clientsByPackage: { package_name: string; count: number }[] = [];
+      
+      if (clientsByPackageData) {
+        // Process the data to count clients per package
+        const packageCounts: Record<string, { name: string, count: number }> = {};
+        
+        clientsByPackageData.forEach((client: any) => {
+          const packageId = client.current_package_id;
+          const packageName = client.service_packages.package_name;
+          
+          if (!packageCounts[packageId]) {
+            packageCounts[packageId] = { name: packageName, count: 0 };
+          }
+          
+          packageCounts[packageId].count += 1;
+        });
+        
+        clientsByPackage = Object.entries(packageCounts).map(([id, data]) => ({
+          package_name: data.name,
+          count: data.count
+        }));
+      }
+      
       // Calculate conversion rate
       const newLeadsMonth = newLeadsMonthResult.count || 0;
       const convertedLeadsMonth = convertedLeadsMonthResult.count || 0;
@@ -274,7 +282,7 @@ export function useDashboardStats() {
         
         leadsByStatus: leadsByStatusResult,
         leadsBySource: leadsBySourceResult,
-        clientsByPackage: clientsByPackageResult,
+        clientsByPackage,
         clientsByStatus: clientsByStatusResult,
         inactiveClients: inactiveClientsResult.count || 0,
         

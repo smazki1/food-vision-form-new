@@ -226,7 +226,12 @@ const SubmissionsAnalytics: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="h-64 mt-4">
-                  <ChartContainer className="h-64 w-full">
+                  <ChartContainer 
+                    className="h-64 w-full"
+                    config={{
+                      pie: { theme: { light: "#0088FE", dark: "#0088FE" } },
+                    }}
+                  >
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -324,7 +329,12 @@ const SubmissionsAnalytics: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="h-80 mt-4">
-                <ChartContainer className="h-80 w-full">
+                <ChartContainer 
+                  className="h-80 w-full"
+                  config={{
+                    satisfaction: { theme: { light: "#0088FE", dark: "#0088FE" } },
+                  }}
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie

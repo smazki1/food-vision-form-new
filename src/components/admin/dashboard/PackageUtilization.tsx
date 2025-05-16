@@ -75,8 +75,7 @@ export function PackageUtilization({ data, loading }: PackageUtilizationProps) {
                     <div className="flex items-center">
                       <Progress 
                         value={getProgressValue(pkg.avg_remaining)} 
-                        className="h-2" 
-                        indicatorClassName="bg-blue-500"
+                        className="h-2 bg-blue-100" 
                       />
                     </div>
                   </TableCell>
