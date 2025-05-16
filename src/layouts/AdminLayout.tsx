@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import AdminNavbar from "@/components/admin/AdminNavbar";
 import { toast } from "sonner";
 import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 import { NotificationCenter } from "@/components/admin/notifications/NotificationCenter";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminMobileNav from "@/components/admin/AdminMobileNav";
 
 const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
@@ -75,15 +76,22 @@ const AdminLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-background">
+      {/* Desktop sidebar */}
       <div className="w-64 hidden md:block shadow-md">
-        <AdminNavbar onLogout={handleLogout} />
+        <AdminSidebar onLogout={handleLogout} />
       </div>
       
-      <div className="flex-1 overflow-auto">
-        <div className="flex justify-end items-center border-b px-6 py-2">
+      {/* Mobile navigation */}
+      <AdminMobileNav onLogout={handleLogout} />
+      
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Desktop header */}
+        <div className="hidden md:flex justify-end items-center border-b px-6 py-2">
           <NotificationCenter />
         </div>
-        <div className="p-6">
+        
+        {/* Main content */}
+        <div className="flex-1 overflow-auto p-4 md:p-6">
           <Outlet />
         </div>
       </div>
