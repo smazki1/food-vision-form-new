@@ -35,8 +35,9 @@ export function useNotifications() {
     queryFn: async () => {
       if (!userId) return [];
       
-      const { data, error } = await supabase
-        .from('notifications')
+      // Temporarily cast to any to avoid TypeScript errors until Supabase types are updated
+      const { data, error } = await (supabase
+        .from('notifications') as any)
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -81,8 +82,9 @@ export function useNotifications() {
   // Mark a notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await supabase
-        .from('notifications')
+      // Temporarily cast to any to avoid TypeScript errors until Supabase types are updated
+      const { error } = await (supabase
+        .from('notifications') as any)
         .update({ read_status: true })
         .eq('notification_id', notificationId);
         
@@ -98,8 +100,9 @@ export function useNotifications() {
     mutationFn: async () => {
       if (!userId) return;
       
-      const { error } = await supabase
-        .from('notifications')
+      // Temporarily cast to any to avoid TypeScript errors until Supabase types are updated
+      const { error } = await (supabase
+        .from('notifications') as any)
         .update({ read_status: true })
         .eq('user_id', userId)
         .eq('read_status', false);

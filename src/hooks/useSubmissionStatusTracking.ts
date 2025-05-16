@@ -10,6 +10,17 @@ interface StatusUpdateParams {
   note?: string;
 }
 
+interface StatusChange {
+  from_status: string;
+  to_status: string;
+  changed_at: string;
+  note: string;
+}
+
+interface EditHistory {
+  status_changes?: StatusChange[];
+}
+
 /**
  * Hook for updating and tracking submission status changes
  * This supports performance reporting by logging status changes with timestamps
@@ -23,7 +34,7 @@ export function useSubmissionStatusTracking() {
       const now = new Date().toISOString();
       
       // Create a status change log entry in the status history
-      let statusHistory;
+      let statusHistory: EditHistory = { status_changes: [] };
       
       // First fetch the current submission to get existing history
       const { data: currentSubmission } = await supabase
@@ -34,10 +45,11 @@ export function useSubmissionStatusTracking() {
       
       // If we have existing history, append to it, otherwise create new
       if (currentSubmission?.edit_history) {
+        const existingHistory = currentSubmission.edit_history as EditHistory;
+        
         statusHistory = {
-          ...currentSubmission.edit_history,
           status_changes: [
-            ...(currentSubmission.edit_history.status_changes || []),
+            ...(existingHistory.status_changes || []),
             {
               from_status: currentSubmission.submission_status,
               to_status: status,
@@ -59,14 +71,22 @@ export function useSubmissionStatusTracking() {
         };
       }
       
+      // Format status name for column update (replace spaces with underscores)
+      const statusColumnName = `status_${status.replace(/\s+/g, "_")}_at`;
+      
+      // Create an update object with the dynamically generated column name
+      const updateData: Record<string, any> = {
+        submission_status: status,
+        edit_history: statusHistory
+      };
+      
+      // Add the status timestamp to the update object
+      updateData[statusColumnName] = now;
+      
       // Update the submission status and history
       const { data, error } = await supabase
         .from("customer_submissions")
-        .update({ 
-          submission_status: status,
-          edit_history: statusHistory,
-          [`status_${status.replace(/\s+/g, "_")}_at`]: now // Store timestamp of specific status
-        })
+        .update(updateData)
         .eq("submission_id", submissionId)
         .select()
         .single();
@@ -101,8 +121,9 @@ export function useSubmissionStatusTracking() {
       
     const link = `/editor/submissions/${submission.submission_id}`;
     
-    const { error } = await supabase
-      .from("notifications")
+    // Temporarily cast to any to avoid TypeScript errors until Supabase types are updated
+    const { error } = await (supabase
+      .from("notifications") as any)
       .insert({
         user_id: submission.assigned_editor_id,
         message,

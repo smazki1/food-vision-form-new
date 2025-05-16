@@ -154,6 +154,11 @@ export type Database = {
           original_item_id: string
           priority: string | null
           processed_image_urls: string[] | null
+          status_בעיבוד_at: string | null
+          status_הושלמה_ואושרה_at: string | null
+          status_הערות_התקבלו_at: string | null
+          status_מוכנה_להצגה_at: string | null
+          status_ממתינה_לעיבוד_at: string | null
           submission_id: string
           submission_status: string
           target_completion_date: string | null
@@ -173,6 +178,11 @@ export type Database = {
           original_item_id: string
           priority?: string | null
           processed_image_urls?: string[] | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
           submission_id?: string
           submission_status?: string
           target_completion_date?: string | null
@@ -192,6 +202,11 @@ export type Database = {
           original_item_id?: string
           priority?: string | null
           processed_image_urls?: string[] | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
           submission_id?: string
           submission_status?: string
           target_completion_date?: string | null
@@ -381,6 +396,39 @@ export type Database = {
             referencedColumns: ["submission_id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          link: string | null
+          message: string
+          notification_id: string
+          read_status: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          link?: string | null
+          message: string
+          notification_id?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          link?: string | null
+          message?: string
+          notification_id?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       service_packages: {
         Row: {
