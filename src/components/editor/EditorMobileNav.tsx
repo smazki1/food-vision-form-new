@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { editorNavItems } from "./EditorNavItems";
+import editorNavItems from "./EditorNavItems";
 
 interface EditorMobileNavProps {
   onLogout: () => void;

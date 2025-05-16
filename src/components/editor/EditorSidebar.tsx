@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { editorNavItems } from "./EditorNavItems";
+import editorNavItems from "./EditorNavItems";
 
 interface EditorSidebarProps {
   onLogout: () => void;
