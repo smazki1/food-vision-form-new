@@ -1,6 +1,6 @@
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,15 @@ const AdminLogin: React.FC = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if already authenticated and redirect if needed
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+    if (isAuthenticated && location.pathname === "/admin-login") {
+      navigate("/admin/dashboard");
+    }
+  }, [navigate, location]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,11 +33,13 @@ const AdminLogin: React.FC = () => {
 
     // Simple authentication check
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      console.log("Admin credentials match, setting authentication");
       // Store admin session in localStorage
       localStorage.setItem("adminAuthenticated", "true");
       toast.success("התחברת בהצלחה");
       navigate("/admin/dashboard");
     } else {
+      console.log("Login failed. Username or password incorrect");
       toast.error("שם משתמש או סיסמה שגויים");
     }
     

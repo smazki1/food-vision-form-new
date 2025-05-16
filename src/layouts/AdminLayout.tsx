@@ -1,18 +1,38 @@
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   // Check if user is authenticated as admin
   useEffect(() => {
-    const isAdmin = localStorage.getItem("adminAuthenticated") === "true";
-    if (!isAdmin) {
-      navigate("/admin");
-    }
+    const checkAuth = () => {
+      const adminAuth = localStorage.getItem("adminAuthenticated") === "true";
+      setIsAuthenticated(adminAuth);
+      setIsChecking(false);
+      
+      if (!adminAuth) {
+        console.log("Not authenticated as admin, redirecting to login");
+        navigate("/admin-login");
+      }
+    };
+    
+    checkAuth();
   }, [navigate]);
+
+  // Show loading state while checking auth
+  if (isChecking) {
+    return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
+  }
+
+  // Only render the admin layout if authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="flex h-screen bg-background">
