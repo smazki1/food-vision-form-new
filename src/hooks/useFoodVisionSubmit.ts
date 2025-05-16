@@ -1,10 +1,8 @@
-
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { triggerMakeWebhook } from "@/utils/webhook-trigger";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
-import { createBatchSubmissions } from "@/api/submissionApi";
-import { getClientRemainingServings } from "@/api/submissionApi";
+import { createBatchSubmissions, getClientRemainingServings } from "@/api/submissionApi";
 
 export const useFoodVisionSubmit = ({
   clientDetails,
