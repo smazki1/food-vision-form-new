@@ -10,7 +10,7 @@ import ClientsTable from "@/components/admin/clients/ClientsTable";
 
 const ClientsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const { data: clients = [], isLoading } = useClients({
     searchTerm,
     statusFilter
@@ -38,7 +38,7 @@ const ClientsList: React.FC = () => {
               <SelectValue placeholder="סטטוס" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">הכל</SelectItem>
+              <SelectItem value="all">הכל</SelectItem>
               {CLIENT_STATUS_OPTIONS.map(status => (
                 <SelectItem key={status} value={status}>{status}</SelectItem>
               ))}

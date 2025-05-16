@@ -27,7 +27,7 @@ export const PaymentStatusField: React.FC = () => {
       render={({ field }) => (
         <FormItem>
           <FormLabel>סטטוס תשלום</FormLabel>
-          <Select onValueChange={field.onChange} value={field.value}>
+          <Select onValueChange={field.onChange} value={field.value || "pending"}>
             <FormControl>
               <SelectTrigger>
                 <SelectValue placeholder="בחר סטטוס תשלום" />
