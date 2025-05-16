@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
@@ -82,7 +81,7 @@ const SubmissionProcessingPage: React.FC = () => {
   
   const handleStatusChange = (status: string) => {
     updateStatus.mutate({ 
-      submissionId: submission.submission_id,
+      submissionId: submission?.submission_id || "",
       status: status as any
     });
   };
@@ -98,7 +97,7 @@ const SubmissionProcessingPage: React.FC = () => {
   };
   
   const handleSelectMainImage = async (imageUrl: string) => {
-    if (imageUrl === submission.main_processed_image_url) return;
+    if (imageUrl === submission?.main_processed_image_url) return;
     
     try {
       await setMainProcessedImage(imageUrl);
@@ -120,7 +119,7 @@ const SubmissionProcessingPage: React.FC = () => {
   };
   
   const handleMarkAsReady = async () => {
-    if (!submission.processed_image_urls?.length || !submission.main_processed_image_url) {
+    if (!submission?.processed_image_urls?.length || !submission.main_processed_image_url) {
       toast.error("יש להעלות לפחות תמונה מעובדת אחת ולבחור תמונה ראשית");
       return;
     }
