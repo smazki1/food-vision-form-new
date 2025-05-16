@@ -46,12 +46,14 @@ export type Database = {
       }
       clients: {
         Row: {
+          app_notifications: boolean | null
           client_id: string
           client_status: Database["public"]["Enums"]["client_status_type"]
           contact_name: string
           created_at: string
           current_package_id: string | null
           email: string
+          email_notifications: boolean | null
           internal_notes: string | null
           last_activity_at: string
           original_lead_id: string | null
@@ -61,12 +63,14 @@ export type Database = {
           user_auth_id: string | null
         }
         Insert: {
+          app_notifications?: boolean | null
           client_id?: string
           client_status?: Database["public"]["Enums"]["client_status_type"]
           contact_name: string
           created_at?: string
           current_package_id?: string | null
           email: string
+          email_notifications?: boolean | null
           internal_notes?: string | null
           last_activity_at?: string
           original_lead_id?: string | null
@@ -76,12 +80,14 @@ export type Database = {
           user_auth_id?: string | null
         }
         Update: {
+          app_notifications?: boolean | null
           client_id?: string
           client_status?: Database["public"]["Enums"]["client_status_type"]
           contact_name?: string
           created_at?: string
           current_package_id?: string | null
           email?: string
+          email_notifications?: boolean | null
           internal_notes?: string | null
           last_activity_at?: string
           original_lead_id?: string | null
@@ -138,6 +144,7 @@ export type Database = {
           assigned_editor_id: string | null
           assigned_package_id_at_submission: string | null
           client_id: string
+          edit_count: number | null
           edit_history: Json | null
           final_approval_timestamp: string | null
           internal_team_notes: string | null
@@ -154,6 +161,7 @@ export type Database = {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
           client_id: string
+          edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
           internal_team_notes?: string | null
@@ -170,6 +178,7 @@ export type Database = {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
           client_id?: string
+          edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
           internal_team_notes?: string | null
@@ -328,6 +337,44 @@ export type Database = {
           restaurant_name?: string
         }
         Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          message_id: string
+          read_status: boolean
+          sender_id: string
+          sender_type: string
+          submission_id: string
+          timestamp: string
+        }
+        Insert: {
+          content: string
+          message_id?: string
+          read_status?: boolean
+          sender_id: string
+          sender_type: string
+          submission_id: string
+          timestamp?: string
+        }
+        Update: {
+          content?: string
+          message_id?: string
+          read_status?: boolean
+          sender_id?: string
+          sender_type?: string
+          submission_id?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "customer_submissions"
+            referencedColumns: ["submission_id"]
+          },
+        ]
       }
       service_packages: {
         Row: {

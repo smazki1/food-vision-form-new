@@ -1,67 +1,69 @@
 
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import NotFound from "./pages/NotFound";
-import FoodVisionForm from "./pages/FoodVisionForm";
-import PromoLandingPage from "./pages/PromoLandingPage";
-import React from 'react';
+import { useState } from 'react';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import './App.css';
+import './rtl.css';
 
-// Admin pages
-import AdminLogin from "./pages/AdminLogin";
-import AdminLayout from "./layouts/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
-import ClientsList from "./pages/admin/ClientsList";
-import ClientDetails from "./pages/admin/ClientDetails";
-import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
-import SubmissionsPage from "./pages/admin/SubmissionsPage"; // Added new import
-import LeadsManagement from "./pages/admin/LeadsManagement";
-import AlertsDashboard from "./pages/admin/AlertsDashboard";
-import PackagesManagementPage from "./pages/admin/PackagesManagementPage";
+// Layouts
+import AdminLayout from './layouts/AdminLayout';
+import { CustomerLayout } from './layouts/CustomerLayout';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-});
+// Admin Pages
+import Dashboard from './pages/admin/Dashboard';
+import LeadsManagement from './pages/admin/LeadsManagement';
+import PackagesManagementPage from './pages/admin/PackagesManagementPage';
+import ClientsList from './pages/admin/ClientsList';
+import ClientDetails from './pages/admin/ClientDetails';
+import AdminLogin from './pages/AdminLogin';
+import SubmissionsPage from './pages/admin/SubmissionsPage';
+import AlertsDashboard from './pages/admin/AlertsDashboard';
+import SubmissionsAnalytics from './pages/admin/SubmissionsAnalytics';
 
-const App: React.FC = () => {
+// Customer Pages
+import CustomerDashboardPage from './pages/customer/CustomerDashboardPage';
+import CustomerProfilePage from './pages/customer/CustomerProfilePage';
+import CustomerSubmissionsPage from './pages/customer/CustomerSubmissionsPage';
+import SubmissionDetailsPage from './pages/customer/SubmissionDetailsPage';
+
+// Public Pages
+import FoodVisionForm from './pages/FoodVisionForm';
+import NotFound from './pages/NotFound';
+import PromoLandingPage from './pages/PromoLandingPage';
+
+function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<FoodVisionForm />} />
-              <Route path="/promo" element={<PromoLandingPage />} />
-              
-              {/* Admin routes */}
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="leads" element={<LeadsManagement />} />
-                <Route path="clients" element={<ClientsList />} />
-                <Route path="clients/:clientId" element={<ClientDetails />} />
-                <Route path="alerts" element={<AlertsDashboard />} />
-                <Route path="submissions" element={<SubmissionsPage />} /> {/* Updated to use new component */}
-                <Route path="analytics" element={<SubmissionsAnalytics />} />
-                <Route path="packages" element={<PackagesManagementPage />} />
-              </Route>
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        {/* Admin Routes */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="leads" element={<LeadsManagement />} />
+          <Route path="packages" element={<PackagesManagementPage />} />
+          <Route path="clients" element={<ClientsList />} />
+          <Route path="clients/:clientId" element={<ClientDetails />} />
+          <Route path="submissions" element={<SubmissionsPage />} />
+          <Route path="alerts" element={<AlertsDashboard />} />
+          <Route path="analytics" element={<SubmissionsAnalytics />} />
+        </Route>
+
+        {/* Customer Routes */}
+        <Route path="/customer" element={<CustomerLayout />}>
+          <Route index element={<CustomerDashboardPage />} />
+          <Route path="dashboard" element={<CustomerDashboardPage />} />
+          <Route path="profile" element={<CustomerProfilePage />} />
+          <Route path="submissions" element={<CustomerSubmissionsPage />} />
+          <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+        </Route>
+
+        {/* Public Routes */}
+        <Route path="/food-vision-form" element={<FoodVisionForm />} />
+        <Route path="/" element={<PromoLandingPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
-};
+}
 
 export default App;

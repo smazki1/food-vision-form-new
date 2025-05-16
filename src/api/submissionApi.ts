@@ -22,6 +22,7 @@ export type Submission = {
   processed_image_urls: string[] | null;
   main_processed_image_url: string | null;
   edit_history: any | null;
+  edit_count: number | null;
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
