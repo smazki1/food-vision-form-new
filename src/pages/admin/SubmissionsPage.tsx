@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useAllSubmissions } from "@/hooks/useAllSubmissions";
-import SubmissionsTable from "@/components/admin/submissions/SubmissionsTable";
+import { SubmissionsTable } from "@/components/admin/submissions/SubmissionsTable";
 import { Submission } from "@/api/submissionApi";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";

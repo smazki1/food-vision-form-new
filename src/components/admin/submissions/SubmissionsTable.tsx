@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 interface SubmissionsTableProps {
   submissions: Submission[];
   loading?: boolean;
+  onViewDetails?: (submission: Submission) => void;
 }
 
 const getStatusBadgeVariant = (status: string) => {
@@ -36,7 +37,11 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({ submissions, loading = false }) => {
+export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({ 
+  submissions, 
+  loading = false,
+  onViewDetails 
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   

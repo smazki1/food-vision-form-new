@@ -25,6 +25,7 @@ export type Submission = {
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
+  clients?: { restaurant_name: string }; // Adding this property to match the actual data structure
 };
 
 // Get all submissions for a client
