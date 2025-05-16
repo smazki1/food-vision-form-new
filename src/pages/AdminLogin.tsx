@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 
 // Simple admin authentication for demonstration purposes
 // In a production environment, use Supabase auth with proper role management
@@ -20,15 +22,30 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { role, isLoading: isRoleLoading } = useCurrentUserRole();
 
   // Check if already authenticated and redirect if needed
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
-    if (isAuthenticated && location.pathname === "/admin-login") {
-      console.log("Already authenticated, redirecting to dashboard");
-      navigate("/admin/dashboard");
-    }
-  }, [navigate, location]);
+    const checkAuth = async () => {
+      const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
+      if (isAuthenticated && location.pathname === "/admin-login") {
+        console.log("Already authenticated, checking role");
+        
+        // Wait for role to load
+        if (isRoleLoading) return;
+        
+        if (role === 'editor') {
+          console.log("User has editor role, redirecting to editor dashboard");
+          navigate("/editor/dashboard");
+        } else {
+          console.log("User has admin role, redirecting to admin dashboard");
+          navigate("/admin/dashboard");
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [navigate, location, role, isRoleLoading]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,11 +65,48 @@ const AdminLogin: React.FC = () => {
       toast.success("התחברת בהצלחה");
       navigate("/admin/dashboard");
     } else {
-      console.log("Login failed. Username or password incorrect");
-      toast.error("שם משתמש או סיסמה שגויים");
+      // Try Supabase auth
+      authWithSupabase();
     }
-    
-    setIsLoading(false);
+  };
+  
+  const authWithSupabase = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password
+      });
+      
+      if (error) throw error;
+      
+      if (data.session) {
+        // Store admin session in localStorage
+        localStorage.setItem("adminAuthenticated", "true");
+        localStorage.setItem("adminAuthTime", Date.now().toString());
+        
+        // Get user role
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        toast.success("התחברת בהצלחה");
+        
+        if (roleData?.role === 'editor') {
+          navigate("/editor/dashboard");
+        } else {
+          navigate("/admin/dashboard");
+        }
+      } else {
+        toast.error("שם משתמש או סיסמה שגויים");
+      }
+    } catch (error) {
+      console.log("Login failed:", error);
+      toast.error("שם משתמש או סיסמה שגויים");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const toggleShowPassword = () => {
@@ -69,7 +123,7 @@ const AdminLogin: React.FC = () => {
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">שם משתמש</Label>
+              <Label htmlFor="username">שם משתמש / אימייל</Label>
               <Input
                 id="username"
                 type="text"

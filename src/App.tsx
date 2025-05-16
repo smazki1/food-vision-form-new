@@ -6,6 +6,7 @@ import './rtl.css';
 
 // Layouts
 import AdminLayout from './layouts/AdminLayout';
+import EditorLayout from './layouts/EditorLayout';
 import { CustomerLayout } from './layouts/CustomerLayout';
 
 // Admin Pages
@@ -18,6 +19,11 @@ import AdminLogin from './pages/AdminLogin';
 import SubmissionsPage from './pages/admin/SubmissionsPage';
 import AlertsDashboard from './pages/admin/AlertsDashboard';
 import SubmissionsAnalytics from './pages/admin/SubmissionsAnalytics';
+import UserManagementPage from './pages/admin/UserManagementPage';
+
+// Editor Pages
+import EditorDashboardPage from './pages/editor/EditorDashboardPage';
+import SubmissionProcessingPage from './pages/editor/SubmissionProcessingPage';
 
 // Customer Pages
 import CustomerDashboardPage from './pages/customer/CustomerDashboardPage';
@@ -46,6 +52,14 @@ function App() {
           <Route path="submissions" element={<SubmissionsPage />} />
           <Route path="alerts" element={<AlertsDashboard />} />
           <Route path="analytics" element={<SubmissionsAnalytics />} />
+          <Route path="users" element={<UserManagementPage />} />
+        </Route>
+
+        {/* Editor Routes */}
+        <Route path="/editor" element={<EditorLayout />}>
+          <Route index element={<EditorDashboardPage />} />
+          <Route path="dashboard" element={<EditorDashboardPage />} />
+          <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
         </Route>
 
         {/* Customer Routes */}

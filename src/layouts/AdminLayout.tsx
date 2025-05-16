@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import AdminNavbar from "@/components/admin/AdminNavbar";
 import { toast } from "sonner";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 
 const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
@@ -10,6 +11,7 @@ const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const { role, isLoading: isRoleLoading } = useCurrentUserRole();
 
   // Check if user is authenticated as admin and session is valid
   useEffect(() => {
@@ -46,8 +48,15 @@ const AdminLayout: React.FC = () => {
     };
   }, [navigate]);
 
+  // Redirect non-admin roles
+  useEffect(() => {
+    if (!isRoleLoading && role === 'editor' && !isChecking && isAuthenticated) {
+      navigate("/editor/dashboard");
+    }
+  }, [role, isRoleLoading, navigate, isChecking, isAuthenticated]);
+
   // Show loading state while checking auth
-  if (isChecking) {
+  if (isChecking || isRoleLoading) {
     return <div className="flex justify-center items-center min-h-screen">Loading...</div>;
   }
 

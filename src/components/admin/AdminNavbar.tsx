@@ -9,7 +9,8 @@ import {
   UserPlus,
   Bell,
   Package,
-  LogOut
+  LogOut,
+  UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +48,11 @@ const navItems = [
     title: "חבילות",
     icon: Package,
     href: "/admin/packages",
+  },
+  {
+    title: "משתמשים",
+    icon: UserCog,
+    href: "/admin/users",
   },
   {
     title: "אנליטיקס",
