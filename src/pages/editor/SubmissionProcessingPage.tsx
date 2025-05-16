@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
@@ -246,6 +245,56 @@ const SubmissionProcessingPage: React.FC = () => {
     ? submission.edit_history[submission.edit_history.length - 1]
     : null;
   
+  // Fix the existing image preview with badge section
+  const imagePreviewSection = (url: string, index: number) => (
+    <div key={index} className="relative group">
+      <img
+        src={url}
+        alt={`תמונה מעובדת ${index + 1}`}
+        className={`aspect-square object-cover rounded-md border cursor-pointer
+          ${url === selectedImage ? 'border-2 border-primary' : 'border-gray-200'}`}
+        onClick={() => setLightboxImage(url)}
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSelectMainImage(url);
+            }}
+            className="w-8 h-8 p-0 rounded-full"
+            disabled={url === submission.main_processed_image_url}
+            title="הגדר כתמונה ראשית"
+          >
+            <Star className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRemoveProcessedImage(url);
+            }}
+            className="w-8 h-8 p-0 rounded-full"
+            title="הסר תמונה"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      {url === submission.main_processed_image_url && (
+        <Badge 
+          className="absolute top-2 right-2"
+          variant="default" // Change from "primary" to "default"
+        >
+          ראשית
+        </Badge>
+      )}
+    </div>
+  );
+  
   return (
     <div className="px-4 py-6 md:px-6">
       <div className="flex items-center gap-2 mb-6">
@@ -322,52 +371,7 @@ const SubmissionProcessingPage: React.FC = () => {
                       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                         {submission.processed_image_urls?.length ? (
                           submission.processed_image_urls.map((url, idx) => (
-                            <div key={idx} className="relative group">
-                              <img
-                                src={url}
-                                alt={`תמונה מעובדת ${idx + 1}`}
-                                className={`aspect-square object-cover rounded-md border cursor-pointer
-                                  ${url === selectedImage ? 'border-2 border-primary' : 'border-gray-200'}`}
-                                onClick={() => setLightboxImage(url)}
-                              />
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                <div className="flex gap-1">
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSelectMainImage(url);
-                                    }}
-                                    className="w-8 h-8 p-0 rounded-full"
-                                    disabled={url === submission.main_processed_image_url}
-                                    title="הגדר כתמונה ראשית"
-                                  >
-                                    <Star className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="destructive"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRemoveProcessedImage(url);
-                                    }}
-                                    className="w-8 h-8 p-0 rounded-full"
-                                    title="הסר תמונה"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                              {url === submission.main_processed_image_url && (
-                                <Badge 
-                                  className="absolute top-2 right-2"
-                                  variant="primary"
-                                >
-                                  ראשית
-                                </Badge>
-                              )}
-                            </div>
+                            imagePreviewSection(url, idx)
                           ))
                         ) : (
                           <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
@@ -450,7 +454,7 @@ const SubmissionProcessingPage: React.FC = () => {
                         </Alert>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">אין תמונות מעובדות לבדיקה</p>
+                      <p className="text-muted-foreground">אין תמונות מ��ובדות לבדיקה</p>
                     )}
                   </div>
                 </TabsContent>
