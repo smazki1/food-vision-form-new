@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Facebook, Instagram, Mail, Link as LinkIcon, WhatsApp } from "lucide-react";
+import { Facebook, Instagram, Mail, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ShareDialogProps {
@@ -118,7 +118,21 @@ export function ShareDialog({ open, onOpenChange, imageUrl, itemName }: ShareDia
                   className="w-[100px] flex flex-col gap-1 h-auto py-4"
                   onClick={() => handleSocialShare("whatsapp")}
                 >
-                  <WhatsApp className="h-8 w-8" />
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    className="h-8 w-8"
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9L3 21" />
+                    <path d="M9 10a.5.5 0 0 1 1 0V16a.5.5 0 0 1-1 0v-6Z" />
+                    <path d="M14 10a.5.5 0 0 1 1 0V16a.5.5 0 0 1-1 0v-6Z" />
+                    <path d="M9 10a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5Z" />
+                  </svg>
                   <span>ואטסאפ</span>
                 </Button>
                 

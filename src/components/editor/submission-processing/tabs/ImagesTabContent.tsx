@@ -11,6 +11,7 @@ import { Info, Upload, Check, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSubmissionStatusTracking } from "@/hooks/useSubmissionStatusTracking";
 import { useSupabaseUserId } from "@/hooks/useSupabaseUserId";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ImagesTabContentProps {
   submission: Submission;
@@ -114,7 +115,7 @@ const ImagesTabContent = ({
       toast({
         title: "לא ניתן לסמן כמוכן להצגה",
         description: "יש להעלות לפחות תמונה אחת ולהגדיר תמונה ראשית",
-        variant: "warning", // Use "warning" instead of "destructive" for alerts
+        variant: "destructive", // Changed from "warning" to "destructive"
       });
       return;
     }
@@ -278,7 +279,7 @@ const ImagesTabContent = ({
               </div>
               
               {hasProcessedImages && !hasMainImage && (
-                <Alert variant="warning" className="mt-4">
+                <Alert variant="destructive" className="mt-4"> {/* Changed from "warning" to "destructive" */}
                   <AlertTriangle className="h-4 w-4" />
                   <AlertTitle>לא נבחרה תמונה ראשית</AlertTitle>
                   <AlertDescription>

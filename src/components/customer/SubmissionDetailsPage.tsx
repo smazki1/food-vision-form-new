@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
 import { useMessages } from "@/hooks/useMessages";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,9 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, Share2, Facebook, Instagram, Mail, Link, Maximize } from "lucide-react";
+import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, Share2, Facebook, Instagram, Mail, Link as LinkIcon, Maximize } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
-import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShareDialog } from "./ShareDialog";
