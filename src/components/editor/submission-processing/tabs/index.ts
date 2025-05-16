@@ -1,6 +1,5 @@
 
-import ImagesTabContent from "./ImagesTabContent";
-import ClientFeedbackTabContent from "./ClientFeedbackTabContent";
-import InternalNotesTabContent from "./InternalNotesTabContent";
-
-export { ImagesTabContent, ClientFeedbackTabContent, InternalNotesTabContent };
+export { default as ImagesTabContent } from "./ImagesTabContent";
+export { default as ClientFeedbackTabContent } from "./ClientFeedbackTabContent";
+export { default as InternalNotesTabContent } from "./InternalNotesTabContent";
+export { ProcessingInfoTab } from "./ProcessingInfoTab";

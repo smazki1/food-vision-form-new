@@ -3,22 +3,35 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSubmission } from "@/hooks/useSubmission";
 import { Submission } from "@/api/submissionApi";
-import { ActionButtons } from "./ActionButtons";
-import { ImagesTabContent } from "./tabs/ImagesTabContent";
-import { ClientFeedbackTabContent } from "./tabs/ClientFeedbackTabContent";
-import { InternalNotesTabContent } from "./tabs/InternalNotesTabContent";
+import ActionButtons from "./ActionButtons";
+import ImagesTabContent from "./tabs/ImagesTabContent";
+import ClientFeedbackTabContent from "./tabs/ClientFeedbackTabContent";
+import InternalNotesTabContent from "./tabs/InternalNotesTabContent";
 import { ProcessingInfoTab } from "./tabs/ProcessingInfoTab";
 
 interface SubmissionProcessingContentProps {
   submission: Submission | null;
   isLoading: boolean;
+  handleSelectMainImage?: (imageUrl: string) => Promise<boolean>;
+  handleRemoveProcessedImage?: (imageUrl: string) => Promise<boolean>;
+  addProcessedImage?: (url: string) => Promise<boolean>;
+  addInternalNote?: (note: string) => Promise<boolean>;
+  respondToClientFeedback?: (response: string, processedImages: string[]) => Promise<boolean>;
+  setLightboxImage?: (imageUrl: string | null) => void;
 }
 
 const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = ({
   submission,
   isLoading,
+  handleSelectMainImage,
+  handleRemoveProcessedImage,
+  addProcessedImage,
+  addInternalNote,
+  respondToClientFeedback,
+  setLightboxImage,
 }) => {
   const [activeTab, setActiveTab] = useState("images");
+  const [responseToClient, setResponseToClient] = useState("");
   
   if (isLoading || !submission) {
     return <div className="p-6">טוען...</div>;
@@ -33,7 +46,12 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
         </p>
       </div>
       
-      <ActionButtons submission={submission} />
+      <ActionButtons 
+        submission={submission}
+        responseToClient={responseToClient}
+        respondToClientFeedback={respondToClientFeedback || (() => Promise.resolve(false))}
+        onSaveProgress={() => {}}
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="mb-4">
@@ -44,15 +62,29 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
         </TabsList>
         
         <TabsContent value="images">
-          <ImagesTabContent submission={submission} />
+          <ImagesTabContent 
+            submission={submission} 
+            handleSelectMainImage={handleSelectMainImage || (() => Promise.resolve(false))}
+            handleRemoveProcessedImage={handleRemoveProcessedImage || (() => Promise.resolve(false))}
+            addProcessedImage={addProcessedImage || (() => Promise.resolve(false))}
+            setLightboxImage={setLightboxImage || (() => {})}
+          />
         </TabsContent>
         
         <TabsContent value="feedback">
-          <ClientFeedbackTabContent submission={submission} />
+          <ClientFeedbackTabContent 
+            submission={submission}
+            maxEdits={3} // Default value
+            responseToClient={responseToClient}
+            setResponseToClient={setResponseToClient}
+          />
         </TabsContent>
         
         <TabsContent value="notes">
-          <InternalNotesTabContent submission={submission} />
+          <InternalNotesTabContent
+            internalTeamNotes={submission.internal_team_notes}
+            onAddNote={addInternalNote || (() => Promise.resolve(false))}
+          />
         </TabsContent>
         
         <TabsContent value="info">

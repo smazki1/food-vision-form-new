@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,6 +59,7 @@ const SubmissionProcessingPage: React.FC = () => {
         <div className="lg:col-span-4 space-y-6">
           <SubmissionProcessingContent 
             submission={submission}
+            isLoading={loading}
             handleSelectMainImage={setMainProcessedImage}
             handleRemoveProcessedImage={removeProcessedImage}
             addProcessedImage={addProcessedImage}

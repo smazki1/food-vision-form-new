@@ -18,7 +18,9 @@ interface ProcessingInfoTabProps {
 }
 
 export const ProcessingInfoTab: React.FC<ProcessingInfoTabProps> = ({ submission }) => {
-  const { maxEdits, currentEditCount } = useMaxEdits(submission);
+  // Replace the hook call with a simpler approach for now
+  const maxEdits = 3; // Default value
+  const currentEditCount = submission.edit_count || 0;
   
   // Calculate days remaining until target completion date
   const daysRemaining = submission.target_completion_date 

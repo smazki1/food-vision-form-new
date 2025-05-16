@@ -27,20 +27,21 @@ export function useAllEditors() {
       // Get editor user details from auth.users (admin required)
       const editorIds = roleData.map(role => role.user_id);
       
-      // Get tasks count for each editor to show workload
+      // Get tasks count for each editor to show workload using count() aggregation
       const { data: taskCountsData, error: taskError } = await supabase
         .from("customer_submissions")
         .select("assigned_editor_id, count")
         .in("assigned_editor_id", editorIds)
-        .eq("submission_status", "בעיבוד")
-        .group("assigned_editor_id");
+        .eq("submission_status", "בעיבוד");
         
       if (taskError) throw taskError;
       
       // Create a map of editor ID to task count
-      const taskCountMap = Object.fromEntries(
-        taskCountsData.map(item => [item.assigned_editor_id, parseInt(item.count)])
-      );
+      const taskCountMap: Record<string, number> = {};
+      
+      taskCountsData.forEach(item => {
+        taskCountMap[item.assigned_editor_id] = parseInt(item.count as unknown as string);
+      });
       
       // Since we can't query auth.users directly, we'll fetch minimal data from auth via the admin API
       // For demo purposes, we'll create mock data based on user IDs
