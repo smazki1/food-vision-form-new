@@ -1,8 +1,6 @@
 
 import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Check, Save } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -18,9 +16,8 @@ import {
 } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Submission } from "@/api/submissionApi";
-import ImagesTab from "@/components/editor/submission/images";
-import ClientFeedbackTab from "@/components/editor/submission/ClientFeedbackTab";
-import InternalNotesTab from "@/components/editor/submission/InternalNotesTab";
+import { ImagesTabContent, ClientFeedbackTabContent, InternalNotesTabContent } from "./tabs";
+import ActionButtons from "./ActionButtons";
 import { useMaxEdits } from "./hooks/useMaxEdits";
 
 interface SubmissionProcessingContentProps {
@@ -44,26 +41,6 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
 }) => {
   const [responseToClient, setResponseToClient] = useState("");
   const maxEdits = useMaxEdits(submission, async () => 3); // Assume default max edits is 3
-  
-  const handleMarkAsReady = async () => {
-    if (!submission?.processed_image_urls?.length || !submission.main_processed_image_url) {
-      toast.error("יש להעלות לפחות תמונה מעובדת אחת ולבחור תמונה ראשית");
-      return;
-    }
-    
-    try {
-      // If this was a response to client feedback, update the edit history
-      if (submission.submission_status === "הערות התקבלו" && responseToClient.trim()) {
-        await respondToClientFeedback(responseToClient, submission.processed_image_urls);
-        setResponseToClient("");
-      }
-      
-      toast.success("המשימה סומנה כמוכנה להצגה");
-    } catch (err) {
-      console.error("Error marking as ready:", err);
-      toast.error("שגיאה בסימון המשימה כמוכנה");
-    }
-  };
   
   const handleSaveProgress = () => {
     toast.success("התקדמות נשמרה בהצלחה");
@@ -102,7 +79,7 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
           </TabsList>
           
           <TabsContent value="images">
-            <ImagesTab 
+            <ImagesTabContent 
               submission={submission}
               handleSelectMainImage={handleSelectMainImage}
               handleRemoveProcessedImage={handleRemoveProcessedImage}
@@ -112,7 +89,7 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
           </TabsContent>
           
           <TabsContent value="client-feedback">
-            <ClientFeedbackTab 
+            <ClientFeedbackTabContent 
               submission={submission}
               maxEdits={maxEdits}
               responseToClient={responseToClient}
@@ -121,31 +98,19 @@ const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = 
           </TabsContent>
           
           <TabsContent value="internal-notes">
-            <InternalNotesTab 
+            <InternalNotesTabContent 
               internalTeamNotes={submission.internal_team_notes}
               onAddNote={addInternalNote}
             />
           </TabsContent>
         </Tabs>
         
-        <div className="flex flex-wrap gap-2 justify-between mt-6">
-          <Button 
-            variant="outline"
-            onClick={handleSaveProgress}
-            className="flex-1 md:flex-none"
-          >
-            <Save className="h-4 w-4 mr-1" />
-            שמור התקדמות
-          </Button>
-          <Button 
-            onClick={handleMarkAsReady}
-            className="flex-1 md:flex-none"
-            disabled={!submission.processed_image_urls?.length || !submission.main_processed_image_url}
-          >
-            <Check className="h-4 w-4 mr-1" />
-            סמן כ"מוכנה להצגה"
-          </Button>
-        </div>
+        <ActionButtons 
+          submission={submission}
+          responseToClient={responseToClient}
+          respondToClientFeedback={respondToClientFeedback}
+          onSaveProgress={handleSaveProgress}
+        />
       </CardContent>
     </Card>
   );
