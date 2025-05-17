@@ -83,6 +83,10 @@ WITH CHECK (client_id = public.get_user_client_id());
 COMMENT ON FUNCTION public.check_client_ownership(uuid) IS 'Security definer function to check if a client_id belongs to the current user';
 COMMENT ON FUNCTION public.get_user_client_id() IS 'Security definer function to get the current user''s client_id';
 
+-- Grant execute permissions on the functions
+GRANT EXECUTE ON FUNCTION public.check_client_ownership(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_client_id() TO authenticated;
+
 -- Verify the policies were created correctly
 DO $$
 BEGIN

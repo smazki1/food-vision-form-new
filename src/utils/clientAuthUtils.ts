@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const fetchClientId = async (userId: string): Promise<string | null> => {
@@ -10,11 +9,12 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // With fixed RLS policies, this should work properly now
+    // Use the security definer function to get the client ID
     const { data, error } = await supabase
-      .from("clients")
-      .select("client_id")
-      .eq("user_auth_id", userId)
+      .from('clients')
+      .select('client_id')
+      .eq('user_auth_id', userId)
+      .limit(1)
       .maybeSingle();
       
     if (error) {
@@ -36,11 +36,12 @@ export const isUserClient = async (): Promise<boolean> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
     
-    // Use the userId to check for client record
+    // Use the security definer function to check client existence
     const { data } = await supabase
-      .from("clients")
-      .select("client_id")
-      .eq("user_auth_id", session.user.id)
+      .from('clients')
+      .select('client_id')
+      .eq('user_auth_id', session.user.id)
+      .limit(1)
       .maybeSingle();
     
     return !!data;
