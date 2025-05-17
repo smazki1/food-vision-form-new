@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, Package, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 
 const statusTranslations: Record<string, { text: string, variant: string }> = {
   "ממתינה לעיבוד": { text: "ממתינות לעיבוד", variant: "yellow" },
@@ -18,7 +19,8 @@ const statusTranslations: Record<string, { text: string, variant: string }> = {
 };
 
 export function CustomerDashboard() {
-  const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile();
+  const { user } = useCustomerAuth();
+  const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
@@ -59,7 +61,7 @@ export function CustomerDashboard() {
         <AlertTitle>שגיאה בטעינת הנתונים</AlertTitle>
         <AlertDescription>
           <div>
-            {error?.message || "אירעה שגיאה בטעינת הנתונים"}
+            {typeof error === 'string' ? error : error?.message || "אירעה שגיאה בטעינת הנתונים"}
           </div>
           {process.env.NODE_ENV === 'development' && error && (
             <pre className="mt-2 text-xs">
@@ -93,6 +95,12 @@ export function CustomerDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Welcome message */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">שלום, {clientProfile?.contact_name || "לקוח יקר"}</h1>
+        <p className="text-muted-foreground">ברוך הבא למערכת Food Vision</p>
+      </div>
+
       {/* Package Summary */}
       <Card>
         <CardHeader className="pb-3">
@@ -118,8 +126,8 @@ export function CustomerDashboard() {
               </p>
             </div>
             <Button asChild>
-              <Link to="/upgrade-package">
-                שדרג חבילה
+              <Link to="/customer/profile">
+                צפה בפרטי החבילה
                 <ArrowRight className="mr-2 h-4 w-4" />
               </Link>
             </Button>
@@ -128,7 +136,7 @@ export function CustomerDashboard() {
           {clientProfile?.remaining_servings && clientProfile.remaining_servings < 5 && (
             <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
               <p className="text-amber-700 text-sm">
-                נותרו לך {clientProfile.remaining_servings} מנות בלבד! שקול לרכוש מנות נוספות כדי להמשיך להשתמש בשירות.
+                נותרו לך {clientProfile.remaining_servings} מנות בלבד! צור קשר איתנו לרכישת מנות נוספות.
               </p>
             </div>
           )}
@@ -197,6 +205,44 @@ export function CustomerDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="hover:border-primary transition-all">
+          <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <Package className="h-6 w-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-medium">הגשת פריטים חדשים</h3>
+            <p className="text-muted-foreground">הגש מנות, קוקטיילים או משקאות חדשים לצילום ועריכה</p>
+            <Button className="w-full" asChild>
+              <Link to="/food-vision-form">
+                הגש עכשיו
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:border-primary transition-all">
+          <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
+            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 text-primary">
+                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+                <path d="M18 14h-8" />
+                <path d="M15 18h-5" />
+                <path d="M10 6h8v4h-8V6Z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-medium">הגלריה שלי</h3>
+            <p className="text-muted-foreground">צפה בכל הפריטים המאושרים והמוכנים לשימוש</p>
+            <Button variant="outline" className="w-full" asChild>
+              <Link to="/customer/gallery">
+                פתח גלריה
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

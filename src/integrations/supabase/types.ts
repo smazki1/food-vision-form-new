@@ -152,9 +152,16 @@ export type Database = {
           item_type: string
           main_processed_image_url: string | null
           original_item_id: string
+          priority: string | null
           processed_image_urls: string[] | null
+          status_בעיבוד_at: string | null
+          status_הושלמה_ואושרה_at: string | null
+          status_הערות_התקבלו_at: string | null
+          status_מוכנה_להצגה_at: string | null
+          status_ממתינה_לעיבוד_at: string | null
           submission_id: string
           submission_status: string
+          target_completion_date: string | null
           uploaded_at: string
         }
         Insert: {
@@ -169,9 +176,16 @@ export type Database = {
           item_type: string
           main_processed_image_url?: string | null
           original_item_id: string
+          priority?: string | null
           processed_image_urls?: string[] | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
           submission_id?: string
           submission_status?: string
+          target_completion_date?: string | null
           uploaded_at?: string
         }
         Update: {
@@ -186,9 +200,16 @@ export type Database = {
           item_type?: string
           main_processed_image_url?: string | null
           original_item_id?: string
+          priority?: string | null
           processed_image_urls?: string[] | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
           submission_id?: string
           submission_status?: string
+          target_completion_date?: string | null
           uploaded_at?: string
         }
         Relationships: [
@@ -376,6 +397,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          link: string | null
+          message: string
+          notification_id: string
+          read_status: boolean
+          related_entity_id: string | null
+          related_entity_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          link?: string | null
+          message: string
+          notification_id?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          link?: string | null
+          message?: string
+          notification_id?: string
+          read_status?: boolean
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       service_packages: {
         Row: {
           created_at: string
@@ -418,6 +472,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       visual_styles: {
         Row: {
           created_at: string
@@ -444,7 +519,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: { user_id: string; role_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
       client_status_type: "פעיל" | "לא פעיל" | "בהמתנה"

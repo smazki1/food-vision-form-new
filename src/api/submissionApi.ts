@@ -26,6 +26,8 @@ export type Submission = {
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
+  target_completion_date: string | null;  // Adding this field
+  priority: string | null;  // Adding this field
   clients?: { restaurant_name: string }; // Adding this property to match the actual data structure
 };
 

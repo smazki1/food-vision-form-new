@@ -52,7 +52,7 @@ export const PackageSelectionField: React.FC<PackageSelectionFieldProps> = ({ se
                 <div className="p-2 text-sm">טוען חבילות...</div>
               ) : packages.length > 0 ? (
                 packages.map((pkg) => (
-                  <SelectItem key={pkg.package_id} value={pkg.package_id || "no-id"}>
+                  <SelectItem key={pkg.package_id} value={pkg.package_id || "default-package"}>
                     {pkg.package_name} - ₪{pkg.price}
                   </SelectItem>
                 ))

@@ -1,133 +1,55 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Submission, SubmissionStatus } from "@/api/submissionApi";
+import { useSubmissionData } from "./submission/useSubmissionData";
+import { useSubmissionStatusTracking } from "./useSubmissionStatusTracking";
+import { useImageManagement } from "./submission/useImageManagement";
+import { useInternalNotes } from "./submission/useInternalNotes";
+import { useEditRequest } from "./submission/useEditRequest";
+import { usePackageDetails } from "./submission/usePackageDetails";
+import { Submission } from "@/api/submissionApi";
 
+/**
+ * Hook that combines all submission-related functionality
+ */
 export function useSubmission(submissionId?: string) {
-  const [submission, setSubmission] = useState<Submission | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchSubmission() {
-      if (!submissionId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("customer_submissions")
-          .select(`
-            *,
-            clients(restaurant_name)
-          `)
-          .eq("submission_id", submissionId)
-          .single();
-
-        if (error) throw error;
-        setSubmission(data as Submission);
-      } catch (err) {
-        console.error("Error fetching submission:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch submission"));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchSubmission();
-  }, [submissionId]);
-
-  const updateSubmissionStatus = async (status: SubmissionStatus) => {
-    if (!submissionId) return false;
-    
-    try {
-      const { error } = await supabase
-        .from("customer_submissions")
-        .update({ submission_status: status })
-        .eq("submission_id", submissionId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      if (submission) {
-        setSubmission({...submission, submission_status: status});
-      }
-      
-      return true;
-    } catch (err) {
-      console.error("Error updating submission status:", err);
-      return false;
-    }
-  };
-
-  const requestEdit = async (editNote: string) => {
-    if (!submissionId || !submission) return false;
-    
-    try {
-      // Create edit history entry
-      const newEditHistory = submission.edit_history || [];
-      newEditHistory.push({
-        timestamp: new Date().toISOString(),
-        client_request: editNote
+  const {
+    submission,
+    setSubmission,
+    loading,
+    error
+  } = useSubmissionData(submissionId);
+  
+  const { updateStatus } = useSubmissionStatusTracking();
+  const { addProcessedImage, removeProcessedImage, setMainProcessedImage } = 
+    useImageManagement(submission, setSubmission);
+  const { addInternalNote } = useInternalNotes(submission, setSubmission);
+  const { requestEdit, respondToClientFeedback } = useEditRequest(submission, setSubmission);
+  const { getMaxEditsAllowed } = usePackageDetails();
+  
+  // Legacy compatibility
+  const updateSubmissionStatus = async (status: any) => {
+    if (submission?.submission_id) {
+      return await updateStatus.mutateAsync({
+        submissionId: submission.submission_id,
+        status: status
       });
-      
-      const { error } = await supabase
-        .from("customer_submissions")
-        .update({ 
-          submission_status: "הערות התקבלו",
-          edit_history: newEditHistory,
-          edit_count: (submission.edit_count || 0) + 1
-        })
-        .eq("submission_id", submissionId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      setSubmission({
-        ...submission, 
-        submission_status: "הערות התקבלו",
-        edit_history: newEditHistory,
-        edit_count: (submission.edit_count || 0) + 1
-      });
-      
-      return true;
-    } catch (err) {
-      console.error("Error requesting edit:", err);
-      return false;
     }
-  };
-
-  const setMainProcessedImage = async (imageUrl: string) => {
-    if (!submissionId) return false;
-    
-    try {
-      const { error } = await supabase
-        .from("customer_submissions")
-        .update({ main_processed_image_url: imageUrl })
-        .eq("submission_id", submissionId);
-        
-      if (error) throw error;
-      
-      // Update local state
-      if (submission) {
-        setSubmission({...submission, main_processed_image_url: imageUrl});
-      }
-      
-      return true;
-    } catch (err) {
-      console.error("Error setting main image:", err);
-      return false;
-    }
+    return false;
   };
 
   return {
     submission,
     loading,
     error,
+    setSubmission,
+    addProcessedImage,
+    removeProcessedImage,
+    setMainProcessedImage,
     updateSubmissionStatus,
+    addInternalNote,
     requestEdit,
-    setMainProcessedImage
+    respondToClientFeedback,
+    getMaxEditsAllowed,
+    updateStatus,
+    isUpdating: updateStatus.isPending,
   };
 }

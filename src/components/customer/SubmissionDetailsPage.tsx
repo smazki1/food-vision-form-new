@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
 import { useMessages } from "@/hooks/useMessages";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Check, Download, Edit, MessageSquare, Send } from "lucide-react";
+import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, Share2, Facebook, Instagram, Mail, Link as LinkIcon, Maximize } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
-import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ShareDialog } from "./ShareDialog";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 // Status badge variant mapping
 const statusBadgeVariant: Record<string, string> = {
@@ -32,6 +34,8 @@ export function SubmissionDetailsPage() {
   const [newMessage, setNewMessage] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [imageToShare, setImageToShare] = useState<string | null>(null);
   
   const { toast } = useToast();
 
@@ -119,18 +123,24 @@ export function SubmissionDetailsPage() {
     }
   };
   
-  const handleDownloadImages = () => {
-    // For now, just open the main image in a new tab
-    if (submission?.main_processed_image_url) {
-      window.open(submission.main_processed_image_url, '_blank');
-    } else if (submission?.processed_image_urls && submission.processed_image_urls.length > 0) {
-      window.open(submission.processed_image_urls[0], '_blank');
-    }
+  const handleDownloadImage = (imageUrl: string) => {
+    // Create a temporary anchor element to download the image
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `${submission?.item_name_at_submission || 'food-vision-image'}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     
     toast({
-      title: "הורדת תמונות",
-      description: "התמונות נפתחות בחלון חדש. ניתן לשמור אותן למחשב.",
+      title: "הורדת תמונה",
+      description: "התמונה מורדת למחשב שלך",
     });
+  };
+
+  const handleShareImage = (imageUrl: string) => {
+    setImageToShare(imageUrl);
+    setShareDialogOpen(true);
   };
 
   if (submissionLoading) {
@@ -175,11 +185,12 @@ export function SubmissionDetailsPage() {
   // Check if this submission can be approved
   const canApprove = submission.submission_status === "מוכנה להצגה";
   
-  // Check if images can be downloaded
+  // Check if images can be downloaded or shared
   const canDownload = submission.submission_status === "הושלמה ואושרה";
+  const canShare = submission.submission_status === "הושלמה ואושרה";
   
   // Parse the edit history if available
-  const editHistory = Array.isArray(submission.edit_history) ? submission.edit_history : [];
+  const editHistory = submission.edit_history?.status_changes || [];
 
   return (
     <div className="space-y-6">
@@ -238,16 +249,9 @@ export function SubmissionDetailsPage() {
           )}
           
           {canApprove && (
-            <Button variant="outline" onClick={handleApprove}>
+            <Button onClick={handleApprove}>
               <Check className="ml-2 h-4 w-4" />
               אשר מנה
-            </Button>
-          )}
-          
-          {canDownload && (
-            <Button variant="secondary" onClick={handleDownloadImages}>
-              <Download className="ml-2 h-4 w-4" />
-              הורד תמונות
             </Button>
           )}
         </div>
@@ -273,32 +277,133 @@ export function SubmissionDetailsPage() {
             </CardHeader>
             <CardContent>
               {hasProcessedImages ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {submission.processed_image_urls.map((imageUrl, index) => (
-                    <div key={index} className="relative group">
-                      <div className={`aspect-square rounded-md overflow-hidden border-2 transition-all ${imageUrl === submission.main_processed_image_url ? 'border-primary' : 'border-transparent'}`}>
+                <div className="space-y-6">
+                  {/* Main image display */}
+                  {submission.main_processed_image_url && (
+                    <div className="relative rounded-lg overflow-hidden border-2 border-primary">
+                      <div className="aspect-video max-h-[400px] overflow-hidden flex items-center justify-center">
                         <img 
-                          src={imageUrl} 
-                          alt={`${submission.item_name_at_submission} - ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onClick={() => setSelectedImage(imageUrl)}
+                          src={submission.main_processed_image_url} 
+                          alt={`${submission.item_name_at_submission} - תמונה ראשית`}
+                          className="object-contain w-full h-full"
                         />
+                        
+                        {/* Watermark for preview mode */}
+                        {submission.submission_status === "מוכנה להצגה" && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <p className="text-white text-3xl font-bold opacity-30 rotate-[330deg]">
+                              תצוגה מקדימה - Food Vision AI
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      {(submission.submission_status === "מוכנה להצגה" || submission.submission_status === "הערות התקבלו") && (
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      
+                      {/* Action buttons for main image */}
+                      <div className="absolute bottom-2 right-2 flex gap-2">
+                        <Button 
+                          size="icon" 
+                          variant="secondary" 
+                          onClick={() => setSelectedImage(submission.main_processed_image_url)}
+                        >
+                          <Maximize className="h-4 w-4" />
+                        </Button>
+                        
+                        {canDownload && (
                           <Button 
+                            size="icon" 
                             variant="secondary" 
-                            className="text-sm"
-                            onClick={() => handleSetMainImage(imageUrl)}
+                            onClick={() => handleDownloadImage(submission.main_processed_image_url!)}
                           >
-                            {imageUrl === submission.main_processed_image_url 
-                              ? "תמונה ראשית" 
-                              : "הגדר כתמונה ראשית"}
+                            <Download className="h-4 w-4" />
                           </Button>
-                        </div>
-                      )}
+                        )}
+                        
+                        {canShare && (
+                          <Button 
+                            size="icon" 
+                            variant="secondary" 
+                            onClick={() => handleShareImage(submission.main_processed_image_url!)}
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  
+                  {/* All processed images carousel */}
+                  <div className="py-4">
+                    <h3 className="text-lg font-medium mb-4">כל התמונות ({submission.processed_image_urls.length})</h3>
+                    
+                    <Carousel className="w-full">
+                      <CarouselContent>
+                        {submission.processed_image_urls.map((imageUrl, index) => (
+                          <CarouselItem key={index} className="md:basis-1/3">
+                            <div className="p-1">
+                              <div className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                                imageUrl === submission.main_processed_image_url ? 'border-primary' : 'border-transparent'
+                              }`}>
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`${submission.item_name_at_submission} - ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                  onClick={() => setSelectedImage(imageUrl)}
+                                />
+                                
+                                {/* Watermark for preview mode */}
+                                {submission.submission_status === "מוכנה להצגה" && (
+                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <p className="text-white text-xs font-bold opacity-30 rotate-[330deg]">
+                                      תצוגה מקדימה
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                {/* Overlay with buttons */}
+                                <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex flex-col items-center justify-center transition-opacity gap-2">
+                                  {(submission.submission_status === "מוכנה להצגה" || submission.submission_status === "הערות התקבלו") && (
+                                    <Button 
+                                      variant="secondary" 
+                                      className="text-sm"
+                                      onClick={() => handleSetMainImage(imageUrl)}
+                                    >
+                                      {imageUrl === submission.main_processed_image_url 
+                                        ? "תמונה ראשית" 
+                                        : "הגדר כתמונה ראשית"}
+                                    </Button>
+                                  )}
+                                  
+                                  <div className="flex gap-2 mt-2">
+                                    {canDownload && (
+                                      <Button 
+                                        size="icon" 
+                                        variant="outline" 
+                                        onClick={() => handleDownloadImage(imageUrl)}
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                    
+                                    {canShare && (
+                                      <Button 
+                                        size="icon" 
+                                        variant="outline" 
+                                        onClick={() => handleShareImage(imageUrl)}
+                                      >
+                                        <Share2 className="h-4 w-4" />
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      <CarouselPrevious className="right-auto left-1" />
+                      <CarouselNext className="left-auto right-1" />
+                    </Carousel>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-10">
@@ -314,20 +419,60 @@ export function SubmissionDetailsPage() {
               {/* Image Preview Dialog */}
               {selectedImage && (
                 <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-                  <DialogContent className="sm:max-w-[800px] p-1">
+                  <DialogContent className="sm:max-w-[900px] md:max-w-[1100px] p-1">
                     <img 
                       src={selectedImage} 
                       alt="תמונה מוגדלת"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain max-h-[80vh]"
                     />
+                    
+                    {/* Watermark for preview mode */}
+                    {submission.submission_status === "מוכנה להצגה" && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <p className="text-white text-4xl font-bold opacity-30 rotate-[330deg]">
+                          תצוגה מקדימה - Food Vision AI
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* Action buttons */}
+                    {submission.submission_status === "הושלמה ואושרה" && (
+                      <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button 
+                          variant="secondary" 
+                          onClick={() => handleDownloadImage(selectedImage)}
+                        >
+                          <Download className="ml-2 h-4 w-4" />
+                          הורד תמונה
+                        </Button>
+                        <Button 
+                          variant="secondary" 
+                          onClick={() => {
+                            handleShareImage(selectedImage);
+                            setSelectedImage(null);
+                          }}
+                        >
+                          <Share2 className="ml-2 h-4 w-4" />
+                          שתף תמונה
+                        </Button>
+                      </div>
+                    )}
                   </DialogContent>
                 </Dialog>
               )}
+              
+              {/* Share Dialog */}
+              <ShareDialog 
+                open={shareDialogOpen} 
+                onOpenChange={setShareDialogOpen}
+                imageUrl={imageToShare || ''}
+                itemName={submission.item_name_at_submission}
+              />
             </CardContent>
           </Card>
         </TabsContent>
         
-        {/* Edit History Tab */}
+        {/* Edit History Tab - keep existing code for this tab */}
         <TabsContent value="editHistory">
           <Card>
             <CardHeader>
@@ -343,20 +488,21 @@ export function SubmissionDetailsPage() {
                     <Card key={index} className="overflow-hidden">
                       <CardHeader className="bg-secondary/20 py-3">
                         <div className="flex justify-between items-center">
-                          <p className="font-medium">בקשת עריכה #{editHistory.length - index}</p>
+                          <p className="font-medium">שינוי סטטוס #{editHistory.length - index}</p>
                           <p className="text-sm text-muted-foreground">
-                            {formatDate(edit.timestamp)}
+                            {formatDate(edit.changed_at)}
                           </p>
                         </div>
                       </CardHeader>
                       <CardContent className="py-3">
-                        <p className="whitespace-pre-line">{edit.client_request}</p>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline">{edit.from_status}</Badge>
+                          <ArrowLeft className="h-4 w-4" />
+                          <Badge>{edit.to_status}</Badge>
+                        </div>
                         
-                        {edit.team_response && (
-                          <div className="mt-3 pt-3 border-t">
-                            <p className="font-medium mb-2">תשובת הצוות:</p>
-                            <p className="whitespace-pre-line">{edit.team_response}</p>
-                          </div>
+                        {edit.note && (
+                          <p className="whitespace-pre-line mt-2">{edit.note}</p>
                         )}
                       </CardContent>
                     </Card>
@@ -373,7 +519,7 @@ export function SubmissionDetailsPage() {
           </Card>
         </TabsContent>
         
-        {/* Messages Tab */}
+        {/* Messages Tab - keep existing code for this tab */}
         <TabsContent value="messages">
           <Card>
             <CardHeader>

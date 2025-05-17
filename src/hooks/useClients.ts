@@ -8,7 +8,7 @@ interface UseClientsOptions {
   statusFilter?: string;
 }
 
-export function useClients({ searchTerm = "", statusFilter = "" }: UseClientsOptions = {}) {
+export function useClients({ searchTerm = "", statusFilter = "all" }: UseClientsOptions = {}) {
   return useQuery({
     queryKey: ["clients", searchTerm, statusFilter],
     queryFn: async () => {
@@ -18,7 +18,7 @@ export function useClients({ searchTerm = "", statusFilter = "" }: UseClientsOpt
         .order("created_at", { ascending: false });
 
       // Apply status filter if selected and is a valid status
-      if (statusFilter && statusFilter !== "הכל") {
+      if (statusFilter && statusFilter !== "all") {
         // Validate the status filter is one of the allowed enum values
         if (["פעיל", "לא פעיל", "בהמתנה"].includes(statusFilter)) {
           query = query.eq("client_status", statusFilter as ClientStatus);
