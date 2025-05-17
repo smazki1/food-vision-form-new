@@ -10,7 +10,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Using direct equality check to avoid recursion in RLS policies
+    // Use the most direct query possible - simple equality check
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
@@ -41,7 +41,7 @@ export const isUserClient = async (): Promise<boolean> => {
     
     console.log("[AUTH_DEBUG_LOOP_FIX] isUserClient - Checking client status for user:", session.user.id);
     
-    // Use the userId to check for client record
+    // Direct simple query to avoid recursion
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")

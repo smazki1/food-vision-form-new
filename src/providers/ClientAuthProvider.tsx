@@ -15,41 +15,54 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
 
-  // Use React Query for data fetching with proper dependencies
-  const { data: clientData, isLoading: clientDataLoading, error: clientError } = useQuery({
+  // Use React Query with improved dependencies and error handling
+  const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user?.id) return null;
+      console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Fetching client ID for user:", user.id);
       return fetchClientId(user.id);
     },
-    enabled: !!user && isAuthenticated && initialized, // Only run query when these conditions are met
+    enabled: !!user?.id && isAuthenticated && initialized, 
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 1, // Only retry once to avoid excessive attempts if there's an RLS issue
+    retry: 1,
+    onError: (error) => {
+      console.error("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Error fetching client data:", error);
+      setClientId(null);
+      setAuthenticating(false);
+    }
   });
 
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - State change:", { 
+    console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
       clientDataLoading,
-      clientDataError: clientError ? 'Error occurred' : undefined,
       clientId: clientData,
       initialized,
       isAuthenticated
     });
     
-    // Only update client ID when we have finished loading AND have data (or confirmed no data)
-    if (initialized && !authLoading && (!user || !clientDataLoading)) {
-      // If we have client data, update the state
-      if (clientData !== undefined) {
+    // Update state only when conditions are right
+    if (initialized) {
+      // If not authenticated or auth is still loading
+      if (!isAuthenticated || authLoading) {
+        console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Not authenticated or still loading");
+        setClientId(null);
+        // Only finish authenticating if we're sure auth is not still loading
+        if (!authLoading) {
+          setAuthenticating(false);
+        }
+      } 
+      // If authenticated and client data is ready
+      else if (isAuthenticated && !clientDataLoading) {
+        console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
         setClientId(clientData);
+        setAuthenticating(false);
       }
-      
-      // Mark authentication process as complete
-      setAuthenticating(false);
     }
-  }, [user, authLoading, clientData, clientDataLoading, clientError, initialized, isAuthenticated]);
+  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
 
   const contextValue: ClientAuthContextType = {
     clientId, 
@@ -57,13 +70,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     isAuthenticated 
   };
 
-  // Provide clear debug info about our current state
-  console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Rendering with:", {
-    clientId,
-    authenticating,
-    isAuthenticated,
-    userId: user?.id
-  });
+  console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Final state:", contextValue);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

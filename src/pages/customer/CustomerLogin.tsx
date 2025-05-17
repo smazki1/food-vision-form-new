@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -20,7 +19,7 @@ const CustomerLogin: React.FC = () => {
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
-  // If already logged in, redirect to dashboard
+  // Handle redirection when already logged in
   useEffect(() => {
     // Log all state changes to debug the loop
     console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Auth state check:", {
@@ -33,18 +32,14 @@ const CustomerLogin: React.FC = () => {
       redirectAttempted: redirectAttempted.current
     });
     
-    // Only redirect when:
-    // 1. Authentication is fully initialized
-    // 2. Not currently loading
-    // 3. User is authenticated
-    // 4. We haven't already attempted a redirect (to prevent loops)
+    // Only redirect when auth is fully initialized, not loading, and user is authenticated
     if (isAuthenticated && initialized && !loading && !redirectAttempted.current) {
       console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - User already authenticated, redirecting to:", from);
       
       // Mark that we've attempted a redirect to prevent loops
       redirectAttempted.current = true;
       
-      // Introduce small timeout to ensure state is stable before navigation
+      // Use timeout to ensure state is stable before navigation
       const timeoutId = setTimeout(() => {
         navigate(from, { replace: true });
       }, 100);

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { toast } from 'sonner';
@@ -8,10 +8,11 @@ export const ProtectedRoute = () => {
   const { user, loading, initialized, isAuthenticated } = useCustomerAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [redirectTarget, setRedirectTarget] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
+  // Use an effect to handle navigation logic separately from rendering
   useEffect(() => {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Auth check:", {
+    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Auth state check:", {
       userId: user?.id,
       isAuthenticated,
       loading,
@@ -19,13 +20,13 @@ export const ProtectedRoute = () => {
       currentPath: location.pathname
     });
 
-    // Only make routing decisions when auth state is fully initialized and no longer loading
+    // Only make routing decisions when auth state is fully initialized and not loading
     if (initialized && !loading) {
-      // If not authenticated, prepare for redirect to login
+      // If not authenticated and not at login already, prepare for redirect
       if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Not authenticated, preparing to redirect");
+        console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Not authenticated, will redirect");
         
-        // Prevent showing toast multiple times in redirect scenarios
+        // Show toast only if not recently shown
         const lastToastTime = sessionStorage.getItem('last_auth_toast_time');
         const currentTime = Date.now();
         if (!lastToastTime || currentTime - parseInt(lastToastTime) > 5000) {
@@ -34,18 +35,18 @@ export const ProtectedRoute = () => {
         }
         
         setShouldRedirect(true);
-        setRedirectTarget('/login');
+        setRedirectPath('/login');
       } else {
         // Reset redirect state when authenticated
         setShouldRedirect(false);
-        setRedirectTarget(null);
+        setRedirectPath(null);
       }
     }
   }, [user, loading, initialized, isAuthenticated, location.pathname]);
 
-  // Case 1: Auth is still initializing or loading - show loading
+  // Still initializing or loading - show loading UI
   if (!initialized || loading) {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Still loading or initializing auth state, showing loading UI");
+    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Still loading auth state");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -53,14 +54,14 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Case 2: Auth check is done, not authenticated - redirect to login
-  if (shouldRedirect && redirectTarget) {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Not authenticated, redirecting to login with return URL:", location.pathname);
-    // Store the current location they were trying to go to
-    return <Navigate to={redirectTarget} state={{ from: location }} replace />;
+  // Auth check complete, redirect if needed
+  if (shouldRedirect && redirectPath) {
+    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Redirecting to:", redirectPath);
+    // Store current location for return after login
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Case 3: Auth check is done, authenticated
-  console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - User authenticated, rendering protected content");
+  // Auth check complete, user is authenticated
+  console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Rendering protected content");
   return <Outlet />;
 };
