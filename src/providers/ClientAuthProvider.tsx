@@ -26,7 +26,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     enabled: !!user?.id && isAuthenticated && initialized, 
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
-    // Handle errors using onError in meta instead of direct onError
     meta: {
       onError: (error: Error) => {
         console.error("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Error fetching client data:", error);

@@ -10,7 +10,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Use the most direct query possible - simple equality check
+    // Use the most direct query possible with no joins or complex conditions
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
