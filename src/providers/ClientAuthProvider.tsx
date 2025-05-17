@@ -26,10 +26,13 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     enabled: !!user?.id && isAuthenticated && initialized, 
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
-    onError: (error) => {
-      console.error("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Error fetching client data:", error);
-      setClientId(null);
-      setAuthenticating(false);
+    // Handle errors using onError in meta instead of direct onError
+    meta: {
+      onError: (error: Error) => {
+        console.error("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Error fetching client data:", error);
+        setClientId(null);
+        setAuthenticating(false);
+      }
     }
   });
 
@@ -39,7 +42,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       userId: user?.id, 
       authLoading,
       clientDataLoading,
-      clientId: clientData,
+      clientData,
       initialized,
       isAuthenticated
     });
@@ -58,7 +61,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       // If authenticated and client data is ready
       else if (isAuthenticated && !clientDataLoading) {
         console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
-        setClientId(clientData);
+        // Use type assertion to handle the clientData
+        setClientId(clientData as string | null);
         setAuthenticating(false);
       }
     }
