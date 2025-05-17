@@ -15,7 +15,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
 
-  // Use React Query with improved dependencies and clear state management
+  // Use React Query with improved error handling and dependencies
   const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
@@ -23,7 +23,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Fetching client ID for user:", user.id);
       return fetchClientId(user.id);
     },
-    enabled: !!user?.id && isAuthenticated && initialized, 
+    enabled: !!user?.id && isAuthenticated && initialized,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     retry: 1,
     meta: {
