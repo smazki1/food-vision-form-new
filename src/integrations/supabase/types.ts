@@ -96,7 +96,15 @@ export type Database = {
           restaurant_name?: string
           user_auth_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_current_package_id_fkey"
+            columns: ["current_package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["package_id"]
+          },
+        ]
       }
       cocktails: {
         Row: {
@@ -521,6 +529,14 @@ export type Database = {
     Functions: {
       has_role: {
         Args: { user_id: string; role_name: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_editor: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
     }

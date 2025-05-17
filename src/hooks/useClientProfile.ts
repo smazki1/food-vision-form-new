@@ -1,7 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useState } from "react";
 
 export function useClientProfile(userId?: string) {
@@ -14,11 +13,13 @@ export function useClientProfile(userId?: string) {
       
       try {
         // First get the client record associated with this user
-        // Limit the fields we select from the service_packages to avoid deep nesting
         const { data: clientData, error: clientError } = await supabase
           .from('clients')
-          .select('*, service_packages!current_package_id(package_name, total_servings)')
-          .eq('user_id', userId)
+          .select(`
+            *,
+            service_packages(package_name, total_servings)
+          `)
+          .eq('user_auth_id', userId)
           .maybeSingle();
 
         if (clientError) {
