@@ -12,7 +12,6 @@ const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
@@ -21,13 +20,9 @@ const CustomerLogin: React.FC = () => {
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
   // If already logged in, redirect to dashboard
-  // Use useEffect to ensure this only runs once auth state is stable
   useEffect(() => {
-    // Only redirect if we're not already in the process of redirecting
-    // and the auth state is fully initialized and we're authenticated
-    if (isAuthenticated && initialized && !loading && !redirecting) {
+    if (isAuthenticated && initialized && !loading) {
       console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
-      setRedirecting(true);
       
       // Add a small delay to ensure state is stable before navigation
       const timeoutId = setTimeout(() => {
@@ -36,12 +31,12 @@ const CustomerLogin: React.FC = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, redirecting]);
+  }, [isAuthenticated, loading, initialized, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isLoading || redirecting) return;
+    if (isLoading) return;
     
     setIsLoading(true);
 
@@ -71,16 +66,6 @@ const CustomerLogin: React.FC = () => {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
-  }
-
-  // Only show login form if not authenticated or if we're not currently redirecting
-  if (isAuthenticated && !redirecting) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
-        <div className="text-center">מעביר אותך לדף הבית...</div>
-      </div>
-    ); // Show loading while redirecting
   }
 
   return (
@@ -123,7 +108,7 @@ const CustomerLogin: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || redirecting}
+              disabled={isLoading}
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>

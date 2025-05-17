@@ -18,7 +18,7 @@ export const ProtectedRoute = () => {
   }, [user, loading, initialized, isAuthenticated, location.pathname]);
 
   // Case 1: Auth is still initializing or loading - show loading
-  if (loading || !initialized) {
+  if (!initialized || loading) {
     console.log("[AUTH_DEBUG] ProtectedRoute - Still loading or initializing auth state, showing loading UI");
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -30,7 +30,7 @@ export const ProtectedRoute = () => {
   // Case 2: Auth check is done, not authenticated
   if (!isAuthenticated) {
     console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, redirecting to login");
-    // Use { replace: true } to prevent adding to history stack, helping prevent redirect loops
+    // Store the current location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

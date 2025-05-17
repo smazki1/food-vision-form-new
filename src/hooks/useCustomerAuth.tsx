@@ -10,8 +10,8 @@ export type AuthState = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  initialized: boolean; // Flag to track initial auth check completion
-  isAuthenticated: boolean; // Explicit authentication status
+  initialized: boolean; 
+  isAuthenticated: boolean;
 };
 
 type AuthContextType = AuthState & {
@@ -68,34 +68,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("[AUTH_DEBUG] Auth state changed:", event, currentSession?.user?.id);
         
         if (mounted) {
-          // Use setTimeout to avoid potential Supabase deadlocks
-          setTimeout(() => {
-            if (mounted) {
-              updateAuthState({
-                session: currentSession,
-                user: currentSession?.user ?? null,
-                loading: false, // Auth state is now known
-                initialized: true // Initial auth check is complete
-              });
-            }
-          }, 0);
+          updateAuthState({
+            session: currentSession,
+            user: currentSession?.user ?? null,
+            initialized: true,
+            loading: false
+          });
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      console.log("[AUTH_DEBUG] Initial session check:", initialSession?.user?.id);
-      
-      if (mounted) {
-        updateAuthState({
-          session: initialSession,
-          user: initialSession?.user ?? null,
-          loading: false, // Initial auth check has completed
-          initialized: true // Initial auth check is complete
-        });
+    const checkInitialSession = async () => {
+      try {
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        console.log("[AUTH_DEBUG] Initial session check:", initialSession?.user?.id);
+        
+        if (mounted) {
+          updateAuthState({
+            session: initialSession,
+            user: initialSession?.user ?? null,
+            initialized: true,
+            loading: false
+          });
+        }
+      } catch (error) {
+        console.error("[AUTH_DEBUG] Error checking initial session:", error);
+        if (mounted) {
+          updateAuthState({
+            initialized: true,
+            loading: false
+          });
+        }
       }
-    });
+    };
+
+    checkInitialSession();
 
     return () => {
       mounted = false;
@@ -120,7 +128,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       console.log("[AUTH_DEBUG] Login successful:", data.user?.id);
-      // onAuthStateChange will update the state
       return { success: true };
     } catch (error) {
       console.error('[AUTH_DEBUG] Login exception:', error);
@@ -141,8 +148,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     updateAuthState({ loading: true });
     try {
       await supabase.auth.signOut();
-      // onAuthStateChange will handle updating the state
       console.log("[AUTH_DEBUG] User signed out successfully");
+      // onAuthStateChange will handle updating the state
     } catch (error) {
       console.error('[AUTH_DEBUG] Sign out error:', error);
       updateAuthState({ loading: false });

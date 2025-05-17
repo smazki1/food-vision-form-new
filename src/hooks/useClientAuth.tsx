@@ -16,25 +16,30 @@ export const useClientAuth = () => {
       
       console.log("[AUTH_DEBUG] useClientAuth - Looking up client ID for user:", user.id);
       
-      const { data, error } = await supabase
-        .from("clients")
-        .select("client_id")
-        .eq("user_auth_id", user.id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("clients")
+          .select("client_id")
+          .eq("user_auth_id", user.id)
+          .maybeSingle();
+          
+        if (error) {
+          console.error("[AUTH_DEBUG] useClientAuth - Error fetching client ID:", error);
+          return null;
+        }
         
-      if (error) {
-        console.error("[AUTH_DEBUG] useClientAuth - Error fetching client ID:", error);
+        console.log("[AUTH_DEBUG] useClientAuth - Client data found:", data);
+        return data?.client_id || null;
+      } catch (error) {
+        console.error("[AUTH_DEBUG] useClientAuth - Exception fetching client ID:", error);
         return null;
       }
-      
-      console.log("[AUTH_DEBUG] useClientAuth - Client data found:", data);
-      return data?.client_id || null;
     },
     enabled: !!user && isAuthenticated && initialized,
   });
 
   useEffect(() => {
-    // Only update authenticating state when both auth and client data loading are complete
+    // Update authenticating state when both auth and client data loading are complete
     if (initialized && !authLoading && (!user || !clientDataLoading)) {
       console.log("[AUTH_DEBUG] useClientAuth - Authentication check complete:", { 
         user: !!user, 
@@ -50,7 +55,10 @@ export const useClientAuth = () => {
         setClientId(clientData);
       }
       
-      setAuthenticating(false);
+      // Add a small delay to ensure state is stable
+      setTimeout(() => {
+        setAuthenticating(false);
+      }, 100);
     }
   }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
 
