@@ -29,7 +29,7 @@ const CustomerLogin: React.FC = () => {
         toast.success("התחברת בהצלחה");
         navigate(from);
       } else {
-        toast.error(error?.message || "שם משתמש או סיסמה שגויים");
+        toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
       toast.error("שגיאה בהתחברות");
@@ -107,4 +107,4 @@ const CustomerLogin: React.FC = () => {
   );
 };
 
-export default CustomerLogin; 
+export default CustomerLogin;

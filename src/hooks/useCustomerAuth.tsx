@@ -3,14 +3,18 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isCustomer: boolean;
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
+  customerLogin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -65,6 +69,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // customerLogin is an alias for signIn to maintain API compatibility
+  const customerLogin = async (email: string, password: string) => {
+    return signIn(email, password);
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -89,15 +98,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // forgotPassword is an alias for resetPassword to maintain API compatibility
+  const forgotPassword = async (email: string) => {
+    return resetPassword(email);
+  };
+
+  // Check if the user is a customer
+  // For now, we'll consider any authenticated user a customer
+  // In a more complex app, we'd check against a specific role or user type
+  const isCustomer = !!user;
+
   return (
     <AuthContext.Provider
       value={{
         user,
         session,
         loading,
+        isCustomer,
         signIn,
         signOut,
         resetPassword,
+        customerLogin,
+        forgotPassword,
       }}
     >
       {children}
