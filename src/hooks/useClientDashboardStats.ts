@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -34,7 +35,7 @@ export function useClientDashboardStats(clientId: string | undefined) {
 
       console.log('[useClientDashboardStats] Current user:', user.id);
 
-      // Verify client access
+      // Verify client access - Use fully qualified column names to avoid ambiguity
       const { data: clientCheck, error: clientError } = await supabase
         .from("clients")
         .select("client_id, user_auth_id")

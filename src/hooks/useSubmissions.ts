@@ -1,62 +1,81 @@
 
 import { useState, useEffect } from "react";
-import { Submission, getClientSubmissions, getClientRemainingServings } from "@/api/submissionApi";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Submission } from "@/api/submissionApi";
+import { useClientAuth } from "./useClientAuth";
 
-export function useSubmissions(clientId?: string) {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [remainingServings, setRemainingServings] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    async function fetchData() {
+export function useSubmissions() {
+  const { clientId } = useClientAuth();
+  const queryClient = useQueryClient();
+  
+  const {
+    data: submissions = [],
+    isLoading: loading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ["client-submissions", clientId],
+    queryFn: async () => {
       if (!clientId) {
-        setLoading(false);
-        return;
+        console.log("[useSubmissions] No clientId available yet");
+        return [];
       }
 
-      try {
-        setLoading(true);
-        const [submissionsData, servingsCount] = await Promise.all([
-          getClientSubmissions(clientId),
-          getClientRemainingServings(clientId)
-        ]);
-        
-        setSubmissions(submissionsData);
-        setRemainingServings(servingsCount);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching submissions data:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch submissions data"));
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [clientId]);
-
-  const refreshSubmissions = async () => {
-    if (!clientId) return;
-    
-    try {
-      setLoading(true);
-      const submissionsData = await getClientSubmissions(clientId);
-      setSubmissions(submissionsData);
+      console.log("[useSubmissions] Fetching submissions for clientId:", clientId);
       
-      const servingsCount = await getClientRemainingServings(clientId);
-      setRemainingServings(servingsCount);
-    } catch (err) {
-      console.error("Error refreshing submissions:", err);
-    } finally {
-      setLoading(false);
-    }
+      const { data, error } = await supabase
+        .from("customer_submissions")
+        .select(`
+          *,
+          clients(restaurant_name)
+        `)
+        .order("uploaded_at", { ascending: false });
+        
+      if (error) {
+        console.error("[useSubmissions] Error fetching submissions:", error);
+        throw error;
+      }
+      
+      console.log("[useSubmissions] Fetched submissions:", data?.length || 0);
+      return data as Submission[];
+    },
+    enabled: !!clientId
+  });
+
+  // Get remaining servings data
+  const {
+    data: clientData,
+    isLoading: clientLoading
+  } = useQuery({
+    queryKey: ["client-remaining-servings", clientId],
+    queryFn: async () => {
+      if (!clientId) return null;
+      
+      const { data, error } = await supabase
+        .from("clients")
+        .select("remaining_servings")
+        .single();
+        
+      if (error) {
+        console.error("[useSubmissions] Error fetching client data:", error);
+        throw error;
+      }
+      
+      return data;
+    },
+    enabled: !!clientId
+  });
+
+  const refreshSubmissions = () => {
+    queryClient.invalidateQueries({ queryKey: ["client-submissions", clientId] });
+    queryClient.invalidateQueries({ queryKey: ["client-remaining-servings", clientId] });
   };
 
   return {
     submissions,
-    remainingServings,
-    loading,
+    remainingServings: clientData?.remaining_servings || 0,
+    loading: loading || clientLoading,
     error,
     refreshSubmissions
   };

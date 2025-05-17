@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ClientDetailsTab from "@/components/food-vision/ClientDetailsTab";
@@ -37,7 +36,7 @@ const FoodVisionForm: React.FC = () => {
   } = useFoodVisionForm();
 
   // Get submissions and remaining servings for the client
-  const { submissions, remainingServings, loading: loadingSubmissions } = useSubmissions(clientId);
+  const { submissions, remainingServings, loading: loadingSubmissions } = useSubmissions();
 
   // Pre-fill client details from profile if user is logged in
   useEffect(() => {

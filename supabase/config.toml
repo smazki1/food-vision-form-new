@@ -1,1 +1,5 @@
+
 project_id = "zjjzqsgflplzdamanhqj"
+
+[functions.consolidate-demo-data]
+verify_jwt = false

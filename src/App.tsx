@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,13 +10,15 @@ import { CustomerLayout } from "@/layouts/CustomerLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import EditorLayout from "@/layouts/EditorLayout";
 import { AuthProvider } from "@/hooks/useCustomerAuth";
+import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+// Import all pages
 import PromoLandingPage from "./pages/PromoLandingPage";
 import FoodVisionForm from "./pages/FoodVisionForm";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
-import CustomerLogin from "./pages/CustomerLogin";
+import CustomerLogin from "./pages/customer/CustomerLogin";
 import ForgotPassword from "./pages/customer/ForgotPassword";
 import ResetPassword from "./pages/customer/ResetPassword";
 
@@ -62,12 +64,36 @@ function App() {
           <Router>
             <AuthProvider>
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<PromoLandingPage />} />
-                <Route path="/food-vision-form" element={<FoodVisionForm />} />
                 <Route path="/login" element={<CustomerLogin />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
+                
+                {/* Food Vision Form - accessible with or without ClientAuthProvider */}
+                <Route path="/food-vision-form" element={
+                  <ClientAuthProvider>
+                    <FoodVisionForm />
+                  </ClientAuthProvider>
+                } />
+                
+                {/* Customer routes - protected, requiring authentication */}
+                <Route element={<ProtectedRoute />}>
+                  {/* All protected customer routes need ClientAuthProvider */}
+                  <Route element={<ClientAuthProvider>
+                    <CustomerLayout />
+                  </ClientAuthProvider>}>
+                    <Route path="/customer">
+                      <Route index element={<Navigate to="/customer/dashboard" replace />} />
+                      <Route path="dashboard" element={<CustomerDashboardPage />} />
+                      <Route path="submissions" element={<CustomerSubmissionsPage />} />
+                      <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+                      <Route path="gallery" element={<CustomerGalleryPage />} />
+                      <Route path="profile" element={<CustomerProfilePage />} />
+                    </Route>
+                  </Route>
+                </Route>
                 
                 {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
@@ -82,18 +108,6 @@ function App() {
                   <Route path="analytics" element={<SubmissionsAnalytics />} />
                   <Route path="alerts" element={<AlertsDashboard />} />
                   <Route path="users" element={<UserManagementPage />} />
-                </Route>
-
-                {/* Customer routes - protected */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/customer" element={<CustomerLayout />}>
-                    <Route index element={<Navigate to="/customer/dashboard" replace />} />
-                    <Route path="dashboard" element={<CustomerDashboardPage />} />
-                    <Route path="submissions" element={<CustomerSubmissionsPage />} />
-                    <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                    <Route path="gallery" element={<CustomerGalleryPage />} />
-                    <Route path="profile" element={<CustomerProfilePage />} />
-                  </Route>
                 </Route>
                 
                 {/* Editor routes */}

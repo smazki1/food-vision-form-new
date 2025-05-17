@@ -1,5 +1,7 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +18,15 @@ const ForgotPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await forgotPassword(email);
+      const { success, error } = await forgotPassword(email);
+      
+      if (success) {
+        toast.success("הוראות לאיפוס הסיסמה נשלחו לכתובת האימייל שלך");
+      } else {
+        toast.error(error || "לא ניתן לשלוח הוראות לאיפוס סיסמה");
+      }
+    } catch (error) {
+      toast.error("התרחשה שגיאה בתהליך שליחת הוראות לאיפוס סיסמה");
     } finally {
       setIsLoading(false);
     }

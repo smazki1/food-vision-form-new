@@ -11,7 +11,7 @@ import ClientsTable from "@/components/admin/clients/ClientsTable";
 const ClientsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const { data: clients = [], isLoading } = useClients({
+  const { clients, isLoading } = useClients({
     searchTerm,
     statusFilter
   });
