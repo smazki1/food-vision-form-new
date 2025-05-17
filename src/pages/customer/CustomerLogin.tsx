@@ -14,18 +14,25 @@ const CustomerLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, user, loading } = useCustomerAuth();
+  const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
   // If already logged in, redirect to dashboard
+  // Use useEffect to ensure this only runs once auth state is stable
   useEffect(() => {
-    if (user && !loading) {
-      console.log("User already authenticated, redirecting to:", from);
-      navigate(from, { replace: true });
-    }
-  }, [user, loading, navigate, from]);
+    const redirectIfLoggedIn = () => {
+      if (isAuthenticated && initialized && !loading) {
+        console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
+        navigate(from, { replace: true });
+      }
+    };
+
+    // Add a small delay to ensure state is stable
+    const timeoutId = setTimeout(redirectIfLoggedIn, 100);
+    return () => clearTimeout(timeoutId);
+  }, [isAuthenticated, loading, initialized, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +42,12 @@ const CustomerLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log("Attempting to login with:", email);
+      console.log("[AUTH_DEBUG] CustomerLogin - Attempting to login with:", email);
       const { success, error } = await signIn(email, password);
 
       if (success) {
         toast.success("התחברת בהצלחה");
-        console.log("Login successful, navigating to:", from);
+        console.log("[AUTH_DEBUG] CustomerLogin - Login successful");
         // Do not navigate here, let the useEffect handle redirection
         // This avoids race conditions with auth state updates
       } else {
@@ -48,7 +55,7 @@ const CustomerLogin: React.FC = () => {
         setIsLoading(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("[AUTH_DEBUG] CustomerLogin - Login error:", error);
       toast.error("שגיאה בהתחברות");
       setIsLoading(false);
     }
@@ -64,8 +71,13 @@ const CustomerLogin: React.FC = () => {
   }
 
   // Only show login form if not authenticated
-  if (user) {
-    return null; // Don't render anything while redirecting
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="ml-3">מעביר אותך לדף הבית...</div>
+      </div>
+    ); // Show loading while redirecting
   }
 
   return (
