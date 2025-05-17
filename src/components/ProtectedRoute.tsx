@@ -16,6 +16,17 @@ export const ProtectedRoute = () => {
       initialized,
       currentPath: location.pathname
     });
+
+    // Add guard to prevent multiple toasts
+    if (initialized && !loading && !isAuthenticated && location.pathname !== '/login') {
+      // Use session storage to prevent showing toast multiple times in redirect scenarios
+      const lastToastTime = sessionStorage.getItem('last_auth_toast_time');
+      const currentTime = Date.now();
+      if (!lastToastTime || currentTime - parseInt(lastToastTime) > 5000) {
+        toast.info('כניסה נדרשת כדי לגשת לדף זה');
+        sessionStorage.setItem('last_auth_toast_time', currentTime.toString());
+      }
+    }
   }, [user, loading, initialized, isAuthenticated, location.pathname]);
 
   // Case 1: Auth is still initializing or loading - show loading
@@ -28,13 +39,9 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Case 2: Auth check is done, not authenticated
+  // Case 2: Auth check is done, not authenticated - redirect to login
   if (!isAuthenticated) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, redirecting to login");
-    // Show toast when redirecting from protected route
-    if (location.pathname !== '/login') {
-      toast.info('כניסה נדרשת כדי לגשת לדף זה');
-    }
+    console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, redirecting to login with return URL:", location.pathname);
     
     // Store the current location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;

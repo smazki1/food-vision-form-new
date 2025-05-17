@@ -10,7 +10,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // With RLS enabled, this will only return the client record where user_auth_id matches auth.uid()
+    // With fixed RLS policies, this should work properly now
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
@@ -36,9 +36,11 @@ export const isUserClient = async (): Promise<boolean> => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
     
+    // Use the userId to check for client record
     const { data } = await supabase
       .from("clients")
       .select("client_id")
+      .eq("user_auth_id", session.user.id)
       .maybeSingle();
     
     return !!data;

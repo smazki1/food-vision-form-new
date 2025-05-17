@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientId } from "@/utils/clientAuthUtils";
@@ -15,38 +15,47 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
 
+  // Use React Query for data fetching with proper dependencies
   const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user) return null;
       return fetchClientId(user.id);
     },
-    enabled: !!user && isAuthenticated && initialized,
+    enabled: !!user && isAuthenticated && initialized, // Only run query when these conditions are met
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   useEffect(() => {
-    // Update authenticating state when both auth and client data loading are complete
+    // Debug state changes
+    console.log("[AUTH_DEBUG] ClientAuthProvider - State change:", { 
+      userId: user?.id, 
+      authLoading,
+      clientDataLoading,
+      clientId: clientData,
+      initialized,
+      isAuthenticated
+    });
+    
+    // Only update client ID when we have finished loading AND have data (or confirmed no data)
     if (initialized && !authLoading && (!user || !clientDataLoading)) {
-      console.log("[AUTH_DEBUG] ClientAuthProvider - Authentication check complete:", { 
-        user: !!user, 
-        isAuthenticated,
-        clientId: clientData || null,
-        authLoading,
-        clientDataLoading,
-        initialized
-      });
-      
-      if (clientData) {
-        console.log("[AUTH_DEBUG] ClientAuthProvider - Setting client ID:", clientData);
+      // If we have client data, update the state
+      if (clientData !== undefined) {
         setClientId(clientData);
       }
       
-      // Add a small delay to ensure state is stable
-      setTimeout(() => {
-        setAuthenticating(false);
-      }, 100);
+      // Mark authentication process as complete
+      setAuthenticating(false);
     }
   }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
+
+  // Provide clear debug info about our current state
+  console.log("[AUTH_DEBUG] ClientAuthProvider - Rendering with:", {
+    clientId,
+    authenticating,
+    isAuthenticated,
+    userId: user?.id
+  });
 
   return (
     <ClientAuthContext.Provider value={{ 
