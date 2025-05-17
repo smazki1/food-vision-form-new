@@ -10,7 +10,7 @@ import { CustomerLayout } from "@/layouts/CustomerLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import EditorLayout from "@/layouts/EditorLayout";
 import { AuthProvider } from "@/hooks/useCustomerAuth";
-import { ClientAuthProvider } from "@/hooks/useClientAuth";
+import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Import all pages
@@ -71,14 +71,20 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 
-                {/* Routes that require ClientAuthProvider */}
-                <Route element={<ClientAuthProvider />}>
-                  {/* Food Vision Form - accessible with or without login */}
-                  <Route path="/food-vision-form" element={<FoodVisionForm />} />
-                  
-                  {/* Customer routes - protected, requiring authentication */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path="/customer" element={<CustomerLayout />}>
+                {/* Food Vision Form - accessible with or without ClientAuthProvider */}
+                <Route path="/food-vision-form" element={
+                  <ClientAuthProvider>
+                    <FoodVisionForm />
+                  </ClientAuthProvider>
+                } />
+                
+                {/* Customer routes - protected, requiring authentication */}
+                <Route element={<ProtectedRoute />}>
+                  {/* All protected customer routes need ClientAuthProvider */}
+                  <Route element={<ClientAuthProvider>
+                    <CustomerLayout />
+                  </ClientAuthProvider>}>
+                    <Route path="/customer">
                       <Route index element={<Navigate to="/customer/dashboard" replace />} />
                       <Route path="dashboard" element={<CustomerDashboardPage />} />
                       <Route path="submissions" element={<CustomerSubmissionsPage />} />
