@@ -5,8 +5,7 @@ import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientId } from "@/utils/clientAuthUtils";
 import { ClientAuthContextType } from '@/types/clientAuthTypes';
-
-export const ClientAuthContext = createContext<ClientAuthContextType | undefined>(undefined);
+import { ClientAuthContext } from '@/contexts/ClientAuthContext';
 
 export const ClientAuthProvider: React.FC = () => {
   const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
@@ -25,7 +24,7 @@ export const ClientAuthProvider: React.FC = () => {
   useEffect(() => {
     // Update authenticating state when both auth and client data loading are complete
     if (initialized && !authLoading && (!user || !clientDataLoading)) {
-      console.log("[AUTH_DEBUG] useClientAuth - Authentication check complete:", { 
+      console.log("[AUTH_DEBUG] ClientAuthProvider - Authentication check complete:", { 
         user: !!user, 
         isAuthenticated,
         clientId: clientData || null,
@@ -35,7 +34,7 @@ export const ClientAuthProvider: React.FC = () => {
       });
       
       if (clientData) {
-        console.log("[AUTH_DEBUG] useClientAuth - Setting client ID:", clientData);
+        console.log("[AUTH_DEBUG] ClientAuthProvider - Setting client ID:", clientData);
         setClientId(clientData);
       }
       

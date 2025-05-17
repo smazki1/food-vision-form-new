@@ -10,7 +10,7 @@ import { CustomerLayout } from "@/layouts/CustomerLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import EditorLayout from "@/layouts/EditorLayout";
 import { AuthProvider } from "@/hooks/useCustomerAuth";
-import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
+import { ClientAuthProvider } from "@/hooks/useClientAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Import all pages
@@ -71,11 +71,12 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 
-                {/* ClientAuthProvider is applied to routes that need client authentication */}
+                {/* Routes that require ClientAuthProvider */}
                 <Route element={<ClientAuthProvider />}>
+                  {/* Food Vision Form - accessible with or without login */}
                   <Route path="/food-vision-form" element={<FoodVisionForm />} />
                   
-                  {/* Customer routes - protected */}
+                  {/* Customer routes - protected, requiring authentication */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/customer" element={<CustomerLayout />}>
                       <Route index element={<Navigate to="/customer/dashboard" replace />} />
