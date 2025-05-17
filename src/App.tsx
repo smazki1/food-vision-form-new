@@ -62,51 +62,49 @@ function App() {
         <TooltipProvider>
           <Router>
             <AuthProvider>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<PromoLandingPage />} />
-                <Route path="/food-vision-form" element={<FoodVisionForm />} />
-                <Route path="/login" element={<CustomerLogin />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                
-                {/* Admin routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="leads" element={<LeadsManagement />} />
-                  <Route path="clients" element={<ClientsList />} />
-                  <Route path="clients/:clientId" element={<ClientDetails />} />
-                  <Route path="packages" element={<PackagesManagementPage />} />
-                  <Route path="submissions" element={<SubmissionsPage />} />
-                  <Route path="queue" element={<SubmissionsQueuePage />} />
-                  <Route path="analytics" element={<SubmissionsAnalytics />} />
-                  <Route path="alerts" element={<AlertsDashboard />} />
-                  <Route path="users" element={<UserManagementPage />} />
-                </Route>
+              {/* Public routes */}
+              <Route path="/" element={<PromoLandingPage />} />
+              <Route path="/food-vision-form" element={<FoodVisionForm />} />
+              <Route path="/login" element={<CustomerLogin />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+              
+              {/* Admin routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="leads" element={<LeadsManagement />} />
+                <Route path="clients" element={<ClientsList />} />
+                <Route path="clients/:clientId" element={<ClientDetails />} />
+                <Route path="packages" element={<PackagesManagementPage />} />
+                <Route path="submissions" element={<SubmissionsPage />} />
+                <Route path="queue" element={<SubmissionsQueuePage />} />
+                <Route path="analytics" element={<SubmissionsAnalytics />} />
+                <Route path="alerts" element={<AlertsDashboard />} />
+                <Route path="users" element={<UserManagementPage />} />
+              </Route>
 
-                {/* Customer routes - protected */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/customer" element={<CustomerLayout />}>
-                    <Route index element={<Navigate to="/customer/dashboard" replace />} />
-                    <Route path="dashboard" element={<CustomerDashboardPage />} />
-                    <Route path="submissions" element={<CustomerSubmissionsPage />} />
-                    <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                    <Route path="gallery" element={<CustomerGalleryPage />} />
-                    <Route path="profile" element={<CustomerProfilePage />} />
-                  </Route>
+              {/* Customer routes - protected */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/customer" element={<CustomerLayout />}>
+                  <Route index element={<Navigate to="/customer/dashboard" replace />} />
+                  <Route path="dashboard" element={<CustomerDashboardPage />} />
+                  <Route path="submissions" element={<CustomerSubmissionsPage />} />
+                  <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+                  <Route path="gallery" element={<CustomerGalleryPage />} />
+                  <Route path="profile" element={<CustomerProfilePage />} />
                 </Route>
-                
-                {/* Editor routes */}
-                <Route path="/editor" element={<EditorLayout />}>
-                  <Route index element={<Navigate to="/editor/dashboard" replace />} />
-                  <Route path="dashboard" element={<EditorDashboardPage />} />
-                  <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
-                </Route>
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              </Route>
+              
+              {/* Editor routes */}
+              <Route path="/editor" element={<EditorLayout />}>
+                <Route index element={<Navigate to="/editor/dashboard" replace />} />
+                <Route path="dashboard" element={<EditorDashboardPage />} />
+                <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
             </AuthProvider>
           </Router>
           <Toaster />
