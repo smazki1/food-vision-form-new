@@ -16,7 +16,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [authenticating, setAuthenticating] = useState(true);
 
   // Use React Query for data fetching with proper dependencies
-  const { data: clientData, isLoading: clientDataLoading } = useQuery({
+  const { data: clientData, isLoading: clientDataLoading, error: clientError } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -24,14 +24,16 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     },
     enabled: !!user && isAuthenticated && initialized, // Only run query when these conditions are met
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1, // Only retry once to avoid excessive attempts if there's an RLS issue
   });
 
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG] ClientAuthProvider - State change:", { 
+    console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - State change:", { 
       userId: user?.id, 
       authLoading,
       clientDataLoading,
+      clientDataError: clientError ? 'Error occurred' : undefined,
       clientId: clientData,
       initialized,
       isAuthenticated
@@ -47,10 +49,16 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       // Mark authentication process as complete
       setAuthenticating(false);
     }
-  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
+  }, [user, authLoading, clientData, clientDataLoading, clientError, initialized, isAuthenticated]);
+
+  const contextValue: ClientAuthContextType = {
+    clientId, 
+    authenticating, 
+    isAuthenticated 
+  };
 
   // Provide clear debug info about our current state
-  console.log("[AUTH_DEBUG] ClientAuthProvider - Rendering with:", {
+  console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Rendering with:", {
     clientId,
     authenticating,
     isAuthenticated,
@@ -58,11 +66,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   });
 
   return (
-    <ClientAuthContext.Provider value={{ 
-      clientId, 
-      authenticating, 
-      isAuthenticated 
-    }}>
+    <ClientAuthContext.Provider value={contextValue}>
       {children}
     </ClientAuthContext.Provider>
   );

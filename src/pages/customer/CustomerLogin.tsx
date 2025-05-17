@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,10 @@ const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
+  const redirectAttempted = useRef(false);
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
@@ -23,57 +23,64 @@ const CustomerLogin: React.FC = () => {
   // If already logged in, redirect to dashboard
   useEffect(() => {
     // Log all state changes to debug the loop
-    console.log("[AUTH_DEBUG] CustomerLogin - Auth state check:", {
+    console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Auth state check:", {
       isAuthenticated, 
       initialized, 
       loading, 
       userId: user?.id,
       currentPath: location.pathname,
       targetPath: from, 
-      isRedirecting
+      redirectAttempted: redirectAttempted.current
     });
     
-    if (isAuthenticated && initialized && !loading && !isRedirecting) {
-      console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
-      setIsRedirecting(true);
+    // Only redirect when:
+    // 1. Authentication is fully initialized
+    // 2. Not currently loading
+    // 3. User is authenticated
+    // 4. We haven't already attempted a redirect (to prevent loops)
+    if (isAuthenticated && initialized && !loading && !redirectAttempted.current) {
+      console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - User already authenticated, redirecting to:", from);
       
-      // Use a small delay to ensure state is stable before navigation
+      // Mark that we've attempted a redirect to prevent loops
+      redirectAttempted.current = true;
+      
+      // Introduce small timeout to ensure state is stable before navigation
       const timeoutId = setTimeout(() => {
         navigate(from, { replace: true });
       }, 100);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, isRedirecting, user, location.pathname]);
+  }, [isAuthenticated, loading, initialized, navigate, from, user, location.pathname]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isLoading || isRedirecting) return;
+    if (isLoading) return;
     
     setIsLoading(true);
 
     try {
-      console.log("[AUTH_DEBUG] CustomerLogin - Attempting to login with:", email);
+      console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Attempting to login with:", email);
       const { success, error } = await signIn(email, password);
 
       if (success) {
         toast.success("התחברת בהצלחה");
-        console.log("[AUTH_DEBUG] CustomerLogin - Login successful");
+        console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Login successful");
         // Let the useEffect handle redirection after auth state updates
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
-        setIsLoading(false);
       }
     } catch (error) {
-      console.error("[AUTH_DEBUG] CustomerLogin - Login error:", error);
+      console.error("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Login error:", error);
       toast.error("שגיאה בהתחברות");
+    } finally {
       setIsLoading(false);
     }
   };
 
   // If still checking authentication status, show loading
-  if (loading && !isRedirecting) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -121,9 +128,9 @@ const CustomerLogin: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || isRedirecting}
+              disabled={isLoading}
             >
-              {isLoading || isRedirecting ? (
+              {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
               ) : (
                 "התחבר"
