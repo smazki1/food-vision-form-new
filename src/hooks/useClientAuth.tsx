@@ -54,5 +54,5 @@ export const useClientAuth = () => {
     }
   }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
 
-  return { clientId, authenticating };
+  return { clientId, authenticating, isAuthenticated };
 };

@@ -12,6 +12,7 @@ const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
@@ -22,22 +23,25 @@ const CustomerLogin: React.FC = () => {
   // If already logged in, redirect to dashboard
   // Use useEffect to ensure this only runs once auth state is stable
   useEffect(() => {
-    const redirectIfLoggedIn = () => {
-      if (isAuthenticated && initialized && !loading) {
-        console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
+    // Only redirect if we're not already in the process of redirecting
+    // and the auth state is fully initialized and we're authenticated
+    if (isAuthenticated && initialized && !loading && !redirecting) {
+      console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
+      setRedirecting(true);
+      
+      // Add a small delay to ensure state is stable before navigation
+      const timeoutId = setTimeout(() => {
         navigate(from, { replace: true });
-      }
-    };
-
-    // Add a small delay to ensure state is stable
-    const timeoutId = setTimeout(redirectIfLoggedIn, 100);
-    return () => clearTimeout(timeoutId);
-  }, [isAuthenticated, loading, initialized, navigate, from]);
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isAuthenticated, loading, initialized, navigate, from, redirecting]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isLoading) return;
+    if (isLoading || redirecting) return;
     
     setIsLoading(true);
 
@@ -48,8 +52,7 @@ const CustomerLogin: React.FC = () => {
       if (success) {
         toast.success("התחברת בהצלחה");
         console.log("[AUTH_DEBUG] CustomerLogin - Login successful");
-        // Do not navigate here, let the useEffect handle redirection
-        // This avoids race conditions with auth state updates
+        // Let the useEffect handle redirection after auth state updates
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
         setIsLoading(false);
@@ -70,12 +73,12 @@ const CustomerLogin: React.FC = () => {
     );
   }
 
-  // Only show login form if not authenticated
-  if (isAuthenticated) {
+  // Only show login form if not authenticated or if we're not currently redirecting
+  if (isAuthenticated && !redirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <div className="ml-3">מעביר אותך לדף הבית...</div>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+        <div className="text-center">מעביר אותך לדף הבית...</div>
       </div>
     ); // Show loading while redirecting
   }
@@ -120,7 +123,7 @@ const CustomerLogin: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading}
+              disabled={isLoading || redirecting}
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>

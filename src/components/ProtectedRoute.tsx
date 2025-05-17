@@ -17,7 +17,7 @@ export const ProtectedRoute = () => {
     });
   }, [user, loading, initialized, isAuthenticated, location.pathname]);
 
-  // Case 1: Auth is still initializing - show loading
+  // Case 1: Auth is still initializing or loading - show loading
   if (loading || !initialized) {
     console.log("[AUTH_DEBUG] ProtectedRoute - Still loading or initializing auth state, showing loading UI");
     return (

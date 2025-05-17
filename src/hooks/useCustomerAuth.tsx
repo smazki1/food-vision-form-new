@@ -10,7 +10,7 @@ export type AuthState = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  initialized: boolean; // New flag to track initial auth check completion
+  initialized: boolean; // Flag to track initial auth check completion
   isAuthenticated: boolean; // Explicit authentication status
 };
 
@@ -34,7 +34,6 @@ const initialAuthState: AuthState = {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // Use a single state object instead of multiple state variables
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
   const navigate = useNavigate();
 
@@ -121,7 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       console.log("[AUTH_DEBUG] Login successful:", data.user?.id);
-      // Note: Don't set loading to false here, as the onAuthStateChange handler will update the state
+      // onAuthStateChange will update the state
       return { success: true };
     } catch (error) {
       console.error('[AUTH_DEBUG] Login exception:', error);
@@ -133,7 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // customerLogin is an alias for signIn to maintain API compatibility
+  // customerLogin is an alias for signIn
   const customerLogin = async (email: string, password: string) => {
     return signIn(email, password);
   };
@@ -142,12 +141,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     updateAuthState({ loading: true });
     try {
       await supabase.auth.signOut();
-      // Don't navigate here - let onAuthStateChange handle it
+      // onAuthStateChange will handle updating the state
+      console.log("[AUTH_DEBUG] User signed out successfully");
     } catch (error) {
       console.error('[AUTH_DEBUG] Sign out error:', error);
       updateAuthState({ loading: false });
     }
-    // Don't set loading to false here, the onAuthStateChange handler will do that
   };
 
   const resetPassword = async (email: string) => {
@@ -170,7 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // forgotPassword is an alias for resetPassword to maintain API compatibility
+  // forgotPassword is an alias for resetPassword
   const forgotPassword = async (email: string) => {
     return resetPassword(email);
   };
