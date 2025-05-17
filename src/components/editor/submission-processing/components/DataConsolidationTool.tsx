@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 export const DataConsolidationTool: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,11 +28,32 @@ export const DataConsolidationTool: React.FC = () => {
       }
       
       setResult(data);
+      
+      // Show toast notification based on result
+      if (data.success) {
+        toast({
+          title: "איחוד נתונים הושלם",
+          description: data.message,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "שגיאה באיחוד נתונים",
+          description: data.error,
+          variant: "destructive", 
+        });
+      }
     } catch (err) {
       console.error("Error running consolidation:", err);
       setResult({
         success: false,
         error: err.message || 'An unknown error occurred'
+      });
+      
+      toast({
+        title: "שגיאה באיחוד נתונים",
+        description: err.message || 'An unknown error occurred',
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -62,9 +84,9 @@ export const DataConsolidationTool: React.FC = () => {
           </ol>
           
           {result && (
-            <Alert variant={result.success ? "success" : "destructive"} className="mt-4">
+            <Alert variant={result.success ? "default" : "destructive"} className={`mt-4 ${result.success ? "border-green-500 bg-green-50" : ""}`}>
               {result.success ? (
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (
                 <AlertCircle className="h-4 w-4" />
               )}
