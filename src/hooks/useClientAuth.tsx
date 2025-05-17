@@ -1,46 +1,16 @@
 
-import { useState, useEffect } from "react";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
-import { useQuery } from "@tanstack/react-query";
-import { fetchClientId } from "@/utils/clientAuthUtils";
+import { useContext } from 'react';
+import { ClientAuthContext } from '@/contexts/ClientAuthContext';
 
 export const useClientAuth = () => {
-  const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
-  const [clientId, setClientId] = useState<string | null>(null);
-  const [authenticating, setAuthenticating] = useState(true);
-
-  const { data: clientData, isLoading: clientDataLoading } = useQuery({
-    queryKey: ["clientId", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      return fetchClientId(user.id);
-    },
-    enabled: !!user && isAuthenticated && initialized,
-  });
-
-  useEffect(() => {
-    // Update authenticating state when both auth and client data loading are complete
-    if (initialized && !authLoading && (!user || !clientDataLoading)) {
-      console.log("[AUTH_DEBUG] useClientAuth - Authentication check complete:", { 
-        user: !!user, 
-        isAuthenticated,
-        clientId: clientData || null,
-        authLoading,
-        clientDataLoading,
-        initialized
-      });
-      
-      if (clientData) {
-        console.log("[AUTH_DEBUG] useClientAuth - Setting client ID:", clientData);
-        setClientId(clientData);
-      }
-      
-      // Add a small delay to ensure state is stable
-      setTimeout(() => {
-        setAuthenticating(false);
-      }, 100);
-    }
-  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
-
-  return { clientId, authenticating, isAuthenticated };
+  const context = useContext(ClientAuthContext);
+  
+  if (context === undefined) {
+    throw new Error('[AUTH_DEBUG] useClientAuth must be used within a ClientAuthProvider');
+  }
+  
+  return context;
 };
+
+// Re-export the ClientAuthProvider for convenience
+export { ClientAuthProvider } from '@/providers/ClientAuthProvider';
