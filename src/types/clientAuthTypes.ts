@@ -4,7 +4,6 @@ export interface ClientAuthState {
   clientId: string | null;
   authenticating: boolean;
   isAuthenticated: boolean;
-  initialized: boolean;
 }
 
 export interface ClientAuthContextType extends ClientAuthState {
