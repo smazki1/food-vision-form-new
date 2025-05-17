@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ClientDetailsTab from "@/components/food-vision/ClientDetailsTab";
 import DishesTab from "@/components/food-vision/DishesTab";
@@ -16,11 +16,15 @@ import ThankYouModal from "@/components/food-vision/ThankYouModal";
 import { useFoodVisionForm } from "@/hooks/use-food-vision-form";
 import { useSubmissions } from "@/hooks/useSubmissions";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { useClientProfile } from "@/hooks/useClientProfile";
 import { useFoodVisionFormValidation } from "@/hooks/useFoodVisionFormValidation";
 import { useFoodVisionFormSubmission } from "@/hooks/useFoodVisionFormSubmission";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 
 const FoodVisionForm: React.FC = () => {
+  const { user } = useCustomerAuth();
   const { clientId, authenticating } = useClientAuth();
+  const { clientProfile } = useClientProfile(user?.id);
   
   const {
     activeTab, setActiveTab,
@@ -34,6 +38,18 @@ const FoodVisionForm: React.FC = () => {
 
   // Get submissions and remaining servings for the client
   const { submissions, remainingServings, loading: loadingSubmissions } = useSubmissions(clientId);
+
+  // Pre-fill client details from profile if user is logged in
+  useEffect(() => {
+    if (clientProfile && Object.keys(clientDetails).some(key => !clientDetails[key as keyof typeof clientDetails])) {
+      setClientDetails({
+        restaurantName: clientProfile.restaurant_name || clientDetails.restaurantName,
+        contactName: clientProfile.contact_name || clientDetails.contactName,
+        phoneNumber: clientProfile.phone || clientDetails.phoneNumber,
+        email: clientProfile.email || clientDetails.email,
+      });
+    }
+  }, [clientProfile, clientDetails, setClientDetails]);
 
   // Form validation
   const { 
@@ -72,6 +88,9 @@ const FoodVisionForm: React.FC = () => {
         referenceImages: Array.isArray(dish.referenceImages) ? dish.referenceImages : []
       }))
     : [];
+
+  // Check if user is logged in to determine if client details should be editable
+  const isClientDetailsEditable = !user;
 
   return (
     <div dir="rtl" className="min-h-screen bg-background">
@@ -116,7 +135,7 @@ const FoodVisionForm: React.FC = () => {
             </TabsList>
 
             <TabsContent value="client">
-              <ClientDetailsTab clientDetails={clientDetails} setClientDetails={setClientDetails} />
+              <ClientDetailsTab clientDetails={clientDetails} setClientDetails={setClientDetails} readOnly={!isClientDetailsEditable} />
             </TabsContent>
             <TabsContent value="dishes">
               <DishesTab dishes={safeDishes} setDishes={setDishes} />

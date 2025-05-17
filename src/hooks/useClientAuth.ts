@@ -1,32 +1,17 @@
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 
 export const useClientAuth = () => {
-  const [clientId, setClientId] = useState<string | undefined>(undefined);
-  const [authenticating, setAuthenticating] = useState(true);
+  const { user, loading } = useCustomerAuth();
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          // In a real app, we would fetch the client_id associated with this user
-          // For demo purposes, we could hard-code a client_id for testing
-          console.log("User authenticated:", user);
-        } else {
-          console.log("No authenticated user found");
-        }
-        setAuthenticating(false);
-      } catch (error) {
-        console.error("Auth error:", error);
-        setAuthenticating(false);
-      }
+    if (user) {
+      console.log("User authenticated:", user);
+    } else if (!loading) {
+      console.log("No authenticated user found");
     }
-    
-    checkAuth();
-  }, []);
+  }, [user, loading]);
 
-  return { clientId, authenticating };
+  return { clientId: user?.id, authenticating: loading };
 };

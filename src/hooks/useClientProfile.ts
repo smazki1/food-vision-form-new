@@ -1,84 +1,76 @@
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Client } from "@/types/client";
+import { toast } from "sonner";
+import { useState } from "react";
 
-export function useClientProfile() {
-  const [clientProfile, setClientProfile] = useState<Client | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+export function useClientProfile(userId?: string) {
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchClientProfile() {
+  const { data: clientProfile, isLoading } = useQuery({
+    queryKey: ["clientProfile", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
       try {
-        setLoading(true);
-        
-        // First get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          setLoading(false);
-          return;
-        }
-        
-        // Then fetch client profile linked to this user
-        const { data, error } = await supabase
-          .from("clients")
+        // First get the client record associated with this user
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
           .select(`
             *,
-            service_packages(package_name, total_servings, max_edits_per_serving)
+            service_packages(*)
           `)
-          .eq("user_auth_id", user.id)
-          .single();
+          .eq('user_id', userId)
+          .maybeSingle();
 
-        if (error) throw error;
-        
-        setClientProfile(data as Client);
+        if (clientError) {
+          console.error("Error fetching client profile:", clientError);
+          setError("שגיאה בטעינת פרטי הלקוח");
+          return null;
+        }
+
+        if (!clientData) {
+          setError("לא נמצאו פרטי לקוח");
+          return null;
+        }
+
+        return clientData;
       } catch (err) {
-        console.error("Error fetching client profile:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch client profile"));
-      } finally {
-        setLoading(false);
+        console.error("Exception in client profile fetch:", err);
+        setError("שגיאה לא צפויה בטעינת פרטי הלקוח");
+        return null;
       }
-    }
+    },
+    enabled: !!userId
+  });
 
-    fetchClientProfile();
-  }, []);
-
-  const updateNotificationPreferences = async (
-    emailNotifications: boolean, 
-    appNotifications: boolean
-  ) => {
-    if (!clientProfile) return false;
+  const updateNotificationPreferences = async (emailEnabled: boolean, appEnabled: boolean) => {
+    if (!userId || !clientProfile?.client_id) return false;
     
     try {
       const { error } = await supabase
-        .from("clients")
+        .from('clients')
         .update({ 
-          email_notifications: emailNotifications,
-          app_notifications: appNotifications
+          email_notifications: emailEnabled,
+          app_notifications: appEnabled,
         })
-        .eq("client_id", clientProfile.client_id);
-        
-      if (error) throw error;
-      
-      // Update local state
-      setClientProfile({
-        ...clientProfile, 
-        email_notifications: emailNotifications,
-        app_notifications: appNotifications
-      } as Client);
+        .eq('client_id', clientProfile.client_id);
+
+      if (error) {
+        console.error("Error updating notification preferences:", error);
+        return false;
+      }
       
       return true;
     } catch (err) {
-      console.error("Error updating notification preferences:", err);
+      console.error("Exception updating notification preferences:", err);
       return false;
     }
   };
 
   return {
     clientProfile,
-    loading,
+    loading: isLoading,
     error,
     updateNotificationPreferences
   };
