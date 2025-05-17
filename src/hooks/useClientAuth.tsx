@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
 export const useClientAuth = () => {
-  const { user, loading } = useCustomerAuth();
+  const { user, loading: authLoading } = useCustomerAuth();
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
 
-  const { data: clientData } = useQuery({
+  const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -34,20 +34,23 @@ export const useClientAuth = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      console.log("[useClientAuth] User authenticated:", user.id);
-    } else if (!loading) {
-      console.log("[useClientAuth] No authenticated user found");
-    }
-    
-    if (!loading) {
+    // Only update authenticating state when both auth and client data loading are complete
+    if (!authLoading && (!user || !clientDataLoading)) {
+      console.log("[useClientAuth] Authentication check complete:", { 
+        user: !!user, 
+        clientId: clientData || null,
+        authLoading,
+        clientDataLoading 
+      });
+      
       if (clientData) {
         console.log("[useClientAuth] Setting client ID:", clientData);
         setClientId(clientData);
       }
+      
       setAuthenticating(false);
     }
-  }, [user, loading, clientData]);
+  }, [user, authLoading, clientData, clientDataLoading]);
 
   return { clientId, authenticating };
 };

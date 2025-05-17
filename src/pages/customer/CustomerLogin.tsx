@@ -14,21 +14,24 @@ const CustomerLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, user } = useCustomerAuth();
+  const { signIn, user, loading } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
   // If already logged in, redirect to dashboard
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       console.log("User already authenticated, redirecting to:", from);
-      navigate(from);
+      navigate(from, { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, loading, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return;
+    
     setIsLoading(true);
 
     try {
@@ -38,17 +41,32 @@ const CustomerLogin: React.FC = () => {
       if (success) {
         toast.success("התחברת בהצלחה");
         console.log("Login successful, navigating to:", from);
-        navigate(from, { replace: true });
+        // Do not navigate here, let the useEffect handle redirection
+        // This avoids race conditions with auth state updates
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("שגיאה בהתחברות");
-    } finally {
       setIsLoading(false);
     }
   };
+
+  // If still checking authentication status, show loading
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Only show login form if not authenticated
+  if (user) {
+    return null; // Don't render anything while redirecting
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
