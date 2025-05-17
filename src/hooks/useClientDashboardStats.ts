@@ -35,7 +35,7 @@ export function useClientDashboardStats(clientId: string | undefined) {
 
       console.log('[useClientDashboardStats] Current user:', user.id);
 
-      // Verify client access - Fix the ambiguous column issue by explicitly referencing the table
+      // Verify client access - Use fully qualified column names to avoid ambiguity
       const { data: clientCheck, error: clientError } = await supabase
         .from("clients")
         .select("client_id, user_auth_id")

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useSubmissions } from "@/hooks/useSubmissions";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -10,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate } from "@/utils/formatDate";
 import { Link, useSearchParams } from "react-router-dom";
-import { Submission, SubmissionStatus } from "@/api/submissionApi";
+import { Submission } from "@/api/submissionApi";
 import { EyeIcon, FilterIcon } from "lucide-react";
 
 // Map status to badge variants
@@ -21,6 +20,15 @@ const statusBadgeVariant: Record<string, string> = {
   "הערות התקבלו": "warning",
   "הושלמה ואושרה": "green"
 };
+
+// Valid statuses for filtering
+const validStatuses = [
+  "ממתינה לעיבוד",
+  "בעיבוד",
+  "מוכנה להצגה",
+  "הערות התקבלו",
+  "הושלמה ואושרה"
+];
 
 // Map item types to display text
 const itemTypeDisplay: Record<string, string> = {

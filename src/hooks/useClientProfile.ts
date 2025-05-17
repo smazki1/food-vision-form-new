@@ -9,33 +9,69 @@ export function useClientProfile(userId?: string) {
   const { data: clientProfile, isLoading } = useQuery({
     queryKey: ["clientProfile", userId],
     queryFn: async () => {
-      if (!userId) return null;
+      if (!userId) {
+        console.log("[useClientProfile] No userId provided");
+        return null;
+      }
       
       try {
+        console.log("[useClientProfile] Fetching client profile for userId:", userId);
+        
         // First get the client record associated with this user
         const { data: clientData, error: clientError } = await supabase
           .from('clients')
           .select(`
-            *,
-            service_packages(package_name, total_servings)
+            client_id, 
+            restaurant_name, 
+            contact_name,
+            phone,
+            email,
+            remaining_servings,
+            email_notifications,
+            app_notifications,
+            client_status,
+            current_package_id
           `)
           .eq('user_auth_id', userId)
           .maybeSingle();
 
         if (clientError) {
-          console.error("Error fetching client profile:", clientError);
+          console.error("[useClientProfile] Error fetching client data:", clientError);
           setError("שגיאה בטעינת פרטי הלקוח");
           return null;
         }
 
+        console.log("[useClientProfile] Client data fetched:", clientData);
+
         if (!clientData) {
+          console.log("[useClientProfile] No client data found for user:", userId);
           setError("לא נמצאו פרטי לקוח");
           return null;
         }
 
+        // If we have a package ID, fetch the package details
+        if (clientData.current_package_id) {
+          console.log("[useClientProfile] Fetching package details for packageId:", clientData.current_package_id);
+          
+          const { data: packageData, error: packageError } = await supabase
+            .from('service_packages')
+            .select('package_name, total_servings')
+            .eq('package_id', clientData.current_package_id)
+            .single();
+
+          if (packageError) {
+            console.error("[useClientProfile] Error fetching package details:", packageError);
+            // Don't fail completely, just return client data without package
+          } else if (packageData) {
+            console.log("[useClientProfile] Package data fetched:", packageData);
+            // Add package data to client object
+            clientData.service_packages = packageData;
+          }
+        }
+
         return clientData;
       } catch (err) {
-        console.error("Exception in client profile fetch:", err);
+        console.error("[useClientProfile] Exception in client profile fetch:", err);
         setError("שגיאה לא צפויה בטעינת פרטי הלקוח");
         return null;
       }
@@ -56,13 +92,13 @@ export function useClientProfile(userId?: string) {
         .eq('client_id', clientProfile.client_id);
 
       if (error) {
-        console.error("Error updating notification preferences:", error);
+        console.error("[useClientProfile] Error updating notification preferences:", error);
         return false;
       }
       
       return true;
     } catch (err) {
-      console.error("Exception updating notification preferences:", err);
+      console.error("[useClientProfile] Exception updating notification preferences:", err);
       return false;
     }
   };
