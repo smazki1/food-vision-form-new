@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -7,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRight, Package, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const statusTranslations: Record<string, { text: string, variant: string }> = {
   "ממתינה לעיבוד": { text: "ממתינות לעיבוד", variant: "yellow" },
@@ -18,10 +18,58 @@ const statusTranslations: Record<string, { text: string, variant: string }> = {
 };
 
 export function CustomerDashboard() {
-  const { clientProfile, loading: profileLoading } = useClientProfile();
-  const { statusCounts, loading: statsLoading } = useClientDashboardStats(clientProfile?.client_id);
+  const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile();
+  const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
+
+  // Check if there are any submissions with count > 0
+  const hasSubmissions = React.useMemo(() => {
+    if (!statusCounts) return false;
+    return statusCounts.some(item => item.count > 0);
+  }, [statusCounts]);
+
+  // Debug logging in development
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[CustomerDashboard] Debug:', {
+        clientProfile: {
+          clientId: clientProfile?.client_id,
+          userAuthId: clientProfile?.user_auth_id,
+          restaurantName: clientProfile?.restaurant_name,
+          remainingServings: clientProfile?.remaining_servings,
+          currentPackageId: clientProfile?.current_package_id
+        },
+        profileLoading,
+        profileError,
+        statusCounts,
+        statsLoading,
+        statsError,
+        hasSubmissions
+      });
+    }
+  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions]);
+
+  // Handle errors with more detail
+  if (profileError || statsError) {
+    const error = profileError || statsError;
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>שגיאה בטעינת הנתונים</AlertTitle>
+        <AlertDescription>
+          <div>
+            {error?.message || "אירעה שגיאה בטעינת הנתונים"}
+          </div>
+          {process.env.NODE_ENV === 'development' && error && (
+            <pre className="mt-2 text-xs">
+              {JSON.stringify(error, null, 2)}
+            </pre>
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -29,6 +77,17 @@ export function CustomerDashboard() {
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
+    );
+  }
+
+  if (!clientProfile) {
+    return (
+      <Alert>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          לא נמצא פרופיל לקוח. אנא התחבר מחדש או צור קשר עם התמיכה.
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -83,7 +142,7 @@ export function CustomerDashboard() {
           <CardDescription>סקירת מספר המנות לפי סטטוס</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {statusCounts && statusCounts.length > 0 ? (
+          {hasSubmissions ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {statusCounts.map((item) => {
                 const statusInfo = statusTranslations[item.status] || { text: item.status, variant: "default" };
@@ -109,6 +168,19 @@ export function CustomerDashboard() {
           ) : (
             <div className="text-center py-8">
               <p className="text-muted-foreground">אין מנות שהועלו עדיין</p>
+              {process.env.NODE_ENV === 'development' && (
+                <pre className="mt-2 text-xs text-left">
+                  Debug Info:
+                  {JSON.stringify({
+                    clientId: clientProfile?.client_id,
+                    userAuthId: clientProfile?.user_auth_id,
+                    statusCounts,
+                    isLoading,
+                    hasError: !!profileError || !!statsError,
+                    hasSubmissions
+                  }, null, 2)}
+                </pre>
+              )}
               <Button className="mt-4" asChild>
                 <Link to="/food-vision-form">העלה מנות עכשיו</Link>
               </Button>
