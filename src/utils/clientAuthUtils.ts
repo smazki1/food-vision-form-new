@@ -10,11 +10,10 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG_FINAL_FIX] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Direct simple query matching our RLS policy: auth.uid() = user_auth_id
+    // Simple direct query matching our new RLS policy: auth.uid() = user_auth_id
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
-      .eq("user_auth_id", userId)
       .maybeSingle();
       
     if (error) {
@@ -41,14 +40,13 @@ export const isUserClient = async (): Promise<boolean> => {
     
     console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - Checking client status for user:", session.user.id);
     
-    // Direct simple query that matches the RLS policy exactly
+    // Simple query that will work with our new RLS policy
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
-      .eq("user_auth_id", session.user.id)
       .maybeSingle();
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+    if (error) {
       console.error("[AUTH_DEBUG_FINAL_FIX] isUserClient - Error checking client status:", error);
       return false;
     }
