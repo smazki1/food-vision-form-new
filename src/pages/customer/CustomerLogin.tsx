@@ -45,6 +45,7 @@ const CustomerLogin: React.FC = () => {
           <CardTitle>התחברות למערכת</CardTitle>
           <CardDescription>
             התחבר כדי לצפות ולנהל את המנות שלך
+            <div className="mt-2 text-sm">Cursor Test - Local to Preview</div>
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
