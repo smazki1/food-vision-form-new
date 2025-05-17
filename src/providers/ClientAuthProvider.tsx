@@ -1,5 +1,6 @@
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { Outlet } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientId } from "@/utils/clientAuthUtils";
@@ -7,11 +8,7 @@ import { ClientAuthContextType } from '@/types/clientAuthTypes';
 
 export const ClientAuthContext = createContext<ClientAuthContextType | undefined>(undefined);
 
-interface ClientAuthProviderProps {
-  children: ReactNode;
-}
-
-export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
+export const ClientAuthProvider: React.FC = () => {
   const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
@@ -55,7 +52,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       authenticating, 
       isAuthenticated 
     }}>
-      {children}
+      <Outlet />
     </ClientAuthContext.Provider>
   );
 };
