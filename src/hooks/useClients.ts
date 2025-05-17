@@ -1,7 +1,8 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Client, ClientStatus } from "@/types/client";
+import { useCurrentUserRole } from "./useCurrentUserRole";
 
 interface UseClientsOptions {
   searchTerm?: string;
@@ -9,9 +10,22 @@ interface UseClientsOptions {
 }
 
 export function useClients({ searchTerm = "", statusFilter = "all" }: UseClientsOptions = {}) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const { isAdmin, isAccountManager } = useCurrentUserRole();
+  
+  const {
+    data: clients = [],
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
     queryKey: ["clients", searchTerm, statusFilter],
     queryFn: async () => {
+      // If not admin or account manager, don't fetch the data
+      if (!isAdmin && !isAccountManager) {
+        return [];
+      }
+      
       let query = supabase
         .from("clients")
         .select("*")
@@ -39,6 +53,19 @@ export function useClients({ searchTerm = "", statusFilter = "all" }: UseClients
       }
 
       return data as Client[];
-    }
+    },
+    enabled: isAdmin || isAccountManager
   });
+  
+  const refreshClients = () => {
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+  };
+  
+  return {
+    clients,
+    isLoading,
+    error,
+    refetch,
+    refreshClients
+  };
 }

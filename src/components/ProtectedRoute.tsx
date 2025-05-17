@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { toast } from 'sonner';
 
 export const ProtectedRoute = () => {
   const { user, loading, initialized, isAuthenticated } = useCustomerAuth();
@@ -30,6 +31,11 @@ export const ProtectedRoute = () => {
   // Case 2: Auth check is done, not authenticated
   if (!isAuthenticated) {
     console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, redirecting to login");
+    // Show toast when redirecting from protected route
+    if (location.pathname !== '/login') {
+      toast.info('כניסה נדרשת כדי לגשת לדף זה');
+    }
+    
     // Store the current location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

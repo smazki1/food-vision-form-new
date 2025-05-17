@@ -531,6 +531,10 @@ export type Database = {
         Args: { user_id: string; role_name: string }
         Returns: boolean
       }
+      is_account_manager: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean

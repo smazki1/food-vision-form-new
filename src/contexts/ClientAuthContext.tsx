@@ -2,4 +2,12 @@
 import { createContext } from 'react';
 import { ClientAuthContextType } from '@/types/clientAuthTypes';
 
-export const ClientAuthContext = createContext<ClientAuthContextType | undefined>(undefined);
+// Create a context with empty default values
+export const ClientAuthContext = createContext<ClientAuthContextType>({
+  clientId: null,
+  authenticating: true,
+  isAuthenticated: false,
+});
+
+// Export the context for use in other components
+export default ClientAuthContext;
