@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useSubmissions } from "@/hooks/useSubmissions";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -40,8 +39,8 @@ const itemTypeDisplay: Record<string, string> = {
 
 export function CustomerSubmissionsList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status") || "all";
-  const initialType = searchParams.get("type") || "all";
+  const initialStatus = searchParams.get("status") || "";
+  const initialType = searchParams.get("type") || "";
 
   const [statusFilter, setStatusFilter] = useState<string>(initialStatus);
   const [typeFilter, setTypeFilter] = useState<string>(initialType);
@@ -53,8 +52,8 @@ export function CustomerSubmissionsList() {
   // Filter submissions based on filters
   const filteredSubmissions = submissions.filter((sub) => {
     return (
-      (statusFilter === "all" ? true : sub.submission_status === statusFilter) &&
-      (typeFilter === "all" ? true : sub.item_type === typeFilter) &&
+      (statusFilter ? sub.submission_status === statusFilter : true) &&
+      (typeFilter ? sub.item_type === typeFilter : true) &&
       (searchTerm
         ? sub.item_name_at_submission.toLowerCase().includes(searchTerm.toLowerCase())
         : true)
@@ -74,8 +73,8 @@ export function CustomerSubmissionsList() {
   };
 
   const clearFilters = () => {
-    setStatusFilter("all");
-    setTypeFilter("all");
+    setStatusFilter("");
+    setTypeFilter("");
     setSearchTerm("");
     setSearchParams({});
   };
@@ -132,7 +131,7 @@ export function CustomerSubmissionsList() {
                 <SelectValue placeholder="סטטוס" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">כל הסטטוסים</SelectItem>
+                <SelectItem value="">כל הסטטוסים</SelectItem>
                 <SelectItem value="ממתינה לעיבוד">ממתינה לעיבוד</SelectItem>
                 <SelectItem value="בעיבוד">בעיבוד</SelectItem>
                 <SelectItem value="מוכנה להצגה">מוכנה להצגה</SelectItem>
@@ -145,13 +144,13 @@ export function CustomerSubmissionsList() {
                 <SelectValue placeholder="סוג פריט" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">כל הסוגים</SelectItem>
+                <SelectItem value="">כל הסוגים</SelectItem>
                 <SelectItem value="dish">מנה</SelectItem>
                 <SelectItem value="cocktail">קוקטייל</SelectItem>
                 <SelectItem value="drink">משקה</SelectItem>
               </SelectContent>
             </Select>
-            {(statusFilter !== "all" || typeFilter !== "all" || searchTerm) && (
+            {(statusFilter || typeFilter || searchTerm) && (
               <Button variant="ghost" onClick={clearFilters}>
                 נקה סינונים
               </Button>
