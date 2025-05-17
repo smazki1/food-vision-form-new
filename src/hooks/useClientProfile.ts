@@ -14,12 +14,10 @@ export function useClientProfile(userId?: string) {
       
       try {
         // First get the client record associated with this user
+        // Limit the fields we select from the service_packages to avoid deep nesting
         const { data: clientData, error: clientError } = await supabase
           .from('clients')
-          .select(`
-            *,
-            service_packages(id:package_id, package_name, total_servings)
-          `)
+          .select('*, service_packages!current_package_id(package_name, total_servings)')
           .eq('user_id', userId)
           .maybeSingle();
 
