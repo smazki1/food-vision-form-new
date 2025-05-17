@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import './App.css';
@@ -20,6 +19,9 @@ import AlertsDashboard from './pages/admin/AlertsDashboard';
 import SubmissionsAnalytics from './pages/admin/SubmissionsAnalytics';
 
 // Customer Pages
+import CustomerLogin from './pages/customer/CustomerLogin';
+import ForgotPassword from './pages/customer/ForgotPassword';
+import ResetPassword from './pages/customer/ResetPassword';
 import CustomerDashboardPage from './pages/customer/CustomerDashboardPage';
 import CustomerProfilePage from './pages/customer/CustomerProfilePage';
 import CustomerSubmissionsPage from './pages/customer/CustomerSubmissionsPage';
@@ -35,7 +37,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* Admin Routes */}
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="dashboard" element={<Dashboard />} />
@@ -48,8 +50,13 @@ function App() {
           <Route path="analytics" element={<SubmissionsAnalytics />} />
         </Route>
 
-        {/* Customer Routes */}
-        <Route path="/customer" element={<CustomerLayout />}>
+        {/* Customer Auth Routes */}
+        <Route path="/login" element={<CustomerLogin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Protected Customer Routes */}
+        <Route path="/dashboard/customer" element={<CustomerLayout />}>
           <Route index element={<CustomerDashboardPage />} />
           <Route path="dashboard" element={<CustomerDashboardPage />} />
           <Route path="profile" element={<CustomerProfilePage />} />
