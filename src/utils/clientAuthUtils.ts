@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const fetchClientId = async (userId: string): Promise<string | null> => {
   if (!userId) {
-    console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - No userId provided");
+    console.log("[AUTH_DEBUG_FINAL_FIX] fetchClientId - No userId provided");
     return null;
   }
   
-  console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Looking up client ID for user:", userId);
+  console.log("[AUTH_DEBUG_FINAL_FIX] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Use a simple direct query that matches our new RLS policy
+    // Direct simple query matching our RLS policy: auth.uid() = user_auth_id
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
@@ -18,14 +18,14 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
       .maybeSingle();
       
     if (error) {
-      console.error("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Error fetching client ID:", error);
+      console.error("[AUTH_DEBUG_FINAL_FIX] fetchClientId - Error fetching client ID:", error);
       return null;
     }
     
-    console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Client data found:", data);
+    console.log("[AUTH_DEBUG_FINAL_FIX] fetchClientId - Client data found:", data);
     return data?.client_id || null;
   } catch (error) {
-    console.error("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Exception fetching client ID:", error);
+    console.error("[AUTH_DEBUG_FINAL_FIX] fetchClientId - Exception fetching client ID:", error);
     return null;
   }
 };
@@ -35,13 +35,13 @@ export const isUserClient = async (): Promise<boolean> => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      console.log("[AUTH_DEBUG_LOOP_FIX] isUserClient - No session found");
+      console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - No session found");
       return false;
     }
     
-    console.log("[AUTH_DEBUG_LOOP_FIX] isUserClient - Checking client status for user:", session.user.id);
+    console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - Checking client status for user:", session.user.id);
     
-    // Direct simple query that matches our RLS policy
+    // Direct simple query that matches the RLS policy exactly
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
@@ -49,13 +49,13 @@ export const isUserClient = async (): Promise<boolean> => {
       .maybeSingle();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-      console.error("[AUTH_DEBUG_LOOP_FIX] isUserClient - Error checking client status:", error);
+      console.error("[AUTH_DEBUG_FINAL_FIX] isUserClient - Error checking client status:", error);
       return false;
     }
     
     return !!data;
   } catch (error) {
-    console.error("[AUTH_DEBUG_LOOP_FIX] isUserClient - Exception checking client status:", error);
+    console.error("[AUTH_DEBUG_FINAL_FIX] isUserClient - Exception checking client status:", error);
     return false;
   }
 };

@@ -15,12 +15,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
 
-  // Use React Query with improved dependencies and error handling
+  // Use React Query with improved dependencies and clear state management
   const { data: clientData, isLoading: clientDataLoading } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Fetching client ID for user:", user.id);
+      console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Fetching client ID for user:", user.id);
       return fetchClientId(user.id);
     },
     enabled: !!user?.id && isAuthenticated && initialized, 
@@ -28,7 +28,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     retry: 1,
     meta: {
       onError: (error: Error) => {
-        console.error("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Error fetching client data:", error);
+        console.error("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Error fetching client data:", error);
         setClientId(null);
         setAuthenticating(false);
       }
@@ -37,7 +37,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth state:", { 
+    console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
       clientDataLoading,
@@ -50,16 +50,16 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     if (initialized) {
       // If not authenticated or auth is still loading
       if (!isAuthenticated || authLoading) {
-        console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Not authenticated or still loading");
+        console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Not authenticated or still loading");
         setClientId(null);
         // Only finish authenticating if we're sure auth is not still loading
         if (!authLoading) {
           setAuthenticating(false);
         }
       } 
-      // If authenticated and client data is ready
+      // If authenticated and client data fetch is complete (either success or failure)
       else if (isAuthenticated && !clientDataLoading) {
-        console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
+        console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
         setClientId(clientData as string | null);
         setAuthenticating(false);
       }
@@ -72,7 +72,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     isAuthenticated 
   };
 
-  console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Final state:", contextValue);
+  console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Final state:", contextValue);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

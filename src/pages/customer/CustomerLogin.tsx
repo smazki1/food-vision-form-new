@@ -20,10 +20,10 @@ const CustomerLogin: React.FC = () => {
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
-  // Handle redirection when already logged in
+  // Handle redirection when already logged in - simplified logic to avoid loops
   useEffect(() => {
-    // Log all state changes to debug the loop
-    console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Auth state check:", {
+    // Log auth state to help track login flow
+    console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Auth check:", {
       isAuthenticated, 
       initialized, 
       loading, 
@@ -33,21 +33,19 @@ const CustomerLogin: React.FC = () => {
       redirectAttempted: redirectAttempted.current
     });
     
-    // Only redirect when auth is fully initialized, not loading, and user is authenticated
+    // Only redirect when fully authenticated and not in a loading state
     if (isAuthenticated && initialized && !loading && !redirectAttempted.current) {
-      console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - User already authenticated, redirecting to:", from);
+      console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - User authenticated, redirecting to:", from);
       
-      // Mark that we've attempted a redirect to prevent loops
+      // Set the flag first to prevent multiple redirects
       redirectAttempted.current = true;
       
-      // Use timeout to ensure state is stable before navigation
-      const timeoutId = setTimeout(() => {
+      // Use a small timeout to ensure all state updates are processed
+      setTimeout(() => {
         navigate(from, { replace: true });
       }, 100);
-      
-      return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, user, location.pathname]);
+  }, [isAuthenticated, loading, initialized, navigate, from, user]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,18 +55,18 @@ const CustomerLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Attempting to login with:", email);
+      console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Attempting login with:", email);
       const { success, error } = await signIn(email, password);
 
       if (success) {
         toast.success("התחברת בהצלחה");
-        console.log("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Login successful");
+        console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Login successful");
         // Let the useEffect handle redirection after auth state updates
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
-      console.error("[AUTH_DEBUG_LOOP_FIX] CustomerLogin - Login error:", error);
+      console.error("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Login error:", error);
       toast.error("שגיאה בהתחברות");
     } finally {
       setIsLoading(false);
@@ -80,6 +78,16 @@ const CustomerLogin: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If already authenticated, don't render the login form
+  if (isAuthenticated && initialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="ml-3">מועבר לדף הבית...</div>
       </div>
     );
   }

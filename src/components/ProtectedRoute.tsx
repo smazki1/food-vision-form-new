@@ -12,7 +12,7 @@ export const ProtectedRoute = () => {
 
   // Use an effect to handle navigation logic separately from rendering
   useEffect(() => {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Auth state check:", {
+    console.log("[AUTH_DEBUG_FINAL_FIX] ProtectedRoute - Auth state check:", {
       userId: user?.id,
       isAuthenticated,
       loading,
@@ -24,14 +24,11 @@ export const ProtectedRoute = () => {
     if (initialized && !loading) {
       // If not authenticated and not at login already, prepare for redirect
       if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Not authenticated, will redirect");
+        console.log("[AUTH_DEBUG_FINAL_FIX] ProtectedRoute - Not authenticated, will redirect");
         
-        // Show toast only if not recently shown
-        const lastToastTime = sessionStorage.getItem('last_auth_toast_time');
-        const currentTime = Date.now();
-        if (!lastToastTime || currentTime - parseInt(lastToastTime) > 5000) {
+        // Only show toast if not coming from a page load or direct URL access
+        if (document.referrer) {
           toast.info('כניסה נדרשת כדי לגשת לדף זה');
-          sessionStorage.setItem('last_auth_toast_time', currentTime.toString());
         }
         
         setShouldRedirect(true);
@@ -46,7 +43,7 @@ export const ProtectedRoute = () => {
 
   // Still initializing or loading - show loading UI
   if (!initialized || loading) {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Still loading auth state");
+    console.log("[AUTH_DEBUG_FINAL_FIX] ProtectedRoute - Still loading auth state");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -56,12 +53,12 @@ export const ProtectedRoute = () => {
 
   // Auth check complete, redirect if needed
   if (shouldRedirect && redirectPath) {
-    console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Redirecting to:", redirectPath);
+    console.log("[AUTH_DEBUG_FINAL_FIX] ProtectedRoute - Redirecting to:", redirectPath);
     // Store current location for return after login
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   // Auth check complete, user is authenticated
-  console.log("[AUTH_DEBUG_LOOP_FIX] ProtectedRoute - Rendering protected content");
+  console.log("[AUTH_DEBUG_FINAL_FIX] ProtectedRoute - Rendering protected content");
   return <Outlet />;
 };
