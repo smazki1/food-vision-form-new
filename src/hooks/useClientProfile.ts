@@ -18,7 +18,7 @@ export function useClientProfile(userId?: string) {
           .from('clients')
           .select(`
             *,
-            service_packages(*)
+            service_packages(id:package_id, package_name, total_servings)
           `)
           .eq('user_id', userId)
           .maybeSingle();

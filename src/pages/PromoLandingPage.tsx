@@ -2,7 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { GalleryCarousel } from "@/components/promo/GalleryCarousel";
+import GalleryCarousel from "@/components/promo/GalleryCarousel";
 import { Link } from "react-router-dom";
 
 const PromoLandingPage = () => {
