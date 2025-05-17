@@ -17,6 +17,11 @@ export type Client = {
   user_auth_id: string | null;
   email_notifications?: boolean;
   app_notifications?: boolean;
+  // Add a service_packages property to handle the join data
+  service_packages?: {
+    package_name: string;
+    total_servings: number;
+  };
 };
 
 export type ClientStatus = Database["public"]["Enums"]["client_status_type"];

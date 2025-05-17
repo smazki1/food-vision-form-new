@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -37,7 +38,6 @@ export function CustomerDashboard() {
       console.debug('[CustomerDashboard] Debug:', {
         clientProfile: {
           clientId: clientProfile?.client_id,
-          userAuthId: clientProfile?.user_auth_id,
           restaurantName: clientProfile?.restaurant_name,
           remainingServings: clientProfile?.remaining_servings,
           currentPackageId: clientProfile?.current_package_id
@@ -114,7 +114,7 @@ export function CustomerDashboard() {
                 {clientProfile?.current_package_id ? (
                   <>
                     <Package className="inline-block mr-2 h-5 w-5" />
-                    {(clientProfile as any)?.service_packages?.package_name || "חבילה נוכחית"}
+                    {clientProfile?.service_packages?.package_name || "חבילה נוכחית"}
                   </>
                 ) : (
                   "אין חבילה פעילה"
@@ -122,7 +122,7 @@ export function CustomerDashboard() {
               </h3>
               <p className="text-sm text-muted-foreground">
                 {clientProfile?.remaining_servings} מנות נותרו מתוך{" "}
-                {(clientProfile as any)?.service_packages?.total_servings || "-"}
+                {clientProfile?.service_packages?.total_servings || "-"}
               </p>
             </div>
             <Button asChild>
@@ -181,7 +181,6 @@ export function CustomerDashboard() {
                   Debug Info:
                   {JSON.stringify({
                     clientId: clientProfile?.client_id,
-                    userAuthId: clientProfile?.user_auth_id,
                     statusCounts,
                     isLoading,
                     hasError: !!profileError || !!statsError,

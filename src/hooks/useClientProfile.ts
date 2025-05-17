@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
+import { Client } from "@/types/client";
 
 export function useClientProfile(userId?: string) {
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +31,8 @@ export function useClientProfile(userId?: string) {
             email_notifications,
             app_notifications,
             client_status,
-            current_package_id
+            current_package_id,
+            user_auth_id
           `)
           .eq('user_auth_id', userId)
           .maybeSingle();
@@ -49,6 +51,9 @@ export function useClientProfile(userId?: string) {
           return null;
         }
 
+        // Cast to Client type with optional service_packages
+        let clientResult = clientData as Client;
+
         // If we have a package ID, fetch the package details
         if (clientData.current_package_id) {
           console.log("[useClientProfile] Fetching package details for packageId:", clientData.current_package_id);
@@ -65,11 +70,11 @@ export function useClientProfile(userId?: string) {
           } else if (packageData) {
             console.log("[useClientProfile] Package data fetched:", packageData);
             // Add package data to client object
-            clientData.service_packages = packageData;
+            clientResult.service_packages = packageData;
           }
         }
 
-        return clientData;
+        return clientResult;
       } catch (err) {
         console.error("[useClientProfile] Exception in client profile fetch:", err);
         setError("שגיאה לא צפויה בטעינת פרטי הלקוח");
