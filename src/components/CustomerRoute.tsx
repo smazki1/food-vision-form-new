@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
@@ -8,11 +8,18 @@ interface CustomerRouteProps {
 }
 
 export const CustomerRoute: React.FC<CustomerRouteProps> = ({ children }) => {
-  const { isCustomer, loading, user } = useCustomerAuth();
+  const { user, loading } = useCustomerAuth();
   const location = useLocation();
 
   // Debug logs
-  console.log("CustomerRoute - Auth state:", { isCustomer, loading, userId: user?.id });
+  useEffect(() => {
+    console.log("CustomerRoute - Auth state:", { 
+      userId: user?.id,
+      isAuthenticated: !!user,
+      loading, 
+      currentPath: location.pathname 
+    });
+  }, [user, loading, location.pathname]);
   
   if (loading) {
     return (
@@ -22,7 +29,7 @@ export const CustomerRoute: React.FC<CustomerRouteProps> = ({ children }) => {
     );
   }
 
-  if (!isCustomer) {
+  if (!user) {
     console.log("Not authenticated, redirecting to login");
     // Redirect to login page but save the attempted location
     return <Navigate to="/login" state={{ from: location }} replace />;

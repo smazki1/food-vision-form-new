@@ -34,11 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Only redirect on sign out - let other navigation happen naturally
-        if (event === 'SIGNED_OUT') {
-          navigate('/login');
-        }
       }
     );
 
@@ -84,6 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    navigate('/login');
   };
 
   const resetPassword = async (email: string) => {

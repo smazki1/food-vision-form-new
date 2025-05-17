@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,22 +14,31 @@ const CustomerLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { customerLogin } = useCustomerAuth();
+  const { signIn, user } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (user) {
+      console.log("User already authenticated, redirecting to:", from);
+      navigate(from);
+    }
+  }, [user, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { success, error } = await customerLogin(email, password);
+      console.log("Attempting to login with:", email);
+      const { success, error } = await signIn(email, password);
 
       if (success) {
         toast.success("התחברת בהצלחה");
         console.log("Login successful, navigating to:", from);
-        navigate(from);
+        navigate(from, { replace: true });
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
