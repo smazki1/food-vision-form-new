@@ -10,7 +10,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG_LOOP_FIX] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Use the most direct query possible with no joins or complex conditions
+    // Use a simple direct query that matches our new RLS policy
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
@@ -41,14 +41,14 @@ export const isUserClient = async (): Promise<boolean> => {
     
     console.log("[AUTH_DEBUG_LOOP_FIX] isUserClient - Checking client status for user:", session.user.id);
     
-    // Direct simple query to avoid recursion
+    // Direct simple query that matches our RLS policy
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
       .eq("user_auth_id", session.user.id)
       .maybeSingle();
     
-    if (error) {
+    if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
       console.error("[AUTH_DEBUG_LOOP_FIX] isUserClient - Error checking client status:", error);
       return false;
     }

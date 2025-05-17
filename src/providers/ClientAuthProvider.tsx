@@ -60,7 +60,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       // If authenticated and client data is ready
       else if (isAuthenticated && !clientDataLoading) {
         console.log("[AUTH_DEBUG_LOOP_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
-        // Use type assertion to handle the clientData
         setClientId(clientData as string | null);
         setAuthenticating(false);
       }
