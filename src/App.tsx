@@ -16,7 +16,7 @@ import PromoLandingPage from "./pages/PromoLandingPage";
 import FoodVisionForm from "./pages/FoodVisionForm";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
-import CustomerLogin from "./pages/CustomerLogin";
+import CustomerLogin from "./pages/customer/CustomerLogin";
 import ForgotPassword from "./pages/customer/ForgotPassword";
 import ResetPassword from "./pages/customer/ResetPassword";
 
@@ -62,6 +62,7 @@ function App() {
           <Router>
             <AuthProvider>
               <Routes>
+                {/* Public routes */}
                 <Route path="/" element={<PromoLandingPage />} />
                 <Route path="/food-vision-form" element={<FoodVisionForm />} />
                 <Route path="/login" element={<CustomerLogin />} />
@@ -85,8 +86,8 @@ function App() {
                 </Route>
 
                 {/* Customer routes - protected */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/customer" element={<CustomerLayout />}>
+                <Route path="/customer" element={<ProtectedRoute />}>
+                  <Route element={<CustomerLayout />}>
                     <Route index element={<Navigate to="/customer/dashboard" replace />} />
                     <Route path="dashboard" element={<CustomerDashboardPage />} />
                     <Route path="submissions" element={<CustomerSubmissionsPage />} />

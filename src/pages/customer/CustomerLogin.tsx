@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -16,7 +17,7 @@ const CustomerLogin: React.FC = () => {
   const { customerLogin } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
-  const from = location.state?.from?.pathname || "/dashboard/customer";
+  const from = location.state?.from?.pathname || "/customer/dashboard";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +28,13 @@ const CustomerLogin: React.FC = () => {
 
       if (success) {
         toast.success("התחברת בהצלחה");
+        console.log("Login successful, navigating to:", from);
         navigate(from);
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("שגיאה בהתחברות");
     } finally {
       setIsLoading(false);

@@ -26,12 +26,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log("AuthProvider initialized");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Only redirect on sign out - let other navigation happen naturally
         if (event === 'SIGNED_OUT') {
           navigate('/login');
         }
@@ -40,6 +44,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -50,18 +55,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      console.log("Attempting login for:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error.message);
         return { success: false, error: error.message };
       }
 
+      console.log("Login successful:", data.user?.id);
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login exception:', error);
       return { 
         success: false, 
         error: 'התרחשה שגיאה בתהליך ההתחברות. אנא נסה שוב מאוחר יותר.' 
@@ -105,7 +113,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Check if the user is a customer
   // For now, we'll consider any authenticated user a customer
-  // In a more complex app, we'd check against a specific role or user type
   const isCustomer = !!user;
 
   return (

@@ -1,9 +1,11 @@
 
-import { Navigate, Outlet } from 'react-router-dom';
+import React from 'react';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 
 export const ProtectedRoute = () => {
   const { user, loading } = useCustomerAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -14,8 +16,10 @@ export const ProtectedRoute = () => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Save the attempted location so we can redirect after login
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  console.log("User authenticated in ProtectedRoute:", user.id);
   return <Outlet />;
 };
