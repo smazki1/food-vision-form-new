@@ -27,7 +27,9 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
     isAuthenticated,
     hasLinkedClientRecord,
     authLoadingTimeout,
-    clientAuthLoadingTimeout 
+    clientAuthLoadingTimeout,
+    hasError,
+    errorMessage
   } = useUnifiedAuth();
   
   const location = useLocation();
@@ -45,13 +47,15 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
       hasLinkedClientRecord,
       authLoadingTimeout,
       clientAuthLoadingTimeout,
+      hasError,
+      errorMessage,
       path: location.pathname,
       timestamp: Date.now()
     });
   }, [
     user, role, clientId, isAuthenticated, initialized, loading, 
-    hasLinkedClientRecord, authLoadingTimeout, clientAuthLoadingTimeout, 
-    location.pathname
+    hasLinkedClientRecord, authLoadingTimeout, clientAuthLoadingTimeout,
+    hasError, errorMessage, location.pathname
   ]);
   
   // Calculate current loading time for display

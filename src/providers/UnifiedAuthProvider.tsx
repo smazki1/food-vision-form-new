@@ -109,6 +109,7 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       updateAuthState({
         clientId,
         hasLinkedClientRecord: !!clientId,
+        role: 'customer',
         loading: false
       });
       
@@ -142,6 +143,40 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     initialized: authState.initialized,
     hasError: authState.hasError
   });
+
+  // Render error state for role determination issues
+  if (authState.hasError && 
+      (authState.errorMessage?.includes('Failed to determine user role') || 
+       authState.errorMessage === 'User has no defined role or client record')) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-destructive mb-2">
+              שגיאה בטעינת פרטי המשתמש
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              לא הצלחנו לזהות את התפקיד שלך במערכת. ייתכן שיש בעיה בהרשאות או בחיבור למסד הנתונים.
+            </p>
+            <div className="space-y-2">
+              <button 
+                onClick={() => window.location.reload()}
+                className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
+              >
+                רענן את הדף
+              </button>
+              <button 
+                onClick={signOut}
+                className="w-full bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
+              >
+                התנתק וחזור לדף הבית
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <UnifiedAuthContext.Provider value={contextValue}>

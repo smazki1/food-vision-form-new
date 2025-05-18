@@ -1,146 +1,208 @@
 
-import { useEffect } from 'react';
-import { unifiedAuthService } from '@/services/unifiedAuthService';
+import { useEffect, useCallback } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { UserRole } from '@/types/unifiedAuthTypes';
 
 /**
- * Hook to initialize authentication state and listen for auth changes
+ * Hook to handle authentication initialization and user role determination
  */
-export const useAuthInitialization = (updateAuthState: (updates: any) => void) => {
+export const useAuthInitialization = (
+  updateAuthState: (updates: any) => void
+) => {
+  /**
+   * Determines user role and client ID
+   */
+  const determineUserRole = useCallback(async (currentUser: User): Promise<void> => {
+    if (!currentUser) {
+      updateAuthState({ role: null, clientId: null });
+      return;
+    }
+
+    console.log('[UNIFIED_AUTH] Determining role for user:', currentUser.id);
+
+    try {
+      // FIRST: Verify we can access the database at all
+      console.log('[UNIFIED_AUTH] Testing database connection...');
+      const { data: testData, error: testError } = await supabase.from('clients').select('count').limit(1);
+      console.log('[UNIFIED_AUTH] Database test result:', { success: !testError, error: testError?.message });
+      
+      // Check for client record FIRST (most users are clients)
+      console.log('[UNIFIED_AUTH] Checking for client record...');
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('client_id, restaurant_name')
+        .eq('user_auth_id', currentUser.id)
+        .maybeSingle();
+
+      console.log('[UNIFIED_AUTH] Client query result:', { 
+        success: !clientError, 
+        hasData: !!clientData,
+        clientId: clientData?.client_id || null,
+        error: clientError?.message || null,
+        errorCode: clientError?.code || null 
+      });
+
+      if (clientError) {
+        console.error('[UNIFIED_AUTH] Client query error:', clientError);
+        
+        // If it's an RLS error, we might be an admin/editor
+        if (clientError.code === 'PGRST116' || clientError.message?.includes('permission')) {
+          console.log('[UNIFIED_AUTH] Client access denied, checking for staff roles...');
+        } else {
+          throw clientError;
+        }
+      } else if (clientData) {
+        // User is a customer
+        updateAuthState({
+          role: 'customer' as UserRole,
+          clientId: clientData.client_id,
+          hasLinkedClientRecord: true
+        });
+        console.log('[UNIFIED_AUTH] User identified as customer:', clientData.client_id);
+        return;
+      }
+
+      // Check for user roles (admin/editor)
+      console.log('[UNIFIED_AUTH] Checking for user roles...');
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', currentUser.id);
+
+      console.log('[UNIFIED_AUTH] Roles query result:', { 
+        success: !rolesError, 
+        roles: userRoles,
+        error: rolesError?.message || null 
+      });
+
+      if (rolesError) {
+        console.error('[UNIFIED_AUTH] Roles query error:', rolesError);
+        throw rolesError;
+      } else if (userRoles && userRoles.length > 0) {
+        // User has an explicit role
+        const userRole = userRoles[0].role as UserRole;
+        updateAuthState({
+          role: userRole,
+          clientId: null, // Admins/editors don't have client records
+          hasLinkedClientRecord: false
+        });
+        console.log('[UNIFIED_AUTH] User role determined:', userRole);
+        return;
+      }
+
+      // If we get here, user has no role and no client record
+      console.warn('[UNIFIED_AUTH] User has no defined role or client record');
+      updateAuthState({
+        role: null,
+        clientId: null,
+        hasLinkedClientRecord: false,
+        hasError: true,
+        errorMessage: 'User has no defined role or client record'
+      });
+      
+    } catch (error) {
+      console.error('[UNIFIED_AUTH] Error determining user role:', error);
+      updateAuthState({ 
+        hasError: true,
+        errorMessage: `Failed to determine user role: ${error.message}`,
+        loading: false
+      });
+    }
+  }, [updateAuthState]);
+
+  /**
+   * Handles auth state changes from Supabase
+   */
   useEffect(() => {
-    console.log("[UNIFIED_AUTH] Authentication initializer started");
-    let isMounted = true;
+    console.log('[UNIFIED_AUTH] Setting up auth state listener...');
     
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = unifiedAuthService.onAuthStateChange(
-      (event, currentSession) => {
-        if (!isMounted) return;
-        
-        const user = currentSession?.user ?? null;
-        
-        console.log(`[UNIFIED_AUTH] Auth event '${event}' for user:`, user?.id);
-        updateAuthState({
-          session: currentSession,
-          user: user,
-          initialized: true,
-          // Only set loading to false when it's a sign-in event or session event
-          // For sign-out we still need to wait for role/client checks to complete
-          ...(event === 'SIGNED_IN' && { loading: false }),
-          ...(event === 'SIGNED_OUT' && { 
-            role: null, 
-            clientId: null, 
-            loading: false, 
-            hasLinkedClientRecord: false 
-          }),
-        });
-        
-        // When user signs in, initiate role and client record checks
-        if (event === 'SIGNED_IN' && user) {
-          initUserData(user.id);
-        }
-      }
-    );
-
-    // THEN check for existing session
-    const checkInitialSession = async () => {
-      try {
-        const { session, error } = await unifiedAuthService.getSession();
-        
-        if (!isMounted) return;
-        
-        console.log("[UNIFIED_AUTH] Initial session check:", 
-          session?.user?.id, 
-          error ? `Error: ${error.message}` : 'No error'
-        );
-        
-        // Update basic auth state
-        updateAuthState({
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[UNIFIED_AUTH] Auth state changed:', event, session?.user?.id);
+      
+      // Update state based on auth event
+      if (event === 'SIGNED_IN' && session?.user) {
+        updateAuthState({ 
+          user: session.user,
           session: session,
-          user: session?.user ?? null,
-          initialized: true,
+          isAuthenticated: true,
+          loading: true // Still need to fetch role
         });
         
-        // If we have a session, initiate role and client record checks
-        if (session?.user) {
-          initUserData(session.user.id);
-        } else {
-          // No session, complete loading
-          updateAuthState({ loading: false });
-        }
-      } catch (error) {
-        if (!isMounted) return;
-        
-        console.error("[UNIFIED_AUTH] Error checking initial session:", error);
+        // Determine role in next tick to avoid Supabase SDK deadlock
+        setTimeout(() => {
+          determineUserRole(session.user);
+        }, 0);
+      } 
+      else if (event === 'SIGNED_OUT') {
         updateAuthState({
-          initialized: true,
+          user: null,
+          session: null,
+          isAuthenticated: false,
+          role: null,
+          clientId: null,
+          hasLinkedClientRecord: false,
           loading: false,
+          initialized: true
+        });
+      }
+    });
+
+    // Check for existing session on mount
+    const checkInitialSession = async () => {
+      console.log('[UNIFIED_AUTH] Checking for existing session...');
+      
+      try {
+        updateAuthState({ loading: true });
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('[UNIFIED_AUTH] Session error:', error);
+          updateAuthState({ 
+            hasError: true,
+            errorMessage: error.message,
+            loading: false,
+            initialized: true
+          });
+          return;
+        }
+        
+        const { session } = data;
+        console.log('[UNIFIED_AUTH] Initial session check:', { hasSession: !!session });
+        
+        if (session?.user) {
+          updateAuthState({
+            user: session.user,
+            session: session,
+            isAuthenticated: true,
+          });
+          
+          // Determine role
+          await determineUserRole(session.user);
+        }
+        
+        // Mark initialization as complete
+        updateAuthState({ 
+          loading: false,
+          initialized: true
+        });
+      } catch (error) {
+        console.error('[UNIFIED_AUTH] Initial session check error:', error);
+        updateAuthState({
           hasError: true,
-          errorMessage: "Failed to check authentication status."
+          errorMessage: error instanceof Error ? error.message : 'Unknown error during initialization',
+          loading: false,
+          initialized: true
         });
       }
     };
     
-    // Fetch role and client data for authenticated user
-    const initUserData = async (userId: string) => {
-      try {
-        // Run role and client ID checks in parallel
-        const [roleResult, clientResult] = await Promise.all([
-          unifiedAuthService.fetchUserRole(userId),
-          unifiedAuthService.fetchClientIdForUser(userId)
-        ]);
-        
-        if (!isMounted) return;
-        
-        // Handle role result
-        if (roleResult.error) {
-          console.error("[UNIFIED_AUTH] Error fetching role:", roleResult.error);
-          updateAuthState({
-            role: 'customer', // Default to customer on error
-            hasError: true,
-            errorMessage: roleResult.error.message
-          });
-        } else {
-          updateAuthState({ 
-            role: roleResult.role 
-          });
-        }
-        
-        // Handle client ID result
-        if (clientResult.error) {
-          console.error("[UNIFIED_AUTH] Error fetching client ID:", clientResult.error);
-          updateAuthState({
-            clientId: null,
-            hasLinkedClientRecord: false,
-            hasError: true,
-            errorMessage: clientResult.error.message
-          });
-        } else {
-          updateAuthState({
-            clientId: clientResult.clientId,
-            hasLinkedClientRecord: !!clientResult.clientId
-          });
-        }
-        
-        // Complete loading
-        updateAuthState({ loading: false });
-      } catch (err) {
-        if (!isMounted) return;
-        
-        console.error("[UNIFIED_AUTH] Exception in initUserData:", err);
-        updateAuthState({
-          loading: false,
-          hasError: true,
-          errorMessage: "Error initializing user data"
-        });
-      }
-    };
-
-    // Start the initialization process
     checkInitialSession();
-
-    // Clean up on unmount
+    
+    // Cleanup
     return () => {
-      isMounted = false;
       subscription.unsubscribe();
     };
-  }, [updateAuthState]);
+  }, [updateAuthState, determineUserRole]);
 };
