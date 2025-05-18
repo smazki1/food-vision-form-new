@@ -1,9 +1,9 @@
-
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 import { Home, Package, Image, User, LogOut, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,19 @@ export function CustomerLayout() {
     clientRecordStatus,
     errorState
   } = useClientAuth();
+  const { isAuthenticated: mainAuthIsAuthenticated, user: mainAuthUser } = useCustomerAuth();
   const { toast } = useToast();
+
+  console.log("[AUTH_DEBUG] CustomerLayout - State received:", {
+    clientId,
+    authenticating,
+    clientRecordStatus,
+    errorState,
+    mainAuthIsAuthenticated,
+    mainAuthUser: mainAuthUser?.id,
+    pathname: location.pathname,
+    timestamp: Date.now()
+  });
 
   // Check if the current path starts with the given path
   const isActive = (path: string) => {
