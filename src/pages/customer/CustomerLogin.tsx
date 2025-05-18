@@ -18,6 +18,7 @@ const CustomerLogin: React.FC = () => {
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
   const { hasLinkedClientRecord, errorState, clientRecordStatus } = useClientAuth();
   const redirectAttempted = useRef(false);
+  const loginTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
@@ -62,27 +63,64 @@ const CustomerLogin: React.FC = () => {
     }
   }, [isAuthenticated, loading, initialized, navigate, from, user, hasLinkedClientRecord, clientRecordStatus, errorState]);
 
+  // Add timeout detection to prevent infinite loading
+  useEffect(() => {
+    return () => {
+      // Clean up timeout on unmount
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (isLoading) return;
     
+    // Clear any existing timeout
+    if (loginTimeoutRef.current) {
+      clearTimeout(loginTimeoutRef.current);
+    }
+    
     setIsLoading(true);
+
+    // Set a timeout to prevent infinite loading state
+    loginTimeoutRef.current = setTimeout(() => {
+      if (isLoading) {
+        console.error("[AUTH_DEBUG_FINAL_] CustomerLogin - Login timeout after 30 seconds");
+        setIsLoading(false);
+        toast.error("התחברות נכשלה - תם הזמן המוקצב. אנא נסה שוב או צור קשר עם התמיכה.");
+      }
+    }, 30000);
 
     try {
       console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - Attempting login with:", email);
       const { success, error } = await signIn(email, password);
+
+      // Clear the timeout since we got a response
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+        loginTimeoutRef.current = null;
+      }
 
       if (success) {
         toast.success("התחברת בהצלחה");
         console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - Login successful");
         // Let the useEffect handle redirection after auth state updates
       } else {
+        console.error("[AUTH_DEBUG_FINAL_] CustomerLogin - Login failed:", error);
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
+      // Clear the timeout since we got a response
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+        loginTimeoutRef.current = null;
+      }
+
       console.error("[AUTH_DEBUG_FINAL_] CustomerLogin - Login error:", error);
-      toast.error("שגיאה בהתחברות");
+      toast.error("שגיאה בהתחברות. אנא נסה שוב או צור קשר עם התמיכה.");
     } finally {
       setIsLoading(false);
     }

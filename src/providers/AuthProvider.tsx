@@ -27,6 +27,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log("[AUTH_DEBUG_FINAL_] AuthProvider initialized");
     let mounted = true;
+
+    // Test Supabase connection
+    const testConnection = async () => {
+      try {
+        console.log("[AUTH_DEBUG_FINAL_] Testing Supabase connection...");
+        const { data, error } = await supabase.auth.getSession();
+        console.log("[AUTH_DEBUG_FINAL_] Supabase connection test:", { 
+          success: !error, 
+          hasSession: !!data?.session,
+          error: error?.message 
+        });
+      } catch (err) {
+        console.error("[AUTH_DEBUG_FINAL_] Supabase connection test failed:", err);
+      }
+    };
+    
+    testConnection();
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -47,8 +64,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // THEN check for existing session
     const checkInitialSession = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log("[AUTH_DEBUG_FINAL_] Initial session check:", initialSession?.user?.id);
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        console.log("[AUTH_DEBUG_FINAL_] Initial session check:", 
+          initialSession?.user?.id, 
+          error ? `Error: ${error.message}` : 'No error'
+        );
         
         if (mounted) {
           updateAuthState({
@@ -82,10 +102,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("[AUTH_DEBUG_FINAL_] Attempting login for:", email);
       updateAuthState({ loading: true });
       
+      // Test Supabase connection first
+      try {
+        console.log("[AUTH_DEBUG_FINAL_] Testing Supabase connection before login...");
+        const { data: testData, error: testError } = await supabase.auth.getSession();
+        console.log("[AUTH_DEBUG_FINAL_] Connection test result:", { 
+          hasData: !!testData, 
+          hasError: !!testError,
+          errorMessage: testError?.message
+        });
+      } catch (testError) {
+        console.error("[AUTH_DEBUG_FINAL_] Connection test error:", testError);
+      }
+      
+      console.log("[AUTH_DEBUG_FINAL_] Calling auth.signInWithPassword...");
+      const startTime = Date.now();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      const duration = Date.now() - startTime;
+      console.log(`[AUTH_DEBUG_FINAL_] auth.signInWithPassword completed in ${duration}ms`);
 
       if (error) {
         console.error("[AUTH_DEBUG_FINAL_] Login error:", error.message);
@@ -100,7 +139,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateAuthState({ loading: false });
       return { 
         success: false, 
-        error: 'התרחשה שגיאה בתהליך ההתחברות. אנא נסה שוב מאוחר יותר.' 
+        error: error instanceof Error ? error.message : 'התרחשה שגיאה בתהליך ההתחברות. אנא נסה שוב מאוחר יותר.' 
       };
     }
   };

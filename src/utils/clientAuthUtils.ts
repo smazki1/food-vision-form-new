@@ -8,6 +8,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   }
   
   console.log("[AUTH_DEBUG_FINAL_] fetchClientId - Looking up client ID for user:", userId);
+  const startTime = Date.now();
   
   try {
     // First verify the user is authenticated to catch potential auth issues early
@@ -22,12 +23,19 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
       return null;
     }
     
+    // Log authentication confirmation
+    console.log("[AUTH_DEBUG_FINAL_] fetchClientId - User authenticated:", authData.user.id);
+    
     // Directly query the clients table with improved error handling
+    console.log("[AUTH_DEBUG_FINAL_] fetchClientId - Querying clients table...");
     const { data, error } = await supabase
       .from("clients")
       .select("client_id, restaurant_name, email, user_auth_id, remaining_servings, current_package_id")
       .eq("user_auth_id", userId)
       .maybeSingle();
+      
+    const duration = Date.now() - startTime;
+    console.log(`[AUTH_DEBUG_FINAL_] fetchClientId - Query completed in ${duration}ms`);
       
     if (error) {
       // Specific handling for RLS policy recursion error
@@ -56,7 +64,11 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
     
     return data?.client_id || null;
   } catch (error) {
+    // Include stack trace for better debugging
     console.error("[AUTH_DEBUG_FINAL_] fetchClientId - Exception fetching client ID:", error);
+    if (error instanceof Error) {
+      console.error("[AUTH_DEBUG_FINAL_] Stack trace:", error.stack);
+    }
     
     // Re-throw policy-related errors so they can be handled specifically
     if (error instanceof Error && 
