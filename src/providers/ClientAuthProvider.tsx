@@ -57,24 +57,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     (errorMessage) => updateClientAuthState({ errorState: errorMessage })
   );
 
-  // Explicit check to ensure authentication process completes
-  useEffect(() => {
-    if (initialized && !authLoading) {
-      if (!isAuthenticated) {
-        // Not authenticated, ensure we're not stuck in loading state
-        updateClientAuthState({
-          authenticating: false,
-          clientRecordStatus: 'not-found'
-        });
-        console.log("[AUTH_DEBUG] ClientAuthProvider - Not authenticated, explicitly ending authentication process");
-      } else if (!clientQueryLoading && clientData !== undefined) {
-        // Authentication and client query complete, ensure we're not stuck
-        updateClientAuthState({ authenticating: false });
-        console.log("[AUTH_DEBUG] ClientAuthProvider - Auth and client query complete, explicitly ending authentication");
-      }
-    }
-  }, [initialized, authLoading, isAuthenticated, clientQueryLoading, clientData, updateClientAuthState]);
-
   // ****** זהו ה-useEffect הראשי שמטפל בהכל ביחד ******
   // Update client state when data is available
   useEffect(() => {
