@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -15,14 +16,14 @@ import { QuickActions } from "./dashboard/QuickActions";
 
 export function CustomerDashboard() {
   const { user } = useCustomerAuth();
-  const { clientId, hasLinkedClientRecord } = useClientAuth();
+  const { clientId, hasLinkedClientRecord, clientRecordStatus, errorState } = useClientAuth();
   const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
 
   // Handle the case where user is authenticated but no client record is linked
-  if (!hasLinkedClientRecord && !isLoading) {
+  if (clientRecordStatus === 'not-found' && !isLoading) {
     return (
       <Alert className="bg-amber-50 border-amber-200">
         <AlertCircle className="h-4 w-4 text-amber-500" />
@@ -30,6 +31,19 @@ export function CustomerDashboard() {
         <AlertDescription className="text-amber-700">
           החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. 
           אנא צור קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Handle error state
+  if (errorState && !isLoading) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>שגיאה בטעינת פרופיל לקוח</AlertTitle>
+        <AlertDescription>
+          {errorState}
         </AlertDescription>
       </Alert>
     );
@@ -47,6 +61,7 @@ export function CustomerDashboard() {
       console.debug('[CustomerDashboard] Debug:', {
         clientId,
         hasLinkedClientRecord,
+        clientRecordStatus,
         clientProfile: {
           clientId: clientProfile?.client_id,
           restaurantName: clientProfile?.restaurant_name,
@@ -61,7 +76,7 @@ export function CustomerDashboard() {
         hasSubmissions
       });
     }
-  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions, clientId, hasLinkedClientRecord]);
+  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions, clientId, hasLinkedClientRecord, clientRecordStatus]);
 
   // Handle errors with more detail
   if (profileError || statsError) {

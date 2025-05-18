@@ -16,7 +16,7 @@ const CustomerLogin: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
-  const { hasLinkedClientRecord, errorState } = useClientAuth();
+  const { hasLinkedClientRecord, errorState, clientRecordStatus } = useClientAuth();
   const redirectAttempted = useRef(false);
 
   // Get the redirect path from location state, or default to dashboard
@@ -31,6 +31,7 @@ const CustomerLogin: React.FC = () => {
       loading, 
       userId: user?.id,
       hasLinkedClientRecord,
+      clientRecordStatus,
       errorState,
       currentPath: location.pathname,
       targetPath: from, 
@@ -49,7 +50,7 @@ const CustomerLogin: React.FC = () => {
         navigate(from, { replace: true });
         
         // Show a warning toast if authenticated but no client record is linked
-        if (!hasLinkedClientRecord) {
+        if (clientRecordStatus === 'not-found') {
           toast.warning("משתמש מאומת אך אין רשומת לקוח מקושרת. חלק מהתכונות עשויות להיות מוגבלות.", { duration: 6000 });
         }
         
@@ -59,7 +60,7 @@ const CustomerLogin: React.FC = () => {
         }
       }, 100);
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, user, hasLinkedClientRecord, errorState]);
+  }, [isAuthenticated, loading, initialized, navigate, from, user, hasLinkedClientRecord, clientRecordStatus, errorState]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

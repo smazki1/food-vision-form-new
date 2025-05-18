@@ -7,7 +7,14 @@ import { toast } from 'sonner';
 
 export const ProtectedRoute = () => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useCustomerAuth();
-  const { clientId, authenticating: clientAuthLoading, hasLinkedClientRecord, errorState } = useClientAuth();
+  const { 
+    clientId, 
+    authenticating: clientAuthLoading, 
+    hasLinkedClientRecord, 
+    hasNoClientRecord,
+    clientRecordStatus,
+    errorState 
+  } = useClientAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
@@ -21,6 +28,8 @@ export const ProtectedRoute = () => {
       clientAuthLoading,
       clientId,
       hasLinkedClientRecord,
+      hasNoClientRecord,
+      clientRecordStatus,
       errorState,
       initialized,
       currentPath: location.pathname
@@ -45,7 +54,7 @@ export const ProtectedRoute = () => {
         setRedirectPath(null);
       }
     }
-  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, clientAuthLoading, errorState]);
+  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, hasNoClientRecord, clientRecordStatus, clientAuthLoading, errorState]);
 
   // Still initializing or loading - show loading UI
   if (!initialized || authLoading || clientAuthLoading) {
@@ -68,9 +77,8 @@ export const ProtectedRoute = () => {
   // even if clientId is null - this prevents redirect loops. The UI can handle displaying appropriate messages.
   if (isAuthenticated) {
     console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - User is authenticated, rendering protected content");
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Client record status:", 
-      hasLinkedClientRecord ? "Client record found" : "No client record linked");
-      
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Client record status:", clientRecordStatus);
+    
     // Show a toast if there's an error state but still render content
     if (errorState) {
       toast.error(errorState, { duration: 6000 });

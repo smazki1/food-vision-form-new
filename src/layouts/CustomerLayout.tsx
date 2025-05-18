@@ -12,7 +12,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function CustomerLayout() {
   const location = useLocation();
-  const { clientId, authenticating, isAuthenticated, hasLinkedClientRecord } = useClientAuth();
+  const { 
+    clientId, 
+    authenticating, 
+    isAuthenticated, 
+    hasLinkedClientRecord,
+    hasNoClientRecord,
+    clientRecordStatus,
+    errorState
+  } = useClientAuth();
   const { toast } = useToast();
 
   // Check if the current path starts with the given path
@@ -47,13 +55,24 @@ export function CustomerLayout() {
   }
 
   // Handle the case where user is authenticated but doesn't have a client profile
-  const noClientProfileBanner = isAuthenticated && !hasLinkedClientRecord && (
+  const noClientProfileBanner = isAuthenticated && clientRecordStatus === 'not-found' && (
     <Alert className="bg-amber-50 border-amber-200 mb-4">
       <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
       <AlertDescription className="text-amber-700">
         החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. חלק מהתכונות עלולות להיות מוגבלות.
         אנא צור קשר עם התמיכה לסיוע.
+      </AlertDescription>
+    </Alert>
+  );
+
+  // Handle error state with specific message
+  const errorBanner = errorState && (
+    <Alert className="bg-red-50 border-red-200 mb-4">
+      <AlertTriangle className="h-4 w-4 text-red-500" />
+      <AlertTitle className="text-red-800">שגיאה בטעינת פרופיל לקוח</AlertTitle>
+      <AlertDescription className="text-red-700">
+        {errorState}
       </AlertDescription>
     </Alert>
   );
@@ -151,7 +170,7 @@ export function CustomerLayout() {
       {/* Main content */}
       <main className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="max-w-5xl mx-auto">
-          {noClientProfileBanner}
+          {errorBanner || noClientProfileBanner}
           <Outlet />
         </div>
       </main>
