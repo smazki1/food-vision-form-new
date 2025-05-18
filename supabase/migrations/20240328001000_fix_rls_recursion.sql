@@ -94,7 +94,7 @@ BEGIN
     SELECT 1 FROM pg_policies 
     WHERE schemaname = 'public' 
     AND tablename = 'clients' 
-    AND polname = 'customers_view_own_client'
+    AND policyname = 'customers_view_own_client'
   ) THEN
     RAISE EXCEPTION 'Critical policy "customers_view_own_client" was not created successfully';
   END IF;

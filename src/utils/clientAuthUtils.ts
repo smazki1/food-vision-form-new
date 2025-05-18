@@ -9,24 +9,27 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
   console.log("[AUTH_DEBUG] fetchClientId - Looking up client ID for user:", userId);
   
   try {
-    // Use the security definer function to get the client ID
+    // Simple direct query using the RLS policy
     const { data, error } = await supabase
       .from('clients')
       .select('client_id')
       .eq('user_auth_id', userId)
-      .limit(1)
-      .maybeSingle();
-      
+      .single();
+    
     if (error) {
+      if (error.code === 'PGRST116') {
+        console.log("[AUTH_DEBUG] fetchClientId - No client record found");
+        return null;
+      }
       console.error("[AUTH_DEBUG] fetchClientId - Error fetching client ID:", error);
-      return null;
+      throw error;
     }
     
     console.log("[AUTH_DEBUG] fetchClientId - Client data found:", data);
     return data?.client_id || null;
   } catch (error) {
     console.error("[AUTH_DEBUG] fetchClientId - Exception fetching client ID:", error);
-    return null;
+    throw error; // Re-throw to handle in the auth context
   }
 };
 
@@ -34,19 +37,29 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
 export const isUserClient = async (): Promise<boolean> => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return false;
+    if (!session) {
+      console.log("[AUTH_DEBUG] isUserClient - No active session");
+      return false;
+    }
     
-    // Use the security definer function to check client existence
-    const { data } = await supabase
+    // Simple direct query using the RLS policy
+    const { data, error } = await supabase
       .from('clients')
       .select('client_id')
-      .eq('user_auth_id', session.user.id)
-      .limit(1)
-      .maybeSingle();
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.log("[AUTH_DEBUG] isUserClient - No client record found");
+        return false;
+      }
+      console.error("[AUTH_DEBUG] isUserClient - Error checking client status:", error);
+      throw error;
+    }
     
     return !!data;
   } catch (error) {
-    console.error("[AUTH_DEBUG] isUserClient - Error checking client status:", error);
+    console.error("[AUTH_DEBUG] isUserClient - Exception checking client status:", error);
     return false;
   }
 };

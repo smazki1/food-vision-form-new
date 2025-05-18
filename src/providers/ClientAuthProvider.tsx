@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +15,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [authenticating, setAuthenticating] = useState(true);
 
   // Use React Query for data fetching with proper dependencies
-  const { data: clientData, isLoading: clientDataLoading } = useQuery({
+  const { 
+    data: clientData, 
+    isLoading: clientDataLoading, 
+    isError, 
+    error: clientDataError // Destructure isError and error
+  } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -32,22 +36,28 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       userId: user?.id, 
       authLoading,
       clientDataLoading,
-      clientId: clientData,
+      clientData,
+      isError,
+      clientDataError,
       initialized,
       isAuthenticated
     });
+
+    if (isError) {
+      console.error("[AUTH_DEBUG] ClientAuthProvider - Error fetching client data:", clientDataError);
+    }
     
-    // Only update client ID when we have finished loading AND have data (or confirmed no data)
+    // Only update client ID when we have finished loading AND have data (or confirmed no data/error)
     if (initialized && !authLoading && (!user || !clientDataLoading)) {
-      // If we have client data, update the state
-      if (clientData !== undefined) {
+      // If we have client data and no error, update the state
+      if (clientData !== undefined && !isError) {
         setClientId(clientData);
       }
       
       // Mark authentication process as complete
       setAuthenticating(false);
     }
-  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
+  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated, isError, clientDataError]);
 
   // Provide clear debug info about our current state
   console.log("[AUTH_DEBUG] ClientAuthProvider - Rendering with:", {

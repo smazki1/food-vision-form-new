@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -15,7 +14,7 @@ const CustomerLogin: React.FC = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
+  const { signIn, user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
@@ -26,54 +25,61 @@ const CustomerLogin: React.FC = () => {
     console.log("[AUTH_DEBUG] CustomerLogin - Auth state check:", {
       isAuthenticated, 
       initialized, 
-      loading, 
+      authLoading, 
       userId: user?.id,
       currentPath: location.pathname,
       targetPath: from, 
       isRedirecting
     });
     
-    if (isAuthenticated && initialized && !loading && !isRedirecting) {
+    if (isAuthenticated && initialized && !authLoading && !isRedirecting) {
       console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
       setIsRedirecting(true);
-      
-      // Use a small delay to ensure state is stable before navigation
-      const timeoutId = setTimeout(() => {
-        navigate(from, { replace: true });
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, isRedirecting, user, location.pathname]);
+  }, [isAuthenticated, authLoading, initialized, navigate, from, isRedirecting, user, location.pathname]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isLoading || isRedirecting) return;
+    // Prevent multiple submissions
+    if (isLoading || isRedirecting) {
+      console.log("[AUTH_DEBUG] CustomerLogin - Preventing duplicate submission:", { isLoading, isRedirecting });
+      return;
+    }
     
-    setIsLoading(true);
-
     try {
-      console.log("[AUTH_DEBUG] CustomerLogin - Attempting to login with:", email);
+      console.log("[AUTH_DEBUG] CustomerLogin - Starting login process", {
+        email,
+        hasPassword: !!password,
+        currentPath: location.pathname,
+        targetRedirect: from
+      });
+      
+      setIsLoading(true);
+      
       const { success, error } = await signIn(email, password);
+      console.log("[AUTH_DEBUG] CustomerLogin - Sign in response:", { success, hasError: !!error });
 
       if (success) {
+        console.log("[AUTH_DEBUG] CustomerLogin - Login successful, waiting for auth state update");
         toast.success("התחברת בהצלחה");
-        console.log("[AUTH_DEBUG] CustomerLogin - Login successful");
-        // Let the useEffect handle redirection after auth state updates
+        // Let the useEffect handle redirection
       } else {
+        console.error("[AUTH_DEBUG] CustomerLogin - Login failed:", error);
         toast.error(error || "שם משתמש או סיסמה שגויים");
-        setIsLoading(false);
       }
     } catch (error) {
       console.error("[AUTH_DEBUG] CustomerLogin - Login error:", error);
       toast.error("שגיאה בהתחברות");
+    } finally {
       setIsLoading(false);
+      console.log("[AUTH_DEBUG] CustomerLogin - Login process completed");
     }
   };
 
   // If still checking authentication status, show loading
-  if (loading && !isRedirecting) {
+  if (authLoading && !isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
