@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
 import { fetchClientId } from "@/utils/clientAuthUtils";

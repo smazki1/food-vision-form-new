@@ -14,6 +14,7 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
+      .eq("user_auth_id", userId)
       .maybeSingle();
       
     if (error) {
@@ -32,18 +33,19 @@ export const fetchClientId = async (userId: string): Promise<string | null> => {
 // Helper function to check if a user has client permissions
 export const isUserClient = async (): Promise<boolean> => {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - No session found");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - No user found");
       return false;
     }
     
-    console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - Checking client status for user:", session.user.id);
+    console.log("[AUTH_DEBUG_FINAL_FIX] isUserClient - Checking client status for user:", user.id);
     
     // Simple query that will work with our new RLS policy
     const { data, error } = await supabase
       .from("clients")
       .select("client_id")
+      .eq("user_auth_id", user.id)
       .maybeSingle();
     
     if (error) {
