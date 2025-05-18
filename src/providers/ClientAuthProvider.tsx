@@ -1,4 +1,3 @@
-
 import React, { useEffect, ReactNode, useCallback } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { ClientAuthContextType } from '@/types/clientAuthTypes';
@@ -17,7 +16,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   
   // Force completion of authentication process after a timeout
   const forceCompleteAuth = useCallback(() => {
-    console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Force completing authentication process");
+    console.log("[AUTH_DEBUG] ClientAuthProvider - Force completing authentication process");
     updateClientAuthState({ 
       authenticating: false,
       clientRecordStatus: clientAuthState.clientRecordStatus === 'loading' ? 'not-found' : clientAuthState.clientRecordStatus
@@ -29,7 +28,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     if (clientAuthState.authenticating) {
       const timeoutId = setTimeout(() => {
         if (clientAuthState.authenticating) {
-          console.warn("[AUTH_DEBUG_FINAL] ClientAuthProvider - Authentication taking too long, forcing completion");
+          console.warn("[AUTH_DEBUG] ClientAuthProvider - Authentication taking too long, forcing completion");
           forceCompleteAuth();
         }
       }, 8000); // 8 second timeout
@@ -62,7 +61,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   useEffect(() => {
     if (!clientQueryLoading) {
       updateClientAuthState({ authenticating: false });
-      console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Client query completed, setting authenticating to false");
+      console.log("[AUTH_DEBUG] ClientAuthProvider - Client query completed, setting authenticating to false");
     }
   }, [clientQueryLoading, updateClientAuthState]);
 
@@ -75,11 +74,11 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
           authenticating: false,
           clientRecordStatus: 'not-found'
         });
-        console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Not authenticated, explicitly ending authentication process");
+        console.log("[AUTH_DEBUG] ClientAuthProvider - Not authenticated, explicitly ending authentication process");
       } else if (!clientQueryLoading && clientData !== undefined) {
         // Authentication and client query complete, ensure we're not stuck
         updateClientAuthState({ authenticating: false });
-        console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Auth and client query complete, explicitly ending authentication");
+        console.log("[AUTH_DEBUG] ClientAuthProvider - Auth and client query complete, explicitly ending authentication");
       }
     }
   }, [initialized, authLoading, isAuthenticated, clientQueryLoading, clientData, updateClientAuthState]);
@@ -87,7 +86,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   // Update client state when data is available
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Auth state:", { 
+    console.log("[AUTH_DEBUG] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
       clientQueryLoading,
@@ -106,7 +105,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       if (isAuthenticated) {
         // User is authenticated, set client data if available
         if (!clientQueryLoading && clientData !== undefined) {
-          console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Setting clientId:", clientData);
+          console.log("[AUTH_DEBUG] ClientAuthProvider - Setting clientId:", clientData);
           
           // Handle client record status based on clientData
           if (clientData === null) {
@@ -116,7 +115,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientId: null,
               authenticating: false
             });
-            console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - No client record linked to user");
+            console.log("[AUTH_DEBUG] ClientAuthProvider - No client record linked to user");
           } else {
             updateClientAuthState({
               clientRecordStatus: 'found',
@@ -124,7 +123,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientId: clientData,
               authenticating: false
             });
-            console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Client record found");
+            console.log("[AUTH_DEBUG] ClientAuthProvider - Client record found");
           }
         }
       } else {
@@ -154,7 +153,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     ...clientAuthState
   };
 
-  console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Final context state:", contextValue);
+  console.log("[AUTH_DEBUG] ClientAuthProvider - Final context state:", contextValue);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

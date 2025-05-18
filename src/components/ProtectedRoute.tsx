@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
@@ -30,7 +29,7 @@ export const ProtectedRoute = () => {
       const timeoutId = setTimeout(() => {
         const loadingDuration = Date.now() - loadingStartTimeRef.current;
         if (loadingDuration > 10000) { // 10 seconds timeout
-          console.warn("[AUTH_DEBUG_FINAL_] ProtectedRoute - Loading timeout exceeded 10s, forcing completion");
+          console.warn("[AUTH_DEBUG] ProtectedRoute - Loading timeout exceeded 10s, forcing completion");
           setLoadingTimedOut(true);
         }
       }, 10000);
@@ -41,7 +40,7 @@ export const ProtectedRoute = () => {
 
   // Use an effect to handle navigation logic separately from rendering
   useEffect(() => {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Auth state check:", {
+    console.log("[AUTH_DEBUG] ProtectedRoute - Auth state check:", {
       userId: user?.id,
       isAuthenticated,
       authLoading,
@@ -61,11 +60,16 @@ export const ProtectedRoute = () => {
     if ((initialized && !authLoading) || loadingTimedOut) {
       // If not authenticated and not at login already, prepare for redirect
       if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Not authenticated, will redirect");
+        console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, will redirect");
         
         // Only show toast if not coming from a page load or direct URL access
         if (document.referrer) {
-          toast.info('כניסה נדרשת כדי לגשת לדף זה');
+          const lastToastTime = sessionStorage.getItem('last_auth_toast_time');
+          const currentTime = Date.now();
+          if (!lastToastTime || currentTime - parseInt(lastToastTime) > 5000) {
+            toast.info('כניסה נדרשת כדי לגשת לדף זה');
+            sessionStorage.setItem('last_auth_toast_time', currentTime.toString());
+          }
         }
         
         setShouldRedirect(true);
@@ -83,7 +87,7 @@ export const ProtectedRoute = () => {
 
   // Still initializing or loading - show loading UI, unless timed out
   if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Still loading auth state", {
+    console.log("[AUTH_DEBUG] ProtectedRoute - Still loading auth state", {
       elapsedTime: currentLoadingTime + 's'
     });
     return (
@@ -105,24 +109,30 @@ export const ProtectedRoute = () => {
 
   // Auth check complete, redirect if needed
   if (shouldRedirect && redirectPath) {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Redirecting to:", redirectPath);
+    console.log("[AUTH_DEBUG] ProtectedRoute - Redirecting to:", redirectPath);
     // Store current location for return after login
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   // EXPLICIT CHECK: Authentication is complete and user is authenticated
   if (isAuthenticated || (loadingTimedOut && user)) {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - User is authenticated or loading timed out with user present, rendering protected content");
+    console.log("[AUTH_DEBUG] ProtectedRoute - User is authenticated or loading timed out with user present, rendering protected content");
     
     // Show a toast if there's an error state but still render content
     if (errorState) {
       toast.error(errorState, { duration: 6000 });
     }
     
+    // Additional check: if authenticated but no clientId and all loading done
+    if (isAuthenticated && !clientId && !clientAuthLoading && initialized) {
+      console.error("[AUTH_DEBUG] ProtectedRoute - Authenticated user has no clientId after loading. Potential data issue or RLS problem.");
+      toast.error("בעיה בטעינת נתוני המשתמש. אנא פנה לתמיכה.");
+    }
+    
     return <Outlet />;
   }
 
   // Fallback case - shouldn't normally reach here
-  console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Unexpected state, redirecting to login");
+  console.log("[AUTH_DEBUG] ProtectedRoute - Unexpected state, redirecting to login");
   return <Navigate to="/login" state={{ from: location }} replace />;
 };

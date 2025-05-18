@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AuthContext } from '@/contexts/AuthContext';
@@ -14,18 +14,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useAuthInitializer(updateAuthState);
 
   const signIn = async (email: string, password: string) => {
+    console.log("[AUTH_DEBUG] Attempting login for:", email);
+    
     try {
+      // Set loading state at the start
       updateAuthState({ loading: true });
       const { success, error, data } = await authService.signInWithPassword(email, password);
 
       if (!success) {
+        console.error("[AUTH_DEBUG] Login error:", error);
         updateAuthState({ loading: false });
         return { success: false, error };
       }
 
       return { success: true };
     } catch (error) {
-      console.error('[AUTH_PROVIDER] Login exception:', error);
+      console.error('[AUTH_DEBUG] Login exception:', error);
       updateAuthState({ loading: false });
       return { 
         success: false, 
@@ -40,12 +44,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    updateAuthState({ loading: true });
     try {
+      updateAuthState({ loading: true });
       await authService.signOut();
+      console.log("[AUTH_DEBUG] User signed out successfully");
       // onAuthStateChange will handle updating the state
     } catch (error) {
-      console.error('[AUTH_PROVIDER] Sign out error:', error);
+      console.error('[AUTH_DEBUG] Sign out error:', error);
       updateAuthState({ loading: false });
     }
   };

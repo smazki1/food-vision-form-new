@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
@@ -18,63 +17,84 @@ export function useClientProfile(userId?: string) {
       try {
         console.log("[useClientProfile] Fetching client profile for userId:", userId);
         
-        // First get the client record associated with this user
-        const { data: clientData, error: clientError } = await supabase
+        // First, verify we can fetch the basic client record with explicit column selection
+        const { data: basicClientData, error: basicClientError } = await supabase
           .from('clients')
           .select(`
-            client_id, 
-            restaurant_name, 
+            client_id,
+            user_auth_id,
+            email_notifications,
+            app_notifications,
+            current_package_id,
+            restaurant_name,
             contact_name,
             phone,
             email,
-            remaining_servings,
-            email_notifications,
-            app_notifications,
             client_status,
-            current_package_id,
-            user_auth_id
+            remaining_servings,
+            created_at,
+            last_activity_at,
+            internal_notes
           `)
           .eq('user_auth_id', userId)
-          .maybeSingle();
+          .single();
 
-        if (clientError) {
-          console.error("[useClientProfile] Error fetching client data:", clientError);
+        if (basicClientError) {
+          console.error("[useClientProfile] Error fetching basic client data:", basicClientError);
           setError("שגיאה בטעינת פרטי הלקוח");
           return null;
         }
 
-        console.log("[useClientProfile] Client data fetched:", clientData);
+        console.log("[useClientProfile] Basic client data fetched:", basicClientData);
 
-        if (!clientData) {
+        if (!basicClientData) {
           console.log("[useClientProfile] No client data found for user:", userId);
           setError("לא נמצאו פרטי לקוח");
           return null;
         }
 
-        // Cast to Client type with optional service_packages
-        let clientResult = clientData as Client;
-
-        // If we have a package ID, fetch the package details
-        if (clientData.current_package_id) {
-          console.log("[useClientProfile] Fetching package details for packageId:", clientData.current_package_id);
+        // If basic client fetch works and we have a package ID, try fetching package data
+        if (basicClientData.current_package_id) {
+          console.log("[useClientProfile] Fetching full profile with package data");
           
-          const { data: packageData, error: packageError } = await supabase
-            .from('service_packages')
-            .select('package_name, total_servings')
-            .eq('package_id', clientData.current_package_id)
+          const { data: clientData, error: clientError } = await supabase
+            .from('clients')
+            .select(`
+              client_id,
+              user_auth_id,
+              email_notifications,
+              app_notifications,
+              current_package_id,
+              restaurant_name,
+              contact_name,
+              phone,
+              email,
+              client_status,
+              remaining_servings,
+              created_at,
+              last_activity_at,
+              internal_notes,
+              service_packages!inner (
+                package_id,
+                package_name,
+                total_servings
+              )
+            `)
+            .eq('user_auth_id', userId)
             .single();
 
-          if (packageError) {
-            console.error("[useClientProfile] Error fetching package details:", packageError);
-            // Don't fail completely, just return client data without package
-          } else if (packageData) {
-            console.log("[useClientProfile] Package data fetched:", packageData);
-            // Add package data to client object
-            clientResult.service_packages = packageData;
+          if (clientError) {
+            console.error("[useClientProfile] Error fetching full client profile:", clientError);
+            setError("שגיאה בטעינת פרטי החבילה");
+            return basicClientData;
           }
+
+          console.log("[useClientProfile] Full client profile fetched:", clientData);
+          return clientData;
         }
 
-        return clientResult;
+        // If no package ID, return basic client data
+        return basicClientData;
       } catch (err) {
         console.error("[useClientProfile] Exception in client profile fetch:", err);
         setError("שגיאה לא צפויה בטעינת פרטי הלקוח");
