@@ -1,16 +1,15 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import "./App.css";
 import "@/rtl.css";
 
-import { UnifiedAuthProvider } from "@/hooks/useUnifiedAuth";
-import { AuthenticatedRoute } from "@/components/AuthenticatedRoute";
-import { PublicOnlyRoute } from "@/components/PublicOnlyRoute";
-import { AuthDebugger } from "@/components/AuthDebugger";
+// Our refined Auth Providers and ProtectedRoute
+import { AuthProvider } from "@/providers/AuthProvider";
+import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
+import { ProtectedRoute } from "@/components/ProtectedRoute"; 
 
 // Layouts
 import { CustomerLayout } from "@/layouts/CustomerLayout";
@@ -25,7 +24,7 @@ import ForgotPassword from "./pages/customer/ForgotPassword";
 import ResetPassword from "./pages/customer/ResetPassword";
 import AdminLogin from "./pages/AdminLogin";
 import FoodVisionForm from "./pages/FoodVisionForm";
-import AccountSetupPage from "./pages/AccountSetupPage";
+// import AccountSetupPage from "./pages/AccountSetupPage"; // Decide if/how to integrate
 
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -67,40 +66,25 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="food-vision-theme">
         <TooltipProvider>
           <Router>
-            <UnifiedAuthProvider>
-              <AuthDebugger />
+            <AuthProvider>
               <Routes>
-                {/* Public routes - accessible only when NOT authenticated */}
-                <Route element={<PublicOnlyRoute />}>
-                  <Route path="/" element={<PromoLandingPage />} />
-                  <Route path="/login" element={<CustomerLogin />} />
-                  <Route path="/admin-login" element={<AdminLogin />} />
-                </Route>
-                
-                {/* Public routes - accessible regardless of authentication */}
+                {/* Public routes */}
+                <Route path="/" element={<PromoLandingPage />} />
+                <Route path="/login" element={<CustomerLogin />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/food-vision-form" element={<FoodVisionForm />} />
                 
-                {/* Account setup page - requires authentication but no client record */}
+                {/* Food Vision Form - might need ClientAuthProvider if it interacts with client data */}
+                <Route path="/food-vision-form" element={<FoodVisionForm />} /> 
+                                
+                {/* Customer routes - protected */}
                 <Route 
-                  element={<AuthenticatedRoute 
-                    allowedRoles={['customer']} 
-                    requireClientRecord={false} 
-                    redirectPath="/login"
-                  />}
-                >
-                  <Route path="/account-setup" element={<AccountSetupPage />} />
-                </Route>
-                
-                {/* Customer routes - protected, requiring authentication AND client record */}
-                <Route 
-                  element={<AuthenticatedRoute 
-                    allowedRoles={['customer']} 
-                    requireClientRecord={true} 
-                    redirectPath="/login"
-                    clientRedirectPath="/account-setup"
-                  />}
+                  element={
+                    <ClientAuthProvider>
+                      <ProtectedRoute />
+                    </ClientAuthProvider>
+                  }
                 >
                   <Route element={<CustomerLayout />}>
                     <Route path="/customer">
@@ -114,47 +98,34 @@ function App() {
                   </Route>
                 </Route>
                 
-                {/* Admin routes - requires admin role */}
-                <Route 
-                  element={<AuthenticatedRoute 
-                    allowedRoles={['admin']} 
-                    redirectPath="/admin-login"
-                  />}
-                >
-                  <Route path="/admin" element={<AdminLayout />}>
-                    <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                    <Route path="dashboard" element={<Dashboard />} />
-                    <Route path="leads" element={<LeadsManagement />} />
-                    <Route path="clients" element={<ClientsList />} />
-                    <Route path="clients/:clientId" element={<ClientDetails />} />
-                    <Route path="packages" element={<PackagesManagementPage />} />
-                    <Route path="submissions" element={<SubmissionsPage />} />
-                    <Route path="queue" element={<SubmissionsQueuePage />} />
-                    <Route path="analytics" element={<SubmissionsAnalytics />} />
-                    <Route path="alerts" element={<AlertsDashboard />} />
-                    <Route path="users" element={<UserManagementPage />} />
-                  </Route>
+                {/* Admin routes - TODO: Implement Admin specific protection if needed */}
+                {/* For now, assuming they might also use a form of ProtectedRoute or specific admin auth logic */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="leads" element={<LeadsManagement />} />
+                  <Route path="clients" element={<ClientsList />} />
+                  <Route path="clients/:clientId" element={<ClientDetails />} />
+                  <Route path="packages" element={<PackagesManagementPage />} />
+                  <Route path="submissions" element={<SubmissionsPage />} />
+                  <Route path="queue" element={<SubmissionsQueuePage />} />
+                  <Route path="analytics" element={<SubmissionsAnalytics />} />
+                  <Route path="alerts" element={<AlertsDashboard />} />
+                  <Route path="users" element={<UserManagementPage />} />
                 </Route>
                 
-                {/* Editor routes - requires editor role */}
-                <Route 
-                  element={<AuthenticatedRoute 
-                    allowedRoles={['editor']} 
-                    redirectPath="/login"
-                  />}
-                >
-                  <Route path="/editor" element={<EditorLayout />}>
-                    <Route index element={<Navigate to="/editor/dashboard" replace />} />
-                    <Route path="dashboard" element={<EditorDashboardPage />} />
-                    <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
-                  </Route>
+                {/* Editor routes - TODO: Implement Editor specific protection */}
+                <Route path="/editor" element={<EditorLayout />}>
+                  <Route index element={<Navigate to="/editor/dashboard" replace />} />
+                  <Route path="dashboard" element={<EditorDashboardPage />} />
+                  <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
                 </Route>
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </UnifiedAuthProvider>
+            </AuthProvider>
           </Router>
-          <Toaster />
+          <SonnerToaster />
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

@@ -85,11 +85,9 @@ export const ProtectedRoute = () => {
   // Calculate current loading time for display
   const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
 
-  // Still initializing or loading - show loading UI, unless timed out
-  if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Still loading auth state", {
-      elapsedTime: currentLoadingTime + 's'
-    });
+  // Case 1: Auth is still initializing or loading (either basic or client-specific)
+  if (!initialized || authLoading || clientAuthLoading) {
+    console.log("[AUTH_DEBUG] ProtectedRoute - Still loading or initializing auth/client state, showing loading UI", { initialized, authLoading, clientAuthLoading });
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="flex items-center">
@@ -107,11 +105,19 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Auth check complete, redirect if needed
-  if (shouldRedirect && redirectPath) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Redirecting to:", redirectPath);
-    // Store current location for return after login
-    return <Navigate to={redirectPath} state={{ from: location }} replace />;
+  // Log actual values right before the crucial check
+  console.log("[AUTH_DEBUG] ProtectedRoute - Values before redirect check:", {
+    isAuthenticated,
+    clientId,
+    initialized,
+    authLoading,
+    clientAuthLoading
+  });
+
+  // Case 2: Auth check is done, but not authenticated OR no clientId
+  if (!isAuthenticated || !clientId) {
+    console.log("[AUTH_DEBUG] ProtectedRoute - Auth check is done, but not authenticated or no clientId, redirecting to login");
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // EXPLICIT CHECK: Authentication is complete and user is authenticated
