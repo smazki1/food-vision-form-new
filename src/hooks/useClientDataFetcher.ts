@@ -16,6 +16,8 @@ export const useClientDataFetcher = (
   onError: (error: string) => void
 ) => {
   const [clientQueryEnabled, setClientQueryEnabled] = useState(false);
+  // Track time when client query was enabled
+  const [queryStartTime] = useState<number>(Date.now());
 
   // Enable the client data query only when auth is complete and user is authenticated
   useEffect(() => {
@@ -42,10 +44,25 @@ export const useClientDataFetcher = (
         loading,
         isAuthenticated,
         hasUserId: !!user?.id,
-        connectionVerified
+        connectionVerified,
+        timestamp: Date.now()
       });
     }
-  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate]);
+    
+    // Force query completion after timeout
+    const timeoutId = setTimeout(() => {
+      const queryDuration = Date.now() - queryStartTime;
+      if (queryDuration > 7000 && clientQueryEnabled) {
+        console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long, forcing completion");
+        onUpdate({
+          authenticating: false,
+          clientRecordStatus: 'not-found'
+        });
+      }
+    }, 7000);
+    
+    return () => clearTimeout(timeoutId);
+  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate, clientQueryEnabled, queryStartTime]);
 
   // Use React Query with improved error handling and retry logic
   const { data: clientData, isLoading: clientQueryLoading } = useQuery({
@@ -95,14 +112,15 @@ export const useClientDataFetcher = (
         console.error("[AUTH_DEBUG_FINAL] useClientDataFetcher - Auth/permission error, not retrying");
         return false;
       }
-      // Otherwise retry up to 2 times
-      return failureCount < 2;
+      // Otherwise retry only once to avoid excessive retries
+      return failureCount < 1;
     },
     meta: {
       onError: (error: Error) => {
         console.error("[AUTH_DEBUG_FINAL] useClientDataFetcher - Error fetching client data:", error);
         onUpdate({
           clientRecordStatus: 'error',
+          authenticating: false // Ensure we're not stuck in loading state
         });
         
         // Set specific error states for different error types

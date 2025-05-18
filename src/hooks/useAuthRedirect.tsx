@@ -8,20 +8,23 @@ import { useClientAuth } from "./useClientAuth";
 interface AuthRedirectOptions {
   redirectPath?: string;
   showWarnings?: boolean;
+  redirectTimeout?: number; // Add timeout option
 }
 
 /**
- * Hook to handle authentication-based redirects
+ * Hook to handle authentication-based redirects with timeout safeguard
  */
 export const useAuthRedirect = (options: AuthRedirectOptions = {}) => {
   const { 
     redirectPath = "/customer/dashboard", 
-    showWarnings = true 
+    showWarnings = true,
+    redirectTimeout = 5000 // Default 5 second timeout
   } = options;
   
   const { isAuthenticated, initialized, loading, user } = useCustomerAuth();
-  const { clientRecordStatus, errorState } = useClientAuth();
+  const { clientRecordStatus, errorState, authenticating } = useClientAuth();
   const redirectAttempted = useRef(false);
+  const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
 
   // Handle redirection when authentication state changes
@@ -30,13 +33,20 @@ export const useAuthRedirect = (options: AuthRedirectOptions = {}) => {
     console.log("[AUTH_DEBUG_FINAL_] useAuthRedirect - Auth check:", {
       isAuthenticated, 
       initialized, 
-      loading, 
+      loading,
+      authenticating,
       userId: user?.id,
       clientRecordStatus,
       errorState,
       targetPath: redirectPath, 
-      redirectAttempted: redirectAttempted.current
+      redirectAttempted: redirectAttempted.current,
+      timestamp: Date.now()
     });
+    
+    // Clear any existing timeout
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+    }
     
     // Only redirect when fully authenticated and not in a loading state
     if (isAuthenticated && initialized && !loading && !redirectAttempted.current) {
@@ -59,12 +69,27 @@ export const useAuthRedirect = (options: AuthRedirectOptions = {}) => {
           toast.error(errorState, { duration: 6000 });
         }
       }, 100);
+      
+      // Set a safeguard timeout to ensure redirect happens even if client auth hangs
+      redirectTimeoutRef.current = setTimeout(() => {
+        if (!redirectAttempted.current) {
+          console.warn("[AUTH_DEBUG_FINAL_] useAuthRedirect - Redirect timeout reached, forcing redirect");
+          redirectAttempted.current = true;
+          navigate(redirectPath, { replace: true });
+        }
+      }, redirectTimeout);
     }
-  }, [isAuthenticated, loading, initialized, navigate, redirectPath, user, clientRecordStatus, errorState, showWarnings]);
+    
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
+  }, [isAuthenticated, loading, initialized, navigate, redirectPath, user, clientRecordStatus, errorState, showWarnings, redirectTimeout, authenticating]);
 
   return {
     redirectAttempted: redirectAttempted.current,
-    isLoading: loading,
+    isLoading: loading || authenticating,
     isAuthenticated,
     initialized
   };

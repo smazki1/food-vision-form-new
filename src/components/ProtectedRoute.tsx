@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useClientAuth } from '@/hooks/useClientAuth';
@@ -18,6 +18,26 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
+  
+  // Track loading time to implement timeout
+  const loadingStartTimeRef = useRef<number>(Date.now());
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  // Check for loading timeout
+  useEffect(() => {
+    if (!initialized || authLoading || clientAuthLoading) {
+      // Set a timeout to force completion if loading takes too long
+      const timeoutId = setTimeout(() => {
+        const loadingDuration = Date.now() - loadingStartTimeRef.current;
+        if (loadingDuration > 10000) { // 10 seconds timeout
+          console.warn("[AUTH_DEBUG_FINAL_] ProtectedRoute - Loading timeout exceeded 10s, forcing completion");
+          setLoadingTimedOut(true);
+        }
+      }, 10000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [initialized, authLoading, clientAuthLoading]);
 
   // Use an effect to handle navigation logic separately from rendering
   useEffect(() => {
@@ -32,11 +52,13 @@ export const ProtectedRoute = () => {
       clientRecordStatus,
       errorState,
       initialized,
+      loadingTimedOut,
+      timestamp: Date.now(),
       currentPath: location.pathname
     });
 
-    // Only make routing decisions when auth state is fully initialized and not loading
-    if (initialized && !authLoading) {
+    // Only make routing decisions when auth state is fully initialized or timeout occurred
+    if ((initialized && !authLoading) || loadingTimedOut) {
       // If not authenticated and not at login already, prepare for redirect
       if (!isAuthenticated && location.pathname !== '/login') {
         console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Not authenticated, will redirect");
@@ -54,14 +76,29 @@ export const ProtectedRoute = () => {
         setRedirectPath(null);
       }
     }
-  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, hasNoClientRecord, clientRecordStatus, clientAuthLoading, errorState]);
+  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, hasNoClientRecord, clientRecordStatus, clientAuthLoading, errorState, loadingTimedOut]);
 
-  // Still initializing or loading - show loading UI
-  if (!initialized || authLoading || clientAuthLoading) {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Still loading auth state");
+  // Calculate current loading time for display
+  const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
+
+  // Still initializing or loading - show loading UI, unless timed out
+  if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Still loading auth state", {
+      elapsedTime: currentLoadingTime + 's'
+    });
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="flex items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="ml-3 text-sm text-muted-foreground">
+            Loading... ({currentLoadingTime}s)
+          </div>
+        </div>
+        {currentLoadingTime > 5 && (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Loading is taking longer than expected...
+          </p>
+        )}
       </div>
     );
   }
@@ -73,11 +110,9 @@ export const ProtectedRoute = () => {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Auth check complete, user is authenticated - CRITICAL CHANGE: Always render content if authenticated,
-  // even if clientId is null - this prevents redirect loops. The UI can handle displaying appropriate messages.
-  if (isAuthenticated) {
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - User is authenticated, rendering protected content");
-    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Client record status:", clientRecordStatus);
+  // EXPLICIT CHECK: Authentication is complete and user is authenticated
+  if (isAuthenticated || (loadingTimedOut && user)) {
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - User is authenticated or loading timed out with user present, rendering protected content");
     
     // Show a toast if there's an error state but still render content
     if (errorState) {

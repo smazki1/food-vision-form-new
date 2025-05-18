@@ -1,5 +1,5 @@
 
-import React, { useEffect, ReactNode } from 'react';
+import React, { useEffect, ReactNode, useCallback } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { ClientAuthContextType } from '@/types/clientAuthTypes';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
@@ -14,6 +14,29 @@ interface ClientAuthProviderProps {
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
   const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
   const { updateClientAuthState, ...clientAuthState } = useClientAuthStateManager();
+  
+  // Force completion of authentication process after a timeout
+  const forceCompleteAuth = useCallback(() => {
+    console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Force completing authentication process");
+    updateClientAuthState({ 
+      authenticating: false,
+      clientRecordStatus: clientAuthState.clientRecordStatus === 'loading' ? 'not-found' : clientAuthState.clientRecordStatus
+    });
+  }, [updateClientAuthState, clientAuthState.clientRecordStatus]);
+  
+  // Set a timeout to force completion if taking too long
+  useEffect(() => {
+    if (clientAuthState.authenticating) {
+      const timeoutId = setTimeout(() => {
+        if (clientAuthState.authenticating) {
+          console.warn("[AUTH_DEBUG_FINAL] ClientAuthProvider - Authentication taking too long, forcing completion");
+          forceCompleteAuth();
+        }
+      }, 8000); // 8 second timeout
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [clientAuthState.authenticating, forceCompleteAuth]);
   
   // Verify database connection
   const connectionVerified = useConnectionVerifier((errorMessage) => {
@@ -39,8 +62,27 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   useEffect(() => {
     if (!clientQueryLoading) {
       updateClientAuthState({ authenticating: false });
+      console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Client query completed, setting authenticating to false");
     }
   }, [clientQueryLoading, updateClientAuthState]);
+
+  // Explicit check to ensure authentication process completes
+  useEffect(() => {
+    if (initialized && !authLoading) {
+      if (!isAuthenticated) {
+        // Not authenticated, ensure we're not stuck in loading state
+        updateClientAuthState({
+          authenticating: false,
+          clientRecordStatus: 'not-found'
+        });
+        console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Not authenticated, explicitly ending authentication process");
+      } else if (!clientQueryLoading && clientData !== undefined) {
+        // Authentication and client query complete, ensure we're not stuck
+        updateClientAuthState({ authenticating: false });
+        console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Auth and client query complete, explicitly ending authentication");
+      }
+    }
+  }, [initialized, authLoading, isAuthenticated, clientQueryLoading, clientData, updateClientAuthState]);
 
   // Update client state when data is available
   useEffect(() => {
@@ -54,7 +96,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       isAuthenticated,
       errorState: clientAuthState.errorState,
       clientRecordStatus: clientAuthState.clientRecordStatus,
-      connectionVerified
+      connectionVerified,
+      authenticating: clientAuthState.authenticating,
+      timestamp: Date.now()
     });
     
     if (initialized && !authLoading) {
@@ -69,14 +113,16 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
             updateClientAuthState({
               clientRecordStatus: 'not-found',
               hasNoClientRecord: true,
-              clientId: null
+              clientId: null,
+              authenticating: false
             });
             console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - No client record linked to user");
           } else {
             updateClientAuthState({
               clientRecordStatus: 'found',
               hasNoClientRecord: false,
-              clientId: clientData
+              clientId: clientData,
+              authenticating: false
             });
             console.log("[AUTH_DEBUG_FINAL] ClientAuthProvider - Client record found");
           }
