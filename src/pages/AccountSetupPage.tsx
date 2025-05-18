@@ -50,7 +50,13 @@ const AccountSetupPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const result = await createClientRecord(values);
+      // We now pass the properly typed values directly - the schema ensures all fields are present
+      const result = await createClientRecord({
+        restaurant_name: values.restaurant_name,
+        contact_name: values.contact_name,
+        phone: values.phone,
+        email: values.email,
+      });
       
       if (result.success) {
         toast.success('רשומת הלקוח נוצרה בהצלחה!');
