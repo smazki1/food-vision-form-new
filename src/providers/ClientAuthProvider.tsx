@@ -32,10 +32,10 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG] ClientAuthProvider - State change:", { 
+    console.log("[AUTH_DEBUG] ClientAuthProvider - State change (EFFECT START):", { 
       userId: user?.id, 
       authLoading,
-      clientDataLoading,
+      clientDataLoading, // Log this at the start of the effect
       clientData,
       isError,
       clientDataError,
@@ -47,8 +47,17 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       console.error("[AUTH_DEBUG] ClientAuthProvider - Error fetching client data:", clientDataError);
     }
     
+    // Log the condition for setAuthenticating(false)
+    const conditionForUpdatingAuth = initialized && !authLoading && (!user || !clientDataLoading);
+    console.log("[AUTH_DEBUG] ClientAuthProvider - Condition for setAuthenticating(false):", conditionForUpdatingAuth, {
+      initialized,
+      authLoading,
+      userExists: !!user,
+      clientDataLoading
+    });
+
     // Only update client ID when we have finished loading AND have data (or confirmed no data/error)
-    if (initialized && !authLoading && (!user || !clientDataLoading)) {
+    if (conditionForUpdatingAuth) {
       // If we have client data and no error, update the state
       if (clientData !== undefined && !isError) {
         setClientId(clientData);
