@@ -17,16 +17,19 @@ export const useClientDataFetcher = (
 ) => {
   const [clientQueryEnabled, setClientQueryEnabled] = useState(false);
   // Track time when client query was enabled
-  const [queryStartTime] = useState<number>(Date.now());
+  const [queryStartTime, setQueryStartTime] = useState<number | null>(null);
 
   // Enable the client data query only when auth is complete and user is authenticated
   useEffect(() => {
     if (initialized && !loading && isAuthenticated && user?.id && connectionVerified) {
-      setClientQueryEnabled(true);
-      onUpdate({
-        clientRecordStatus: 'loading',
-      });
-      console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
+      if (!clientQueryEnabled) {
+        setQueryStartTime(Date.now());
+        setClientQueryEnabled(true);
+        onUpdate({
+          clientRecordStatus: 'loading',
+        });
+        console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
+      }
     } else if (initialized && !loading && !isAuthenticated) {
       // If auth is initialized and user is not authenticated, we can stop authenticating
       onUpdate({
@@ -37,6 +40,7 @@ export const useClientDataFetcher = (
         errorState: null
       });
       setClientQueryEnabled(false);
+      setQueryStartTime(null);
       console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - User not authenticated, resetting client auth state");
     } else {
       console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Not ready to fetch client data yet:", {
@@ -50,18 +54,23 @@ export const useClientDataFetcher = (
     }
     
     // Force query completion after timeout
-    const timeoutId = setTimeout(() => {
-      const queryDuration = Date.now() - queryStartTime;
-      if (queryDuration > 7000 && clientQueryEnabled) {
-        console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long, forcing completion");
-        onUpdate({
-          authenticating: false
-        });
-      }
-    }, 7000);
+    let timeoutId: NodeJS.Timeout | undefined;
+    if (clientQueryEnabled && queryStartTime !== null) {
+      timeoutId = setTimeout(() => {
+        const queryDuration = Date.now() - queryStartTime;
+        if (queryDuration > 7000) {
+          console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long (actual query phase), forcing completion");
+          onUpdate({
+            authenticating: false
+          });
+        }
+      }, 7000);
+    }
     
-    return () => clearTimeout(timeoutId);
-  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate, clientQueryEnabled, queryStartTime]);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate, clientQueryEnabled, queryStartTime, setQueryStartTime]);
 
   // Use React Query with improved error handling and retry logic
   const { data: clientData, isLoading: clientQueryLoading } = useQuery({
