@@ -14,65 +14,97 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
   const [clientId, setClientId] = useState<string | null>(null);
   const [authenticating, setAuthenticating] = useState(true);
+  const [clientDataLoading, setClientDataLoading] = useState(false);
+  const [clientQueryEnabled, setClientQueryEnabled] = useState(false);
+
+  // Enable the client data query only when auth is complete and user is authenticated
+  useEffect(() => {
+    if (initialized && !authLoading && isAuthenticated && user?.id) {
+      setClientQueryEnabled(true);
+      setClientDataLoading(true);
+    } else if (initialized && !authLoading && !isAuthenticated) {
+      // If auth is initialized and user is not authenticated, we can stop authenticating
+      setClientId(null);
+      setAuthenticating(false);
+      setClientDataLoading(false);
+      setClientQueryEnabled(false);
+    }
+  }, [initialized, authLoading, isAuthenticated, user?.id]);
 
   // Use React Query with improved error handling and dependencies
-  const { data: clientData, isLoading: clientDataLoading } = useQuery({
+  const { data: clientData, isLoading: clientQueryLoading, error: clientError } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Fetching client ID for user:", user.id);
+      console.log("[AUTH_VERIFY] ClientAuthProvider - Fetching client ID for user:", user.id);
       return fetchClientId(user.id);
     },
-    enabled: !!user?.id && isAuthenticated && initialized,
+    enabled: clientQueryEnabled,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 1,
+    retry: 2,
     meta: {
       onError: (error: Error) => {
-        console.error("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Error fetching client data:", error);
-        setClientId(null);
-        setAuthenticating(false);
+        console.error("[AUTH_VERIFY] ClientAuthProvider - Error fetching client data:", error);
+        setClientDataLoading(false);
       }
     }
   });
 
+  // Handle client data loading state
+  useEffect(() => {
+    if (clientQueryEnabled && !clientQueryLoading) {
+      setClientDataLoading(false);
+    }
+  }, [clientQueryLoading, clientQueryEnabled]);
+
+  // Update client state when data is available
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Auth state:", { 
+    console.log("[AUTH_VERIFY] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
+      clientQueryLoading,
       clientDataLoading,
       clientData,
+      clientError,
       initialized,
       isAuthenticated
     });
     
-    // Update state only when conditions are right
-    if (initialized) {
-      // If not authenticated or auth is still loading
-      if (!isAuthenticated || authLoading) {
-        console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Not authenticated or still loading");
-        setClientId(null);
-        // Only finish authenticating if we're sure auth is not still loading
-        if (!authLoading) {
+    if (initialized && !authLoading) {
+      // Auth is complete
+      if (isAuthenticated) {
+        // User is authenticated, set client data if available
+        if (!clientQueryLoading && clientData !== undefined) {
+          console.log("[AUTH_VERIFY] ClientAuthProvider - Setting clientId:", clientData);
+          setClientId(clientData); // Could be null if no client record exists
           setAuthenticating(false);
         }
-      } 
-      // If authenticated and client data fetch is complete (either success or failure)
-      else if (isAuthenticated && !clientDataLoading) {
-        console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Auth complete, client data:", clientData);
-        setClientId(clientData as string | null);
+      } else {
+        // Not authenticated, reset client data
+        setClientId(null);
         setAuthenticating(false);
       }
     }
-  }, [user, authLoading, clientData, clientDataLoading, initialized, isAuthenticated]);
+  }, [
+    user, 
+    authLoading, 
+    clientData, 
+    clientQueryLoading, 
+    initialized, 
+    isAuthenticated, 
+    clientError
+  ]);
 
+  // The final context value with clearer states
   const contextValue: ClientAuthContextType = {
     clientId, 
-    authenticating, 
-    isAuthenticated 
+    authenticating: authenticating || authLoading || clientDataLoading,
+    isAuthenticated,
+    hasLinkedClientRecord: !!clientId // NEW: explicit flag for linked client record
   };
 
-  console.log("[AUTH_DEBUG_FINAL_FIX] ClientAuthProvider - Final state:", contextValue);
+  console.log("[AUTH_VERIFY] ClientAuthProvider - Final context state:", contextValue);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -6,8 +5,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useClientAuth } from "@/hooks/useClientAuth";
 
-// Import the new components
+// Import the components
 import { WelcomeSection } from "./dashboard/WelcomeSection";
 import { PackageSummaryCard } from "./dashboard/PackageSummaryCard";
 import { SubmissionsStatusOverview } from "./dashboard/SubmissionsStatusOverview";
@@ -15,10 +15,25 @@ import { QuickActions } from "./dashboard/QuickActions";
 
 export function CustomerDashboard() {
   const { user } = useCustomerAuth();
+  const { clientId, hasLinkedClientRecord } = useClientAuth();
   const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
+
+  // Handle the case where user is authenticated but no client record is linked
+  if (!hasLinkedClientRecord && !isLoading) {
+    return (
+      <Alert className="bg-amber-50 border-amber-200">
+        <AlertCircle className="h-4 w-4 text-amber-500" />
+        <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
+        <AlertDescription className="text-amber-700">
+          החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. 
+          אנא צור קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   // Check if there are any submissions with count > 0
   const hasSubmissions = React.useMemo(() => {
@@ -30,6 +45,8 @@ export function CustomerDashboard() {
   React.useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.debug('[CustomerDashboard] Debug:', {
+        clientId,
+        hasLinkedClientRecord,
         clientProfile: {
           clientId: clientProfile?.client_id,
           restaurantName: clientProfile?.restaurant_name,
@@ -44,7 +61,7 @@ export function CustomerDashboard() {
         hasSubmissions
       });
     }
-  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions]);
+  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions, clientId, hasLinkedClientRecord]);
 
   // Handle errors with more detail
   if (profileError || statsError) {

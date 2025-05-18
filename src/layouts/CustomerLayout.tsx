@@ -1,16 +1,18 @@
+
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useClientAuth } from "@/hooks/useClientAuth";
-import { Home, Package, Image, User, LogOut } from "lucide-react";
+import { Home, Package, Image, User, LogOut, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export function CustomerLayout() {
   const location = useLocation();
-  const { clientId, authenticating } = useClientAuth();
+  const { clientId, authenticating, isAuthenticated, hasLinkedClientRecord } = useClientAuth();
   const { toast } = useToast();
 
   // Check if the current path starts with the given path
@@ -44,8 +46,20 @@ export function CustomerLayout() {
     );
   }
 
+  // Handle the case where user is authenticated but doesn't have a client profile
+  const noClientProfileBanner = isAuthenticated && !hasLinkedClientRecord && (
+    <Alert className="bg-amber-50 border-amber-200 mb-4">
+      <AlertTriangle className="h-4 w-4 text-amber-500" />
+      <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
+      <AlertDescription className="text-amber-700">
+        החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. חלק מהתכונות עלולות להיות מוגבלות.
+        אנא צור קשר עם התמיכה לסיוע.
+      </AlertDescription>
+    </Alert>
+  );
+
   // If not authenticated, redirect to login (This should be handled by the router)
-  if (!clientId) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
         <h1 className="text-2xl font-bold">יש להתחבר למערכת</h1>
@@ -137,6 +151,7 @@ export function CustomerLayout() {
       {/* Main content */}
       <main className="flex-1 p-4 md:p-6 overflow-auto">
         <div className="max-w-5xl mx-auto">
+          {noClientProfileBanner}
           <Outlet />
         </div>
       </main>
