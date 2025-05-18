@@ -7,20 +7,21 @@ import { toast } from 'sonner';
 
 export const ProtectedRoute = () => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useCustomerAuth();
-  const { clientId, authenticating: clientAuthLoading, hasLinkedClientRecord } = useClientAuth();
+  const { clientId, authenticating: clientAuthLoading, hasLinkedClientRecord, errorState } = useClientAuth();
   const location = useLocation();
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   // Use an effect to handle navigation logic separately from rendering
   useEffect(() => {
-    console.log("[AUTH_VERIFY] ProtectedRoute - Auth state check:", {
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Auth state check:", {
       userId: user?.id,
       isAuthenticated,
       authLoading,
       clientAuthLoading,
       clientId,
       hasLinkedClientRecord,
+      errorState,
       initialized,
       currentPath: location.pathname
     });
@@ -29,7 +30,7 @@ export const ProtectedRoute = () => {
     if (initialized && !authLoading) {
       // If not authenticated and not at login already, prepare for redirect
       if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("[AUTH_VERIFY] ProtectedRoute - Not authenticated, will redirect");
+        console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Not authenticated, will redirect");
         
         // Only show toast if not coming from a page load or direct URL access
         if (document.referrer) {
@@ -44,11 +45,11 @@ export const ProtectedRoute = () => {
         setRedirectPath(null);
       }
     }
-  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, clientAuthLoading]);
+  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, clientAuthLoading, errorState]);
 
   // Still initializing or loading - show loading UI
   if (!initialized || authLoading || clientAuthLoading) {
-    console.log("[AUTH_VERIFY] ProtectedRoute - Still loading auth state");
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Still loading auth state");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -58,21 +59,27 @@ export const ProtectedRoute = () => {
 
   // Auth check complete, redirect if needed
   if (shouldRedirect && redirectPath) {
-    console.log("[AUTH_VERIFY] ProtectedRoute - Redirecting to:", redirectPath);
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Redirecting to:", redirectPath);
     // Store current location for return after login
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Auth check complete, user is authenticated but may not have client record
-  // CRITICAL CHANGE: Allow rendering even if clientId is null to prevent redirect loop
+  // Auth check complete, user is authenticated - CRITICAL CHANGE: Always render content if authenticated,
+  // even if clientId is null - this prevents redirect loops. The UI can handle displaying appropriate messages.
   if (isAuthenticated) {
-    console.log("[AUTH_VERIFY] ProtectedRoute - User is authenticated, rendering protected content");
-    console.log("[AUTH_VERIFY] ProtectedRoute - Client record status:", 
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - User is authenticated, rendering protected content");
+    console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Client record status:", 
       hasLinkedClientRecord ? "Client record found" : "No client record linked");
+      
+    // Show a toast if there's an error state but still render content
+    if (errorState) {
+      toast.error(errorState, { duration: 6000 });
+    }
+    
     return <Outlet />;
   }
 
   // Fallback case - shouldn't normally reach here
-  console.log("[AUTH_VERIFY] ProtectedRoute - Unexpected state, redirecting to login");
+  console.log("[AUTH_DEBUG_FINAL_] ProtectedRoute - Unexpected state, redirecting to login");
   return <Navigate to="/login" state={{ from: location }} replace />;
 };

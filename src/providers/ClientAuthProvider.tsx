@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +15,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const [authenticating, setAuthenticating] = useState(true);
   const [clientDataLoading, setClientDataLoading] = useState(false);
   const [clientQueryEnabled, setClientQueryEnabled] = useState(false);
+  const [errorState, setErrorState] = useState<string | null>(null);
 
   // Enable the client data query only when auth is complete and user is authenticated
   useEffect(() => {
@@ -31,21 +31,45 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     }
   }, [initialized, authLoading, isAuthenticated, user?.id]);
 
-  // Use React Query with improved error handling and dependencies
+  // Use React Query with improved error handling and retry logic
   const { data: clientData, isLoading: clientQueryLoading, error: clientError } = useQuery({
     queryKey: ["clientId", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      console.log("[AUTH_VERIFY] ClientAuthProvider - Fetching client ID for user:", user.id);
-      return fetchClientId(user.id);
+      console.log("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Fetching client ID for user:", user.id);
+      try {
+        return await fetchClientId(user.id);
+      } catch (error) {
+        // Capture specific policy errors for UI feedback
+        if (error instanceof Error && error.message.includes('policy')) {
+          setErrorState("Database policy error detected. Please contact support.");
+          console.error("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Policy error:", error.message);
+        }
+        throw error;
+      }
     },
     enabled: clientQueryEnabled,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    retry: 2,
+    retry: (failureCount, error) => {
+      // If it's a policy error, don't retry
+      if (error instanceof Error && error.message.includes('policy')) {
+        console.error("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Policy error, not retrying");
+        return false;
+      }
+      // Otherwise retry up to 2 times
+      return failureCount < 2;
+    },
     meta: {
       onError: (error: Error) => {
-        console.error("[AUTH_VERIFY] ClientAuthProvider - Error fetching client data:", error);
+        console.error("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Error fetching client data:", error);
         setClientDataLoading(false);
+        
+        // Set specific error states for different error types
+        if (error.message.includes('policy')) {
+          setErrorState("Policy configuration error. Please contact support.");
+        } else {
+          setErrorState("Error loading client data. Please try again later.");
+        }
       }
     }
   });
@@ -60,7 +84,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   // Update client state when data is available
   useEffect(() => {
     // Debug state changes
-    console.log("[AUTH_VERIFY] ClientAuthProvider - Auth state:", { 
+    console.log("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
       clientQueryLoading,
@@ -68,7 +92,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       clientData,
       clientError,
       initialized,
-      isAuthenticated
+      isAuthenticated,
+      errorState
     });
     
     if (initialized && !authLoading) {
@@ -76,7 +101,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       if (isAuthenticated) {
         // User is authenticated, set client data if available
         if (!clientQueryLoading && clientData !== undefined) {
-          console.log("[AUTH_VERIFY] ClientAuthProvider - Setting clientId:", clientData);
+          console.log("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Setting clientId:", clientData);
           setClientId(clientData); // Could be null if no client record exists
           setAuthenticating(false);
         }
@@ -84,6 +109,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
         // Not authenticated, reset client data
         setClientId(null);
         setAuthenticating(false);
+        setErrorState(null);
       }
     }
   }, [
@@ -101,10 +127,11 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     clientId, 
     authenticating: authenticating || authLoading || clientDataLoading,
     isAuthenticated,
-    hasLinkedClientRecord: !!clientId // NEW: explicit flag for linked client record
+    hasLinkedClientRecord: !!clientId, // Explicit flag for linked client record
+    errorState // Add error state to context for UI feedback
   };
 
-  console.log("[AUTH_VERIFY] ClientAuthProvider - Final context state:", contextValue);
+  console.log("[AUTH_DEBUG_FINAL_] ClientAuthProvider - Final context state:", contextValue);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

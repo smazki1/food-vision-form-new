@@ -8,6 +8,7 @@ export const ClientAuthContext = createContext<ClientAuthContextType>({
   authenticating: true,
   isAuthenticated: false,
   hasLinkedClientRecord: false, // Adding the missing property
+  errorState: null // Add error state for specific auth/client fetch errors
 });
 
 // Export the context for use in other components

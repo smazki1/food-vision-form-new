@@ -25,13 +25,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const updateAuthState = createAuthStateUpdater(setAuthState);
 
   useEffect(() => {
-    console.log("[AUTH_DEBUG] AuthProvider initialized");
+    console.log("[AUTH_DEBUG_FINAL_] AuthProvider initialized");
     let mounted = true;
     
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
-        console.log("[AUTH_DEBUG] Auth state changed:", event, currentSession?.user?.id);
+        console.log("[AUTH_DEBUG_FINAL_] Auth state changed:", event, currentSession?.user?.id);
         
         if (mounted) {
           updateAuthState({
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkInitialSession = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        console.log("[AUTH_DEBUG] Initial session check:", initialSession?.user?.id);
+        console.log("[AUTH_DEBUG_FINAL_] Initial session check:", initialSession?.user?.id);
         
         if (mounted) {
           updateAuthState({
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           });
         }
       } catch (error) {
-        console.error("[AUTH_DEBUG] Error checking initial session:", error);
+        console.error("[AUTH_DEBUG_FINAL_] Error checking initial session:", error);
         if (mounted) {
           updateAuthState({
             initialized: true,
@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      console.log("[AUTH_DEBUG] Attempting login for:", email);
+      console.log("[AUTH_DEBUG_FINAL_] Attempting login for:", email);
       updateAuthState({ loading: true });
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -88,15 +88,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       if (error) {
-        console.error("[AUTH_DEBUG] Login error:", error.message);
+        console.error("[AUTH_DEBUG_FINAL_] Login error:", error.message);
         updateAuthState({ loading: false });
         return { success: false, error: error.message };
       }
 
-      console.log("[AUTH_DEBUG] Login successful:", data.user?.id);
+      console.log("[AUTH_DEBUG_FINAL_] Login successful:", data.user?.id);
       return { success: true };
     } catch (error) {
-      console.error('[AUTH_DEBUG] Login exception:', error);
+      console.error('[AUTH_DEBUG_FINAL_] Login exception:', error);
       updateAuthState({ loading: false });
       return { 
         success: false, 
@@ -114,10 +114,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     updateAuthState({ loading: true });
     try {
       await supabase.auth.signOut();
-      console.log("[AUTH_DEBUG] User signed out successfully");
+      console.log("[AUTH_DEBUG_FINAL_] User signed out successfully");
       // onAuthStateChange will handle updating the state
     } catch (error) {
-      console.error('[AUTH_DEBUG] Sign out error:', error);
+      console.error('[AUTH_DEBUG_FINAL_] Sign out error:', error);
       updateAuthState({ loading: false });
     }
   };
@@ -134,7 +134,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { success: true };
     } catch (error) {
-      console.error('[AUTH_DEBUG] Reset password error:', error);
+      console.error('[AUTH_DEBUG_FINAL_] Reset password error:', error);
       return { 
         success: false, 
         error: 'התרחשה שגיאה בתהליך איפוס הסיסמה. אנא נסה שוב מאוחר יותר.' 

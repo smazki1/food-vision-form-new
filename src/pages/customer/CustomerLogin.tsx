@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useClientAuth } from "@/hooks/useClientAuth";
 
 const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -15,19 +16,22 @@ const CustomerLogin: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user, loading, isAuthenticated, initialized } = useCustomerAuth();
+  const { hasLinkedClientRecord, errorState } = useClientAuth();
   const redirectAttempted = useRef(false);
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
-  // Handle redirection when already logged in - simplified logic to avoid loops
+  // Handle redirection when already logged in - improved logic to avoid loops
   useEffect(() => {
     // Log auth state to help track login flow
-    console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Auth check:", {
+    console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - Auth check:", {
       isAuthenticated, 
       initialized, 
       loading, 
       userId: user?.id,
+      hasLinkedClientRecord,
+      errorState,
       currentPath: location.pathname,
       targetPath: from, 
       redirectAttempted: redirectAttempted.current
@@ -35,7 +39,7 @@ const CustomerLogin: React.FC = () => {
     
     // Only redirect when fully authenticated and not in a loading state
     if (isAuthenticated && initialized && !loading && !redirectAttempted.current) {
-      console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - User authenticated, redirecting to:", from);
+      console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - User authenticated, redirecting to:", from);
       
       // Set the flag first to prevent multiple redirects
       redirectAttempted.current = true;
@@ -43,9 +47,19 @@ const CustomerLogin: React.FC = () => {
       // Use a small timeout to ensure all state updates are processed
       setTimeout(() => {
         navigate(from, { replace: true });
+        
+        // Show a warning toast if authenticated but no client record is linked
+        if (!hasLinkedClientRecord) {
+          toast.warning("משתמש מאומת אך אין רשומת לקוח מקושרת. חלק מהתכונות עשויות להיות מוגבלות.", { duration: 6000 });
+        }
+        
+        // Show an error toast if there's an error state
+        if (errorState) {
+          toast.error(errorState, { duration: 6000 });
+        }
       }, 100);
     }
-  }, [isAuthenticated, loading, initialized, navigate, from, user]);
+  }, [isAuthenticated, loading, initialized, navigate, from, user, hasLinkedClientRecord, errorState]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,18 +69,18 @@ const CustomerLogin: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Attempting login with:", email);
+      console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - Attempting login with:", email);
       const { success, error } = await signIn(email, password);
 
       if (success) {
         toast.success("התחברת בהצלחה");
-        console.log("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Login successful");
+        console.log("[AUTH_DEBUG_FINAL_] CustomerLogin - Login successful");
         // Let the useEffect handle redirection after auth state updates
       } else {
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
-      console.error("[AUTH_DEBUG_FINAL_FIX] CustomerLogin - Login error:", error);
+      console.error("[AUTH_DEBUG_FINAL_] CustomerLogin - Login error:", error);
       toast.error("שגיאה בהתחברות");
     } finally {
       setIsLoading(false);
