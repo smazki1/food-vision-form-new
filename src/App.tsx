@@ -9,9 +9,10 @@ import "@/rtl.css";
 import { CustomerLayout } from "@/layouts/CustomerLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import EditorLayout from "@/layouts/EditorLayout";
-import { AuthProvider } from "@/hooks/useCustomerAuth";
+import { AuthProvider } from "@/providers/AuthProvider";
 import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthDebugger } from "@/components/AuthDebugger";
 
 // Import all pages
 import PromoLandingPage from "./pages/PromoLandingPage";
@@ -63,6 +64,7 @@ function App() {
         <TooltipProvider>
           <Router>
             <AuthProvider>
+              <AuthDebugger />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<PromoLandingPage />} />
