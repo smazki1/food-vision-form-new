@@ -55,8 +55,7 @@ export const useClientDataFetcher = (
       if (queryDuration > 7000 && clientQueryEnabled) {
         console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long, forcing completion");
         onUpdate({
-          authenticating: false,
-          clientRecordStatus: 'not-found'
+          authenticating: false
         });
       }
     }, 7000);
