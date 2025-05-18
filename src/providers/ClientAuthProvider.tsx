@@ -87,7 +87,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientRecordStatus: 'not-found',
               hasNoClientRecord: true,
               clientId: null,
-              authenticating: false  // *** נקבע ביחד עם clientId ***
+              authenticating: false, // *** נקבע ביחד עם clientId ***
+              isAuthenticated: true    // User is authenticated by main provider, client check done
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - No client record linked to user");
           } else {
@@ -95,7 +96,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientRecordStatus: 'found',
               hasNoClientRecord: false,
               clientId: clientData,
-              authenticating: false  // *** נקבע ביחד עם clientId ***
+              authenticating: false, // *** נקבע ביחד עם clientId ***
+              isAuthenticated: true    // User is authenticated by main provider, client data found
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - Client record found");
           }
@@ -107,7 +109,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
           authenticating: false,
           errorState: null,
           clientRecordStatus: 'not-found',
-          hasNoClientRecord: true
+          hasNoClientRecord: true,
+          isAuthenticated: false // Correctly false here
         });
       }
     }
