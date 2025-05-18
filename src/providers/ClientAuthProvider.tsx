@@ -57,13 +57,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     (errorMessage) => updateClientAuthState({ errorState: errorMessage })
   );
 
-  // Handle client data loading state
-  useEffect(() => {
-    if (!clientQueryLoading) {
-      updateClientAuthState({ authenticating: false });
-      console.log("[AUTH_DEBUG] ClientAuthProvider - Client query completed, setting authenticating to false");
-    }
-  }, [clientQueryLoading, updateClientAuthState]);
+  // *** הוסרה הפונקציה שגרמה לrace condition ***
+  // הuseEffect שהיה מגדיר authenticating: false רק בהתבסס על clientQueryLoading הוסר
 
   // Explicit check to ensure authentication process completes
   useEffect(() => {
@@ -83,9 +78,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     }
   }, [initialized, authLoading, isAuthenticated, clientQueryLoading, clientData, updateClientAuthState]);
 
-  // Update client state when data is available
+  // *** זהו הuseEffect הראשי שמטפל בכל העדכונים ביחד ***
+  // Update client state when data is available - THIS IS THE MAIN EFFECT
   useEffect(() => {
-    // Debug state changes
     console.log("[AUTH_DEBUG] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
       authLoading,
@@ -107,13 +102,14 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
         if (!clientQueryLoading && clientData !== undefined) {
           console.log("[AUTH_DEBUG] ClientAuthProvider - Setting clientId:", clientData);
           
+          // *** זה החלק החשוב - נעדכן הכל ביחד ***
           // Handle client record status based on clientData
           if (clientData === null) {
             updateClientAuthState({
               clientRecordStatus: 'not-found',
               hasNoClientRecord: true,
               clientId: null,
-              authenticating: false
+              authenticating: false  // *** זה נקבע ביחד עם clientId ***
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - No client record linked to user");
           } else {
@@ -121,7 +117,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientRecordStatus: 'found',
               hasNoClientRecord: false,
               clientId: clientData,
-              authenticating: false
+              authenticating: false  // *** זה נקבע ביחד עם clientId ***
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - Client record found");
           }
