@@ -14,23 +14,34 @@ const ResetPassword: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [hasHashParams, setHasHashParams] = useState(false);
   const navigate = useNavigate();
   const { loading } = useCustomerAuth();
 
   // Check if we have a hash parameter in the URL (for password reset)
   useEffect(() => {
-    console.log("[AUTH_DEBUG] ResetPassword - Checking for hash parameter in URL");
+    console.log("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Checking for hash parameter in URL");
     
     const hashParams = window.location.hash;
-    if (!hashParams || !hashParams.includes('access_token=')) {
-      console.log("[AUTH_DEBUG] ResetPassword - No hash parameters found, this might be a direct access");
+    const hasParams = !!(hashParams && hashParams.includes('access_token='));
+    
+    setHasHashParams(hasParams);
+    
+    if (!hasParams) {
+      console.log("[AUTH_DEBUG_LOOP_FIX] ResetPassword - No hash parameters found, this might be a direct access");
+      toast.warning("לינק לאיפוס סיסמה לא תקין או פג תוקף");
     } else {
-      console.log("[AUTH_DEBUG] ResetPassword - Hash parameters found, ready for password reset");
+      console.log("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Hash parameters found, ready for password reset");
     }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!hasHashParams) {
+      toast.error("לינק לאיפוס סיסמה לא תקין");
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast.error("הסיסמאות אינן תואמות");
@@ -45,18 +56,18 @@ const ResetPassword: React.FC = () => {
     setIsLoading(true);
 
     try {
-      console.log("[AUTH_DEBUG] ResetPassword - Attempting to update password");
+      console.log("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Attempting to update password");
       
       // Using updateUser directly since we're already in the hash callback for password reset
       const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
-        console.error("[AUTH_DEBUG] ResetPassword - Failed to update password:", error);
+        console.error("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Failed to update password:", error);
         toast.error(error.message || "שגיאה באיפוס הסיסמה");
         return;
       }
       
-      console.log("[AUTH_DEBUG] ResetPassword - Password updated successfully");
+      console.log("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Password updated successfully");
       setIsSuccess(true);
       toast.success("הסיסמה עודכנה בהצלחה");
       
@@ -66,7 +77,7 @@ const ResetPassword: React.FC = () => {
       }, 2000);
       
     } catch (error) {
-      console.error("[AUTH_DEBUG] ResetPassword - Unexpected error:", error);
+      console.error("[AUTH_DEBUG_LOOP_FIX] ResetPassword - Unexpected error:", error);
       toast.error("שגיאה בלתי צפויה אירעה באיפוס הסיסמה");
     } finally {
       setIsLoading(false);
@@ -88,7 +99,7 @@ const ResetPassword: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle>איפוס סיסמה</CardTitle>
           <CardDescription>
-            הזן את הסיסמה החדשה שלך
+            {hasHashParams ? "הזן את הסיסמה החדשה שלך" : "לינק לא תקין או פג תוקף"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -104,7 +115,7 @@ const ResetPassword: React.FC = () => {
                 required
                 minLength={6}
                 dir="ltr"
-                disabled={isSuccess}
+                disabled={isSuccess || !hasHashParams}
               />
             </div>
             <div className="space-y-2">
@@ -118,7 +129,7 @@ const ResetPassword: React.FC = () => {
                 required
                 minLength={6}
                 dir="ltr"
-                disabled={isSuccess}
+                disabled={isSuccess || !hasHashParams}
               />
             </div>
           </CardContent>
@@ -126,7 +137,7 @@ const ResetPassword: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || isSuccess}
+              disabled={isLoading || isSuccess || !hasHashParams}
             >
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>

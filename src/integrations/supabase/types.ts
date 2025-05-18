@@ -531,6 +531,10 @@ export type Database = {
         Args: { user_auth_id: string }
         Returns: string
       }
+      get_client_id: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       has_role: {
         Args: { user_id: string; role_name: string }
         Returns: boolean

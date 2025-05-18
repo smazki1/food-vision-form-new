@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, Link } from "react-router-dom";
-import { toast } from "sonner";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
+/**
+ * Customer login page with comprehensive authentication handling
+ */
 const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const navigate = useNavigate();
+  
   const location = useLocation();
+  const navigate = useNavigate();
   const { signIn, user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
 
   // Get the redirect path from location state, or default to dashboard
@@ -83,6 +88,18 @@ const CustomerLogin: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If already authenticated, show loading with redirect message
+  if (isAuthenticated && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>מועבר לדף הבית...</p>
+        </div>
       </div>
     );
   }
