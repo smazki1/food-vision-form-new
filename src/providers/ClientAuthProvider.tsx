@@ -57,9 +57,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     (errorMessage) => updateClientAuthState({ errorState: errorMessage })
   );
 
-  // *** הוסרה הפונקציה שגרמה לrace condition ***
-  // הuseEffect שהיה מגדיר authenticating: false רק בהתבסס על clientQueryLoading הוסר
-
   // Explicit check to ensure authentication process completes
   useEffect(() => {
     if (initialized && !authLoading) {
@@ -78,8 +75,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     }
   }, [initialized, authLoading, isAuthenticated, clientQueryLoading, clientData, updateClientAuthState]);
 
-  // *** זהו הuseEffect הראשי שמטפל בכל העדכונים ביחד ***
-  // Update client state when data is available - THIS IS THE MAIN EFFECT
+  // ****** זהו ה-useEffect הראשי שמטפל בהכל ביחד ******
+  // Update client state when data is available
   useEffect(() => {
     console.log("[AUTH_DEBUG] ClientAuthProvider - Auth state:", { 
       userId: user?.id, 
@@ -102,14 +99,13 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
         if (!clientQueryLoading && clientData !== undefined) {
           console.log("[AUTH_DEBUG] ClientAuthProvider - Setting clientId:", clientData);
           
-          // *** זה החלק החשוב - נעדכן הכל ביחד ***
           // Handle client record status based on clientData
           if (clientData === null) {
             updateClientAuthState({
               clientRecordStatus: 'not-found',
               hasNoClientRecord: true,
               clientId: null,
-              authenticating: false  // *** זה נקבע ביחד עם clientId ***
+              authenticating: false  // *** נקבע ביחד עם clientId ***
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - No client record linked to user");
           } else {
@@ -117,7 +113,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
               clientRecordStatus: 'found',
               hasNoClientRecord: false,
               clientId: clientData,
-              authenticating: false  // *** זה נקבע ביחד עם clientId ***
+              authenticating: false  // *** נקבע ביחד עם clientId ***
             });
             console.log("[AUTH_DEBUG] ClientAuthProvider - Client record found");
           }
