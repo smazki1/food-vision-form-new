@@ -24,11 +24,11 @@ export const useClientDataFetcher = (
     if (initialized && !loading && isAuthenticated && user?.id && connectionVerified) {
       if (!clientQueryEnabled) {
         setQueryStartTime(Date.now());
-        setClientQueryEnabled(true);
-        onUpdate({
-          clientRecordStatus: 'loading',
-        });
-        console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
+      setClientQueryEnabled(true);
+      onUpdate({
+        clientRecordStatus: 'loading',
+      });
+      console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
       }
     } else if (initialized && !loading && !isAuthenticated) {
       // If auth is initialized and user is not authenticated, we can stop authenticating
@@ -57,14 +57,14 @@ export const useClientDataFetcher = (
     let timeoutId: NodeJS.Timeout | undefined;
     if (clientQueryEnabled && queryStartTime !== null) {
       timeoutId = setTimeout(() => {
-        const queryDuration = Date.now() - queryStartTime;
+      const queryDuration = Date.now() - queryStartTime;
         if (queryDuration > 7000) {
           console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long (actual query phase), forcing completion");
-          onUpdate({
-            authenticating: false
-          });
-        }
-      }, 7000);
+        onUpdate({
+          authenticating: false
+        });
+      }
+    }, 7000);
     }
     
     return () => {

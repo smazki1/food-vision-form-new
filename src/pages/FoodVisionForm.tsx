@@ -23,6 +23,8 @@ import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 const FoodVisionForm: React.FC = () => {
   const { user } = useCustomerAuth();
   const { clientId, authenticating } = useClientAuth();
+  console.log("FoodVisionForm - User:", user);
+  console.log("FoodVisionForm - ClientID:", clientId, "Authenticating:", authenticating);
   const { clientProfile } = useClientProfile(user?.id);
   
   const {
@@ -64,7 +66,7 @@ const FoodVisionForm: React.FC = () => {
     showThankYou, 
     handleFormSubmit,
     handleCloseThankYou,
-    isSubmitDisabled
+    isSubmitDisabled: submissionHookSubmitDisabled
   } = useFoodVisionFormSubmission({
     handleSubmit,
     validateForm,
@@ -72,6 +74,10 @@ const FoodVisionForm: React.FC = () => {
     clientId,
     remainingServings
   });
+
+  // DIAGNOSTIC: Temporarily remove `authenticating` from the disabled condition
+  // const finalIsSubmitDisabled = authenticating || !clientId || submissionHookSubmitDisabled;
+  const finalIsSubmitDisabled = !clientId || submissionHookSubmitDisabled;
 
   // Handle tab change
   const handleTabChange = (nextTab: string) => {
@@ -165,7 +171,7 @@ const FoodVisionForm: React.FC = () => {
             setActiveTab={setActiveTab}
             isSubmitting={isSubmitting}
             handleSubmit={handleFormSubmit}
-            isSubmitDisabled={isSubmitDisabled}
+            isSubmitDisabled={finalIsSubmitDisabled}
           />
         </div>
       </div>

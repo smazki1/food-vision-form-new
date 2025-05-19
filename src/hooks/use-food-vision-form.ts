@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useClientDetails } from "./useClientDetails";
 import { useFoodItems } from "./useFoodItems";
@@ -63,8 +62,8 @@ export const useFoodVisionForm = () => {
     saveToStorage,
   ]);
 
-  const handleSubmit = useCallback(async (options: SubmitOptions = {}) => {
-    const submitHandler = useFoodVisionSubmit({
+  // Call useFoodVisionSubmit at the top level of the useFoodVisionForm hook
+  const internalSubmitHandler = useFoodVisionSubmit({
       clientDetails,
       dishes,
       cocktails,
@@ -77,22 +76,13 @@ export const useFoodVisionForm = () => {
       setDrinks,
       setAdditionalDetails,
       setIsSubmitting,
-      clientId: options.clientId, // Pass clientId if available
-    });
+    // clientId is not passed here, it will be passed to the returned function
+  });
 
-    return submitHandler();
-  }, [
-    clientDetails,
-    dishes,
-    cocktails,
-    drinks,
-    additionalDetails,
-    setClientDetails,
-    setDishes,
-    setCocktails,
-    setDrinks,
-    setAdditionalDetails
-  ]);
+  const handleSubmit = useCallback(async (options: SubmitOptions = {}) => {
+    // Pass the options (which includes clientId) to the internalSubmitHandler
+    return internalSubmitHandler(options);
+  }, [internalSubmitHandler]);
 
   return {
     activeTab,

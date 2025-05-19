@@ -43,16 +43,24 @@ export const useFoodVisionFormSubmission = ({
     setIsSubmitting(true);
     
     try {
+      console.log("[FormSubmitDebug] Calling handleSubmit with clientId:", clientId);
       const result = await handleSubmit({
         clientId: clientId // Pass the client ID to the submit handler
       });
+      console.log("[FormSubmitDebug] handleSubmit result:", result);
       
       if (result && result.success) {
+        console.log("[FormSubmitDebug] handleSubmit successful, showing thank you.");
         setShowThankYou(true);
-      } else if (result && !result.success) {
+      } else if (result && typeof result.success === 'boolean' && !result.success) {
+        console.log("[FormSubmitDebug] handleSubmit returned success:false. Error message:", result.message);
         setSubmitError(result.message || "אירעה שגיאה בעת שליחת הטופס");
+      } else {
+        console.log("[FormSubmitDebug] handleSubmit returned unexpected result or no result. Defaulting to error.");
+        setSubmitError("אירעה שגיאה בעת שליחת הטופס (תוצאה לא צפויה מההגשה)");
       }
     } catch (err: any) {
+      console.error("[FormSubmitDebug] Error caught in useFoodVisionFormSubmission:", err);
       setSubmitError("אירעה שגיאה בעת שליחת הטופס. אנא נסה שוב מאוחר יותר.");
     } finally {
       setIsSubmitting(false);

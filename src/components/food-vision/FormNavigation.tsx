@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -63,7 +62,7 @@ const FormNavigation: React.FC<FormNavigationProps> = ({
             <Button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSubmitDisabled}
             >
               {isSubmitting ? (
                 <span className="flex gap-2 items-center">

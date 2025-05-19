@@ -17,9 +17,10 @@ export const useFoodVisionSubmit = ({
   setDrinks,
   setAdditionalDetails,
   setIsSubmitting,
-  clientId
 }: any) => {
-  return useCallback(async () => {
+  return useCallback(async (options?: { clientId?: string }) => {
+    const currentClientId = options?.clientId;
+
     // Validate required fields
     if (!clientDetails.restaurantName ||
         !clientDetails.contactName ||
@@ -37,9 +38,9 @@ export const useFoodVisionSubmit = ({
       (Array.isArray(drinks) ? drinks.length : 0);
     
     // If client is authenticated, check if they have enough servings
-    if (clientId) {
+    if (currentClientId) {
       try {
-        const remainingServings = await getClientRemainingServings(clientId);
+        const remainingServings = await getClientRemainingServings(currentClientId);
         
         if (remainingServings < totalNewItems) {
           toast.error(`אין מספיק מנות בחבילה. נותרו ${remainingServings} מנות, אך ניסית להגיש ${totalNewItems} פריטים.`);
@@ -67,7 +68,7 @@ export const useFoodVisionSubmit = ({
       const result = await triggerMakeWebhook(completeFormData);
       
       // If user is authenticated, create submissions for each new item
-      if (clientId && result) {
+      if (currentClientId && result) {
         // Prepare items for batch submission creation
         const itemsForSubmission = [
           ...(Array.isArray(dishes) ? dishes.map(dish => ({
@@ -88,7 +89,7 @@ export const useFoodVisionSubmit = ({
         ];
         
         if (itemsForSubmission.length > 0) {
-          await createBatchSubmissions(clientId, itemsForSubmission);
+          await createBatchSubmissions(currentClientId, itemsForSubmission);
         }
       }
       
@@ -111,11 +112,12 @@ export const useFoodVisionSubmit = ({
       
       // Show success message
       toast.success("תודה! הטופס נשלח בהצלחה. נחזור אליך תוך 24 שעות.");
+      console.log("[useFoodVisionSubmitDebug] All DB operations successful. Returning success:true.");
       return { success: true };
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("[useFoodVisionSubmitDebug] Error during submission process:", error);
       toast.error("אירעה שגיאה בעת שליחת הטופס. אנא נסה שוב מאוחר יותר.");
-      return { success: false, message: "שגיאת שרת" };
+      return { success: false, message: "שגיאה פנימית במהלך עיבוד הטופס" };
     } finally {
       setIsSubmitting(false);
     }
@@ -132,6 +134,5 @@ export const useFoodVisionSubmit = ({
     setDrinks,
     setAdditionalDetails,
     setIsSubmitting,
-    clientId
   ]);
 };

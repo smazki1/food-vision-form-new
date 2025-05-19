@@ -17,8 +17,27 @@ interface FormData {
 
 export const triggerMakeWebhook = async (formData: FormData): Promise<boolean> => {
   try {
-    // Get or create client
-    const client_id = await getOrCreateClient(formData.clientDetails);
+    // Get current authenticated user's ID
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError) {
+      console.error("[triggerMakeWebhook] Error fetching authenticated user:", authError);
+      // Decide handling: throw, or proceed if anonymous submissions are allowed.
+      // For now, let's throw as gallery logic implies an authenticated user.
+      throw new Error("Could not verify authenticated user.");
+    }
+    
+    const authUserId = user?.id; 
+    // If user is null here but form implies logged-in state, it's an issue.
+    // The ClientAuthProvider should ideally prevent submission if user is not authenticated
+    // and client_id cannot be determined.
+
+    console.log(`[triggerMakeWebhook] Current authUserId: ${authUserId}`);
+
+    // Get or create client, passing the authUserId
+    const client_id = await getOrCreateClient(formData.clientDetails, authUserId); 
+    
+    console.log(`[triggerMakeWebhook] Using client_id: ${client_id} for user ${authUserId}`);
     
     // Process dishes, cocktails, and drinks
     // These functions likely save data to your Supabase tables
