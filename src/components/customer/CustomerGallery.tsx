@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,14 +110,14 @@ export function CustomerGallery() {
 
         <div className="flex gap-2">
           <Select
-            value={selectedType || ""}
-            onValueChange={(value) => setSelectedType(value || null)}
+            value={selectedType || "__ALL__"}
+            onValueChange={(value) => setSelectedType(value === "__ALL__" ? null : value)}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="סנן לפי סוג" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">הכל</SelectItem>
+              <SelectItem value="__ALL__">הכל</SelectItem>
               {itemTypes.map((type) => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
