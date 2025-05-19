@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from "react";
 import { FoodItem } from "@/types/food-vision";
 
@@ -68,6 +67,6 @@ export const useFoodVisionFormSubmission = ({
     showThankYou,
     handleFormSubmit,
     handleCloseThankYou,
-    isSubmitDisabled: clientId && remainingServings <= 0
+    isSubmitDisabled: !!(clientId && remainingServings <= 0)
   };
 };
