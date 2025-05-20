@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ClientDetailsTab from "@/components/food-vision/ClientDetailsTab";
 import DishesTab from "@/components/food-vision/DishesTab";
@@ -23,6 +25,9 @@ import { useCustomerAuth } from "@/hooks/useCustomerAuth";
 const FoodVisionForm: React.FC = () => {
   const { user } = useCustomerAuth();
   const { clientId, authenticating } = useClientAuth();
+  
+  console.log(`[FoodVisionForm RENDER] authenticating: ${authenticating}, clientId: ${clientId}, timestamp: ${Date.now()}`);
+
   console.log("FoodVisionForm - User:", user);
   console.log("FoodVisionForm - ClientID:", clientId, "Authenticating:", authenticating);
   const { clientProfile } = useClientProfile(user?.id);
@@ -75,9 +80,17 @@ const FoodVisionForm: React.FC = () => {
     remainingServings
   });
 
-  // DIAGNOSTIC: Temporarily remove `authenticating` from the disabled condition
-  // const finalIsSubmitDisabled = authenticating || !clientId || submissionHookSubmitDisabled;
-  const finalIsSubmitDisabled = !clientId || submissionHookSubmitDisabled;
+  // Log the inputs to finalIsSubmitDisabled
+  console.log("[FoodVisionForm] Determining finalIsSubmitDisabled:", {
+    raw_authenticating_from_useClientAuth: authenticating,
+    raw_submissionHookSubmitDisabled_from_useFoodVisionFormSubmission: submissionHookSubmitDisabled,
+    timestamp: Date.now(),
+  });
+
+  // ADJUSTED LOGIC: Determine final submit disabled state
+  // Rely primarily on the submission hook's own disabled state, 
+  // as the submission process itself can handle an initially null/resolving clientId.
+  const finalIsSubmitDisabled = submissionHookSubmitDisabled;
 
   // Handle tab change
   const handleTabChange = (nextTab: string) => {
@@ -101,6 +114,14 @@ const FoodVisionForm: React.FC = () => {
     <div dir="rtl" className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto px-4 py-8">
         <FormHeader />
+
+        {user && (
+          <div className="mb-4 flex justify-start">
+            <Button asChild variant="outline">
+              <Link to="/customer/dashboard">חזרה לדאשבורד</Link>
+            </Button>
+          </div>
+        )}
 
         {clientId && !authenticating && (
           <div className="mb-6">

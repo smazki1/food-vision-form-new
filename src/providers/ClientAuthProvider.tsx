@@ -1,136 +1,126 @@
-import React, { useEffect, ReactNode, useCallback } from 'react';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
-import { ClientAuthContextType } from '@/types/clientAuthTypes';
+import React, { useEffect, useMemo } from 'react';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
-import { useClientAuthStateManager } from '@/hooks/useClientAuthStateManager';
-import { useConnectionVerifier } from '@/hooks/useConnectionVerifier';
+import { useCustomerAuth } from '@/hooks/useCustomerAuth';
 import { useClientDataFetcher } from '@/hooks/useClientDataFetcher';
+import { useConnectionVerifier } from '@/hooks/useConnectionVerifier';
+import { useClientAuthStateManager } from '@/hooks/useClientAuthStateManager';
+import { ClientAuthState, ClientAuthContextType } from '@/types/clientAuthTypes';
 
 interface ClientAuthProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
-  const { user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
-  const { updateClientAuthState, ...clientAuthState } = useClientAuthStateManager();
+  const { user, loading: authLoading, initialized, isAuthenticated } = useCustomerAuth();
   
-  // Force completion of authentication process after a timeout
-  const forceCompleteAuth = useCallback(() => {
-    console.log("[AUTH_DEBUG] ClientAuthProvider - Force completing authentication process");
-    updateClientAuthState({ 
-      authenticating: false,
-      clientRecordStatus: clientAuthState.clientRecordStatus === 'loading' ? 'not-found' : clientAuthState.clientRecordStatus
-    });
-  }, [updateClientAuthState, clientAuthState.clientRecordStatus]);
+  const {
+    clientId,
+    authenticating,
+    clientRecordStatus,
+    errorState,
+    updateClientAuthState,
+  } = useClientAuthStateManager();
   
-  // Set a timeout to force completion if taking too long
-  useEffect(() => {
-    if (clientAuthState.authenticating) {
-      const timeoutId = setTimeout(() => {
-        if (clientAuthState.authenticating) {
-          console.warn("[AUTH_DEBUG] ClientAuthProvider - Authentication taking too long, forcing completion");
-          forceCompleteAuth();
-        }
-      }, 8000); // 8 second timeout
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [clientAuthState.authenticating, forceCompleteAuth]);
-  
-  // Verify database connection
   const connectionVerified = useConnectionVerifier((errorMessage) => {
-    if (errorMessage) {
-      updateClientAuthState({ errorState: errorMessage });
-    } else {
-      updateClientAuthState({ errorState: null });
-    }
+    updateClientAuthState({ errorState: errorMessage || null });
   });
 
-  // Fetch client data when authentication is ready
-  const { clientData, clientQueryLoading } = useClientDataFetcher(
+  const { 
+    clientData,
+    clientQueryLoading, 
+  } = useClientDataFetcher(
     user,
     isAuthenticated,
     initialized,
     authLoading,
     connectionVerified,
     updateClientAuthState,
-    (errorMessage) => updateClientAuthState({ errorState: errorMessage })
+    (errorMessage) => updateClientAuthState({ errorState: errorMessage, clientRecordStatus: 'error', authenticating: false })
   );
 
-  // ****** זהו ה-useEffect הראשי שמטפל בהכל ביחד ******
-  // Update client state when data is available
   useEffect(() => {
-    console.log("[AUTH_DEBUG] ClientAuthProvider - Auth state:", { 
-      userId: user?.id, 
-      authLoading,
-      clientQueryLoading,
-      clientData,
-      initialized,
-      isAuthenticated,
-      errorState: clientAuthState.errorState,
-      clientRecordStatus: clientAuthState.clientRecordStatus,
-      connectionVerified,
-      authenticating: clientAuthState.authenticating,
-      timestamp: Date.now()
+    const currentTimestamp = Date.now();
+    console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Main useEffect. States:`, {
+      auth: {loading: authLoading, initialized, authenticated: isAuthenticated, userId: user?.id},
+      clientAuth: { clientId, authenticating, clientRecordStatus, errorState },
+      fetcher: {clientData, clientQueryLoading},
+      connectionVerified
     });
     
-    if (initialized && !authLoading) {
-      // Auth is complete
-      if (isAuthenticated) {
-        // User is authenticated, set client data if available
-        if (!clientQueryLoading && clientData !== undefined) {
-          console.log("[AUTH_DEBUG] ClientAuthProvider - Setting clientId:", clientData);
-          
-          // Handle client record status based on clientData
-          if (clientData === null) {
+    if (!initialized || authLoading) {
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Basic auth loading. Ensuring authenticating: true.`);
+      if (!authenticating) {
+        updateClientAuthState({ authenticating: true });
+      }
+      return;
+    }
+
+    if (!isAuthenticated) {
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - User NOT authenticated. Resetting. authenticating: false.`);
             updateClientAuthState({
+        clientId: null,
+        authenticating: false,
               clientRecordStatus: 'not-found',
-              hasNoClientRecord: true,
-              clientId: null,
-              authenticating: false, // *** נקבע ביחד עם clientId ***
-              isAuthenticated: true    // User is authenticated by main provider, client check done
-            });
-            console.log("[AUTH_DEBUG] ClientAuthProvider - No client record linked to user");
-          } else {
+        errorState: null,
+      });
+      return;
+    }
+
+    if (clientQueryLoading) {
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client query IS loading. Ensuring authenticating: true.`);
+      if (!authenticating) {
+        updateClientAuthState({ authenticating: true, clientRecordStatus: 'loading' });
+      }
+      return;
+    }
+
+    console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client query NOT loading. Status: ${clientRecordStatus}, Data: ${clientData}`);
+
+    if (clientRecordStatus === 'error') {
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Status is 'error'. Expecting authenticating:false.`);
+      if (authenticating) {
+        console.warn(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Status 'error', but authenticating still true. Forcing false.`);
+        updateClientAuthState({ authenticating: false });
+      }
+      return; 
+    }
+
+    if (clientData) {
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client ID FOUND: ${clientData}.`);
             updateClientAuthState({
+        clientId: clientData,
+        authenticating: false,
               clientRecordStatus: 'found',
-              hasNoClientRecord: false,
-              clientId: clientData,
-              authenticating: false, // *** נקבע ביחד עם clientId ***
-              isAuthenticated: true    // User is authenticated by main provider, client data found
+        errorState: null, 
             });
-            console.log("[AUTH_DEBUG] ClientAuthProvider - Client record found");
-          }
-        }
       } else {
-        // Not authenticated, reset client data
+      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client ID NOT found (null).`);
         updateClientAuthState({
           clientId: null,
           authenticating: false,
+        clientRecordStatus: 'not-found',
           errorState: null,
-          clientRecordStatus: 'not-found',
-          hasNoClientRecord: true,
-          isAuthenticated: false // Correctly false here
         });
-      }
     }
   }, [
-    user, 
-    authLoading, 
-    clientData, 
-    clientQueryLoading, 
-    initialized, 
-    isAuthenticated,
+    user, authLoading, initialized, isAuthenticated,
+    clientData, clientQueryLoading, 
+    authenticating,
+    clientRecordStatus,
+    errorState,
     connectionVerified,
-    updateClientAuthState
+    updateClientAuthState, 
   ]);
 
-  // The final context value with clearer states
-  const contextValue: ClientAuthContextType = {
-    ...clientAuthState
-  };
-
-  console.log("[AUTH_DEBUG] ClientAuthProvider - Final context state:", contextValue);
+  const contextValue: ClientAuthContextType = useMemo(() => ({
+    clientId,
+    authenticating,
+    clientRecordStatus,
+    errorState,
+    isAuthenticated: clientRecordStatus === 'found' || clientRecordStatus === 'not-found',
+    hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
+    verifyConnection: () => { /* Placeholder */ }, 
+  }), [clientId, authenticating, clientRecordStatus, errorState]);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

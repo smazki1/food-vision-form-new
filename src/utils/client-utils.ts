@@ -8,19 +8,36 @@ import { ClientDetails } from "@/types/food-vision";
  */
 export const getOrCreateClient = async (
   clientDetails: ClientDetails, 
-  authUserId?: string // Optional current authenticated user ID
+  authUserIdParam?: string // Renamed to avoid conflict, optional current authenticated user ID
 ): Promise<string> => {
+  let effectiveAuthUserId = authUserIdParam; // Initialize with the parameter
+
   try {
+    // If authUserId is not provided from param, try to get it from the current session
+    if (!effectiveAuthUserId) {
+      console.log("[getOrCreateClient] authUserId not provided, attempting to get from session.");
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.warn("[getOrCreateClient] Error fetching session:", sessionError);
+        // Proceed without authUserId if session fetch fails
+      } else if (sessionData?.session?.user?.id) {
+        effectiveAuthUserId = sessionData.session.user.id;
+        console.log(`[getOrCreateClient] authUserId from session: ${effectiveAuthUserId}`);
+      } else {
+        console.log("[getOrCreateClient] No active session or user ID in session.");
+      }
+    }
+
     let clientToUseId: string | null = null;
     let clientFoundBy: string | null = null;
 
     // Priority 1: Try to find a client linked to the current auth user ID
-    if (authUserId) {
-      console.log(`[getOrCreateClient] Attempting to find client by authUserId: ${authUserId}`);
+    if (effectiveAuthUserId) { // Now use effectiveAuthUserId which might be from param or session
+      console.log(`[getOrCreateClient] Attempting to find client by authUserId: ${effectiveAuthUserId}`);
       const { data: userLinkedClient, error: userLinkedClientError } = await supabase
         .from('clients')
         .select('client_id, email, user_auth_id, remaining_servings')
-        .eq('user_auth_id', authUserId)
+        .eq('user_auth_id', effectiveAuthUserId)
         .single();
 
       if (userLinkedClientError && userLinkedClientError.code !== 'PGRST116') { // PGRST116 = 0 rows, not an error for .single()
@@ -30,7 +47,7 @@ export const getOrCreateClient = async (
       if (userLinkedClient) {
         clientToUseId = userLinkedClient.client_id;
         clientFoundBy = "authUserId";
-        console.log(`[getOrCreateClient] Found client ${clientToUseId} by authUserId ${authUserId}.`);
+        console.log(`[getOrCreateClient] Found client ${clientToUseId} by authUserId ${effectiveAuthUserId}.`);
         // Optional: Update client details from form if they differ and logic allows.
         // Example: if (userLinkedClient.email !== clientDetails.email) { /* update logic */ }
       }
@@ -53,29 +70,32 @@ export const getOrCreateClient = async (
       if (emailMatchClients && emailMatchClients.length > 0) {
         const existingClientByEmail = emailMatchClients[0];
         
-        if (authUserId) {
+        if (effectiveAuthUserId) {
           if (!existingClientByEmail.user_auth_id) {
             // Email match found, client is unlinked, and user is logged in: Link them.
-            console.log(`[getOrCreateClient] Client ${existingClientByEmail.client_id} (email: ${clientDetails.email}) found unlinked. Linking to authUserId ${authUserId}.`);
+            console.log(`[getOrCreateClient] Client ${existingClientByEmail.client_id} (email: ${clientDetails.email}) found unlinked. Linking to authUserId ${effectiveAuthUserId}.`);
             const { error: updateError } = await supabase
               .from('clients')
-              .update({ user_auth_id: authUserId })
-              .eq('client_id', existingClientByEmail.client_id);
+              .update({ user_auth_id: effectiveAuthUserId })
+              .eq('client_id', existingClientByEmail.client_id)
+              .select('client_id')
+              .single();
+
             if (updateError) {
-              console.error(`[getOrCreateClient] Failed to link authUserId ${authUserId} to client ${existingClientByEmail.client_id}:`, updateError);
-              // Decide: throw, or use the client_id anyway but it remains unlinked for this transaction?
-              // For now, let's proceed but log the error. The client_id is still valid.
+              console.error(`[getOrCreateClient] Failed to link authUserId ${effectiveAuthUserId} to client ${existingClientByEmail.client_id}:`, updateError);
+              // Throw an error if linking fails, as this is a critical step when an authUserId is provided for an existing anonymous client.
+              throw new Error(`Failed to update client ${existingClientByEmail.client_id} with new authUserId: ${updateError.message}`);
             }
             clientToUseId = existingClientByEmail.client_id;
             clientFoundBy = "email_linked_now";
-          } else if (existingClientByEmail.user_auth_id === authUserId) {
+          } else if (existingClientByEmail.user_auth_id === effectiveAuthUserId) {
             // Email match found, and it's already linked to the current auth user. Good.
             clientToUseId = existingClientByEmail.client_id;
             clientFoundBy = "email_already_linked_to_user";
-            console.log(`[getOrCreateClient] Client ${clientToUseId} (email: ${clientDetails.email}) found, already linked to authUserId ${authUserId}.`);
+            console.log(`[getOrCreateClient] Client ${clientToUseId} (email: ${clientDetails.email}) found, already linked to authUserId ${effectiveAuthUserId}.`);
           } else {
             // Email match found, but it's linked to a DIFFERENT auth user. This is a conflict.
-            console.warn(`[getOrCreateClient] CONFLICT: Email ${clientDetails.email} matches client ${existingClientByEmail.client_id}, but it's linked to a different auth user (${existingClientByEmail.user_auth_id}) than current (${authUserId}).`);
+            console.warn(`[getOrCreateClient] CONFLICT: Email ${clientDetails.email} matches client ${existingClientByEmail.client_id}, but it's linked to a different auth user (${existingClientByEmail.user_auth_id}) than current (${effectiveAuthUserId}).`);
             // Business decision needed:
             // 1. Fail (throw error) - Safest default for now.
             // 2. Create a new client for current authUser (ignoring email match, potentially leading to duplicate emails if not unique constraint).
@@ -93,26 +113,65 @@ export const getOrCreateClient = async (
 
     // Priority 3: If still no client, create a new one
     if (!clientToUseId) {
-      console.log(`[getOrCreateClient] No client found by ${clientFoundBy || 'any method'}. Creating new client for email ${clientDetails.email} and authUserId ${authUserId || 'N/A'}.`);
-      const { data: newClientData, error: newClientError } = await supabase
+      console.log(`[getOrCreateClient] No client found by ${clientFoundBy || 'any method'}. Creating new client for email ${clientDetails.email} and authUserId ${effectiveAuthUserId || 'N/A'}.`);
+      
+      let packageIdForNewClient: string | null = null;
+      let servingsForNewClient: number = 0;
+
+      try {
+        // @ts-ignore TypeScript struggles with this specific Supabase SDK chaining for reasons not immediately obvious
+        const { data: tastingPackage, error: packageError } = await supabase
+          .from('service_packages')
+          .select('package_id, total_servings')
+          .eq('package_name', 'חבילת טעימה חינמית') // CORRECTED: Changed from 'name' to 'package_name'
+          .eq('is_active', true)    // Make sure to get an active package
+          .single();
+
+        if (packageError && packageError.code !== 'PGRST116') { // PGRST116 means no rows found, not an error here
+          console.error('[getOrCreateClient] Error fetching "חבילת טעימה חינמית" package:', packageError);
+        }
+        
+        if (tastingPackage) {
+          packageIdForNewClient = tastingPackage.package_id;
+          servingsForNewClient = tastingPackage.total_servings; // Should be 1 as per confirmation
+          console.log(`[getOrCreateClient] Found "חבילת טעימה חינמית" package ID: ${packageIdForNewClient} with ${servingsForNewClient} servings.`);
+        } else {
+          console.warn('[getOrCreateClient] "חבילת טעימה חינמית" package not found or not active. New client will have no initial package.');
+        }
+      } catch (e) {
+        console.error('[getOrCreateClient] Exception while fetching "חבילת טעימה חינמית" package:', e);
+      }
+
+      const newClientPayload = {
+        restaurant_name: clientDetails.restaurantName,
+        contact_name: clientDetails.contactName,
+        phone: clientDetails.phoneNumber,
+        email: clientDetails.email,
+        user_auth_id: effectiveAuthUserId, 
+        current_package_id: packageIdForNewClient,
+        remaining_servings: servingsForNewClient
+      };
+      
+      console.log("[getOrCreateClient] Inserting new client with payload:", newClientPayload);
+      
+      // Perform the insert
+      const { data, error } = await supabase
         .from('clients')
-        .insert({
-          restaurant_name: clientDetails.restaurantName,
-          contact_name: clientDetails.contactName,
-          phone: clientDetails.phoneNumber,
-          email: clientDetails.email,
-          user_auth_id: authUserId // This will be null if authUserId is undefined, which is correct for anonymous
-        })
+        .insert(newClientPayload)
         .select('client_id')
         .single();
 
+      // Handle the response data and error separately
+      const newClientError = error;
+      const newClientData = data as { client_id: string } | null;
+
       if (newClientError) {
         console.error("[getOrCreateClient] Error creating new client:", newClientError);
-        throw newClientError; // Rethrow to be caught by the main try-catch
+        throw newClientError;
       }
-      if (!newClientData) {
-          console.error("[getOrCreateClient] Failed to create new client or retrieve its ID, newClientData is null/undefined.");
-          throw new Error("Client creation failed: No data returned after insert.");
+      if (!newClientData || !newClientData.client_id) {
+          console.error("[getOrCreateClient] Failed to create new client or retrieve its ID, newClientData is null/undefined or client_id is missing.");
+          throw new Error("Client creation failed: No data or client_id returned after insert.");
       }
       clientToUseId = newClientData.client_id;
       clientFoundBy = "newly_created";
@@ -135,13 +194,29 @@ export const getOrCreateClient = async (
 
   } catch (error) {
     // Log the error with more context before re-throwing or throwing a new one.
-    console.error(`[getOrCreateClient] Error during client processing for email ${clientDetails.email} and authUserId ${authUserId || 'N/A'}:`, error);
+    console.error(`[getOrCreateClient] Error during client processing for email ${clientDetails.email} and authUserId ${effectiveAuthUserId || 'N/A'}:`, error);
     
     // Handle specific known errors more gracefully if desired
     if (error instanceof Error && error.message.startsWith("Client email conflict")) {
         throw error; // Re-throw the specific conflict error
     }
-    // For other errors, throw a generic message or the original error
-    throw new Error(`Failed to get or create client: ${error instanceof Error ? error.message : String(error)}`);
+
+    // Attempt to get a more specific message from Supabase-like error objects
+    let errorMessage = "An unknown error occurred";
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      errorMessage = String((error as { message: string }).message);
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = String(error);
+    }
+    
+    // For other errors, throw a new error with a more descriptive message
+    throw new Error(`Failed to get or create client: ${errorMessage}`);
   }
 };
+
+export interface ClientResult {
+  clientId: string | null;
+  error?: string | null;
+}

@@ -9,85 +9,46 @@ export const ProtectedRoute = () => {
   const { 
     clientId, 
     authenticating: clientAuthLoading, 
-    hasLinkedClientRecord, 
-    hasNoClientRecord,
     clientRecordStatus,
     errorState 
   } = useClientAuth();
   const location = useLocation();
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-  const [redirectPath, setRedirectPath] = useState<string | null>(null);
   
-  // Track loading time to implement timeout
+  // Timeout for overall loading to prevent getting stuck indefinitely
   const loadingStartTimeRef = useRef<number>(Date.now());
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
-  // Check for loading timeout
   useEffect(() => {
-    if (!initialized || authLoading || clientAuthLoading) {
-      // Set a timeout to force completion if loading takes too long
-      const timeoutId = setTimeout(() => {
+    const checkLoadingTimeout = () => {
+      if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
         const loadingDuration = Date.now() - loadingStartTimeRef.current;
         if (loadingDuration > 10000) { // 10 seconds timeout
-          console.warn("[AUTH_DEBUG] ProtectedRoute - Loading timeout exceeded 10s, forcing completion");
+          console.warn("[AUTH_DEBUG] ProtectedRoute - Overall loading timeout exceeded 10s. Will proceed with current auth state.");
           setLoadingTimedOut(true);
         }
-      }, 10000);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [initialized, authLoading, clientAuthLoading]);
-
-  // Use an effect to handle navigation logic separately from rendering
-  useEffect(() => {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Auth state check:", {
-      userId: user?.id,
-      isAuthenticated,
-      authLoading,
-      clientAuthLoading,
-      clientId,
-      hasLinkedClientRecord,
-      hasNoClientRecord,
-      clientRecordStatus,
-      errorState,
-      initialized,
-      loadingTimedOut,
-      timestamp: Date.now(),
-      currentPath: location.pathname
-    });
-
-    // Only make routing decisions when auth state is fully initialized or timeout occurred
-    if ((initialized && !authLoading) || loadingTimedOut) {
-      // If not authenticated and not at login already, prepare for redirect
-      if (!isAuthenticated && location.pathname !== '/login') {
-        console.log("[AUTH_DEBUG] ProtectedRoute - Not authenticated, will redirect");
-        
-        // Only show toast if not coming from a page load or direct URL access
-        if (document.referrer) {
-          const lastToastTime = sessionStorage.getItem('last_auth_toast_time');
-          const currentTime = Date.now();
-          if (!lastToastTime || currentTime - parseInt(lastToastTime) > 5000) {
-            toast.info('כניסה נדרשת כדי לגשת לדף זה');
-            sessionStorage.setItem('last_auth_toast_time', currentTime.toString());
-          }
-        }
-        
-        setShouldRedirect(true);
-        setRedirectPath('/login');
-      } else {
-        // Reset redirect state when authenticated
-        setShouldRedirect(false);
-        setRedirectPath(null);
       }
-    }
-  }, [user, authLoading, initialized, isAuthenticated, location.pathname, clientId, hasLinkedClientRecord, hasNoClientRecord, clientRecordStatus, clientAuthLoading, errorState, loadingTimedOut]);
+    };
 
-  // Calculate current loading time for display
+    const intervalId = setInterval(checkLoadingTimeout, 1000); // Check every second
+    return () => clearInterval(intervalId);
+  }, [initialized, authLoading, clientAuthLoading, loadingTimedOut]);
+
+  console.log("[AUTH_DEBUG] ProtectedRoute - State Check:", {
+    isAuthenticated, authLoading, initialized,
+    clientId, clientAuthLoading, clientRecordStatus, errorState,
+      loadingTimedOut,
+    pathname: location.pathname,
+    timestamp: Date.now()
+  });
+
+  // Condition 1: Show loading UI if basic auth isn't done, OR if client auth is still actively loading its record.
+  // We consider client auth done loading if clientAuthLoading is false OR if loadingTimedOut is true.
+  const stillLoading = !loadingTimedOut && 
+                       (!initialized || authLoading || (clientAuthLoading && clientRecordStatus === 'loading'));
+
+  if (stillLoading) {
   const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
-
-  // Case 1: Auth is still initializing or loading (either basic or client-specific)
-  if (!initialized || authLoading || clientAuthLoading) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Still loading or initializing auth/client state, showing loading UI", { initialized, authLoading, clientAuthLoading });
+    console.log("[AUTH_DEBUG] ProtectedRoute - Showing Loading UI...", { currentLoadingTime });
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="flex items-center">
@@ -105,40 +66,33 @@ export const ProtectedRoute = () => {
     );
   }
 
-  // Log actual values right before the crucial check
-  console.log("[AUTH_DEBUG] ProtectedRoute - Values before redirect check:", {
-    isAuthenticated,
-    clientId,
-    initialized,
-    authLoading,
-    clientAuthLoading
+  // At this point, all initial loading attempts are considered "done" (either completed or timed out).
+  console.log("[AUTH_DEBUG] ProtectedRoute - Past loading phase. Final check for redirection.", {
+    isAuthenticated, clientId, clientAuthLoading, clientRecordStatus, errorState
   });
 
-  // Case 2: Auth check is done, but not authenticated OR no clientId
-  if (!isAuthenticated || !clientId) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - Auth check is done, but not authenticated or no clientId, redirecting to login");
+  // Condition 2: If not authenticated after all loading attempts, redirect to login.
+  if (!isAuthenticated) {
+    console.log("[AUTH_DEBUG] ProtectedRoute - NOT Authenticated. Redirecting to /login.");
+    // Toast logic from original code can be added here if needed for non-authenticated redirect
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // EXPLICIT CHECK: Authentication is complete and user is authenticated
-  if (isAuthenticated || (loadingTimedOut && user)) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - User is authenticated or loading timed out with user present, rendering protected content");
+  // If we reach here: User IS Authenticated.
+  // Render the Outlet. The presence or absence of clientId will be handled by the specific page.
+  console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated. Rendering Outlet.", {
+    clientId, clientRecordStatus, errorState
+  });
     
-    // Show a toast if there's an error state but still render content
-    if (errorState) {
-      toast.error(errorState, { duration: 6000 });
+  // Optional: Show a non-blocking toast if there was an error resolving client info but user is auth'd.
+  if (errorState && clientRecordStatus === 'error') {
+    toast.error(`Profile loading error: ${errorState}. Some features might be limited.`, { duration: 7000 });
     }
-    
-    // Additional check: if authenticated but no clientId and all loading done
-    if (isAuthenticated && !clientId && !clientAuthLoading && initialized) {
-      console.error("[AUTH_DEBUG] ProtectedRoute - Authenticated user has no clientId after loading. Potential data issue or RLS problem.");
-      toast.error("בעיה בטעינת נתוני המשתמש. אנא פנה לתמיכה.");
+  // Optional: Toast if authenticated but no client record yet (if relevant for user experience).
+  else if (!clientId && clientRecordStatus === 'not-found' && !clientAuthLoading) {
+     console.warn("[AUTH_DEBUG] ProtectedRoute - Authenticated user has no linked client record. This is expected if it's a new user or record needs creation/linking on a specific page.");
+     // toast.info("Complete your profile or first submission to link your account fully.", { duration: 5000 });
     }
     
     return <Outlet />;
-  }
-
-  // Fallback case - shouldn't normally reach here
-  console.log("[AUTH_DEBUG] ProtectedRoute - Unexpected state, redirecting to login");
-  return <Navigate to="/login" state={{ from: location }} replace />;
 };

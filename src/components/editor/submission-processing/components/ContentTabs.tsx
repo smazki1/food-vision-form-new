@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Submission } from "@/api/submissionApi";
@@ -6,7 +5,8 @@ import {
   ImagesTabContent, 
   ClientFeedbackTabContent, 
   InternalNotesTabContent,
-  ProcessingInfoTab 
+  ProcessingInfoTab,
+  OriginalImagesTabContent
 } from "../tabs";
 
 interface ContentTabsProps {
@@ -38,8 +38,9 @@ const ContentTabs: React.FC<ContentTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-      <TabsList className="mb-4">
-        <TabsTrigger value="images">תמונות</TabsTrigger>
+      <TabsList className="mb-4 grid w-full grid-cols-5">
+        <TabsTrigger value="images">תמונות מעובדות</TabsTrigger>
+        <TabsTrigger value="originals">תמונות מקוריות</TabsTrigger>
         <TabsTrigger value="feedback">משוב לקוח</TabsTrigger>
         <TabsTrigger value="notes">הערות פנימיות</TabsTrigger>
         <TabsTrigger value="info">מידע למעבד</TabsTrigger>
@@ -52,6 +53,13 @@ const ContentTabs: React.FC<ContentTabsProps> = ({
           handleRemoveProcessedImage={handleRemoveProcessedImage || (() => Promise.resolve(false))}
           addProcessedImage={addProcessedImage || (() => Promise.resolve(false))}
           setLightboxImage={setLightboxImage || (() => {})}
+        />
+      </TabsContent>
+      
+      <TabsContent value="originals">
+        <OriginalImagesTabContent 
+          submission={submission} 
+          setLightboxImage={setLightboxImage || (() => {})} 
         />
       </TabsContent>
       

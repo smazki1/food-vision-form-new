@@ -1,4 +1,4 @@
-
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -21,5 +21,11 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['@radix-ui/react-tooltip']
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    css: true,
   },
 }));
