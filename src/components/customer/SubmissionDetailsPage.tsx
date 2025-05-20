@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
@@ -15,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShareDialog } from "./ShareDialog";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import OriginalImagesCustomerTab from "./OriginalImagesCustomerTab";
 
 // Status badge variant mapping
 const statusBadgeVariant: Record<string, string> = {
@@ -257,9 +257,19 @@ export function SubmissionDetailsPage() {
         </div>
       </div>
       
-      <Tabs defaultValue="images">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+      {/* Lightbox Dialog for selectedImage */}
+      {selectedImage && (
+        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+          <DialogContent className="max-w-3xl p-0">
+            <img src={selectedImage} alt="Selected Preview" className="max-h-[80vh] w-auto mx-auto" />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <Tabs defaultValue="images" className="w-full">
+        <TabsList className="grid grid-cols-4 w-full max-w-lg mb-4">
           <TabsTrigger value="images">תמונות</TabsTrigger>
+          <TabsTrigger value="originals">תמונות מקוריות</TabsTrigger>
           <TabsTrigger value="editHistory">היסטוריית עריכות</TabsTrigger>
           <TabsTrigger value="messages">תקשורת</TabsTrigger>
         </TabsList>
@@ -472,7 +482,25 @@ export function SubmissionDetailsPage() {
           </Card>
         </TabsContent>
         
-        {/* Edit History Tab - keep existing code for this tab */}
+        {/* Original Images Tab - New */}
+        <TabsContent value="originals">
+          <Card>
+            <CardHeader>
+              <CardTitle>תמונות מקוריות</CardTitle>
+              <CardDescription>
+                אלו התמונות שהעלית במקור עבור פריט זה.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <OriginalImagesCustomerTab 
+                submission={submission} 
+                onImageClick={setSelectedImage} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* Edit History Tab */}
         <TabsContent value="editHistory">
           <Card>
             <CardHeader>
@@ -519,7 +547,7 @@ export function SubmissionDetailsPage() {
           </Card>
         </TabsContent>
         
-        {/* Messages Tab - keep existing code for this tab */}
+        {/* Messages Tab */}
         <TabsContent value="messages">
           <Card>
             <CardHeader>
