@@ -22,44 +22,52 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
     queryKey: ["originalImages", originalItemId, itemType],
     queryFn: async () => {
       if (!originalItemId || !itemType) {
+        console.log("[useOriginalImages] Bailing out: originalItemId or itemType missing", { originalItemId, itemType });
         return null;
       }
 
       let tableName: string;
-      let idColumnName: string = "id"; // Default ID column name
+      let idColumnName: string; // Will be set in the switch
+      const selectColumnName: string = "reference_image_urls";
 
       switch (itemType) {
         case "dish":
           tableName = "dishes";
-          // If dishes table has a different primary key name for original items, specify here
-          // For example: idColumnName = "dish_id"; 
+          idColumnName = "dish_id"; // Corrected: Assuming original_item_id in submissions FKs to dish_id in dishes
           break;
         case "cocktail":
           tableName = "cocktails";
-          // idColumnName = "cocktail_id";
+          idColumnName = "cocktail_id"; // Assuming original_item_id in submissions FKs to cocktail_id in cocktails
           break;
         case "drink":
           tableName = "drinks";
-          // idColumnName = "drink_id";
+          idColumnName = "drink_id";    // Assuming original_item_id in submissions FKs to drink_id in drinks
           break;
         default:
           console.error(`[useOriginalImages] Unknown item type: ${itemType}`);
           return null;
       }
 
-      console.log(`[useOriginalImages] Fetching original images for item ID: ${originalItemId}, type: ${itemType}, table: ${tableName}`);
+      console.log(`[useOriginalImages] Preparing to query Supabase. 
+        Table: ${tableName}, 
+        ID Column: ${idColumnName}, 
+        Select Column: ${selectColumnName}, 
+        Item ID: ${originalItemId}`
+      );
 
-      // @ts-ignore - Supabase SDK can struggle with dynamic table names in .from(), leading to deep type instantiation.
+      // @ts-ignore 
       const { data, error } = await supabase
         .from(tableName) 
-        .select("reference_image_urls")
+        .select(selectColumnName)
         .eq(idColumnName, originalItemId)
         .single();
+      
+      console.log("[useOriginalImages] Supabase response:", { data, error });
 
       if (error) {
         console.error(
-          `[useOriginalImages] Error fetching original images from table ${tableName} for ID ${originalItemId}:`,
-          error
+          `[useOriginalImages] Supabase error object while fetching from ${tableName} for ID ${originalItemId}:`,
+          JSON.stringify(error, null, 2)
         );
         if (error.code === 'PGRST116') {
           return null; 
@@ -69,7 +77,7 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
         );
       }
 
-      if (data && typeof data === 'object' && 'reference_image_urls' in data && Array.isArray((data as ItemWithReferenceImageUrls).reference_image_urls)) {
+      if (data && typeof data === 'object' && selectColumnName in data && Array.isArray((data as any)[selectColumnName])) {
         const typedData = data as ItemWithReferenceImageUrls;
         console.log(`[useOriginalImages] Successfully fetched original images:`, typedData.reference_image_urls);
         return typedData.reference_image_urls;
