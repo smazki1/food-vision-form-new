@@ -1,6 +1,6 @@
 import React from 'react';
 import { Submission } from "@/api/submissionApi";
-import { useOriginalImages } from "@/hooks/useOriginalImages";
+import { useOriginalImages, SubmissionItemType } from "@/hooks/useOriginalImages";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, Image as ImageIcon } from "lucide-react";
 
@@ -13,7 +13,7 @@ const OriginalImagesTabContent: React.FC<OriginalImagesTabContentProps> = ({
   submission, 
   setLightboxImage 
 }) => {
-  const itemTypeForHook = submission.item_type as "dishes" | "cocktails" | "drinks";
+  const itemTypeForHook: SubmissionItemType = submission.item_type;
   const { 
     data: originalImages, 
     isLoading: isLoadingOriginalImages, 

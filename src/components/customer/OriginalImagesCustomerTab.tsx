@@ -1,6 +1,6 @@
 import React from 'react';
 import { Submission } from "@/api/submissionApi"; // Assuming Submission type is appropriate
-import { useOriginalImages } from "@/hooks/useOriginalImages";
+import { useOriginalImages, SubmissionItemType } from "@/hooks/useOriginalImages";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, Image as ImageIcon, Maximize } from "lucide-react";
 
@@ -13,9 +13,8 @@ const OriginalImagesCustomerTab: React.FC<OriginalImagesCustomerTabProps> = ({
   submission, 
   onImageClick 
 }) => {
-  // Determine the item type for the hook based on submission details
-  // This might need adjustment if submission.item_type has different values than expected by the hook
-  const itemTypeForHook = submission.item_type as "dishes" | "cocktails" | "drinks";
+  // Ensure submission.item_type conforms to SubmissionItemType for the hook
+  const itemTypeForHook: SubmissionItemType = submission.item_type;
 
   const { 
     data: originalImages, 
