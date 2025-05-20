@@ -6,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 export type SubmissionItemType = "dish" | "cocktail" | "drink";
 
 // This interface helps in asserting the type of the data object later
-interface ItemWithReferenceImages {
-  reference_images: string[];
+interface ItemWithReferenceImageUrls {
+  reference_image_urls: string[];
   // Include other common fields if necessary, or keep it minimal
 }
 
@@ -25,17 +25,22 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
         return null;
       }
 
-      // Determine the correct Supabase table name
       let tableName: string;
+      let idColumnName: string = "id"; // Default ID column name
+
       switch (itemType) {
         case "dish":
           tableName = "dishes";
+          // If dishes table has a different primary key name for original items, specify here
+          // For example: idColumnName = "dish_id"; 
           break;
         case "cocktail":
-          tableName = "cocktails"; // Assuming table name is 'cocktails'
+          tableName = "cocktails";
+          // idColumnName = "cocktail_id";
           break;
         case "drink":
-          tableName = "drinks";    // Assuming table name is 'drinks'
+          tableName = "drinks";
+          // idColumnName = "drink_id";
           break;
         default:
           console.error(`[useOriginalImages] Unknown item type: ${itemType}`);
@@ -47,8 +52,8 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
       // @ts-ignore - Supabase SDK can struggle with dynamic table names in .from(), leading to deep type instantiation.
       const { data, error } = await supabase
         .from(tableName) 
-        .select("reference_images")
-        .eq("id", originalItemId) // Assuming the ID column in these tables is 'id'
+        .select("reference_image_urls")
+        .eq(idColumnName, originalItemId)
         .single();
 
       if (error) {
@@ -56,7 +61,7 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
           `[useOriginalImages] Error fetching original images from table ${tableName} for ID ${originalItemId}:`,
           error
         );
-        if (error.code === 'PGRST116') { // "No rows found"
+        if (error.code === 'PGRST116') {
           return null; 
         }
         throw new Error(
@@ -64,12 +69,12 @@ export const useOriginalImages = (originalItemId?: string, itemType?: Submission
         );
       }
 
-      if (data && typeof data === 'object' && 'reference_images' in data && Array.isArray((data as ItemWithReferenceImages).reference_images)) {
-        const typedData = data as ItemWithReferenceImages;
-        console.log(`[useOriginalImages] Successfully fetched original images:`, typedData.reference_images);
-        return typedData.reference_images;
+      if (data && typeof data === 'object' && 'reference_image_urls' in data && Array.isArray((data as ItemWithReferenceImageUrls).reference_image_urls)) {
+        const typedData = data as ItemWithReferenceImageUrls;
+        console.log(`[useOriginalImages] Successfully fetched original images:`, typedData.reference_image_urls);
+        return typedData.reference_image_urls;
       } else {
-        console.log(`[useOriginalImages] No reference images found or data format is unexpected from ${tableName} for ID ${originalItemId}. Data:`, data);
+        console.log(`[useOriginalImages] No reference image URLs found or data format is unexpected from ${tableName} for ID ${originalItemId}. Data:`, data);
         return null;
       }
     },
