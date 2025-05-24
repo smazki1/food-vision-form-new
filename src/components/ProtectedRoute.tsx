@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { toast } from 'sonner';
 
 export const ProtectedRoute = () => {
-  const { user, loading: authLoading, initialized, isAuthenticated } = useCustomerAuth();
+  const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   const { 
     clientId, 
     authenticating: clientAuthLoading, 

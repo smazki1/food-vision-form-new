@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ const CustomerLogin: React.FC = () => {
   
   const location = useLocation();
   const navigate = useNavigate();
-  const { signIn, user, loading: authLoading, isAuthenticated, initialized } = useCustomerAuth();
+  const { signIn, user, loading: authLoading, isAuthenticated, initialized } = useUnifiedAuth();
 
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";

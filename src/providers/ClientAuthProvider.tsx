@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientDataFetcher } from '@/hooks/useClientDataFetcher';
 import { useConnectionVerifier } from '@/hooks/useConnectionVerifier';
 import { useClientAuthStateManager } from '@/hooks/useClientAuthStateManager';
@@ -11,7 +11,7 @@ interface ClientAuthProviderProps {
 }
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
-  const { user, loading: authLoading, initialized, isAuthenticated } = useCustomerAuth();
+  const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   
   const {
     clientId,

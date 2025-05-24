@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useClientAuth } from "@/hooks/useClientAuth";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { Home, Package, Image, User, LogOut, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ export function CustomerLayout() {
     clientRecordStatus,
     errorState
   } = useClientAuth();
-  const { isAuthenticated: mainAuthIsAuthenticated, user: mainAuthUser } = useCustomerAuth();
+  const { isAuthenticated: unifiedIsAuthenticated, user: unifiedUser } = useUnifiedAuth();
   const { toast } = useToast();
 
   console.log("[AUTH_DEBUG] CustomerLayout - State received:", {
@@ -29,8 +29,8 @@ export function CustomerLayout() {
     authenticating,
     clientRecordStatus,
     errorState,
-    mainAuthIsAuthenticated,
-    mainAuthUser: mainAuthUser?.id,
+    mainAuthIsAuthenticated: unifiedIsAuthenticated,
+    mainAuthUser: unifiedUser?.id,
     pathname: location.pathname,
     timestamp: Date.now()
   });

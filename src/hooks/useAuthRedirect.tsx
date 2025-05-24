@@ -1,8 +1,7 @@
-
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useCustomerAuth } from "./useCustomerAuth";
+import { useUnifiedAuth } from "./useUnifiedAuth";
 import { useClientAuth } from "./useClientAuth";
 
 interface AuthRedirectOptions {
@@ -21,7 +20,7 @@ export const useAuthRedirect = (options: AuthRedirectOptions = {}) => {
     redirectTimeout = 5000 // Default 5 second timeout
   } = options;
   
-  const { isAuthenticated, initialized, loading, user } = useCustomerAuth();
+  const { isAuthenticated, initialized, loading, user } = useUnifiedAuth();
   const { clientRecordStatus, errorState, authenticating } = useClientAuth();
   const redirectAttempted = useRef(false);
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
