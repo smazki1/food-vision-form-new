@@ -1,11 +1,10 @@
-
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useClientAuth } from "@/hooks/useClientAuth";
 
 // Import the components
@@ -15,7 +14,7 @@ import { SubmissionsStatusOverview } from "./dashboard/SubmissionsStatusOverview
 import { QuickActions } from "./dashboard/QuickActions";
 
 export function CustomerDashboard() {
-  const { user } = useCustomerAuth();
+  const { user } = useUnifiedAuth();
   const { clientId, hasLinkedClientRecord, clientRecordStatus, errorState } = useClientAuth();
   const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);

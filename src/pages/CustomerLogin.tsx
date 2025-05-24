@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCustomerAuth } from '@/hooks/useCustomerAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 
@@ -20,7 +19,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const CustomerLogin: React.FC = () => {
-  const { signIn } = useCustomerAuth();
+  const { signIn, resetPassword } = useUnifiedAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
@@ -63,7 +62,6 @@ const CustomerLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const { resetPassword } = useCustomerAuth();
       const { success, error } = await resetPassword(resetEmail);
       
       if (success) {

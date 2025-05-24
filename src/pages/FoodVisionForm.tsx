@@ -20,10 +20,10 @@ import { useClientAuth } from "@/hooks/useClientAuth";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useFoodVisionFormValidation } from "@/hooks/useFoodVisionFormValidation";
 import { useFoodVisionFormSubmission } from "@/hooks/useFoodVisionFormSubmission";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 
 const FoodVisionForm: React.FC = () => {
-  const { user } = useCustomerAuth();
+  const { user } = useUnifiedAuth();
   const { clientId, authenticating } = useClientAuth();
   
   console.log(`[FoodVisionForm RENDER] authenticating: ${authenticating}, clientId: ${clientId}, timestamp: ${Date.now()}`);
