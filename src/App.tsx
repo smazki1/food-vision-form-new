@@ -7,7 +7,8 @@ import "./App.css";
 import "@/rtl.css";
 
 // Our refined Auth Providers and ProtectedRoute
-import { AuthProvider } from "@/providers/AuthProvider";
+import { UnifiedAuthProvider } from "@/providers/UnifiedAuthProvider";
+import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
 import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute"; 
 
@@ -29,7 +30,7 @@ import FoodVisionForm from "./pages/FoodVisionForm";
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
 import LeadsManagement from "./pages/admin/LeadsManagement";
-import ClientsList from "./pages/admin/ClientsList";
+import { ClientsList } from "./pages/admin/ClientsList";
 import ClientDetails from "./pages/admin/ClientDetails";
 import PackagesManagementPage from "./pages/admin/PackagesManagementPage";
 import SubmissionsPage from "./pages/admin/SubmissionsPage";
@@ -66,7 +67,8 @@ function App() {
       <ThemeProvider defaultTheme="light" storageKey="food-vision-theme">
         <TooltipProvider>
           <Router>
-            <AuthProvider>
+            <UnifiedAuthProvider>
+              <CurrentUserRoleProvider>
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<PromoLandingPage />} />
@@ -123,7 +125,8 @@ function App() {
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </AuthProvider>
+              </CurrentUserRoleProvider>
+            </UnifiedAuthProvider>
           </Router>
           <SonnerToaster />
         </TooltipProvider>
