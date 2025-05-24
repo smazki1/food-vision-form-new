@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCustomerAuth } from "@/hooks/useCustomerAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 const ResetPassword: React.FC = () => {
@@ -16,7 +15,7 @@ const ResetPassword: React.FC = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [hasHashParams, setHasHashParams] = useState(false);
   const navigate = useNavigate();
-  const { loading } = useCustomerAuth();
+  const { loading } = useUnifiedAuth();
 
   // Check if we have a hash parameter in the URL (for password reset)
   useEffect(() => {
