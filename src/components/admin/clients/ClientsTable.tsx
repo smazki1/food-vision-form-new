@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Client } from "@/types/client";
@@ -15,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
-import ClientsPackageName from "./ClientsPackageName";
 
 interface ClientsTableProps {
   clients: Client[];
@@ -135,7 +133,7 @@ const ClientsTable: React.FC<ClientsTableProps> = ({ clients, isLoading }) => {
                 </Badge>
               </TableCell>
               <TableCell>
-                <ClientsPackageName packageId={client.current_package_id} />
+                {client.service_packages?.package_name || (client.current_package_id ? "-" : "לא מוגדר")}
               </TableCell>
               <TableCell>{client.remaining_servings}</TableCell>
               <TableCell>{formatDate(client.created_at)}</TableCell>

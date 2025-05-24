@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,7 +12,8 @@ import { PackageSection } from "@/components/admin/client-details/PackageSection
 import { PlaceholderCard } from "@/components/admin/client-details/PlaceholderCard";
 import { ClientEditForm } from "@/components/admin/client-details/ClientEditForm";
 import { CreateUserAccountButton } from "@/components/admin/client-details/CreateUserAccountButton";
-import { History, CreditCard } from "lucide-react";
+import { History, CreditCard, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ClientDetails: React.FC = () => {
   const { clientId } = useParams<{ clientId: string }>();
@@ -27,15 +27,43 @@ const ClientDetails: React.FC = () => {
     hasUserAccount,
     isUpdating,
     isAddingServings,
-    refreshClientData
+    refreshClientData,
+    submittedDishes,
+    submittedCocktails,
+    submittedDrinks,
+    error,
   } = useClientDetails(clientId);
 
   if (loading) {
-    return <div>טוען...</div>;
+    return <div className="flex justify-center items-center h-64">טוען...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>שגיאה בטעינת פרטי הלקוח</AlertTitle>
+          <AlertDescription>
+            {error.message || "אירעה שגיאה לא צפויה. נסה לרענן את העמוד או פנה לתמיכה."}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (!client) {
-    return <div>לא נמצא לקוח</div>;
+    return (
+      <div className="container mx-auto p-4">
+        <Alert variant="default">
+          <AlertTriangle className="h-4 w-4" /> 
+          <AlertTitle>לא נמצא לקוח</AlertTitle>
+          <AlertDescription>
+            פרטי הלקוח המבוקש לא נמצאו. ייתכן שהקישור שגוי או שהלקוח נמחק.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   return (
@@ -95,15 +123,15 @@ const ClientDetails: React.FC = () => {
             </TabsList>
             
             <TabsContent value="dishes">
-              <DishesTabContent dishes={[]} />
+              <DishesTabContent dishes={submittedDishes} />
             </TabsContent>
             
             <TabsContent value="cocktails">
-              <CocktailsTabContent cocktails={[]} />
+              <CocktailsTabContent cocktails={submittedCocktails} />
             </TabsContent>
             
             <TabsContent value="drinks">
-              <DrinksTabContent drinks={[]} />
+              <DrinksTabContent drinks={submittedDrinks} />
             </TabsContent>
             
             <TabsContent value="details">

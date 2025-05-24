@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead, LeadStatus, LeadSource } from "@/types/lead";
@@ -54,8 +53,8 @@ const LeadsManagement: React.FC = () => {
   };
 
   const handleEditLead = (lead: Lead) => {
-    setCurrentLead(lead);
-    setIsFormOpen(true);
+    setSelectedLead(lead);
+    setIsDetailsOpen(true);
   };
 
   const handleViewLead = (lead: Lead) => {
@@ -66,9 +65,12 @@ const LeadsManagement: React.FC = () => {
   const handleDeleteLead = async (id: string) => {
     try {
       await deleteLead(id);
-      // Toast is handled in the mutation
+      if (selectedLead && selectedLead.id === id) {
+        setIsDetailsOpen(false);
+        setSelectedLead(null);
+      }
     } catch (error) {
-      console.error("Error deleting lead:", error);
+      console.error("Error deleting lead from LeadsManagementPage:", error);
     }
   };
 
@@ -89,17 +91,14 @@ const LeadsManagement: React.FC = () => {
       
       if (currentLead) {
         await updateLead(currentLead.id, data);
-        // Toast is handled in the mutation
       } else {
         await addLead(data);
-        // Toast is handled in the mutation
       }
       
       setIsFormOpen(false);
       setCurrentLead(undefined);
     } catch (error) {
       console.error("Form submission error:", error);
-      // Toast is handled in the mutation
     } finally {
       setFormLoading(false);
     }
@@ -108,8 +107,6 @@ const LeadsManagement: React.FC = () => {
   const handleUpdateLead = async (id: string, updates: Partial<Lead>) => {
     try {
       await updateLead(id, updates);
-      
-      // Update the selected lead with new data if it matches
       if (selectedLead && selectedLead.id === id) {
         setSelectedLead({
           ...selectedLead,
@@ -134,10 +131,8 @@ const LeadsManagement: React.FC = () => {
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
-      // Toggle direction if clicking the same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // Set new field and default to descending order
       setSortBy(field);
       setSortDirection("desc");
     }
@@ -214,10 +209,10 @@ const LeadsManagement: React.FC = () => {
       <LeadFormSheet
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
-        lead={currentLead}
         onSubmit={handleFormSubmit}
-        onCancel={handleCloseForm}
+        lead={currentLead}
         isLoading={formLoading}
+        onCancel={handleCloseForm}
       />
       
       {/* Lead Details Sheet */}
@@ -226,6 +221,7 @@ const LeadsManagement: React.FC = () => {
         onOpenChange={setIsDetailsOpen}
         lead={selectedLead}
         onUpdate={handleUpdateLead}
+        onDeleteLeadConfirm={handleDeleteLead}
       />
     </div>
   );

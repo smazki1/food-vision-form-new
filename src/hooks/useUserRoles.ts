@@ -1,20 +1,23 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin } from "@/integrations/supabase/supabaseAdmin";
 import { UserRoleRecord } from "@/types/auth";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCurrentUserRole } from "@/hooks/useCurrentUserRole.tsx";
 
 export function useUserRoles() {
   const queryClient = useQueryClient();
+  const { status: authStatus, isAdmin } = useCurrentUserRole();
   
   // Fetch all users with their roles
   const { data: userRoles, isLoading, error } = useQuery({
     queryKey: ['user-roles'],
     queryFn: async () => {
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
       
       if (authError) {
+        console.error("Error fetching auth users with admin client:", authError);
         throw authError;
       }
       
@@ -24,15 +27,16 @@ export function useUserRoles() {
         .select('*');
       
       if (rolesError) {
+        console.error("Error fetching rolesData from user_roles:", rolesError);
         throw rolesError;
       }
       
       // Combine users with their roles
       const usersWithRoles = authUsers.users.map(user => {
-        const userRole = rolesData?.find(role => role.user_id === user.id);
+        const userRoleRecord = rolesData?.find(role => role.user_id === user.id);
         return {
           ...user,
-          role: userRole?.role
+          role: userRoleRecord?.role
         };
       });
       
@@ -41,6 +45,7 @@ export function useUserRoles() {
         roles: rolesData as UserRoleRecord[]
       };
     },
+    enabled: authStatus === "ROLE_DETERMINED" && isAdmin,
     retry: 1,
   });
   
@@ -48,37 +53,48 @@ export function useUserRoles() {
   const assignRole = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
       // Check if user already has a role
-      const { data: existingRole } = await supabase
+      const { data: existingRole, error: fetchError } = await supabase
         .from('user_roles')
-        .select('*')
+        .select('user_id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error("Error fetching existing role:", fetchError);
+        throw fetchError;
+      }
         
       if (existingRole) {
         // Update existing role
         const { data, error } = await supabase
           .from('user_roles')
-          .update({ role })
+          .update({ role, updated_at: new Date().toISOString() })
           .eq('user_id', userId)
-          .select()
+          .select('user_id, role')
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating role:", error);
+          throw error;
+        }
         return data;
       } else {
         // Insert new role
         const { data, error } = await supabase
           .from('user_roles')
-          .insert({ user_id: userId, role })
-          .select()
+          .insert({ user_id: userId, role, created_at: new Date().toISOString() })
+          .select('user_id, role')
           .single();
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error inserting role:", error);
+          throw error;
+        }
         return data;
       }
     },
-    onSuccess: () => {
-      toast.success('תפקיד המשתמש עודכן בהצלחה');
+    onSuccess: (data) => {
+      toast.success(`תפקיד המשתמש ל ID: ${data?.user_id} עודכן ל: ${data?.role}`);
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
     },
     onError: (error) => {
@@ -94,11 +110,14 @@ export function useUserRoles() {
         .delete()
         .eq('user_id', userId);
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting role:", error);
+        throw error;
+      }
       return userId;
     },
-    onSuccess: () => {
-      toast.success('תפקיד המשתמש הוסר בהצלחה');
+    onSuccess: (userId) => {
+      toast.success(`תפקיד הוסר ממשתמש ID: ${userId}`);
       queryClient.invalidateQueries({ queryKey: ['user-roles'] });
     },
     onError: (error) => {
@@ -108,8 +127,8 @@ export function useUserRoles() {
 
   return {
     userRoles,
-    isLoading,
-    error,
+    isLoading: isLoading || (authStatus !== "ROLE_DETERMINED" && authStatus !== "NO_SESSION" && authStatus !== "ERROR_SESSION" && authStatus !== "ERROR_FETCHING_ROLE" ),
+    error: error || (authStatus === "ERROR_FETCHING_ROLE" ? new Error("Error fetching user role") : null),
     assignRole,
     removeRole
   };

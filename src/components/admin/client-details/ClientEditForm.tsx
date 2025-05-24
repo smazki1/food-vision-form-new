@@ -1,4 +1,3 @@
-
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -6,10 +5,11 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Client, CLIENT_STATUS_OPTIONS } from "@/types/client";
 import { Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const clientFormSchema = z.object({
   restaurant_name: z.string().min(1, "שם המסעדה הוא שדה חובה"),
@@ -18,6 +18,8 @@ const clientFormSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
   client_status: z.enum(["פעיל", "לא פעיל", "בהמתנה"]),
   internal_notes: z.string().optional(),
+  email_notifications: z.boolean().optional(),
+  app_notifications: z.boolean().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientFormSchema>;
@@ -39,6 +41,8 @@ export function ClientEditForm({ client, onSubmit, onCancel, isSubmitting }: Cli
       email: client.email,
       client_status: client.client_status,
       internal_notes: client.internal_notes || "",
+      email_notifications: client.email_notifications || false,
+      app_notifications: client.app_notifications || false,
     },
   });
 
@@ -136,6 +140,48 @@ export function ClientEditForm({ client, onSubmit, onCancel, isSubmitting }: Cli
                 <Textarea {...field} rows={4} />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="email_notifications"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">קבלת התראות באימייל</FormLabel>
+                <FormDescription>
+                  האם הלקוח מעוניין לקבל עדכונים והתראות למייל?
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="app_notifications"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">קבלת התראות באפליקציה</FormLabel>
+                <FormDescription>
+                  האם הלקוח מעוניין לקבל עדכונים והתראות במערכת?
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
             </FormItem>
           )}
         />

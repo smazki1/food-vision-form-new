@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "./StatusBadge";
 import { Package, MOCK_PACKAGES } from "@/types/package";
@@ -48,6 +48,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Popover,
@@ -64,6 +66,17 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { RefreshCw } from "lucide-react";
 
 // Zod schema for form validation
 const leadFormSchema = z.object({
@@ -86,17 +99,23 @@ interface LeadDetailsSheetProps {
   onOpenChange: (open: boolean) => void;
   lead: Lead | null;
   onUpdate: (id: string, updates: Partial<Lead>) => Promise<void>;
+  onDeleteLeadConfirm: (leadId: string) => Promise<void>;
 }
 
 export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
   isOpen,
   onOpenChange,
   lead,
-  onUpdate
+  onUpdate,
+  onDeleteLeadConfirm
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { updateLeadStatus } = useLeads();
 
   const form = useForm<LeadFormValues>({
@@ -130,6 +149,8 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
         reminder_details: lead.reminder_details || "",
         free_sample_package_active: lead.free_sample_package_active
       });
+    } else {
+      setSelectedPackage(null);
     }
   }, [lead, form]);
 
@@ -147,8 +168,8 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
         lead_status: values.lead_status as any,
         lead_source: values.lead_source as any,
         notes: values.notes,
-        reminder_at: values.reminder_at ? values.reminder_at.toISOString() : null,
-        reminder_details: values.reminder_details,
+        reminder_at: values.reminder_details && values.reminder_at ? values.reminder_at.toISOString() : null,
+        reminder_details: values.reminder_details ? values.reminder_details : null,
         free_sample_package_active: values.free_sample_package_active
       };
 
@@ -184,6 +205,7 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
       if (exists) {
         toast.error("לקוח עם אותו אימייל כבר קיים במערכת");
         setShowConvertDialog(false);
+        setSelectedPackage(null);
         return;
       }
 
@@ -216,11 +238,32 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
       }
 
       setShowConvertDialog(false);
-      onOpenChange(false);
+      setSelectedPackage(null);
       toast.success("הליד הומר ללקוח בהצלחה");
     } catch (error) {
       console.error("Error converting lead to client:", error);
       toast.error("שגיאה בהמרת הליד ללקוח");
+    }
+  };
+
+  const openDeleteConfirmationDialog = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteLead = async () => {
+    if (!lead) return;
+    setIsDeleting(true);
+    try {
+      await onDeleteLeadConfirm(lead.id);
+      toast.success('הליד נמחק בהצלחה');
+      setIsDeleteDialogOpen(false);
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      toast.error('שגיאה במחיקת הליד');
+      setIsDeleteDialogOpen(true);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -233,7 +276,13 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
 
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <Sheet open={isOpen} onOpenChange={(open) => {
+          onOpenChange(open);
+          if (!open) {
+              setSelectedPackage(null);
+              setShowConvertDialog(false);
+          }
+      }}>
         <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-y-auto">
           <SheetHeader className="mb-6">
             <SheetTitle className="text-2xl">פרטי ליד</SheetTitle>
@@ -531,31 +580,41 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
                     </CardContent>
                   </Card>
 
-                  {/* Footer buttons */}
-                  <div className="flex justify-between items-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowConvertDialog(true)}
-                      disabled={isClientConversionDisabled}
-                    >
-                      המר ללקוח
-                    </Button>
-
-                    <div className="flex gap-2">
-                      <SheetClose asChild>
-                        <Button type="button" variant="outline">
-                          ביטול
+                  <SheetFooter className="mt-8 sticky bottom-0 bg-background py-4 px-6 border-t" data-testid="lead-details-sheet-footer">
+                    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-3">
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={openDeleteConfirmationDialog}
+                            className="w-full sm:w-auto"
+                        >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            מחק ליד
                         </Button>
-                      </SheetClose>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        שמור שינויים
-                      </Button>
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowConvertDialog(true)}
+                                disabled={isClientConversionDisabled}
+                                className="w-full sm:w-auto"
+                            >
+                                המר ללקוח
+                            </Button>
+                            <SheetClose asChild>
+                                <Button type="button" variant="outline" className="w-full sm:w-auto">
+                                ביטול
+                                </Button>
+                            </SheetClose>
+                            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+                                {isSubmitting && (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                )}
+                                שמור שינויים
+                            </Button>
+                        </div>
                     </div>
-                  </div>
+                   </SheetFooter>
                 </form>
               </Form>
             </div>
@@ -564,7 +623,10 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
       </Sheet>
 
       {/* Convert to Client Dialog */}
-      <Dialog open={showConvertDialog} onOpenChange={setShowConvertDialog}>
+      <Dialog open={showConvertDialog} onOpenChange={(open) => {
+          setShowConvertDialog(open);
+          if (!open) setSelectedPackage(null);
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>המרת ליד ללקוח חדש</DialogTitle>
@@ -603,7 +665,10 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setShowConvertDialog(false)}
+              onClick={() => {
+                  setShowConvertDialog(false);
+                  setSelectedPackage(null);
+              }}
             >
               ביטול
             </Button>
@@ -616,6 +681,25 @@ export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>אישור מחיקת ליד</AlertDialogTitle>
+            <AlertDialogDescription>
+              האם אתה בטוח שברצונך למחוק את הליד "{lead?.restaurant_name}"? לא ניתן לשחזר פעולה זו.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteLead} disabled={isDeleting}>
+              {isDeleting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
+              מחק ליד
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

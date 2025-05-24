@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { UserWithRole, UserRole } from "@/types/auth";
@@ -34,6 +33,8 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { formatDate } from "@/utils/formatDate";
 
+const NO_ROLE_VALUE = "__NO_ROLE__";
+
 const UserManagementPage: React.FC = () => {
   const { userRoles, isLoading, error, assignRole, removeRole } = useUserRoles();
   const [searchTerm, setSearchTerm] = useState("");
@@ -59,11 +60,11 @@ const UserManagementPage: React.FC = () => {
     user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  const handleRoleChange = (userId: string, role: UserRole | "") => {
-    if (role === "") {
+  const handleRoleChange = (userId: string, roleValue: UserRole | typeof NO_ROLE_VALUE) => {
+    if (roleValue === NO_ROLE_VALUE) {
       removeRole.mutate(userId);
     } else {
-      assignRole.mutate({ userId, role });
+      assignRole.mutate({ userId, role: roleValue as UserRole });
     }
   };
   
@@ -132,8 +133,8 @@ const UserManagementPage: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={user.role || ""}
-                          onValueChange={(value) => handleRoleChange(user.id, value as UserRole | "")}
+                          value={user.role || NO_ROLE_VALUE}
+                          onValueChange={(value) => handleRoleChange(user.id, value as UserRole | typeof NO_ROLE_VALUE)}
                         >
                           <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="בחר תפקיד" />
@@ -141,7 +142,7 @@ const UserManagementPage: React.FC = () => {
                           <SelectContent>
                             <SelectGroup>
                               <SelectLabel>תפקידים</SelectLabel>
-                              <SelectItem value="">ללא תפקיד</SelectItem>
+                              <SelectItem value={NO_ROLE_VALUE}>ללא תפקיד</SelectItem>
                               <SelectItem value="admin">מנהל מערכת</SelectItem>
                               <SelectItem value="editor">עורך</SelectItem>
                               <SelectItem value="account_manager">מנהל לקוחות</SelectItem>

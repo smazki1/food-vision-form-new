@@ -1,7 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem } from "@/types/food-vision";
 import { Client } from "@/types/client";
+import { DishDetailsForTab, CocktailDetailsForTab, DrinkDetailsForTab } from "@/types/food-vision";
 
 export type SubmissionStatus = 
   | "ממתינה לעיבוד" 
@@ -117,4 +117,100 @@ export async function getClientRemainingServings(clientId: string): Promise<numb
   }
 
   return data.remaining_servings;
+}
+
+export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {
+  // 1. Get all submissions for the client
+  const submissions = await getClientSubmissions(clientId);
+
+  // 2. Filter for dish submissions and get unique dish IDs
+  const dishIds = [
+    ...new Set(
+      submissions
+        .filter(sub => sub.item_type === 'dish')
+        .map(sub => sub.original_item_id)
+    ),
+  ];
+
+  if (dishIds.length === 0) {
+    return [];
+  }
+
+  // 3. Fetch details for these unique dishes
+  // Make sure the select query matches the fields in DishDetailsForTab
+  const { data: dishesData, error: dishesError } = await supabase
+    .from('dishes') // Assuming 'dishes' is your dishes table name
+    .select('dish_id, name, ingredients, description, notes, reference_image_urls')
+    .in('dish_id', dishIds);
+
+  if (dishesError) {
+    console.error("Error fetching unique submitted dish details:", dishesError);
+    throw dishesError;
+  }
+
+  return (dishesData || []) as DishDetailsForTab[];
+}
+
+export async function getUniqueSubmittedCocktailDetailsForClient(clientId: string): Promise<CocktailDetailsForTab[]> {
+  // 1. Get all submissions for the client
+  const submissions = await getClientSubmissions(clientId);
+
+  // 2. Filter for cocktail submissions and get unique cocktail IDs
+  const cocktailIds = [
+    ...new Set(
+      submissions
+        .filter(sub => sub.item_type === 'cocktail')
+        .map(sub => sub.original_item_id)
+    ),
+  ];
+
+  if (cocktailIds.length === 0) {
+    return [];
+  }
+
+  // 3. Fetch details for these unique cocktails
+  // Assuming 'cocktails' is your cocktails table name
+  const { data: cocktailsData, error: cocktailsError } = await supabase
+    .from('cocktails') 
+    .select('cocktail_id, name, ingredients, description, notes, reference_image_urls')
+    .in('cocktail_id', cocktailIds);
+
+  if (cocktailsError) {
+    console.error("Error fetching unique submitted cocktail details:", cocktailsError);
+    throw cocktailsError;
+  }
+
+  return (cocktailsData || []) as CocktailDetailsForTab[];
+}
+
+export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string): Promise<DrinkDetailsForTab[]> {
+  // 1. Get all submissions for the client
+  const submissions = await getClientSubmissions(clientId);
+
+  // 2. Filter for drink submissions and get unique drink IDs
+  const drinkIds = [
+    ...new Set(
+      submissions
+        .filter(sub => sub.item_type === 'drink')
+        .map(sub => sub.original_item_id)
+    ),
+  ];
+
+  if (drinkIds.length === 0) {
+    return [];
+  }
+
+  // 3. Fetch details for these unique drinks
+  // Assuming 'drinks' is your drinks table name
+  const { data: drinksData, error: drinksError } = await supabase
+    .from('drinks') 
+    .select('drink_id, name, ingredients, description, notes, reference_image_urls') // Ensure fields match DrinkDetailsForTab
+    .in('drink_id', drinkIds);
+
+  if (drinksError) {
+    console.error("Error fetching unique submitted drink details:", drinksError);
+    throw drinksError;
+  }
+
+  return (drinksData || []) as DrinkDetailsForTab[];
 }

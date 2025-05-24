@@ -35,7 +35,7 @@ export const getOrCreateClient = async (
     if (effectiveAuthUserId) { // Now use effectiveAuthUserId which might be from param or session
       console.log(`[getOrCreateClient] Attempting to find client by authUserId: ${effectiveAuthUserId}`);
       const { data: userLinkedClient, error: userLinkedClientError } = await supabase
-        .from('clients')
+      .from('clients')
         .select('client_id, email, user_auth_id, remaining_servings')
         .eq('user_auth_id', effectiveAuthUserId)
         .single();
@@ -143,9 +143,9 @@ export const getOrCreateClient = async (
       }
 
       const newClientPayload = {
-        restaurant_name: clientDetails.restaurantName,
-        contact_name: clientDetails.contactName,
-        phone: clientDetails.phoneNumber,
+          restaurant_name: clientDetails.restaurantName,
+          contact_name: clientDetails.contactName,
+          phone: clientDetails.phoneNumber,
         email: clientDetails.email,
         user_auth_id: effectiveAuthUserId, 
         current_package_id: packageIdForNewClient,

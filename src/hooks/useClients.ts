@@ -1,64 +1,67 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Client, ClientStatus } from "@/types/client";
+import { Client } from "@/types/client";
 import { useCurrentUserRole } from "./useCurrentUserRole";
+import { useEffect } from "react";
 
-interface UseClientsOptions {
-  searchTerm?: string;
-  statusFilter?: string;
-}
-
-export function useClients({ searchTerm = "", statusFilter = "all" }: UseClientsOptions = {}) {
+export function useClients(/*{ searchTerm = "", statusFilter = "all" }: UseClientsOptions = {}*/) {
   const queryClient = useQueryClient();
-  const { isAdmin, isAccountManager } = useCurrentUserRole();
+  const currentUserRoleData = useCurrentUserRole(); 
+
+  console.log('[useClients_Simplified] Hook called. Data from useCurrentUserRole():', JSON.stringify(currentUserRoleData, null, 2));
+
+  const finalQueryKey = ["clients_simplified", currentUserRoleData.userId, currentUserRoleData.status];
+  
+  const isQueryEnabled = currentUserRoleData.status === "ROLE_DETERMINED" && (currentUserRoleData.isAdmin || currentUserRoleData.isAccountManager);
+
+  console.log('[useClients_Simplified] Determined queryKey:', finalQueryKey, 'isQueryEnabled:', isQueryEnabled);
   
   const {
     data: clients = [],
     isLoading,
     error,
-    refetch
+    refetch,
+    isFetching,
+    status: queryStatus
   } = useQuery({
-    queryKey: ["clients", searchTerm, statusFilter],
+    queryKey: finalQueryKey, 
     queryFn: async () => {
-      // If not admin or account manager, don't fetch the data
-      if (!isAdmin && !isAccountManager) {
+      console.log('[useClients_Simplified] queryFn START. CurrentRoleData inside queryFn:', JSON.stringify(currentUserRoleData, null, 2));
+      console.log('[useClients_Simplified] queryFn isQueryEnabled check (should be true if we are here):', isQueryEnabled);
+
+      if (currentUserRoleData.status !== "ROLE_DETERMINED" || (!currentUserRoleData.isAdmin && !currentUserRoleData.isAccountManager)) { 
+        console.warn('[useClients_Simplified] queryFn: Role not determined or not authorized INSIDE queryFn. Status:', currentUserRoleData.status, 'isAdmin:', currentUserRoleData.isAdmin);
         return [];
       }
+      console.log('[useClients_Simplified] queryFn: Authorization check passed INSIDE queryFn.');
       
       let query = supabase
         .from("clients")
         .select("*")
         .order("created_at", { ascending: false });
 
-      // Apply status filter if selected and is a valid status
-      if (statusFilter && statusFilter !== "all") {
-        // Validate the status filter is one of the allowed enum values
-        if (["פעיל", "לא פעיל", "בהמתנה"].includes(statusFilter)) {
-          query = query.eq("client_status", statusFilter as ClientStatus);
-        }
+      console.log('[useClients_Simplified] queryFn: Executing Supabase query...');
+      const { data: rawData, error: queryError } = await query;
+      console.log('[useClients_Simplified] queryFn: Supabase query FINISHED.');
+
+      if (queryError) {
+        console.error('[useClients_Simplified] queryFn: Error during Supabase query:', queryError);
+        throw queryError;
       }
 
-      // Apply search term if entered
-      if (searchTerm) {
-        query = query.or(
-          `restaurant_name.ilike.%${searchTerm}%,contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
-        );
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        throw error;
-      }
-
-      return data as Client[];
+      console.log('[useClients_Simplified] queryFn: Supabase query successful. Returning data count:', rawData?.length);
+      return rawData as Client[];
     },
-    enabled: isAdmin || isAccountManager
+    enabled: isQueryEnabled,
   });
   
+  useEffect(() => {
+    console.log('[useClients_Simplified] Query state: isLoading:', isLoading, 'isFetching:', isFetching, 'status:', queryStatus, 'error:', error, 'clients count:', clients.length);
+  }, [isLoading, isFetching, queryStatus, error, clients]);
+  
   const refreshClients = () => {
-    queryClient.invalidateQueries({ queryKey: ["clients"] });
+    console.log('[useClients_Simplified] refreshClients called. Invalidating queries for:', finalQueryKey);
+    queryClient.invalidateQueries({ queryKey: finalQueryKey });
   };
   
   return {
@@ -67,5 +70,74 @@ export function useClients({ searchTerm = "", statusFilter = "all" }: UseClients
     error,
     refetch,
     refreshClients
+  };
+}
+
+// New hook
+interface UseClientsSimplifiedV2Options {
+  enabled: boolean;
+  userId: string | null;
+}
+
+export function useClients_Simplified_V2({ enabled, userId }: UseClientsSimplifiedV2Options) {
+  const queryClient = useQueryClient();
+
+  const queryKey = ["clients_list_for_admin", userId];
+
+  console.log(`[useClients_Simplified_V2] Hook called. enabled: ${enabled}, userId: ${userId}, queryKey: ${JSON.stringify(queryKey)}`);
+
+  const {
+    data: clients = [],
+    isLoading,
+    error,
+    refetch,
+    isFetching,
+    status: queryStatus
+  } = useQuery<Client[], Error, Client[], readonly unknown[]>({
+    queryKey: queryKey,
+    queryFn: async () => {
+      console.log('[useClients_Simplified_V2] queryFn START.');
+
+      const queryBuilder = supabase
+        .from("clients")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      console.log('[useClients_Simplified_V2] queryFn: Executing Supabase query...');
+      const { data: rawData, error: queryError } = await queryBuilder;
+      console.log('[useClients_Simplified_V2] queryFn: Supabase query FINISHED.');
+
+      if (queryError) {
+        console.error('[useClients_Simplified_V2] queryFn: Error during Supabase query:', queryError);
+        throw new Error(queryError.message || 'Unknown database error');
+      }
+
+      console.log('[useClients_Simplified_V2] queryFn: Supabase query successful. Returning data count:', rawData?.length);
+      return rawData || [];
+    },
+    enabled: enabled,
+  });
+
+  useEffect(() => {
+    let errorMessage: string | null = null;
+    if (error) {
+      errorMessage = error.message;
+    }
+    console.log(`[useClients_Simplified_V2] Query state updated: isLoading: ${isLoading}, isFetching: ${isFetching}, status: ${queryStatus}, enabled: ${enabled}, error: ${errorMessage}, clients count: ${clients.length}`);
+  }, [isLoading, isFetching, queryStatus, enabled, error, clients]);
+
+  const refreshClients = () => {
+    console.log('[useClients_Simplified_V2] refreshClients called. Invalidating queries for:', queryKey);
+    queryClient.invalidateQueries({ queryKey: queryKey });
+  };
+
+  return {
+    clients,
+    isLoading,
+    error,
+    refetch,
+    refreshClients,
+    queryStatus,
+    isFetching
   };
 }

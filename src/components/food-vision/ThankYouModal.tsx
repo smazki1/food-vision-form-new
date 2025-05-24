@@ -11,13 +11,13 @@ const ThankYouModal: React.FC<ThankYouModalProps> = ({ open, onClose }) => (
     <DialogContent className="text-center">
       <DialogHeader className="text-center">
         <DialogTitle asChild>
-          <h2 className="text-2xl font-bold text-[#F97316] mb-2">תודה רבה!</h2>
+        <h2 className="text-2xl font-bold text-[#F97316] mb-2">תודה רבה!</h2>
         </DialogTitle>
         <DialogDescription asChild>
-          <p className="text-lg text-gray-800 font-medium">
-            הפרטים נקלטו בהצלחה.<br />
-            נציגנו יצרו איתך קשר במהלך 24 השעות הקרובות.
-          </p>
+        <p className="text-lg text-gray-800 font-medium">
+          הפרטים נקלטו בהצלחה.<br />
+          נציגנו יצרו איתך קשר במהלך 24 השעות הקרובות.
+        </p>
         </DialogDescription>
       </DialogHeader>
       <div className="flex flex-col items-center space-y-2 p-2 mt-4">

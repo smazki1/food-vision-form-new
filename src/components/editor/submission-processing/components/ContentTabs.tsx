@@ -59,7 +59,7 @@ const ContentTabs: React.FC<ContentTabsProps> = ({
       <TabsContent value="originals">
         <OriginalImagesTabContent 
           submission={submission} 
-          setLightboxImage={setLightboxImage || (() => {})} 
+          setLightboxImage={setLightboxImage || (() => {})}
         />
       </TabsContent>
       

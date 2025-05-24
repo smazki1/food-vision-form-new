@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 
@@ -7,7 +6,7 @@ interface PackageFeaturesTagsProps {
 }
 
 const PackageFeaturesTags: React.FC<PackageFeaturesTagsProps> = ({ tags = [] }) => {
-  if (tags.length === 0) {
+  if (!tags || tags.length === 0) {
     return <span className="text-muted-foreground text-sm">אין תגים</span>;
   }
 

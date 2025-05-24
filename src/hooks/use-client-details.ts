@@ -1,11 +1,20 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { getClientDetails, updateClientDetails as updateClient, addServingsToClient } from "@/api/clientApi";
+import { 
+  getUniqueSubmittedDishDetailsForClient,
+  getUniqueSubmittedCocktailDetailsForClient,
+  getUniqueSubmittedDrinkDetailsForClient
+} from "@/api/submissionApi";
 import { Client } from "@/types/client";
+// Import the new shared types
+import { DishDetailsForTab, CocktailDetailsForTab, DrinkDetailsForTab } from "@/types/food-vision"; 
 import { toast } from "sonner";
 
 export const useClientDetails = (clientId?: string) => {
   const [client, setClient] = useState<Client | null>(null);
+  const [submittedDishes, setSubmittedDishes] = useState<DishDetailsForTab[]>([]); // State for submitted dishes
+  const [submittedCocktails, setSubmittedCocktails] = useState<CocktailDetailsForTab[]>([]); // State for submitted cocktails
+  const [submittedDrinks, setSubmittedDrinks] = useState<DrinkDetailsForTab[]>([]); // State for submitted drinks
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
@@ -20,8 +29,22 @@ export const useClientDetails = (clientId?: string) => {
 
     try {
       setLoading(true);
+      // Fetch client details and dish submissions in parallel or sequentially
       const clientData = await getClientDetails(clientId);
       setClient(clientData);
+      
+      if (clientData) { // Only fetch items if client exists
+        // Fetch in parallel for slightly better performance
+        const [dishDetails, cocktailDetails, drinkDetails] = await Promise.all([
+          getUniqueSubmittedDishDetailsForClient(clientId),
+          getUniqueSubmittedCocktailDetailsForClient(clientId),
+          getUniqueSubmittedDrinkDetailsForClient(clientId)
+        ]);
+        setSubmittedDishes(dishDetails);
+        setSubmittedCocktails(cocktailDetails);
+        setSubmittedDrinks(drinkDetails);
+      }
+      
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch client details"));
@@ -79,6 +102,9 @@ export const useClientDetails = (clientId?: string) => {
 
   return {
     client,
+    submittedDishes, // Return submitted dishes
+    submittedCocktails, // Return submitted cocktails
+    submittedDrinks, // Return submitted drinks
     loading,
     error,
     isEditMode,
