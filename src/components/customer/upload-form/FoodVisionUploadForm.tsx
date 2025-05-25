@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
-import FormHeader from "@/components/food-vision/FormHeader";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from 'lucide-react';
 import { useClientPackage } from '@/hooks/useClientPackage';
@@ -19,11 +18,14 @@ import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import { getOrCreateClient } from '@/utils/client-utils';
 import { ClientDetails as FoodVisionClientDetails } from '@/types/food-vision';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import FormProgress from './FormProgress';
+import { cn } from '@/lib/utils';
 
 export interface StepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
   clearExternalErrors?: () => void;
   errors?: Record<string, string>;
+  onFinalSubmit?: () => void;
 }
 
 const allSteps = [
@@ -110,6 +112,8 @@ const FoodVisionUploadForm: React.FC = () => {
     }
   }, [clientId, authenticating]);
 
+  const typedFormSteps = formSteps.map(step => ({ id: step.id, name: step.name }));
+
   const CurrentStepComponent = formSteps.find(step => step.id === currentStepId)?.component || (() => <div>שלב לא תקין</div>);
   const currentStepConfig = formSteps.find(step => step.id === currentStepId);
 
@@ -145,11 +149,11 @@ const FoodVisionUploadForm: React.FC = () => {
 
           toast.success("פרטי מסעדה אומתו בהצלחה! מזהה לקוח חדש/מאומת: " + newClientId.substring(0, 8) + "...");
 
-          const nextStepInSequence = allSteps.find(step => step.id === 2);
-          if (nextStepInSequence) {
+          const nextStepInAllSteps = allSteps.find(step => step.id === 2);
+          if (nextStepInAllSteps) {
             const stepsForLoggedInUser = allSteps.filter(step => step.id !== 1);
             setFormSteps(stepsForLoggedInUser);
-            setCurrentStepId(nextStepInSequence.id);
+            setCurrentStepId(nextStepInAllSteps.id);
             window.scrollTo(0, 0);
           } else {
             toast.error("שגיאה במעבר לשלב הבא לאחר אימות מסעדה.");
@@ -157,7 +161,14 @@ const FoodVisionUploadForm: React.FC = () => {
 
         } catch (error: any) {
           console.error("[FoodVisionUploadForm] Error in handleRestaurantDetailsSubmit:", error);
-          toast.error(error.message || "שגיאה באימות פרטי המסעדה.");
+          let errorMessage = "שגיאה באימות פרטי המסעדה.";
+          if (error.message) {
+            errorMessage = error.message.includes("duplicate key value violates unique constraint") 
+              ? "כתובת אימייל זו כבר משויכת למסעדה קיימת. אנא השתמש בכתובת אחרת או התחבר אם זו המסעדה שלך."
+              : error.message;
+          }
+          setStepErrors({ submit: errorMessage });
+          toast.error(errorMessage);
         } finally {
           setIsCreatingClient(false);
         }
@@ -175,12 +186,13 @@ const FoodVisionUploadForm: React.FC = () => {
       const newErrors = currentStepConfig.validate(formData);
       setStepErrors(newErrors);
       if (Object.keys(newErrors).length === 0) {
-        const currentIndex = formSteps.findIndex(step => step.id === currentStepId);
-        if (currentIndex < formSteps.length - 1) {
-          setCurrentStepId(formSteps[currentIndex + 1].id);
+        const currentIndexInCurrentSteps = formSteps.findIndex(step => step.id === currentStepId);
+        if (currentIndexInCurrentSteps < formSteps.length - 1) {
+          setCurrentStepId(formSteps[currentIndexInCurrentSteps + 1].id);
           window.scrollTo(0, 0);
         } else {
-          await handleSubmit();
+          console.warn("[FoodVisionUploadForm] Reached end of steps via footer button. This should ideally be handled by ReviewSubmitStep's button.")
+          await handleSubmit(); 
         }
       }
     }
@@ -188,10 +200,13 @@ const FoodVisionUploadForm: React.FC = () => {
 
   const handlePrevious = () => {
     setStepErrors({});
-    const currentIndex = formSteps.findIndex(step => step.id === currentStepId);
-    if (currentIndex > 0) {
-      setCurrentStepId(formSteps[currentIndex - 1].id);
+    const currentIndexInCurrentSteps = formSteps.findIndex(step => step.id === currentStepId);
+
+    if (currentIndexInCurrentSteps > 0) {
+      setCurrentStepId(formSteps[currentIndexInCurrentSteps - 1].id);
       window.scrollTo(0, 0);
+    } else if (clientId && !formSteps.find(s => s.id === 1)) {
+      console.warn("[FoodVisionUploadForm] Attempted to go back from the first visible step for a logged-in user.");
     }
   };
   
@@ -206,21 +221,26 @@ const FoodVisionUploadForm: React.FC = () => {
       } else if (currentStepId !== 1) {
          setCurrentStepId(allSteps[0].id);
       }
+      setStepErrors({ submit: "יש להשלים את פרטי המסעדה או להתחבר לפני ההגשה." });
       return;
     }
 
-    const reviewStepConfig = formSteps.find(step => step.id === currentStepId);
+    const reviewStepConfig = allSteps.find(step => step.id === 4);
     if (reviewStepConfig?.validate) {
       const newErrors = reviewStepConfig.validate(formData);
       setStepErrors(newErrors);
       if (Object.keys(newErrors).length > 0) {
         toast.error("אנא תקן את השגיאות בטופס הסקירה.");
+        if (currentStepId !== 4) setCurrentStepId(4);
         return;
       }
     }
 
     if (remainingDishes !== undefined && remainingDishes <= 0) {
-        toast.error("אין לך מספיק מנות נותרות בחבילה כדי לבצע הגשה זו.");
+        const noDishesError = "אין לך מספיק מנות נותרות בחבילה כדי לבצע הגשה זו.";
+        setStepErrors({ submit: noDishesError }); 
+        toast.error(noDishesError);
+        if (currentStepId !== 4) setCurrentStepId(4);
         return;
     }
 
@@ -237,41 +257,66 @@ const FoodVisionUploadForm: React.FC = () => {
         const { error: uploadError } = await supabase.storage
           .from('food-vision-images')
           .upload(filePath, file);
-        if (uploadError) throw new Error(`שגיאה בהעלאת קובץ ${file.name}: ${uploadError.message}`);
+        if (uploadError) {
+          console.error(`Upload error for ${file.name}:`, uploadError);
+          throw new Error(`שגיאה בהעלאת קובץ ${file.name}: ${uploadError.message}`);
+        }
         
         const { data: publicUrlData } = supabase.storage.from('food-vision-images').getPublicUrl(filePath);
-        if (!publicUrlData || !publicUrlData.publicUrl) throw new Error(`שגיאה בקבלת URL ציבורי עבור ${file.name}`);
+        if (!publicUrlData || !publicUrlData.publicUrl) {
+          console.error(`Public URL error for ${file.name}`);
+          throw new Error(`שגיאה בקבלת URL ציבורי עבור ${file.name}`);
+        }
         return publicUrlData.publicUrl;
       });
       const resolvedUploadedImageUrls = await Promise.all(uploadPromises);
 
       let itemInsertError: any = null;
+
+      // Define a type for item types that are supported for table mapping
+      type SupportedItemType = 'dish' | 'cocktail' | 'drink';
+
+      const tableNameMap: Record<SupportedItemType, string> = {
+        dish: 'dishes',
+        cocktail: 'cocktails',
+        drink: 'drinks',
+      };
+      
+      // Validate that itemType is a supported one before trying to map
+      if (!formData.itemType || !Object.keys(tableNameMap).includes(formData.itemType)) {
+        throw new Error(`סוג פריט לא נתמך או חסר: ${formData.itemType}`);
+      }
+
+      const itemTable = tableNameMap[formData.itemType as SupportedItemType];
+      const itemIdColumn = `${formData.itemType}_id`;
+
       const itemData = {
         client_id: finalClientId,
         name: formData.itemName,
         description: formData.description,
         notes: formData.specialNotes,
         reference_image_urls: resolvedUploadedImageUrls,
+        [itemIdColumn]: newItemId,
       };
 
-      switch (formData.itemType) {
-        case 'dish':
-          const { error: dishError } = await supabase.from('dishes').insert({ ...itemData, dish_id: newItemId });
-          itemInsertError = dishError;
-          break;
-        case 'cocktail':
-          const { error: cocktailError } = await supabase.from('cocktails').insert({ ...itemData, cocktail_id: newItemId });
-          itemInsertError = cocktailError;
-          break;
-        case 'drink':
-          const { error: drinkError } = await supabase.from('drinks').insert({ ...itemData, drink_id: newItemId });
-          itemInsertError = drinkError;
-          break;
-        default:
-          throw new Error('סוג פריט לא ידוע או לא נתמך.');
-      }
+      const { error: genericInsertError } = await supabase.from(itemTable as any).insert(itemData);
+      itemInsertError = genericInsertError;
 
-      if (itemInsertError) throw new Error(`שגיאה ביצירת הפריט (${formData.itemType}): ${itemInsertError.message}`);
+      if (itemInsertError) {
+        console.error(`Error inserting item (${formData.itemType}). Error object:`, JSON.stringify(itemInsertError, null, 2));
+        let detailedMessage = `שגיאה ביצירת הפריט (${formData.itemType})`;
+        if (itemInsertError.message) {
+          detailedMessage += `: ${itemInsertError.message}`;
+        } else if (itemInsertError.details) {
+          detailedMessage += `: ${itemInsertError.details}`;
+        } else if (itemInsertError.hint) {
+          detailedMessage += ` (רמז: ${itemInsertError.hint})`;
+        }
+        if (Object.keys(itemInsertError).length === 0) {
+            detailedMessage += ". נראה שהייתה בעיה כללית בגישה לטבלה או בהרשאות. בדוק את הגדרות ה-RLS ב-Supabase.";
+        }
+        throw new Error(detailedMessage);
+      }
       
       const submissionToInsert = {
         client_id: finalClientId,
@@ -283,15 +328,15 @@ const FoodVisionUploadForm: React.FC = () => {
       const { error: submissionInsertError } = await supabase.from('customer_submissions').insert(submissionToInsert);
 
       if (submissionInsertError) {
-        const itemTable = `${formData.itemType}s`;
-        const itemIdColumn = `${formData.itemType}_id`;
+        console.error("Error inserting submission, attempting to rollback item:", submissionInsertError);
         await supabase.from(itemTable as any).delete().eq(itemIdColumn, newItemId);
-        throw new Error(`שגיאה בשמירת ההגשה: ${submissionInsertError.message}`);
+        console.warn("Item rollback attempted for item ID:", newItemId, "from table:", itemTable);
+        throw new Error(`שגיאה בשמירת ההגשה: ${submissionInsertError.message}. פרטי הפריט לא נשמרו.`);
       }
 
       toast.success("הפריט הוגש בהצלחה!");
       resetFormData();
-      if (finalClientId) {
+      if (clientId) {
         const stepsForLoggedInUser = allSteps.filter(step => step.id !== 1);
         setFormSteps(stepsForLoggedInUser);
         setCurrentStepId(stepsForLoggedInUser[0]?.id || allSteps[1].id);
@@ -304,12 +349,17 @@ const FoodVisionUploadForm: React.FC = () => {
       navigate('/customer/home');
 
     } catch (error: any) {
-      console.error("Submission error:", error);
+      console.error("Submission process error:", error);
+      setStepErrors({ submit: error.message || "אירעה שגיאה במהלך ההגשה. נסה שוב." });
       toast.error(error.message || "אירעה שגיאה במהלך ההגשה. נסה שוב.");
+      if (currentStepId !== 4) setCurrentStepId(4);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const isFirstStepInCurrentFlow = currentStepId === formSteps[0]?.id;
+  const isLastStepInCurrentFlow = currentStepId === formSteps[formSteps.length - 1]?.id;
 
   if (authenticating) {
     return (
@@ -321,110 +371,78 @@ const FoodVisionUploadForm: React.FC = () => {
   }
 
   return (
-    <div dir="rtl" className="min-h-[calc(100vh-4rem)] bg-background">
-      <div className="container max-w-4xl mx-auto">
-        <FormHeader />
-        
-        <div className="bg-white rounded-lg shadow-sm p-6 md:p-8">
-          <div className="flex items-center text-sm text-muted-foreground mb-2 md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-transparent hover:text-primary p-0 text-xs"
-              onClick={() => navigate('/customer/home')}
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="p-4 bg-white shadow-md sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto">
+            <FormProgress currentStepId={currentStepId} formSteps={typedFormSteps} />
+        </div>
+      </div>
+
+      <main className="flex-grow overflow-y-auto p-4 md:p-6">
+        <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6 md:p-8">
+          <div className="mt-0">
+            <CurrentStepComponent 
+              setExternalErrors={setStepErrors}
+              clearExternalErrors={handleClearStepErrors}
+              errors={stepErrors}
+              {...(currentStepConfig?.id === 4 && { onFinalSubmit: handleSubmit })}
+            />
+          </div>
+
+          {Object.keys(stepErrors).length > 0 && 
+           !stepErrors.restaurantName && !stepErrors.contactName && !stepErrors.phone && !stepErrors.email && 
+           !stepErrors.itemName && !stepErrors.itemType && !stepErrors.referenceImages && !stepErrors.finalCheck && (
+            <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-md">
+              <p className="text-sm text-red-700 font-semibold mb-1">אנא תקן את השגיאות הבאות:</p>
+              <ul className="list-disc list-inside text-sm text-red-600">
+                {Object.entries(stepErrors)
+                  .filter(([key]) => key === 'submit')
+                  .map(([key, error], index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <footer className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-top-md z-10 md:py-5">
+        <div className={cn(
+          "mx-auto flex items-center max-w-5xl",
+          (!isFirstStepInCurrentFlow && isLastStepInCurrentFlow) || (isFirstStepInCurrentFlow && !isLastStepInCurrentFlow) ? "justify-center" : "justify-between",
+          "md:gap-x-3"
+        )}>
+          
+          {!isLastStepInCurrentFlow && (
+            <Button 
+              onClick={handleNext} 
+              className={cn(
+                "py-4 px-6 text-base font-medium rounded-xl transition-all duration-150 ease-in-out hover:-translate-y-px hover:shadow-md focus-visible:ring-ring",
+                isFirstStepInCurrentFlow ? "w-full md:w-auto md:max-w-sm" : "flex-1 md:flex-none md:w-auto",
+                "bg-orange-500 text-white hover:bg-orange-600 focus-visible:ring-orange-500"
+              )}
+              disabled={isSubmitting || isCreatingClient}
             >
-              דף הבית
+              הבא
             </Button>
-            <ChevronRight className="h-4 w-4 mx-1" />
-            <span className="font-medium text-foreground text-xs">הוספת פריט חדש</span>
-          </div>
-          
-          <h1 className="text-2xl font-semibold text-center mb-2">
-            {formSteps.find(step => step.id === currentStepId)?.name || 'טעינת שלב...'}
-          </h1>
-
-          <div className="flex justify-center items-center my-6 md:my-8 space-x-2 space-x-reverse">
-            {formSteps.map((step, index) => (
-              <React.Fragment key={step.id}>
-                <div className="flex flex-col items-center">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-in-out 
-                      ${currentStepId === step.id ? 'bg-primary text-primary-foreground' : 
-                       (formSteps.findIndex(s => s.id === currentStepId) > index ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500')}`}
-                  >
-                    {formSteps.findIndex(s => s.id === currentStepId) > index ? <InfoIcon className="h-5 w-5" /> : step.id}
-                  </div>
-                  <p className={`mt-2 text-xs text-center ${currentStepId === step.id ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
-                    {step.name}
-                  </p>
-                </div>
-                {index < formSteps.length - 1 && (
-                  <div className={`flex-1 h-1 rounded transition-all duration-300 ease-in-out 
-                    ${formSteps.findIndex(s => s.id === currentStepId) > index ? 'bg-green-500' : 'bg-gray-200'}`}>
-                  </div>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-
-          {currentStepId === 1 && !clientId && (
-            <Alert variant="default" className="mb-6 bg-blue-50 border-blue-200 text-blue-700">
-              <InfoIcon className="h-4 w-4" />
-              <AlertDescription>
-                משתמש חדש? מלא את פרטי המסעדה שלך כדי שנוכל לשייך אליך את ההגשות. אם כבר יש לך חשבון, המערכת תזהה אותך.
-              </AlertDescription>
-            </Alert>
           )}
           
-          {currentStepId === formSteps.find(s => s.id === 2)?.id && remainingDishes !== undefined && remainingDishes <= 10 && (
-            <Alert 
-              variant={remainingDishes <=0 ? "destructive" : "default"} 
-              className={`mb-6 ${remainingDishes > 0 && remainingDishes <= 5 ? 'bg-orange-50 border-orange-400 text-orange-700' : (remainingDishes > 5 ? 'bg-sky-50 border-sky-400 text-sky-700' : '')}`}>
-              <InfoIcon className="h-4 w-4" />
-              <AlertDescription>
-                {remainingDishes <= 0 
-                  ? "לא נותרו לך מנות בחבילה. לא תוכל להגיש פריטים חדשים עד לחידוש החבילה."
-                  : `שים לב: נותרו לך ${remainingDishes} מנות בחבילה.` 
-                }
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="min-h-[300px]">
-            <CurrentStepComponent errors={stepErrors} clearExternalErrors={handleClearStepErrors} setExternalErrors={setStepErrors} />
-          </div>
-
-          <div className="mt-8 pt-6 border-t flex justify-between items-center">
+          {!isFirstStepInCurrentFlow && (
             <Button 
               variant="outline" 
               onClick={handlePrevious} 
-              disabled={currentStepId === formSteps[0].id || isSubmitting || isCreatingClient}
+              className={cn(
+                "py-4 px-6 text-base font-medium rounded-xl transition-all duration-150 ease-in-out hover:-translate-y-px hover:shadow-md focus-visible:ring-ring",
+                isLastStepInCurrentFlow ? "w-full md:w-auto md:max-w-sm" : "flex-1 md:flex-none md:w-auto",
+                "border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50"
+              )}
+              disabled={isSubmitting || isCreatingClient}
             >
-              <ChevronRight className="ml-2 h-4 w-4" />
-              הקודם
+              חזור
             </Button>
-            
-            {currentStepId === formSteps[formSteps.length - 1].id ? (
-              <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting || isCreatingClient || (remainingDishes !== undefined && remainingDishes <= 0)}
-                size="lg"
-              >
-                {isSubmitting ? 'שולח...' : 'הגש פריט'}
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleNext} 
-                disabled={isSubmitting || isCreatingClient || (currentStepId === 1 && !clientId && isCreatingClient)}
-                size="lg"
-              >
-                {isCreatingClient && currentStepId ===1 ? 'מאמת פרטים...' : 'הבא'}
-                <ChevronLeft className="mr-2 h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          )}
         </div>
-      </div>
+      </footer>
     </div>
   );
 };

@@ -1,116 +1,185 @@
 import React, { useContext } from 'react';
 import { NewItemFormContext } from '@/contexts/NewItemFormContext';
-import { StepProps } from '../FoodVisionUploadForm';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm'; // Use a distinct name
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, CheckCircle, Image as ImageIcon } from 'lucide-react';
+import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { useClientPackage } from '@/hooks/useClientPackage';
+import { cn } from '@/lib/utils'; 
+import { Button } from '@/components/ui/button';
 
-const ReviewSubmitStep: React.FC<StepProps> = ({ errors }) => {
+// Extend the global StepProps for this specific step
+interface ReviewSubmitStepProps extends GlobalStepProps {
+  onFinalSubmit?: () => void; // New prop for handling submission from this step
+}
+
+interface ReviewItemProps {
+  label: string;
+  value?: string | null;
+  isMissing?: boolean;
+}
+
+const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
+  if (!value && !isMissing) return null;
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
+      <dt className="text-sm font-medium text-gray-500 sm:w-1/3">{label}</dt>
+      <dd className={cn("mt-1 text-sm text-gray-800 sm:mt-0 sm:w-2/3", isMissing && !value && "text-red-500 italic")}>
+        {value || (isMissing ? "לא סופק" : "-")}
+      </dd>
+    </div>
+  );
+};
+
+const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubmit }) => {
   const { formData } = useContext(NewItemFormContext);
-  const { clientId } = useClientAuth(); // To conditionally show restaurant details
+  const { clientId } = useClientAuth();
   const { remainingDishes, packageName } = useClientPackage();
 
   const { 
-    restaurantName, contactName, phone, email, // Restaurant details
+    restaurantName, contactName, phone, email,
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
+
+  const itemTypeDisplay: Record<string, string> = {
+    dish: "מנה",
+    cocktail: "קוקטייל",
+    drink: "משקה"
+  };
+
+  const canSubmit = remainingDishes === undefined || remainingDishes > 0;
 
   return (
     <div className="space-y-8" dir="rtl">
       <div>
-        <h2 className="text-2xl font-semibold mb-1">סקירה ואישור</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          אנא בדוק את כל הפרטים שהזנת לפני ההגשה הסופית.
+        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800 text-center">סקירה ואישור</h2>
+        <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
+          אנא בדוק את כל הפרטים שהזנת לפני ההגשה הסופית. ודא שהכל תקין.
         </p>
       </div>
 
-      {/* Restaurant Details Section - Only show if these details were part of the form flow */}
+      {/* Restaurant Details Section */}
       {!clientId && (restaurantName || contactName || phone || email) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">פרטי המסעדה</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {restaurantName && <p><span className="font-semibold">שם המסעדה:</span> {restaurantName}</p>}
-            {contactName && <p><span className="font-semibold">שם איש קשר:</span> {contactName}</p>}
-            {phone && <p><span className="font-semibold">טלפון:</span> {phone}</p>}
-            {email && <p><span className="font-semibold">אימייל:</span> {email}</p>}
-          </CardContent>
-        </Card>
+        <section className="space-y-4">
+          <div className="flex items-center mb-3">
+            <Building2 className="h-6 w-6 text-primary ml-3" /> 
+            <h3 className="text-lg font-semibold text-gray-700">פרטי המסעדה</h3>
+          </div>
+          <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
+            <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
+            <ReviewItem label="שם איש קשר" value={contactName} isMissing={!contactName} />
+            <ReviewItem label="טלפון" value={phone} isMissing={!phone} />
+            <ReviewItem label="אימייל" value={email} isMissing={!email} />
+          </dl>
+          <Separator className="my-6" />
+        </section>
       )}
 
       {/* Item Details Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">פרטי הפריט</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p><span className="font-semibold">שם הפריט:</span> {itemName}</p>
-          <p><span className="font-semibold">סוג הפריט:</span> {itemType ? itemType.charAt(0).toUpperCase() + itemType.slice(1) : '-'}</p>
-          {description && <p><span className="font-semibold">תיאור:</span> {description}</p>}
-          {specialNotes && <p><span className="font-semibold">הערות מיוחדות:</span> {specialNotes}</p>}
-        </CardContent>
-      </Card>
+      <section className="space-y-4">
+        <div className="flex items-center mb-3">
+          <ItemIcon className="h-6 w-6 text-primary ml-3" /> 
+          <h3 className="text-lg font-semibold text-gray-700">פרטי הפריט</h3>
+        </div>
+        <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
+          <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
+          <ReviewItem label="סוג הפריט" value={itemType ? itemTypeDisplay[itemType] : undefined} isMissing={!itemType} />
+          <ReviewItem label="תיאור/מרכיבים" value={description} />
+          <ReviewItem label="הערות מיוחדות" value={specialNotes} />
+        </dl>
+        <Separator className="my-6" />
+      </section>
 
       {/* Uploaded Images Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">תמונות שהועלו ({referenceImages.length})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {referenceImages.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {referenceImages.map((file, index) => (
-                <div key={index} className="relative group border rounded-md overflow-hidden aspect-square">
-                  <img 
-                    src={URL.createObjectURL(file)} 
-                    alt={`תמונה ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                    onLoad={() => URL.revokeObjectURL(file.name)} // Clean up object URL
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
-                    {file.name}
-                  </div>
+      <section className="space-y-4">
+         <div className="flex items-center mb-3">
+            <ImageIcon className="h-6 w-6 text-primary ml-3" /> 
+            <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
+          </div>
+        {referenceImages.length > 0 ? (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white"> 
+            {referenceImages.map((file, index) => (
+              <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video"> 
+                <img 
+                  src={URL.createObjectURL(file)} 
+                  alt={`תצוגה מקדימה ${index + 1}`} 
+                  className="w-full h-full object-contain"
+                  onLoad={() => URL.revokeObjectURL(file.name)}
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
+                  {file.name}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground">לא הועלו תמונות.</p>
-          )}
-        </CardContent>
-      </Card>
-
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-4 border border-gray-200 rounded-md bg-white">
+            <p className="text-muted-foreground text-center py-4">לא הועלו תמונות.</p>
+          </div>
+        )}
+        <Separator className="my-6" />
+      </section>
+      
       {/* Submission Cost / Package Info Alert */}
-      <Alert variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} className={remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <=5 ? "border-orange-500 text-orange-700 bg-orange-50" : ""}>
-        <InfoIcon className={`h-4 w-4 ${remainingDishes !== undefined && remainingDishes <= 0 ? "text-destructive" : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <=5 ? "text-orange-700" : "text-primary") }`} />
-        <AlertDescription className="text-sm">
+      <Alert 
+        variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} 
+        className={cn(
+          "p-4 rounded-md",
+          remainingDishes !== undefined && remainingDishes <= 0 
+            ? "bg-red-50 border-red-500 text-red-700"
+            : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <=5 
+                ? "bg-orange-50 border-orange-500 text-orange-700"
+                : "bg-blue-50 border-blue-500 text-blue-700") 
+      )}>
+        <InfoIcon className="h-5 w-5" />
+        <AlertDescription className="text-sm mr-2"> 
           {remainingDishes !== undefined && remainingDishes <= 0 ? (
-            <>הגשה זו לא תתאפשר. <strong>לא נותרו לך מנות בחבילה הנוכחית ({packageName}).</strong></>
+            <>הגשה זו לא תתאפשר. <strong>לא נותרו לך מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
           ) : (
             <>
-              הגשה זו תנצל מנה אחת מהחבילה שלך. 
-              {packageName && `(חבילה: ${packageName}) `}
-              {remainingDishes !== undefined && `לאחר הגשה זו ייוותרו לך ${remainingDishes - 1} מנות.`}
+              הגשה זו תנצל מנה אחת מהחבילה שלך.
             </>
           )}
         </AlertDescription>
       </Alert>
 
-      {/* Final Confirmation Prompt */}
-      <div className="flex items-center space-x-2 space-x-reverse p-4 bg-green-50 border-l-4 border-green-500 rounded-md">
-        <CheckCircle className="h-6 w-6 text-green-600" />
-        <p className="text-sm text-green-700">
-          בדקתי את כל הפרטים ואני מאשר את ההגשה.
-        </p>
-      </div>
+      {/* Final Confirmation Button */}
+      {onFinalSubmit && (
+        <Button
+            onClick={onFinalSubmit}
+            disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
+            className={cn(
+                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
+                "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
+                "border-2",
+                canSubmit 
+                ? "bg-orange-500 hover:bg-orange-600 border-orange-600 hover:border-orange-700 text-white focus-visible:ring-orange-500" 
+                : "bg-gray-300 hover:bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed shadow-inner",
+                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 border-red-600 hover:border-red-700 text-white focus-visible:ring-red-500"
+            )}
+        >
+            <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
+            <span className="leading-tight">✓ בדקתי הכל - הגש עכשיו!</span>
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
+        </Button>
+      )}
+      
 
-      {/* Display any submission errors passed from the parent form */}
-      {errors?.finalCheck && <p className="text-sm text-red-500 mt-2 text-center">{errors.finalCheck}</p>}
-      {errors?.submit && <p className="text-sm text-red-500 mt-2 text-center">{errors.submit}</p>}
-
+      {/* Display any submission errors (specifically for this step, like missing images before confirming) */}
+      {errors?.finalCheck && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
+            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
+            <span>{errors.finalCheck}</span>
+        </div>
+      )}
+      {/* Display general submit errors (e.g. from API) */}
+       {errors?.submit && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
+            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
+            <span>{errors.submit}</span>
+        </div>
+      )}
     </div>
   );
 };

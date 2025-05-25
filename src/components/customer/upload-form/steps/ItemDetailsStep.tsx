@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNewItemForm, ItemType } from '@/contexts/NewItemFormContext';
-import { Input } from '@/components/ui/input';
+import { IconInput } from '@/components/ui/icon-input';
 import { Label } from '@/components/ui/label';
+import { IconTextarea } from '@/components/ui/icon-textarea';
 import {
   Select,
   SelectContent,
@@ -9,9 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from '@/components/ui/textarea';
 import { StepProps } from '../FoodVisionUploadForm';
-import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const ItemDetailsStep: React.FC<StepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
@@ -39,86 +39,75 @@ const ItemDetailsStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
   };
   
   return (
-    <div className="space-y-4">
-      <Card className="p-4 bg-card/50">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="itemName" className="text-sm font-medium text-foreground">
-              שם הפריט <span className="text-destructive">*</span>
-            </Label>
-            <Input 
-              id="itemName"
-              name="itemName"
-              value={formData.itemName}
-              onChange={handleChange}
-              placeholder="לדוגמה: פסטה קרבונרה, מוחיטו קלאסי"
-              className={`bg-background/50 ${errors?.itemName ? 'border-destructive' : ''}`}
-              aria-invalid={!!errors?.itemName}
-            />
-            {errors?.itemName && (
-              <p className="text-sm text-destructive">{errors.itemName}</p>
-            )}
-          </div>
+    <div className="space-y-6" dir="rtl">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">פרטי המנה / מוצר</h2>
+      </div>
+      <div className="space-y-6">
+        <IconInput
+          id="itemName"
+          name="itemName"
+          label="שם הפריט"
+          value={formData.itemName}
+          onChange={handleChange}
+          placeholder="לדוגמה: פסטה קרבונרה, מוחיטו קלאסי"
+          error={errors?.itemName}
+          iconPosition="right"
+          required
+        />
 
-          <div className="space-y-2">
-            <Label htmlFor="itemType" className="text-sm font-medium text-foreground">
-              סוג הפריט <span className="text-destructive">*</span>
-            </Label>
-            <Select 
-              name="itemType" 
-              value={formData.itemType}
-              onValueChange={handleSelectChange}
+        <div className="space-y-2">
+          <Label htmlFor="itemType" className="font-medium text-gray-700">
+            סוג הפריט <span className="text-red-600 ml-1">*</span>
+          </Label>
+          <Select 
+            name="itemType" 
+            value={formData.itemType}
+            onValueChange={handleSelectChange}
+          >
+            <SelectTrigger 
+              id="itemType" 
+              className={cn(
+                "w-full h-12 px-4 py-3 rounded-md border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/50 transition-colors duration-150 ease-in-out bg-background",
+                errors?.itemType ? "border-red-500 focus:border-red-500 focus:ring-red-500/50 text-red-700 placeholder-red-400" : "border-gray-300"
+              )}
+              aria-invalid={!!errors?.itemType}
             >
-              <SelectTrigger 
-                id="itemType" 
-                className={`bg-background/50 ${errors?.itemType ? 'border-destructive' : ''}`}
-              >
-                <SelectValue placeholder="בחר סוג פריט" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="dish">מנה</SelectItem>
-                <SelectItem value="cocktail">קוקטייל</SelectItem>
-                <SelectItem value="drink">משקה</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors?.itemType && (
-              <p className="text-sm text-destructive">{errors.itemType}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium text-foreground">
-              מרכיבים עיקריים <span className="text-xs text-muted-foreground">(אופציונלי)</span>
-            </Label>
-            <Textarea 
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="פרט את המרכיבים העיקריים של הפריט"
-              rows={3}
-              className="bg-background/50 resize-none"
-              maxLength={200}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="specialNotes" className="text-sm font-medium text-foreground">
-              הערות מיוחדות <span className="text-xs text-muted-foreground">(אופציונלי)</span>
-            </Label>
-            <Textarea 
-              id="specialNotes"
-              name="specialNotes"
-              value={formData.specialNotes}
-              onChange={handleChange}
-              placeholder="הערות מיוחדות לצילום או עיבוד"
-              rows={3}
-              className="bg-background/50 resize-none"
-              maxLength={300}
-            />
-          </div>
+              <SelectValue placeholder="בחר סוג פריט" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dish">מנה</SelectItem>
+              <SelectItem value="cocktail">קוקטייל</SelectItem>
+              <SelectItem value="drink">משקה</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors?.itemType && (
+            <p className="text-xs text-red-500 mt-1">{errors.itemType}</p>
+          )}
         </div>
-      </Card>
+
+        <IconTextarea
+          id="description"
+          name="description"
+          label="מרכיבים עיקריים (אופציונלי)"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="פרט את המרכיבים העיקריים של הפריט (לדוגמה: רוטב עגבניות, בזיליקום, פרמזן)"
+          rows={4}
+          error={errors?.description}
+        />
+
+        <IconTextarea
+          id="specialNotes"
+          name="specialNotes"
+          label="הערות מיוחדות (אופציונלי)"
+          value={formData.specialNotes}
+          onChange={handleChange}
+          placeholder="לצילום או עיבוד (לדוגמה: ללא גלוטן, דגש על צבעוניות)"
+          rows={4}
+          error={errors?.specialNotes}
+        />
+      </div>
     </div>
   );
 };
