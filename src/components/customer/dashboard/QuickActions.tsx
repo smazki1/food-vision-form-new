@@ -1,11 +1,12 @@
-
 import React from "react";
 import { QuickActionCard } from "./QuickActionCard";
-import { Package } from "lucide-react";
+// import { Package } from "lucide-react"; // Package icon no longer needed if first card is removed
 
 export const QuickActions: React.FC = () => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* REMOVED QuickActionCard for "הגשת פריטים חדשים" */}
+      {/* 
       <QuickActionCard
         title="הגשת פריטים חדשים"
         description="הגש מנות, קוקטיילים או משקאות חדשים לצילום ועריכה"
@@ -13,6 +14,7 @@ export const QuickActions: React.FC = () => {
         linkTo="/food-vision-form"
         buttonText="הגש עכשיו"
       />
+      */}
 
       <QuickActionCard
         title="הגלריה שלי"
