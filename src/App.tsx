@@ -40,11 +40,16 @@ import AlertsDashboard from "./pages/admin/AlertsDashboard";
 import UserManagementPage from "./pages/admin/UserManagementPage";
 
 // Customer pages
+import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
 import CustomerSubmissionsPage from "./pages/customer/CustomerSubmissionsPage";
 import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
 import CustomerGalleryPage from "./pages/customer/CustomerGalleryPage";
 import SubmissionDetailsPage from "./pages/customer/SubmissionDetailsPage";
+import FoodVisionUploadFormPage from "./pages/customer/FoodVisionUploadFormPage";
+import CustomerSubmissionsStatusPage from "./pages/customer/CustomerSubmissionsStatusPage";
+import { DishesPage } from "./pages/customer/DishesPage";
+import CustomerPackageDetailsPage from "./pages/customer/CustomerPackageDetailsPage";
 
 // Editor pages
 import EditorDashboardPage from "./pages/editor/EditorDashboardPage";
@@ -90,12 +95,17 @@ function App() {
                 >
                   <Route element={<CustomerLayout />}>
                     <Route path="/customer">
-                      <Route index element={<Navigate to="/customer/dashboard" replace />} />
+                      <Route index element={<Navigate to="/customer/home" replace />} />
+                      <Route path="home" element={<CustomerHomePage />} />
                       <Route path="dashboard" element={<CustomerDashboardPage />} />
                       <Route path="submissions" element={<CustomerSubmissionsPage />} />
+                      <Route path="dishes" element={<DishesPage />} />
                       <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
                       <Route path="gallery" element={<CustomerGalleryPage />} />
                       <Route path="profile" element={<CustomerProfilePage />} />
+                      <Route path="new-submission" element={<FoodVisionUploadFormPage />} />
+                      <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
+                      <Route path="package-details" element={<CustomerPackageDetailsPage />} />
                     </Route>
                   </Route>
                 </Route>

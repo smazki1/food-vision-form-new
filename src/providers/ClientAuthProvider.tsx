@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientDataFetcher } from '@/hooks/useClientDataFetcher';
@@ -12,6 +12,7 @@ interface ClientAuthProviderProps {
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
+  const [refreshToggle, setRefreshToggle] = useState(false);
   
   const {
     clientId,
@@ -34,9 +35,15 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     initialized,
     authLoading,
     connectionVerified,
+    refreshToggle,
     updateClientAuthState,
     (errorMessage) => updateClientAuthState({ errorState: errorMessage, clientRecordStatus: 'error', authenticating: false })
   );
+
+  const refreshClientAuth = useCallback(() => {
+    console.log("[AUTH_DEBUG_FINAL] refreshClientAuth called. Toggling refresh state.");
+    setRefreshToggle(prev => !prev);
+  }, []);
 
   useEffect(() => {
     const currentTimestamp = Date.now();
@@ -114,13 +121,15 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   const contextValue: ClientAuthContextType = useMemo(() => ({
     clientId,
+    userAuthId: user?.id || null,
     authenticating,
     clientRecordStatus,
     errorState,
     isAuthenticated: clientRecordStatus === 'found' || clientRecordStatus === 'not-found',
     hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
     verifyConnection: () => { /* Placeholder */ }, 
-  }), [clientId, authenticating, clientRecordStatus, errorState]);
+    refreshClientAuth,
+  }), [clientId, user?.id, authenticating, clientRecordStatus, errorState, refreshClientAuth]);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

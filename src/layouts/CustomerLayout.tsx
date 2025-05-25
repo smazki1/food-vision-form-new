@@ -1,7 +1,6 @@
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { Home, Package, Image, User, LogOut, AlertTriangle } from "lucide-react";
@@ -9,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BottomNavigation } from "@/components/customer/BottomNavigation";
 
 export function CustomerLayout() {
   const location = useLocation();
@@ -16,8 +16,6 @@ export function CustomerLayout() {
     clientId, 
     authenticating, 
     isAuthenticated, 
-    hasLinkedClientRecord,
-    hasNoClientRecord,
     clientRecordStatus,
     errorState
   } = useClientAuth();
@@ -89,7 +87,7 @@ export function CustomerLayout() {
     </Alert>
   );
 
-  // If not authenticated, redirect to login (This should be handled by the router)
+  // If not authenticated, redirect to login
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center flex-col gap-4">
@@ -102,58 +100,72 @@ export function CustomerLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Sidebar */}
-      <aside className="md:w-64 border-b md:border-r md:border-b-0 p-4 bg-card">
-        <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
+    <div className="min-h-screen flex flex-col bg-background">
+      {/* Mobile Header - REMOVED as per request */}
+      {/*
+      <header className="sticky top-0 z-50 bg-white border-b md:hidden">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
+              FV
+            </div>
+            <h1 className="text-xl font-bold">Food Vision</h1>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="text-gray-500"
+          >
+            <LogOut className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
+      */}
+
+      {/* Desktop Sidebar - REMOVED header part and logout button */}
+      <aside className="hidden md:block md:w-64 border-r p-4 bg-card">
+        {/* Logo and Title - REMOVED as per request */}
+        {/* 
+        <div className="flex items-center gap-2 mb-6">
           <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
             FV
           </div>
           <h1 className="text-xl font-bold">Food Vision</h1>
         </div>
+        */}
 
-        <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0">
+        <nav className="flex flex-col gap-1">
           <Button
-            variant={isActive("/customer/dashboard") ? "default" : "ghost"}
+            variant={isActive("/customer/home") ? "default" : "ghost"}
             className="justify-start"
             asChild
           >
-            <Link to="/customer/dashboard">
+            <Link to="/customer/home">
               <Home className="ml-2 h-4 w-4" />
               דף הבית
             </Link>
           </Button>
 
           <Button
-            variant={isActive("/customer/submissions") ? "default" : "ghost"}
+            variant={isActive("/customer/submissions-status") ? "default" : "ghost"}
             className="justify-start"
             asChild
           >
-            <Link to="/customer/submissions">
-              <Image className="ml-2 h-4 w-4" />
+            <Link to="/customer/submissions-status">
+              <Package className="ml-2 h-4 w-4" />
               המנות שלי
             </Link>
           </Button>
           
           <Button
-            variant={isActive("/customer/gallery") ? "default" : "ghost"}
+            variant={isActive("/customer/home") ? "default" : "ghost"}
             className="justify-start"
             asChild
           >
-            <Link to="/customer/gallery">
+            <Link to="/customer/home">
               <Image className="ml-2 h-4 w-4" />
               הגלריה שלי
-            </Link>
-          </Button>
-
-          <Button
-            variant={isActive("/food-vision-form") ? "default" : "ghost"}
-            className="justify-start"
-            asChild
-          >
-            <Link to="/food-vision-form">
-              <Package className="ml-2 h-4 w-4" />
-              העלאת מנות חדשות
             </Link>
           </Button>
 
@@ -167,25 +179,19 @@ export function CustomerLayout() {
               פרופיל
             </Link>
           </Button>
-
-          <Button
-            variant="ghost"
-            className="justify-start text-destructive hover:text-destructive mt-auto md:mt-4"
-            onClick={handleLogout}
-          >
-            <LogOut className="ml-2 h-4 w-4" />
-            התנתקות
-          </Button>
         </nav>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-5xl mx-auto">
+      <main className="flex-1 overflow-auto pb-20 md:pb-0">
+        <div className="max-w-5xl mx-auto p-4">
           {errorBanner || noClientProfileBanner}
           <Outlet />
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <BottomNavigation />
 
       {/* Toast notifications */}
       <Toaster />

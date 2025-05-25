@@ -12,6 +12,7 @@ export const useClientDataFetcher = (
   initialized: boolean, 
   loading: boolean,
   connectionVerified: boolean,
+  refreshToggle: boolean,
   onUpdate: (updates: any) => void,
   onError: (error: string) => void
 ) => {
@@ -74,7 +75,7 @@ export const useClientDataFetcher = (
 
   // Use React Query with improved error handling and retry logic
   const { data: clientData, isLoading: clientQueryLoading } = useQuery({
-    queryKey: ["clientId", user?.id],
+    queryKey: ["clientId", user?.id, refreshToggle],
     queryFn: async () => {
       if (!user?.id) {
         console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - No user ID for query");
