@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,7 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
         <CardDescription>פרטי החבילה הנוכחית שלך ומספר המנות שנותרו</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col items-center gap-4">
           <div className="space-y-1">
             <h3 className="text-xl font-medium">
               {clientProfile?.current_package_id ? (
@@ -38,7 +37,6 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
           <Button asChild>
             <Link to="/customer/profile">
               צפה בפרטי החבילה
-              <ArrowRight className="mr-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
