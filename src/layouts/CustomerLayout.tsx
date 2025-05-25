@@ -58,8 +58,12 @@ export function CustomerLayout() {
   // If still authenticating, show a loading indicator
   if (authenticating) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="mt-4 text-sm text-muted-foreground text-center">
+          המערכת בגרסת בטא - הטעינה עשויה לקחת מספר שניות. <br />
+          במקרה של המתנה ממושכת, אנא רענן את הדף
+        </div>
       </div>
     );
   }

@@ -26,8 +26,11 @@ export const useClientDataFetcher = (
       if (!clientQueryEnabled) {
         setQueryStartTime(Date.now());
       setClientQueryEnabled(true);
+      // Ensure authenticating is true when we start the process
       onUpdate({
         clientRecordStatus: 'loading',
+        authenticating: true, // Explicitly set authenticating true
+        errorState: null // Clear previous errors
       });
       console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
       }
@@ -36,42 +39,43 @@ export const useClientDataFetcher = (
       onUpdate({
         clientId: null,
         authenticating: false,
-        clientRecordStatus: 'not-found',
-        hasNoClientRecord: true,
+        clientRecordStatus: 'not-found', // Or 'idle' if more appropriate before any attempt
+        hasNoClientRecord: true, // This might be premature if no attempt was made
         errorState: null
       });
       setClientQueryEnabled(false);
       setQueryStartTime(null);
       console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - User not authenticated, resetting client auth state");
     } else {
-      console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Not ready to fetch client data yet:", {
-        initialized,
-        loading,
-        isAuthenticated,
-        hasUserId: !!user?.id,
-        connectionVerified,
-        timestamp: Date.now()
-      });
+      // This log can be noisy if conditions frequently change, consider conditional logging
+      // console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Not ready to fetch client data yet:", {
+      //   initialized, loading, isAuthenticated, hasUserId: !!user?.id, connectionVerified, timestamp: Date.now()
+      // });
     }
     
     // Force query completion after timeout
     let timeoutId: NodeJS.Timeout | undefined;
     if (clientQueryEnabled && queryStartTime !== null) {
       timeoutId = setTimeout(() => {
-      const queryDuration = Date.now() - queryStartTime;
-        if (queryDuration > 7000) {
-          console.warn("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query taking too long (actual query phase), forcing completion");
-        onUpdate({
-          authenticating: false
-        });
-      }
-    }, 7000);
+        if (queryStartTime !== null) { 
+          const queryDuration = Date.now() - queryStartTime;
+          console.warn(`[AUTH_DEBUG_FINAL] useClientDataFetcher - Query seems STUCK after ${queryDuration}ms (timeout was 7000ms). Forcing error state.`);
+          onError("Client data query timed out. Please try again."); // Inform through onError prop
+          onUpdate({ 
+              authenticating: false,
+              clientRecordStatus: 'error',
+              errorState: "Client data query timed out."
+          });
+          setQueryStartTime(null); 
+          setClientQueryEnabled(false); 
+        }
+      }, 7000); 
     }
     
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate, clientQueryEnabled, queryStartTime, setQueryStartTime]);
+  }, [initialized, loading, isAuthenticated, user?.id, connectionVerified, onUpdate, onError, clientQueryEnabled, queryStartTime, setQueryStartTime]); // Added onError to deps
 
   // Use React Query with improved error handling and retry logic
   const { data: clientData, isLoading: clientQueryLoading } = useQuery({
@@ -126,10 +130,12 @@ export const useClientDataFetcher = (
     },
     meta: {
       onError: (error: Error) => {
-        console.error("[AUTH_DEBUG_FINAL] useClientDataFetcher - Error fetching client data:", error);
+        console.error("[AUTH_DEBUG_FINAL] useClientDataFetcher - Error fetching client data (from useQuery meta.onError):", error);
+        // This onError is from react-query if the queryFn throws or retry fails
         onUpdate({
           clientRecordStatus: 'error',
           authenticating: false // Ensure we're not stuck in loading state
+          // errorState will be set by the onError prop call below
         });
         
         // Set specific error states for different error types
@@ -145,6 +151,54 @@ export const useClientDataFetcher = (
       }
     }
   });
+
+  // NEW useEffect to handle successful query completion and update state
+  useEffect(() => {
+    // Only act if a query was genuinely started (queryStartTime was set)
+    if (queryStartTime === null && !clientQueryLoading) {
+      // If queryStartTime is null and we are not loading, it means either:
+      // 1. Query completed successfully and queryStartTime was cleared.
+      // 2. Query was never started or was reset.
+      // In this case, this effect doesn't need to do anything related to success handling.
+      return;
+    }
+
+    // Condition for successful completion acknowledged by React Query:
+    // - It's no longer loading (clientQueryLoading is false).
+    // - clientData is defined (it will be string or null, not undefined if successful query execution).
+    // - A query attempt was made (queryStartTime was not null before this render cycle or clientQueryEnabled is true).
+    if (!clientQueryLoading && clientData !== undefined && (clientQueryEnabled || queryStartTime !== null)) {
+      console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Query successful (clientQueryLoading is false, clientData is defined). Clearing queryStartTime.", { clientDataValue: clientData });
+      
+      // Store queryStartTime before clearing, to confirm it was active
+      const wasQueryAttempted = queryStartTime !== null;
+      setQueryStartTime(null); // Crucial: Clear the start time to prevent timeout
+
+      if (wasQueryAttempted) { // Only call onUpdate if this effect is reacting to a completed query
+        if (typeof clientData === 'string' && clientData.length > 0) { // Client ID found
+            onUpdate({
+                clientId: clientData,
+                clientRecordStatus: 'found',
+                authenticating: false,
+                errorState: null,
+                hasLinkedClientRecord: true,
+                hasNoClientRecord: false,
+            });
+        } else if (clientData === null) { // Successfully determined no client record
+            onUpdate({
+                clientId: null,
+                clientRecordStatus: 'not-found',
+                authenticating: false,
+                errorState: null,
+                hasLinkedClientRecord: false,
+                hasNoClientRecord: true,
+            });
+        }
+        // If clientData is undefined here, it's an edge case not typically expected for a "successful" (non-loading) query state.
+        // The primary timeout or meta.onError should catch issues.
+      }
+    }
+  }, [clientQueryEnabled, clientQueryLoading, clientData, queryStartTime, onUpdate, setQueryStartTime]); // Dependencies remain critical
 
   return { clientData, clientQueryLoading, clientQueryEnabled };
 };

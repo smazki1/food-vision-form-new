@@ -11,6 +11,13 @@ interface ClientAuthProviderProps {
 }
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
+  useEffect(() => {
+    console.log('[CLIENT_AUTH_PROVIDER_LIFECYCLE] Mounted');
+    return () => {
+      console.log('[CLIENT_AUTH_PROVIDER_LIFECYCLE] Unmounted');
+    };
+  }, []); // Empty dependency array to track mount/unmount
+
   const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   const [refreshToggle, setRefreshToggle] = useState(false);
   
@@ -22,9 +29,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     updateClientAuthState,
   } = useClientAuthStateManager();
   
-  const connectionVerified = useConnectionVerifier((errorMessage) => {
+  // Define a STABLE callback for onConnectionError
+  const handleConnectionError = useCallback((errorMessage: string) => {
     updateClientAuthState({ errorState: errorMessage || null });
-  });
+  }, [updateClientAuthState]); // updateClientAuthState from useClientAuthStateManager should be stable
+
+  const connectionVerified = useConnectionVerifier(handleConnectionError); // Pass the stable callback
 
   const { 
     clientData,
@@ -46,90 +56,124 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   }, []);
 
   useEffect(() => {
-    const currentTimestamp = Date.now();
-    console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Main useEffect. States:`, {
-      auth: {loading: authLoading, initialized, authenticated: isAuthenticated, userId: user?.id},
-      clientAuth: { clientId, authenticating, clientRecordStatus, errorState },
-      fetcher: {clientData, clientQueryLoading},
-      connectionVerified
+    console.log('[AUTH_PROVIDER_DEBUG] Main useEffect triggered. States:', {
+      initialized, authLoading, supabaseIsAuthenticated: isAuthenticated,
+      clientQueryLoading,
+      currentAuthenticating: authenticating,
+      currentClientRecordStatus: clientRecordStatus,
+      currentErrorState: errorState,
+      currentClientId: clientId,
+      connectionVerified,
+      user: user?.id
     });
-    
+
+    // Stage 1: Handle initial loading from useUnifiedAuth
     if (!initialized || authLoading) {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Basic auth loading. Ensuring authenticating: true.`);
-      if (!authenticating) {
-        updateClientAuthState({ authenticating: true });
-      }
-      return;
-    }
-
-    if (!isAuthenticated) {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - User NOT authenticated. Resetting. authenticating: false.`);
-            updateClientAuthState({
-        clientId: null,
-        authenticating: false,
-              clientRecordStatus: 'not-found',
-        errorState: null,
-      });
-      return;
-    }
-
-    if (clientQueryLoading) {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client query IS loading. Ensuring authenticating: true.`);
-      if (!authenticating) {
+      // If basic auth is still loading, ensure we reflect an overall authenticating state.
+      if (authenticating !== true || clientRecordStatus !== 'loading') {
         updateClientAuthState({ authenticating: true, clientRecordStatus: 'loading' });
       }
       return;
     }
 
-    console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client query NOT loading. Status: ${clientRecordStatus}, Data: ${clientData}`);
-
-    if (clientRecordStatus === 'error') {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Status is 'error'. Expecting authenticating:false.`);
-      if (authenticating) {
-        console.warn(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Status 'error', but authenticating still true. Forcing false.`);
-        updateClientAuthState({ authenticating: false });
-      }
-      return; 
-    }
-
-    if (clientData) {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client ID FOUND: ${clientData}.`);
-            updateClientAuthState({
-        clientId: clientData,
-        authenticating: false,
-              clientRecordStatus: 'found',
-        errorState: null, 
-            });
-      } else {
-      console.log(`[AUTH_DEBUG ${currentTimestamp}] ClientAuthProvider - Client ID NOT found (null).`);
+    // Stage 2: Handle user not authenticated by useUnifiedAuth (Supabase)
+    if (!isAuthenticated) { // isAuthenticated from useUnifiedAuth
+      // If Supabase user is definitively not authenticated, reset all client-specific auth state.
+      if (clientId !== null || authenticating !== false || clientRecordStatus !== 'not-found' || errorState !== null) {
         updateClientAuthState({
           clientId: null,
           authenticating: false,
-        clientRecordStatus: 'not-found',
+          clientRecordStatus: 'not-found',
           errorState: null,
         });
+      }
+      return;
     }
+
+    // At this point, user IS authenticated by useUnifiedAuth.
+    // Client-specific data fetching is managed by useClientDataFetcher.
+    // useClientDataFetcher uses onUpdate (which is updateClientAuthState) to set:
+    // - clientRecordStatus: 'loading' when it starts its query.
+    // - clientId, clientRecordStatus: 'found', authenticating: false on success.
+    // - clientRecordStatus: 'error', errorState, authenticating: false on error.
+
+    // This useEffect primarily ensures that if clientQueryLoading (from useClientDataFetcher) is false,
+    // and clientRecordStatus is NOT 'loading' (meaning fetcher has completed or errored),
+    // then the overall 'authenticating' flag should also be false.
+    if (!clientQueryLoading && clientRecordStatus !== 'loading') {
+      if (authenticating !== false) {
+        updateClientAuthState({ authenticating: false });
+      }
+    } 
+    // Conversely, if clientQueryLoading IS true (fetcher is active), 
+    // useClientDataFetcher should have set authenticating: true via its onUpdate callback.
+    // If it hasn't (e.g., authenticating is false), this indicates a possible state mismatch,
+    // so we can enforce authenticating: true.
+    else if (clientQueryLoading && authenticating !== true) {
+        // Only set if not an error, as error state should keep authenticating false.
+        if (clientRecordStatus !== 'error') {
+             updateClientAuthState({ authenticating: true, clientRecordStatus: 'loading'});
+        }
+    }
+    
+    // The actual values of clientId, clientRecordStatus ('found', 'not-found', 'error'), and errorState
+    // are expected to be set by useClientDataFetcher via the onUpdate/onError callbacks.
+    // This useEffect should not need to duplicate that logic further.
+
   }, [
-    user, authLoading, initialized, isAuthenticated,
-    clientData, clientQueryLoading, 
-    authenticating,
-    clientRecordStatus,
-    errorState,
-    connectionVerified,
-    updateClientAuthState, 
+    // Key dependencies that drive the flow:
+    initialized, authLoading, isAuthenticated, // from useUnifiedAuth
+    clientQueryLoading, // from useClientDataFetcher, indicates if it's actively fetching
+    
+    // States managed by useClientAuthStateManager, which this useEffect reacts to and also influences:
+    authenticating, 
+    clientRecordStatus, 
+    errorState, 
+    clientId, // Read for conditions
+    
+    updateClientAuthState, // The stable callback to update state
+    user // user object from useUnifiedAuth (used in useClientDataFetcher's queryKey, indirectly influences)
+    // connectionVerified is used by useClientDataFetcher, which then calls onUpdate. Not directly here.
   ]);
 
-  const contextValue: ClientAuthContextType = useMemo(() => ({
-    clientId,
-    userAuthId: user?.id || null,
-    authenticating,
-    clientRecordStatus,
-    errorState,
-    isAuthenticated: clientRecordStatus === 'found' || clientRecordStatus === 'not-found',
-    hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
-    verifyConnection: () => { /* Placeholder */ }, 
-    refreshClientAuth,
-  }), [clientId, user?.id, authenticating, clientRecordStatus, errorState, refreshClientAuth]);
+  const contextValue: ClientAuthContextType = useMemo(() => {
+    // Determine overall isAuthenticated status for the context
+    // User must be authenticated via Supabase AND have a determined client record status (either found or explicitly not-found)
+    // And not be in an error state for client data, and connection must be verified.
+    const finalIsAuthenticated = isAuthenticated && // from useUnifiedAuth
+                               (clientRecordStatus === 'found' || clientRecordStatus === 'not-found') &&
+                               !errorState &&
+                               connectionVerified;
+    
+    console.log('[AUTH_PROVIDER_CONTEXT_DEBUG] Computing contextValue. Values:', {
+      supabaseIsAuthenticated: isAuthenticated,
+      clientRecordStatus,
+      errorState,
+      connectionVerified,
+      calculatedFinalIsAuthenticated: finalIsAuthenticated,
+      clientId,
+      userAuthId: user?.id,
+      currentAuthenticating: authenticating
+    });
+    
+    return {
+      clientId,
+      userAuthId: user?.id || null,
+      authenticating, // This reflects the process of fetching client-specific data
+      clientRecordStatus,
+      errorState,
+      // isAuthenticated: clientRecordStatus === 'found' || clientRecordStatus === 'not-found', // Old logic
+      isAuthenticated: finalIsAuthenticated,
+      hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
+      hasNoClientRecord: clientRecordStatus === 'not-found', // Make sure this is used consistently
+      refreshClientAuth,
+    };
+  }, [
+    clientId, user?.id, authenticating, clientRecordStatus, errorState, 
+    isAuthenticated, // from useUnifiedAuth, for finalIsAuthenticated
+    connectionVerified, // for finalIsAuthenticated
+    refreshClientAuth
+  ]);
 
   return (
     <ClientAuthContext.Provider value={contextValue}>

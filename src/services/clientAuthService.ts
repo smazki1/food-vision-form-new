@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 
@@ -41,7 +40,10 @@ export const clientAuthService = {
     
     try {
       // First verify the user is authenticated to catch potential auth issues early
+      console.log("[AUTH_DEBUG_FINAL] ClientAuthService - Attempting supabase.auth.getUser()");
       const { data: authData, error: authError } = await supabase.auth.getUser();
+      console.log("[AUTH_DEBUG_FINAL] ClientAuthService - supabase.auth.getUser() completed");
+
       if (authError) {
         console.error("[AUTH_DEBUG_FINAL] ClientAuthService - Auth verification failed:", authError);
         throw new Error("Authentication verification failed");
@@ -91,6 +93,12 @@ export const clientAuthService = {
         return null;
       }
       
+      // START <<<< TEMPORARY DELAY FOR TESTING >>>> START
+      // console.log("[TEMP_TEST_DELAY] Starting 6-second delay for testing long load message...");
+      // await new Promise(resolve => setTimeout(resolve, 6000)); // 6-second delay
+      // console.log("[TEMP_TEST_DELAY] Finished 6-second delay.");
+      // END <<<< TEMPORARY DELAY FOR TESTING >>>> END
+
       return data?.client_id || null;
     } catch (error) {
       // Include stack trace for better debugging
