@@ -1,10 +1,16 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { toast } from 'sonner';
 
-const ProtectedRoute = () => {
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = ['customer'] }) => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   const { 
     clientId, 
@@ -79,8 +85,8 @@ const ProtectedRoute = () => {
   }
 
   // If we reach here: User IS Authenticated.
-  // Render the Outlet. The presence or absence of clientId will be handled by the specific page.
-  console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated. Rendering Outlet.", {
+  // Render the children or Outlet. The presence or absence of clientId will be handled by the specific page.
+  console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated. Rendering content.", {
     clientId, clientRecordStatus, errorState
   });
     
@@ -94,7 +100,7 @@ const ProtectedRoute = () => {
      // toast.info("Complete your profile or first submission to link your account fully.", { duration: 5000 });
     }
     
-    return <Outlet />;
+    return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;
