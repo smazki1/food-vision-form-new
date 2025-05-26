@@ -1,8 +1,8 @@
+
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import { Separator } from '@/components/ui/separator';
-import { Alert } from "@/components/ui/alert";
 import { Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils'; 
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
   const { formData } = useNewItemForm();
 
   const { 
-    restaurantName, // Only this from original "client details"
+    restaurantName,
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
 
@@ -39,7 +39,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
     drink: "משקה"
   };
 
-  // For public form, submission is always possible (goes to holding if no match)
   const canSubmit = true; 
 
   return (
@@ -51,7 +50,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
         </p>
       </div>
 
-      {/* Restaurant Name Section (Simplified) */}
       <section className="space-y-4">
         <div className="flex items-center mb-3">
           <Building2 className="h-6 w-6 text-primary ml-3" /> 
@@ -63,7 +61,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
         <Separator className="my-6" />
       </section>
 
-      {/* Item Details Section */}
       <section className="space-y-4">
         <div className="flex items-center mb-3">
           <ItemIcon className="h-6 w-6 text-primary ml-3" /> 
@@ -78,7 +75,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
         <Separator className="my-6" />
       </section>
 
-      {/* Uploaded Images Section */}
       <section className="space-y-4">
          <div className="flex items-center mb-3">
             <ImageIcon className="h-6 w-6 text-primary ml-3" /> 
@@ -92,7 +88,7 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
                     src={URL.createObjectURL(file)} 
                   alt={`תצוגה מקדימה ${index + 1}`} 
                   className="w-full h-full object-contain"
-                  onLoad={() => {if (file instanceof File) URL.revokeObjectURL(file.name);}} // Check if File before revoke
+                  onLoad={() => {if (file instanceof File) URL.revokeObjectURL(file.name);}}
                   />
                 <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
                     {file instanceof File ? file.name : `Image ${index + 1}`}
@@ -108,7 +104,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
         <Separator className="my-6" />
       </section>
 
-      {/* Final Confirmation Button */}
       {onFinalSubmit && (
         <Button
             onClick={onFinalSubmit}
@@ -129,7 +124,6 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
         </Button>
       )}
       
-      {/* Display any submission errors */}
       {errors?.finalCheck && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
             <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
@@ -146,4 +140,4 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
   );
 };
 
-export default PublicReviewSubmitStep; 
+export default PublicReviewSubmitStep;

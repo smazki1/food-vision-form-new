@@ -1,17 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import ItemDetailsStep from '@/components/customer/upload-form/steps/ItemDetailsStep';
-import ImageUploadStep from '@/components/customer/upload-form/steps/ImageUploadStep';
-import PublicReviewSubmitStep from './steps/PublicReviewSubmitStep';
-import RestaurantNameStep from './steps/RestaurantNameStep'; 
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { NewItemFormData, useNewItemForm, ItemType } from '@/contexts/NewItemFormContext';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
-import { useNavigate } from 'react-router-dom';
+import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import FormProgress from '@/components/customer/upload-form/FormProgress';
 import { cn } from '@/lib/utils';
+import { publicFormSteps } from './config/formStepsConfig';
+import { useFormNavigation } from '@/hooks/useFormNavigation';
+import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
 
 export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -20,227 +16,60 @@ export interface PublicStepProps {
   onFinalSubmit?: () => void; 
 }
 
-const publicFormSteps = [
-  {
-    id: 1,
-    name: 'שם מסעדה',
-    component: RestaurantNameStep, 
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (!data.restaurantName?.trim()) newErrors.restaurantName = 'שם המסעדה הוא שדה חובה.';
-      return newErrors;
-    }
-  },
-  {
-    id: 2,
-    name: 'פרטי פריט',
-    component: ItemDetailsStep,
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (!data.itemName.trim()) newErrors.itemName = 'שם הפריט הוא שדה חובה.';
-      if (!data.itemType) newErrors.itemType = 'סוג הפריט הוא שדה חובה.';
-      return newErrors;
-    }
-  },
-  {
-    id: 3,
-    name: 'העלאת תמונות',
-    component: ImageUploadStep,
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (data.referenceImages.length < 1) newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת.';
-      if (data.referenceImages.length > 10) newErrors.referenceImages = 'ניתן להעלות עד 10 תמונות.';
-      return newErrors;
-    }
-  },
-  {
-    id: 4,
-    name: 'סקירה ואישור',
-    component: PublicReviewSubmitStep,
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (data.referenceImages.length === 0) newErrors.finalCheck = "יש להעלות לפחות תמונה אחת לפני ההגשה.";
-      return newErrors;
-    }
-  }
-];
-
 const PublicFoodVisionUploadForm: React.FC = () => {
-  const [currentStepId, setCurrentStepId] = useState(publicFormSteps[0].id);
-  const { formData, resetFormData, updateFormData } = useNewItemForm();
-  const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const { formData, resetFormData } = useNewItemForm();
+  const { isSubmitting, submitForm } = usePublicFormSubmission();
+  const {
+    currentStepId,
+    currentStepConfig,
+    currentStepIndex,
+    stepErrors,
+    setStepErrors,
+    handleNext,
+    handlePrevious,
+    clearStepErrors,
+    resetNavigation
+  } = useFormNavigation();
 
   useEffect(() => {
     resetFormData(); 
   }, []); 
 
   const typedFormSteps = publicFormSteps.map(step => ({ id: step.id, name: step.name }));
-  const CurrentStepComponent = publicFormSteps.find(step => step.id === currentStepId)?.component || (() => <div>שלב לא תקין</div>);
-  const currentStepConfig = publicFormSteps.find(step => step.id === currentStepId);
-
-  const handleClearStepErrors = () => {
-    setStepErrors({});
-  };
-
-  const handleNext = async () => {
-    if (currentStepConfig?.validate) {
-      const newErrors = currentStepConfig.validate(formData);
-      setStepErrors(newErrors);
-      if (Object.keys(newErrors).length === 0) {
-        const currentIndex = publicFormSteps.findIndex(step => step.id === currentStepId);
-        if (currentIndex < publicFormSteps.length - 1) {
-          setCurrentStepId(publicFormSteps[currentIndex + 1].id);
-          window.scrollTo(0, 0);
-        } else {
-          await handleSubmit(); 
-        }
-      }
-    }
-  };
-
-  const handlePrevious = () => {
-    setStepErrors({});
-    const currentIndex = publicFormSteps.findIndex(step => step.id === currentStepId);
-    if (currentIndex > 0) {
-      setCurrentStepId(publicFormSteps[currentIndex - 1].id);
-      window.scrollTo(0, 0);
-    }
-  };
+  const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
 
   const handleSubmit = async () => {
-    console.log('[PublicSubmit] Starting submission process...');
-    console.log('[PublicSubmit] Form data:', formData);
-    
-    if (!formData.restaurantName?.trim()) {
-        console.log('[PublicSubmit] Missing restaurant name');
-        toast.error("שם המסעדה הוא שדה חובה.");
+    const success = await submitForm(formData);
+    if (success) {
+      resetFormData();
+      resetNavigation();
+    } else {
+      // Set specific errors based on validation
+      if (!formData.restaurantName?.trim()) {
         setStepErrors({ restaurantName: "שם המסעדה הוא שדה חובה." });
-        setCurrentStepId(1); 
         return;
-    }
-
-    if (!formData.itemName?.trim()) {
-        console.log('[PublicSubmit] Missing item name');
-        toast.error("שם הפריט הוא שדה חובה.");
+      }
+      if (!formData.itemName?.trim()) {
         setStepErrors({ itemName: "שם הפריט הוא שדה חובה." });
-        setCurrentStepId(2); 
         return;
-    }
-
-    if (!formData.itemType) {
-        console.log('[PublicSubmit] Missing item type');
-        toast.error("סוג הפריט הוא שדה חובה.");
+      }
+      if (!formData.itemType) {
         setStepErrors({ itemType: "סוג הפריט הוא שדה חובה." });
-        setCurrentStepId(2); 
         return;
-    }
-
-    if (formData.referenceImages.length === 0) {
-        console.log('[PublicSubmit] No images uploaded');
-        toast.error("יש להעלות לפחות תמונה אחת.");
+      }
+      if (formData.referenceImages.length === 0) {
         setStepErrors({ referenceImages: "יש להעלות לפחות תמונה אחת." });
-        setCurrentStepId(3); 
         return;
-    }
-
-    setIsSubmitting(true);
-    toast.info("מעלה פרטי פריט ותמונות...");
-
-    try {
-      console.log('[PublicSubmit] Starting image upload process...');
-      const uploadedImageUrls: string[] = [];
-
-      for (let i = 0; i < formData.referenceImages.length; i++) {
-        const file = formData.referenceImages[i];
-        if (file instanceof File) {
-            // Simplified file path
-            const fileExt = file.name.split('.').pop() || 'jpg';
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `public-submissions/${fileName}`;
-            
-            console.log(`[PublicSubmit] Uploading file ${i + 1}/${formData.referenceImages.length} to: ${filePath}`);
-
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('food-vision-images')
-                .upload(filePath, file);
-
-            if (uploadError) {
-                console.error(`[PublicSubmit] Upload error for file ${i + 1}:`, uploadError);
-                throw new Error(`שגיאה בהעלאת תמונה ${i + 1}: ${uploadError.message}`);
-            }
-            
-            console.log(`[PublicSubmit] Upload successful for file ${i + 1}:`, uploadData);
-
-            const { data: publicUrlData } = supabase.storage
-                .from('food-vision-images')
-                .getPublicUrl(filePath);
-            
-            uploadedImageUrls.push(publicUrlData.publicUrl);
-            console.log(`[PublicSubmit] Generated public URL ${i + 1}:`, publicUrlData.publicUrl);
-        }
       }
-      
-      console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
-      
-      // Prepare RPC parameters based on item type
-      let category = null;
-      let ingredients = null;
-      
-      if (formData.itemType === 'cocktail') {
-        ingredients = formData.description?.trim() ? 
-          formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
-      } else {
-        category = formData.description?.trim() || null;
-      }
-
-      const rpcParams = {
-        p_restaurant_name: formData.restaurantName.trim(),
-        p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
-        p_item_name: formData.itemName.trim(),
-        p_description: formData.description?.trim() || null,
-        p_category: category,
-        p_ingredients: ingredients,
-        p_reference_image_urls: uploadedImageUrls,
-      };
-
-      console.log('[PublicSubmit] Calling RPC with params:', rpcParams);
-
-      const { data: submissionData, error: submissionError } = await supabase.rpc(
-        'public_submit_item_by_restaurant_name',
-        rpcParams
-      );
-
-      if (submissionError) {
-        console.error('[PublicSubmit] RPC error:', submissionError);
-        throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
-      }
-
-      console.log('[PublicSubmit] RPC response:', submissionData);
-      
-      if (submissionData && typeof submissionData === 'object' && submissionData.success) {
-        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
-        resetFormData();
-        setCurrentStepId(publicFormSteps[0].id);
-        setStepErrors({});
-        console.log('[PublicSubmit] Submission completed successfully');
-      } else {
-        console.error('[PublicSubmit] RPC returned success=false:', submissionData);
-        throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
-      }
-
-    } catch (error: any) {
-      console.error("[PublicSubmit] Error in submission process:", error);
-      toast.error(`שגיאה בהגשה: ${error.message || 'אירעה שגיאה לא צפויה.'}`);
-      setStepErrors({ submit: error.message || 'אירעה שגיאה לא צפויה.' });
-    } finally {
-      setIsSubmitting(false);
     }
   };
-  
+
+  const handleNextStep = () => {
+    handleNext(formData, handleSubmit);
+  };
+
   const showNavigationButtons = currentStepConfig && currentStepConfig.id !== 4; 
-  const isLastNonReviewStep = currentStepConfig && currentStepConfig.id === publicFormSteps.find(s => s.id === 3)?.id; 
+  const isLastNonReviewStep = currentStepConfig && currentStepConfig.id === 3; 
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8 bg-white shadow-xl rounded-lg">
@@ -254,7 +83,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         <CurrentStepComponent 
             key={currentStepId}
             setExternalErrors={setStepErrors} 
-            clearExternalErrors={handleClearStepErrors}
+            clearExternalErrors={clearStepErrors}
             errors={stepErrors}
             onFinalSubmit={currentStepId === 4 ? handleSubmit : undefined} 
         />
@@ -282,7 +111,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
               הקודם
             </Button>
           )}
-          <Button onClick={handleNext} disabled={isSubmitting} className="flex items-center">
+          <Button onClick={handleNextStep} disabled={isSubmitting} className="flex items-center">
             {isSubmitting ? 'מעבד...' : (isLastNonReviewStep ? 'לסקירה ואישור' : 'הבא')}
             <ChevronLeft className="mr-2 h-4 w-4" /> 
           </Button>
