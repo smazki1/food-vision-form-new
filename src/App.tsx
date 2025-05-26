@@ -6,7 +6,6 @@ import { UnifiedAuthProvider } from './providers/UnifiedAuthProvider';
 import AdminLayout from './layouts/AdminLayout';
 import LeadsManagement from './pages/admin/LeadsManagement';
 import PackagesManagementPage from './pages/admin/PackagesManagementPage';
-import SettingsPage from './pages/admin/SettingsPage';
 import CustomerLogin from './pages/customer/CustomerLogin';
 import FoodVisionForm from './pages/FoodVisionForm';
 import EditorLayout from './layouts/EditorLayout';
@@ -33,7 +32,6 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="leads" element={<LeadsManagement />} />
                 <Route path="packages" element={<PackagesManagementPage />} />
-                <Route path="settings" element={<SettingsPage />} />
                 <Route path="clients" element={<ClientsList />} />
               </Route>
 
