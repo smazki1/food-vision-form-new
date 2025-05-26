@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -22,6 +21,12 @@ export function CustomerDashboard() {
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
+
+  // Check if there are any submissions with count > 0
+  const hasSubmissions = React.useMemo(() => {
+    if (!statusCounts) return false;
+    return statusCounts.some(item => item.count > 0);
+  }, [statusCounts]);
 
   console.log("[CUSTOMER_DASHBOARD] State:", {
     clientId,
@@ -127,12 +132,6 @@ export function CustomerDashboard() {
       </div>
     );
   }
-
-  // Check if there are any submissions with count > 0
-  const hasSubmissions = React.useMemo(() => {
-    if (!statusCounts) return false;
-    return statusCounts.some(item => item.count > 0);
-  }, [statusCounts]);
 
   return (
     <div className="w-full flex flex-col items-center space-y-6">
