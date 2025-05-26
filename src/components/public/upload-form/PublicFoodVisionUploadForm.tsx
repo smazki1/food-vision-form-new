@@ -200,16 +200,26 @@ const PublicFoodVisionUploadForm: React.FC = () => {
       
       console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
       
-      // Prepare RPC parameters with correct structure
+      // Prepare RPC parameters - matching the exact function signature
+      let category = null;
+      let ingredients = null;
+      
+      if (formData.itemType === 'cocktail') {
+        // For cocktails, put ingredients into the ingredients parameter
+        ingredients = formData.description?.trim() ? 
+          formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
+      } else {
+        // For dishes and drinks, put description into category
+        category = formData.description?.trim() || null;
+      }
+
       const rpcParams = {
         p_restaurant_name: formData.restaurantName.trim(),
         p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
         p_item_name: formData.itemName.trim(),
         p_description: formData.description?.trim() || null,
-        p_category: formData.itemType !== 'cocktail' ? 
-          (formData.description?.trim() || null) : null,
-        p_ingredients: formData.itemType === 'cocktail' ? 
-          (formData.description?.trim() ? formData.description.split(',').map(i => i.trim()) : null) : null,
+        p_category: category,
+        p_ingredients: ingredients,
         p_reference_image_urls: uploadedImageUrls,
       };
 

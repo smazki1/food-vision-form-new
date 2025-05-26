@@ -127,15 +127,26 @@ const PublicUploadForm: React.FC = () => {
       const uploadedImageUrls = await uploadImages();
       console.log('[Submit] Images uploaded:', uploadedImageUrls);
       
-      // Prepare parameters for the RPC call with corrected structure
+      // Prepare parameters for the RPC call - matching the exact function signature
+      let category = null;
+      let ingredients = null;
+      
+      if (formData.itemType === 'cocktail') {
+        // For cocktails, put ingredients into the ingredients parameter
+        ingredients = formData.ingredients.trim() ? 
+          formData.ingredients.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
+      } else {
+        // For dishes and drinks, put category into category
+        category = formData.category.trim() || null;
+      }
+
       const rpcParams = {
         p_restaurant_name: formData.restaurantName.trim(),
         p_item_type: formData.itemType,
         p_item_name: formData.itemName.trim(),
         p_description: formData.description.trim() || null,
-        p_category: formData.itemType !== 'cocktail' ? (formData.category.trim() || null) : null,
-        p_ingredients: formData.itemType === 'cocktail' ? 
-          (formData.ingredients.trim() ? formData.ingredients.split(',').map(i => i.trim()) : null) : null,
+        p_category: category,
+        p_ingredients: ingredients,
         p_reference_image_urls: uploadedImageUrls
       };
 
