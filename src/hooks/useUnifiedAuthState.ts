@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from 'react';
 import { UnifiedAuthState, UserRole } from '@/types/unifiedAuthTypes';
 import { User, Session } from '@supabase/supabase-js';
@@ -77,7 +76,7 @@ export const useUnifiedAuthState = () => {
           loading: false,
           initialized: true,
         });
-      }, 8000); // 8 second timeout
+      }, 20000); // 20 second timeout
       
       return () => clearTimeout(timeoutId);
     }
@@ -90,7 +89,7 @@ export const useUnifiedAuthState = () => {
           clientAuthLoadingTimeout: true,
           loading: false 
         });
-      }, 8000); // 8 second timeout
+      }, 20000); // 20 second timeout
       
       return () => clearTimeout(timeoutId);
     }
