@@ -127,7 +127,7 @@ const PublicUploadForm: React.FC = () => {
       const uploadedImageUrls = await uploadImages();
       console.log('[Submit] Images uploaded:', uploadedImageUrls);
       
-      // Prepare parameters for the RPC call
+      // Prepare parameters for the RPC call with corrected structure
       const rpcParams = {
         p_restaurant_name: formData.restaurantName.trim(),
         p_item_type: formData.itemType,
@@ -154,7 +154,7 @@ const PublicUploadForm: React.FC = () => {
 
       console.log('[Submit] RPC response:', submissionData);
       
-      if (submissionData && submissionData.success) {
+      if (submissionData && typeof submissionData === 'object' && submissionData.success) {
         toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
         // Reset form
         setFormData({
@@ -169,8 +169,9 @@ const PublicUploadForm: React.FC = () => {
         // Reset file input
         const fileInput = document.getElementById('images') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
+        setErrors({});
       } else {
-        throw new Error('שגיאה לא ידועה בהגשה');
+        throw new Error(submissionData?.message || 'שגיאה לא ידועה בהגשה');
       }
 
     } catch (error: any) {

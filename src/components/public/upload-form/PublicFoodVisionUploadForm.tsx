@@ -113,6 +113,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
 
   const handleSubmit = async () => {
     console.log('[PublicSubmit] Starting submission process...');
+    console.log('[PublicSubmit] Form data:', formData);
     
     // Final validation before submitting
     const reviewStepConfig = publicFormSteps.find(step => step.id === 4); 
@@ -120,37 +121,43 @@ const PublicFoodVisionUploadForm: React.FC = () => {
       const newErrors = reviewStepConfig.validate(formData);
       setStepErrors(newErrors);
       if (Object.keys(newErrors).length > 0) {
+        console.log('[PublicSubmit] Validation errors:', newErrors);
         toast.error("אנא תקנו את השגיאות בטופס הסקירה.");
         if (currentStepId !== reviewStepConfig.id) setCurrentStepId(reviewStepConfig.id);
         return;
       }
     }
 
+    // Validate required fields
     if (!formData.restaurantName?.trim()) {
+        console.log('[PublicSubmit] Missing restaurant name');
         toast.error("שם המסעדה הוא שדה חובה.");
         setStepErrors({ restaurantName: "שם המסעדה הוא שדה חובה." });
-        if (currentStepId !== 1) setCurrentStepId(1); 
+        setCurrentStepId(1); 
         return;
     }
 
     if (!formData.itemName?.trim()) {
+        console.log('[PublicSubmit] Missing item name');
         toast.error("שם הפריט הוא שדה חובה.");
         setStepErrors({ itemName: "שם הפריט הוא שדה חובה." });
-        if (currentStepId !== 2) setCurrentStepId(2); 
+        setCurrentStepId(2); 
         return;
     }
 
     if (!formData.itemType) {
+        console.log('[PublicSubmit] Missing item type');
         toast.error("סוג הפריט הוא שדה חובה.");
         setStepErrors({ itemType: "סוג הפריט הוא שדה חובה." });
-        if (currentStepId !== 2) setCurrentStepId(2); 
+        setCurrentStepId(2); 
         return;
     }
 
     if (formData.referenceImages.length === 0) {
+        console.log('[PublicSubmit] No images uploaded');
         toast.error("יש להעלות לפחות תמונה אחת.");
         setStepErrors({ referenceImages: "יש להעלות לפחות תמונה אחת." });
-        if (currentStepId !== 3) setCurrentStepId(3); 
+        setCurrentStepId(3); 
         return;
     }
 
@@ -158,9 +165,10 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     toast.info("מעלה פרטי פריט ותמונות...");
 
     try {
-      console.log('[PublicSubmit] Uploading images...');
+      console.log('[PublicSubmit] Starting image upload process...');
       const uploadedImageUrls: string[] = [];
 
+      // Upload images to storage
       for (let i = 0; i < formData.referenceImages.length; i++) {
         const file = formData.referenceImages[i];
         if (file instanceof File) {
@@ -192,13 +200,14 @@ const PublicFoodVisionUploadForm: React.FC = () => {
       
       console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
       
-      // 2. Call the public RPC function
+      // Prepare RPC parameters with correct structure
       const rpcParams = {
         p_restaurant_name: formData.restaurantName.trim(),
         p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
         p_item_name: formData.itemName.trim(),
         p_description: formData.description?.trim() || null,
-        p_category: formData.itemType !== 'cocktail' ? (formData.itemName.trim() || null) : null,
+        p_category: formData.itemType !== 'cocktail' ? 
+          (formData.description?.trim() || null) : null,
         p_ingredients: formData.itemType === 'cocktail' ? 
           (formData.description?.trim() ? formData.description.split(',').map(i => i.trim()) : null) : null,
         p_reference_image_urls: uploadedImageUrls,
@@ -218,10 +227,18 @@ const PublicFoodVisionUploadForm: React.FC = () => {
 
       console.log('[PublicSubmit] RPC response:', submissionData);
       
-      if (submissionData && submissionData.success) {
-        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
-        resetFormData();
-        setCurrentStepId(publicFormSteps[0].id); 
+      // Check if response is valid JSON object
+      if (submissionData && typeof submissionData === 'object') {
+        if (submissionData.success) {
+          toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
+          resetFormData();
+          setCurrentStepId(publicFormSteps[0].id);
+          setStepErrors({});
+          console.log('[PublicSubmit] Submission completed successfully');
+        } else {
+          console.error('[PublicSubmit] RPC returned success=false:', submissionData);
+          throw new Error(submissionData.message || 'הגשה נכשלה - אנא נסו שוב');
+        }
       } else {
         console.error('[PublicSubmit] Unexpected response format:', submissionData);
         throw new Error('תגובה לא צפויה מהשרת');
@@ -289,4 +306,4 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   );
 };
 
-export default PublicFoodVisionUploadForm; 
+export default PublicFoodVisionUploadForm;
