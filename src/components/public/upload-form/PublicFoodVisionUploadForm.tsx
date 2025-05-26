@@ -13,7 +13,6 @@ import { ChevronRight, ChevronLeft } from 'lucide-react';
 import FormProgress from '@/components/customer/upload-form/FormProgress';
 import { cn } from '@/lib/utils';
 
-// Simplified StepProps for public form
 export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
   clearExternalErrors?: () => void;
@@ -73,7 +72,6 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // Reset form data only once when component mounts
   useEffect(() => {
     resetFormData(); 
   }, []); 
@@ -115,20 +113,6 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     console.log('[PublicSubmit] Starting submission process...');
     console.log('[PublicSubmit] Form data:', formData);
     
-    // Final validation before submitting
-    const reviewStepConfig = publicFormSteps.find(step => step.id === 4); 
-    if (reviewStepConfig?.validate) {
-      const newErrors = reviewStepConfig.validate(formData);
-      setStepErrors(newErrors);
-      if (Object.keys(newErrors).length > 0) {
-        console.log('[PublicSubmit] Validation errors:', newErrors);
-        toast.error("אנא תקנו את השגיאות בטופס הסקירה.");
-        if (currentStepId !== reviewStepConfig.id) setCurrentStepId(reviewStepConfig.id);
-        return;
-      }
-    }
-
-    // Validate required fields
     if (!formData.restaurantName?.trim()) {
         console.log('[PublicSubmit] Missing restaurant name');
         toast.error("שם המסעדה הוא שדה חובה.");
@@ -168,10 +152,10 @@ const PublicFoodVisionUploadForm: React.FC = () => {
       console.log('[PublicSubmit] Starting image upload process...');
       const uploadedImageUrls: string[] = [];
 
-      // Upload images to storage
       for (let i = 0; i < formData.referenceImages.length; i++) {
         const file = formData.referenceImages[i];
         if (file instanceof File) {
+            // Simplified file path
             const fileExt = file.name.split('.').pop() || 'jpg';
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `public-submissions/${fileName}`;
@@ -200,16 +184,14 @@ const PublicFoodVisionUploadForm: React.FC = () => {
       
       console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
       
-      // Prepare RPC parameters - matching the exact function signature
+      // Prepare RPC parameters based on item type
       let category = null;
       let ingredients = null;
       
       if (formData.itemType === 'cocktail') {
-        // For cocktails, put ingredients into the ingredients parameter
         ingredients = formData.description?.trim() ? 
           formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
       } else {
-        // For dishes and drinks, put description into category
         category = formData.description?.trim() || null;
       }
 
@@ -237,21 +219,15 @@ const PublicFoodVisionUploadForm: React.FC = () => {
 
       console.log('[PublicSubmit] RPC response:', submissionData);
       
-      // Check if response is valid JSON object
-      if (submissionData && typeof submissionData === 'object') {
-        if (submissionData.success) {
-          toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
-          resetFormData();
-          setCurrentStepId(publicFormSteps[0].id);
-          setStepErrors({});
-          console.log('[PublicSubmit] Submission completed successfully');
-        } else {
-          console.error('[PublicSubmit] RPC returned success=false:', submissionData);
-          throw new Error(submissionData.message || 'הגשה נכשלה - אנא נסו שוב');
-        }
+      if (submissionData && typeof submissionData === 'object' && submissionData.success) {
+        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
+        resetFormData();
+        setCurrentStepId(publicFormSteps[0].id);
+        setStepErrors({});
+        console.log('[PublicSubmit] Submission completed successfully');
       } else {
-        console.error('[PublicSubmit] Unexpected response format:', submissionData);
-        throw new Error('תגובה לא צפויה מהשרת');
+        console.error('[PublicSubmit] RPC returned success=false:', submissionData);
+        throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
       }
 
     } catch (error: any) {

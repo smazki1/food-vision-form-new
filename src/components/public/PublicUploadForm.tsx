@@ -84,8 +84,8 @@ const PublicUploadForm: React.FC = () => {
     const uploadedUrls: string[] = [];
     
     for (const file of formData.images) {
-      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
-      const fileName = `${Date.now()}-${sanitizedFileName}`;
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `public-submissions/${fileName}`;
       
       console.log(`[Upload] Uploading to: ${filePath}`);
@@ -122,21 +122,17 @@ const PublicUploadForm: React.FC = () => {
     toast.info('מעלה פרטי פריט ותמונות...');
 
     try {
-      // Upload images first
       console.log('[Submit] Starting image upload...');
       const uploadedImageUrls = await uploadImages();
       console.log('[Submit] Images uploaded:', uploadedImageUrls);
       
-      // Prepare parameters for the RPC call - matching the exact function signature
       let category = null;
       let ingredients = null;
       
       if (formData.itemType === 'cocktail') {
-        // For cocktails, put ingredients into the ingredients parameter
         ingredients = formData.ingredients.trim() ? 
           formData.ingredients.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
       } else {
-        // For dishes and drinks, put category into category
         category = formData.category.trim() || null;
       }
 
@@ -152,7 +148,6 @@ const PublicUploadForm: React.FC = () => {
 
       console.log('[Submit] Calling RPC with params:', rpcParams);
 
-      // Call the RPC function
       const { data: submissionData, error: submissionError } = await supabase.rpc(
         'public_submit_item_by_restaurant_name',
         rpcParams
@@ -167,7 +162,6 @@ const PublicUploadForm: React.FC = () => {
       
       if (submissionData && typeof submissionData === 'object' && submissionData.success) {
         toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
-        // Reset form
         setFormData({
           restaurantName: '',
           itemType: '',
@@ -177,7 +171,6 @@ const PublicUploadForm: React.FC = () => {
           ingredients: '',
           images: []
         });
-        // Reset file input
         const fileInput = document.getElementById('images') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
         setErrors({});
@@ -202,7 +195,6 @@ const PublicUploadForm: React.FC = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Restaurant Name */}
               <div>
                 <Label htmlFor="restaurantName">שם המסעדה *</Label>
                 <Input
@@ -217,7 +209,6 @@ const PublicUploadForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Item Type */}
               <div>
                 <Label htmlFor="itemType">סוג הפריט *</Label>
                 <Select 
@@ -238,7 +229,6 @@ const PublicUploadForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Item Name */}
               <div>
                 <Label htmlFor="itemName">שם הפריט *</Label>
                 <Input
@@ -253,7 +243,6 @@ const PublicUploadForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Description */}
               <div>
                 <Label htmlFor="description">תיאור הפריט</Label>
                 <Textarea
@@ -265,7 +254,6 @@ const PublicUploadForm: React.FC = () => {
                 />
               </div>
 
-              {/* Category (for dishes and drinks) */}
               {formData.itemType && formData.itemType !== 'cocktail' && (
                 <div>
                   <Label htmlFor="category">קטגוריה</Label>
@@ -278,7 +266,6 @@ const PublicUploadForm: React.FC = () => {
                 </div>
               )}
 
-              {/* Ingredients (for cocktails) */}
               {formData.itemType === 'cocktail' && (
                 <div>
                   <Label htmlFor="ingredients">מרכיבים</Label>
@@ -294,7 +281,6 @@ const PublicUploadForm: React.FC = () => {
                 </div>
               )}
 
-              {/* Image Upload */}
               <div>
                 <Label htmlFor="images">תמונות הפריט *</Label>
                 <div className="mt-2">
@@ -318,7 +304,6 @@ const PublicUploadForm: React.FC = () => {
                   </label>
                 </div>
                 
-                {/* Preview uploaded images */}
                 {formData.images.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {formData.images.map((file, index) => (
@@ -345,7 +330,6 @@ const PublicUploadForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Submit Button */}
               <Button
                 type="submit"
                 disabled={isSubmitting}
