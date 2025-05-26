@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import ItemDetailsStep from '@/components/customer/upload-form/steps/ItemDetailsStep';
 import ImageUploadStep from '@/components/customer/upload-form/steps/ImageUploadStep';
 import PublicReviewSubmitStep from './steps/PublicReviewSubmitStep';
-import RestaurantNameStep from './steps/RestaurantNameStep'; // To be created
+import RestaurantNameStep from './steps/RestaurantNameStep'; 
 import { Button } from '@/components/ui/button';
 import { NewItemFormData, useNewItemForm, ItemType } from '@/contexts/NewItemFormContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,14 +18,14 @@ export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
   clearExternalErrors?: () => void;
   errors?: Record<string, string>;
-  onFinalSubmit?: () => void; // May not be needed if ReviewSubmitStep handles it
+  onFinalSubmit?: () => void; 
 }
 
 const publicFormSteps = [
   {
     id: 1,
     name: 'שם מסעדה',
-    component: RestaurantNameStep, // New step
+    component: RestaurantNameStep, 
     validate: (data: NewItemFormData) => {
       const newErrors: Record<string, string> = {};
       if (!data.restaurantName?.trim()) newErrors.restaurantName = 'שם המסעדה הוא שדה חובה.';
@@ -59,7 +60,6 @@ const publicFormSteps = [
     component: PublicReviewSubmitStep,
     validate: (data: NewItemFormData) => {
       const newErrors: Record<string, string> = {};
-      // Add any specific validation for the public form review step if needed
       if (data.referenceImages.length === 0) newErrors.finalCheck = "יש להעלות לפחות תמונה אחת לפני ההגשה.";
       return newErrors;
     }
@@ -76,7 +76,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   // Reset form data only once when component mounts
   useEffect(() => {
     resetFormData(); 
-  }, []); // Empty dependency array ensures it runs only once on mount
+  }, []); 
 
   const typedFormSteps = publicFormSteps.map(step => ({ id: step.id, name: step.name }));
   const CurrentStepComponent = publicFormSteps.find(step => step.id === currentStepId)?.component || (() => <div>שלב לא תקין</div>);
@@ -96,9 +96,6 @@ const PublicFoodVisionUploadForm: React.FC = () => {
           setCurrentStepId(publicFormSteps[currentIndex + 1].id);
           window.scrollTo(0, 0);
         } else {
-          // This case (being on the last step and clicking 'Next')
-          // should ideally be handled by the ReviewSubmitStep's own submit button.
-          // If ReviewSubmitStep has its own submission logic, this might not be strictly necessary.
           await handleSubmit(); 
         }
       }
@@ -115,8 +112,10 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    // Final validation before submitting (e.g., from Review step)
-    const reviewStepConfig = publicFormSteps.find(step => step.id === 4); // Assuming ID 4 is Review
+    console.log('[PublicSubmit] Starting submission process...');
+    
+    // Final validation before submitting
+    const reviewStepConfig = publicFormSteps.find(step => step.id === 4); 
     if (reviewStepConfig?.validate) {
       const newErrors = reviewStepConfig.validate(formData);
       setStepErrors(newErrors);
@@ -130,80 +129,106 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     if (!formData.restaurantName?.trim()) {
         toast.error("שם המסעדה הוא שדה חובה.");
         setStepErrors({ restaurantName: "שם המסעדה הוא שדה חובה." });
-        if (currentStepId !== 1) setCurrentStepId(1); // Go to restaurant name step
+        if (currentStepId !== 1) setCurrentStepId(1); 
+        return;
+    }
+
+    if (!formData.itemName?.trim()) {
+        toast.error("שם הפריט הוא שדה חובה.");
+        setStepErrors({ itemName: "שם הפריט הוא שדה חובה." });
+        if (currentStepId !== 2) setCurrentStepId(2); 
+        return;
+    }
+
+    if (!formData.itemType) {
+        toast.error("סוג הפריט הוא שדה חובה.");
+        setStepErrors({ itemType: "סוג הפריט הוא שדה חובה." });
+        if (currentStepId !== 2) setCurrentStepId(2); 
+        return;
+    }
+
+    if (formData.referenceImages.length === 0) {
+        toast.error("יש להעלות לפחות תמונה אחת.");
+        setStepErrors({ referenceImages: "יש להעלות לפחות תמונה אחת." });
+        if (currentStepId !== 3) setCurrentStepId(3); 
         return;
     }
 
     setIsSubmitting(true);
-    toast.info("מעלים פרטי פריט ותמונות...");
-
-    const sanitizeName = (name: string) => {
-      // Allow letters, numbers, spaces, hyphens, underscores, periods
-      // Replace other characters with an underscore
-      // Specifically keep Hebrew characters for restaurant name if desired, but ensure it's URL-safe for path segment
-      // For file names, it's safer to stick to ASCII or ensure encoding/decoding is handled perfectly.
-      // For now, let's be relatively strict for file path segments to avoid issues.
-      return name.replace(/[^a-zA-Z0-9_\-\.\s]/g, '_').replace(/\s+/g, '_');
-    };
+    toast.info("מעלה פרטי פריט ותמונות...");
 
     try {
+      console.log('[PublicSubmit] Uploading images...');
       const uploadedImageUrls: string[] = [];
-      const sanitizedRestaurantName = formData.restaurantName ? sanitizeName(formData.restaurantName) : 'unknown-restaurant';
 
-      for (const file of formData.referenceImages) {
+      for (let i = 0; i < formData.referenceImages.length; i++) {
+        const file = formData.referenceImages[i];
         if (file instanceof File) {
-            const originalFileName = file.name;
-            const sanitizedOriginalFileName = sanitizeName(originalFileName);
-            const fileName = `${Date.now()}-${sanitizedOriginalFileName}`;
-            const filePath = `public-uploads/${sanitizedRestaurantName}/${fileName}`;
+            const fileExt = file.name.split('.').pop() || 'jpg';
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `public-submissions/${fileName}`;
             
-            console.log(`[UploadDebug] Attempting to upload to path: ${filePath}`); // Log the exact path
+            console.log(`[PublicSubmit] Uploading file ${i + 1}/${formData.referenceImages.length} to: ${filePath}`);
 
             const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('food-vision-images') // Changed from 'food-vision-items' to 'food-vision-images'
+                .from('food-vision-images')
                 .upload(filePath, file);
 
             if (uploadError) {
-                console.error('Error uploading file:', uploadError);
-                throw new Error(`שגיאה בהעלאת קובץ: ${file.name}. ${uploadError.message}`);
+                console.error(`[PublicSubmit] Upload error for file ${i + 1}:`, uploadError);
+                throw new Error(`שגיאה בהעלאת תמונה ${i + 1}: ${uploadError.message}`);
             }
-            // Construct the public URL. Adjust if your bucket/CDN setup is different.
+            
+            console.log(`[PublicSubmit] Upload successful for file ${i + 1}:`, uploadData);
+
             const { data: publicUrlData } = supabase.storage
-                .from('food-vision-images') // Changed from 'food-vision-items' to 'food-vision-images'
+                .from('food-vision-images')
                 .getPublicUrl(filePath);
+            
             uploadedImageUrls.push(publicUrlData.publicUrl);
-        } else if (typeof file === 'string') {
-            // If it's already a URL (e.g., from a previous upload attempt or external source)
-            uploadedImageUrls.push(file);
+            console.log(`[PublicSubmit] Generated public URL ${i + 1}:`, publicUrlData.publicUrl);
         }
       }
       
+      console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
+      
       // 2. Call the public RPC function
+      const rpcParams = {
+        p_restaurant_name: formData.restaurantName.trim(),
+        p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
+        p_item_name: formData.itemName.trim(),
+        p_description: formData.description?.trim() || null,
+        p_category: formData.itemType !== 'cocktail' ? (formData.itemName.trim() || null) : null,
+        p_ingredients: formData.itemType === 'cocktail' ? 
+          (formData.description?.trim() ? formData.description.split(',').map(i => i.trim()) : null) : null,
+        p_reference_image_urls: uploadedImageUrls,
+      };
+
+      console.log('[PublicSubmit] Calling RPC with params:', rpcParams);
+
       const { data: submissionData, error: submissionError } = await supabase.rpc(
         'public_submit_item_by_restaurant_name',
-        {
-          p_restaurant_name: formData.restaurantName,
-          p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
-          p_item_name: formData.itemName,
-          p_description: formData.description || null,
-          p_notes: formData.specialNotes || null,
-          p_reference_image_urls: uploadedImageUrls,
-        }
+        rpcParams
       );
 
       if (submissionError) {
-        console.error('Error submitting item via RPC:', submissionError);
-        throw submissionError;
+        console.error('[PublicSubmit] RPC error:', submissionError);
+        throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
       }
 
-      toast.success("הפריט הוגש בהצלחה!" + (formData.restaurantName ? ` עבור ${formData.restaurantName}` : ''));
-      resetFormData();
-      // Navigate to a success page or clear the form
-      setCurrentStepId(publicFormSteps[0].id); // Go back to the first step
-      // navigate('/public-submission-success'); // Or navigate to a dedicated success page
+      console.log('[PublicSubmit] RPC response:', submissionData);
+      
+      if (submissionData && submissionData.success) {
+        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
+        resetFormData();
+        setCurrentStepId(publicFormSteps[0].id); 
+      } else {
+        console.error('[PublicSubmit] Unexpected response format:', submissionData);
+        throw new Error('תגובה לא צפויה מהשרת');
+      }
 
     } catch (error: any) {
-      console.error("Submission error:", error);
+      console.error("[PublicSubmit] Error in submission process:", error);
       toast.error(`שגיאה בהגשה: ${error.message || 'אירעה שגיאה לא צפויה.'}`);
       setStepErrors({ submit: error.message || 'אירעה שגיאה לא צפויה.' });
     } finally {
@@ -211,8 +236,8 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     }
   };
   
-  const showNavigationButtons = currentStepConfig && currentStepConfig.id !== 4; // Don't show for ReviewSubmitStep if it has its own submit
-  const isLastNonReviewStep = currentStepConfig && currentStepConfig.id === publicFormSteps.find(s => s.id === 3)?.id; // e.g. ImageUpload is last before Review
+  const showNavigationButtons = currentStepConfig && currentStepConfig.id !== 4; 
+  const isLastNonReviewStep = currentStepConfig && currentStepConfig.id === publicFormSteps.find(s => s.id === 3)?.id; 
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8 bg-white shadow-xl rounded-lg">
@@ -228,9 +253,6 @@ const PublicFoodVisionUploadForm: React.FC = () => {
             setExternalErrors={setStepErrors} 
             clearExternalErrors={handleClearStepErrors}
             errors={stepErrors}
-            // Pass onFinalSubmit if the ReviewSubmitStep should trigger the main form's handleSubmit
-            // This is useful if ReviewSubmitStep is generic and doesn't have its own submission logic.
-            // If ReviewSubmitStep calls handleSubmit directly, this prop might not be needed.
             onFinalSubmit={currentStepId === 4 ? handleSubmit : undefined} 
         />
       </div>
@@ -253,13 +275,13 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         )}>
           {currentStepId !== publicFormSteps[0].id && (
             <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting} className="flex items-center">
-              <ChevronRight className="ml-2 h-4 w-4" /> {/* Assuming Hebrew (RTL), so Right arrow for Previous */}
+              <ChevronRight className="ml-2 h-4 w-4" /> 
               הקודם
             </Button>
           )}
           <Button onClick={handleNext} disabled={isSubmitting} className="flex items-center">
             {isSubmitting ? 'מעבד...' : (isLastNonReviewStep ? 'לסקירה ואישור' : 'הבא')}
-            <ChevronLeft className="mr-2 h-4 w-4" /> {/* Assuming Hebrew (RTL), so Left arrow for Next */}
+            <ChevronLeft className="mr-2 h-4 w-4" /> 
           </Button>
         </div>
       )}
