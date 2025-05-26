@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/unifiedAuthTypes';
+import { cacheService } from './cacheService';
 
 interface UserAuthData {
   user_role: string | null;
@@ -10,11 +11,11 @@ interface UserAuthData {
 }
 
 /**
- * Optimized authentication service using unified database queries
+ * Optimized authentication service using unified database queries with enhanced caching
  */
 export const optimizedAuthService = {
   /**
-   * Get user authentication data in a single optimized query
+   * Get user authentication data with improved caching
    */
   getUserAuthData: async (userId: string): Promise<{
     role: UserRole;
@@ -22,10 +23,28 @@ export const optimizedAuthService = {
     restaurantName: string | null;
     hasLinkedClientRecord: boolean;
     error?: string;
+    fromCache?: boolean;
   }> => {
     try {
       console.log('[OPTIMIZED_AUTH] Fetching auth data for user:', userId);
       
+      // Try cache first
+      const cacheKey = `auth_data_${userId}`;
+      const cachedData = cacheService.get<{
+        role: UserRole;
+        clientId: string | null;
+        restaurantName: string | null;
+        hasLinkedClientRecord: boolean;
+      }>(cacheKey);
+
+      if (cachedData) {
+        console.log('[OPTIMIZED_AUTH] Using cached auth data for user:', userId);
+        return {
+          ...cachedData,
+          fromCache: true
+        };
+      }
+
       const { data, error } = await supabase
         .rpc('get_user_auth_data', { user_uid: userId });
 
@@ -53,18 +72,23 @@ export const optimizedAuthService = {
 
       const authData: UserAuthData = data[0];
       
-      console.log('[OPTIMIZED_AUTH] Auth data retrieved:', {
-        role: authData.user_role,
-        clientId: authData.client_id,
-        hasClientRecord: authData.has_client_record
-      });
-
-      return {
+      const result = {
         role: authData.user_role as UserRole,
         clientId: authData.client_id,
         restaurantName: authData.restaurant_name,
         hasLinkedClientRecord: authData.has_client_record
       };
+
+      // Cache the result for 10 minutes
+      cacheService.set(cacheKey, result, { ttl: 10 * 60 * 1000 });
+      
+      console.log('[OPTIMIZED_AUTH] Auth data retrieved and cached:', {
+        role: result.role,
+        clientId: result.clientId,
+        hasClientRecord: result.hasLinkedClientRecord
+      });
+
+      return result;
 
     } catch (error) {
       console.error('[OPTIMIZED_AUTH] Service error:', error);
@@ -79,67 +103,19 @@ export const optimizedAuthService = {
   },
 
   /**
-   * Cache user auth data to localStorage for faster subsequent loads
+   * Clear auth cache for user
    */
-  cacheUserAuthData: (userId: string, authData: any) => {
-    try {
-      const cacheKey = `auth_data_${userId}`;
-      const cacheData = {
-        ...authData,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + (5 * 60 * 1000) // 5 minutes
-      };
-      localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      console.log('[OPTIMIZED_AUTH] Auth data cached for user:', userId);
-    } catch (error) {
-      console.warn('[OPTIMIZED_AUTH] Failed to cache auth data:', error);
-    }
+  clearAuthCache: (userId: string) => {
+    const cacheKey = `auth_data_${userId}`;
+    cacheService.remove(cacheKey);
+    console.log('[OPTIMIZED_AUTH] Cleared auth cache for user:', userId);
   },
 
   /**
-   * Get cached user auth data if still valid
+   * Clear all auth cache
    */
-  getCachedUserAuthData: (userId: string) => {
-    try {
-      const cacheKey = `auth_data_${userId}`;
-      const cached = localStorage.getItem(cacheKey);
-      
-      if (!cached) {
-        return null;
-      }
-
-      const cacheData = JSON.parse(cached);
-      
-      // Check if cache is still valid
-      if (Date.now() > cacheData.expiresAt) {
-        localStorage.removeItem(cacheKey);
-        return null;
-      }
-
-      console.log('[OPTIMIZED_AUTH] Using cached auth data for user:', userId);
-      return {
-        role: cacheData.role,
-        clientId: cacheData.clientId,
-        restaurantName: cacheData.restaurantName,
-        hasLinkedClientRecord: cacheData.hasLinkedClientRecord
-      };
-
-    } catch (error) {
-      console.warn('[OPTIMIZED_AUTH] Failed to read cached auth data:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Clear cached auth data for user
-   */
-  clearCachedAuthData: (userId: string) => {
-    try {
-      const cacheKey = `auth_data_${userId}`;
-      localStorage.removeItem(cacheKey);
-      console.log('[OPTIMIZED_AUTH] Cleared cached auth data for user:', userId);
-    } catch (error) {
-      console.warn('[OPTIMIZED_AUTH] Failed to clear cached auth data:', error);
-    }
+  clearAllAuthCache: () => {
+    cacheService.invalidatePattern('auth_data_');
+    console.log('[OPTIMIZED_AUTH] Cleared all auth cache');
   }
 };
