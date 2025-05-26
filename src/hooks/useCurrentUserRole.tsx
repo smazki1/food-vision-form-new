@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizedAuthService } from '@/services/optimizedAuthService';
 import { User } from '@supabase/supabase-js';
@@ -23,6 +23,29 @@ export interface CurrentUserRoleState {
   error: string | null;
   isLoading: boolean;
 }
+
+// Create context for the provider
+const CurrentUserRoleContext = createContext<CurrentUserRoleState | undefined>(undefined);
+
+// Provider component
+export const CurrentUserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const currentUserRoleState = useCurrentUserRole();
+  
+  return (
+    <CurrentUserRoleContext.Provider value={currentUserRoleState}>
+      {children}
+    </CurrentUserRoleContext.Provider>
+  );
+};
+
+// Hook to use the context (optional, for consistency)
+export const useCurrentUserRoleContext = (): CurrentUserRoleState => {
+  const context = useContext(CurrentUserRoleContext);
+  if (context === undefined) {
+    throw new Error('useCurrentUserRoleContext must be used within a CurrentUserRoleProvider');
+  }
+  return context;
+};
 
 export const useCurrentUserRole = (): CurrentUserRoleState => {
   const [status, setStatus] = useState<CurrentUserRoleStatus>('INITIALIZING');
@@ -73,7 +96,7 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
       
       try {
         console.log("[useCurrentUserRole] Fetching role for user:", session.user.id);
-        const authData = await optimizedAuthService.getAuthData(session.user.id);
+        const authData = await optimizedAuthService.getUserAuthData(session.user.id);
         
         if (!forceComplete) { // Only update if we haven't forced completion
           setRole(authData.role);
