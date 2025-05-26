@@ -445,4 +445,4 @@ const FoodVisionUploadForm: React.FC = () => {
   );
 };
 
-export default FoodVisionUploadForm; 
+export default FoodVisionUploadForm;

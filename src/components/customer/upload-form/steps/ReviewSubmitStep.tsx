@@ -1,3 +1,4 @@
+
 import React, { useContext } from 'react';
 import { NewItemFormContext } from '@/contexts/NewItemFormContext';
 import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm'; // Use a distinct name
@@ -38,7 +39,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
   const { remainingDishes, packageName } = useClientPackage();
 
   const { 
-    restaurantName, contactName, phone, email,
+    restaurantName,
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
 
@@ -60,7 +61,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
       </div>
 
       {/* Restaurant Details Section */}
-      {!clientId && (restaurantName || contactName || phone || email) && (
+      {!clientId && restaurantName && (
         <section className="space-y-4">
           <div className="flex items-center mb-3">
             <Building2 className="h-6 w-6 text-primary ml-3" /> 
@@ -68,9 +69,6 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
           </div>
           <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
             <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
-            <ReviewItem label="שם איש קשר" value={contactName} isMissing={!contactName} />
-            <ReviewItem label="טלפון" value={phone} isMissing={!phone} />
-            <ReviewItem label="אימייל" value={email} isMissing={!email} />
           </dl>
           <Separator className="my-6" />
         </section>
@@ -184,4 +182,4 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
   );
 };
 
-export default ReviewSubmitStep; 
+export default ReviewSubmitStep;
