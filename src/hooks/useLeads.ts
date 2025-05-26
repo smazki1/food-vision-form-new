@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { Lead, LeadStatus } from "@/types/lead";
@@ -51,7 +50,7 @@ export const useLeads = (filters?: LeadsFilter) => {
         id: optimisticLead.id,
         data: optimisticLead,
         operation: 'create',
-        queryKey: ["leads", filters]
+        queryKey: ["leads", filtersCacheKey]
       });
 
       return { optimisticLead };
@@ -95,7 +94,7 @@ export const useLeads = (filters?: LeadsFilter) => {
           id,
           data: optimisticLead,
           operation: 'update',
-          queryKey: ["leads", filters],
+          queryKey: ["leads", filtersCacheKey],
           originalData: originalLead
         });
       }
@@ -134,7 +133,7 @@ export const useLeads = (filters?: LeadsFilter) => {
           id,
           data: leadToDelete,
           operation: 'delete',
-          queryKey: ["leads", filters],
+          queryKey: ["leads", filtersCacheKey],
           originalData: leadToDelete
         });
       }
