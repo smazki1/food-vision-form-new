@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
@@ -5,17 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 /**
- * Customer login page with comprehensive authentication handling
+ * Customer login page with simplified and optimized authentication handling
  */
 const CustomerLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,68 +23,40 @@ const CustomerLogin: React.FC = () => {
   // Get the redirect path from location state, or default to dashboard
   const from = location.state?.from?.pathname || "/customer/dashboard";
 
-  // If already logged in, redirect to dashboard
+  // Check if already authenticated and redirect
   useEffect(() => {
-    // Log all state changes to debug the loop
-    console.log("[AUTH_DEBUG] CustomerLogin - Auth state check:", {
-      isAuthenticated, 
-      initialized, 
-      authLoading, 
-      userId: user?.id,
-      currentPath: location.pathname,
-      targetPath: from, 
-      isRedirecting
-    });
-    
-    if (isAuthenticated && initialized && !authLoading && !isRedirecting) {
-      console.log("[AUTH_DEBUG] CustomerLogin - User already authenticated, redirecting to:", from);
-      setIsRedirecting(true);
+    if (initialized && !authLoading && isAuthenticated && user) {
+      console.log("[CustomerLogin] User already authenticated, redirecting to:", from);
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, authLoading, initialized, navigate, from, isRedirecting, user, location.pathname]);
+  }, [isAuthenticated, initialized, authLoading, user, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Prevent multiple submissions
-    if (isLoading || isRedirecting) {
-      console.log("[AUTH_DEBUG] CustomerLogin - Preventing duplicate submission:", { isLoading, isRedirecting });
-      return;
-    }
+    if (isLoading) return;
     
     try {
-      console.log("[AUTH_DEBUG] CustomerLogin - Starting login process", {
-        email,
-        hasPassword: !!password,
-        currentPath: location.pathname,
-        targetRedirect: from
-      });
-      
       setIsLoading(true);
       
       const { success, error } = await signIn(email, password);
-      console.log("[AUTH_DEBUG] CustomerLogin - Sign in response:", { success, hasError: !!error });
 
       if (success) {
-        console.log("[AUTH_DEBUG] CustomerLogin - Login successful, waiting for auth state update");
         toast.success("ההתחברות בוצעה בהצלחה");
-        // Let the useEffect handle redirection
+        // Navigation will be handled by useEffect above
       } else {
-        console.error("[AUTH_DEBUG] CustomerLogin - Login failed:", error);
         toast.error(error || "שם משתמש או סיסמה שגויים");
       }
     } catch (error) {
-      console.error("[AUTH_DEBUG] CustomerLogin - Login error:", error);
+      console.error("[CustomerLogin] Login error:", error);
       toast.error("שגיאה בהתחברות");
     } finally {
       setIsLoading(false);
-      console.log("[AUTH_DEBUG] CustomerLogin - Login process completed");
     }
   };
 
-  // If still checking authentication status, show loading
-  if (authLoading && !isRedirecting) {
-    console.log("[CustomerLogin] Rendering: Auth Loading Spinner");
+  // Show loading spinner while checking auth state
+  if (!initialized || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -93,9 +64,8 @@ const CustomerLogin: React.FC = () => {
     );
   }
 
-  // If already authenticated, show loading with redirect message
+  // If already authenticated, show redirect message
   if (isAuthenticated && user) {
-    console.log("[CustomerLogin] Rendering: Authenticated, redirecting message");
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -106,7 +76,6 @@ const CustomerLogin: React.FC = () => {
     );
   }
 
-  console.log("[CustomerLogin] Rendering: Login Form");
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -147,9 +116,9 @@ const CustomerLogin: React.FC = () => {
             <Button
               type="submit"
               className="w-full"
-              disabled={isLoading || isRedirecting}
+              disabled={isLoading}
             >
-              {isLoading || isRedirecting ? (
+              {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
               ) : (
                 "התחברות"
