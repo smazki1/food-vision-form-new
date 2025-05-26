@@ -1,15 +1,15 @@
 import React, { useContext } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { IconInput } from '@/components/ui/icon-input';
 import { NewItemFormContext } from '@/contexts/NewItemFormContext';
-import { StepProps } from '../FoodVisionUploadForm'; // Assuming StepProps is exported
+import { StepProps } from '../FoodVisionUploadForm';
+import { Store, User, Phone, Mail } from 'lucide-react';
 
-const RestaurantDetailsStep: React.FC<StepProps> = ({ errors, clearExternalErrors, setExternalErrors }) => {
+const RestaurantDetailsStep: React.FC<StepProps> = ({ errors, clearExternalErrors }) => {
   const { formData, updateFormData } = useContext(NewItemFormContext);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     updateFormData({ [e.target.name]: e.target.value });
-    if (clearExternalErrors) clearExternalErrors(); // Clear errors on change
+    if (clearExternalErrors) clearExternalErrors();
   };
   
   // Ensure setExternalErrors is available before calling
@@ -17,68 +17,64 @@ const RestaurantDetailsStep: React.FC<StepProps> = ({ errors, clearExternalError
   // For instance, validating on blur or integrating with a form library
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-8" dir="rtl">
       <div>
-        <h2 className="text-2xl font-semibold mb-1">פרטי המסעדה שלך</h2>
-        <p className="text-sm text-muted-foreground mb-6">
-          מידע זה יעזור לנו להתאים לך את השירות בצורה הטובה ביותר.
+        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800">פרטי המסעדה שלך</h2>
+        <p className="text-sm md:text-base text-muted-foreground mb-8">
+          מידע זה יעזור לנו להתאים לך את השירות בצורה הטובה ביותר ולשייך את ההגשות לחשבונך.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="restaurantName">שם המסעדה</Label>
-          <Input
-            id="restaurantName"
-            name="restaurantName"
-            value={formData.restaurantName || ''}
-            onChange={handleChange}
-            placeholder="לדוגמה: פיצה כרמל"
-            className={errors?.restaurantName ? 'border-red-500' : ''}
-          />
-          {errors?.restaurantName && <p className="text-xs text-red-500 mt-1">{errors.restaurantName}</p>}
-        </div>
+      <div className="space-y-6">
+        <IconInput
+          id="restaurantName"
+          name="restaurantName"
+          label="שם המסעדה"
+          value={formData.restaurantName || ''}
+          onChange={handleChange}
+          placeholder="לדוגמה: פיצה כרמל"
+          error={errors?.restaurantName}
+          icon={<Store />}
+          iconPosition="right"
+        />
 
-        <div>
-          <Label htmlFor="contactName">שם איש קשר</Label>
-          <Input
-            id="contactName"
-            name="contactName"
-            value={formData.contactName || ''}
-            onChange={handleChange}
-            placeholder="לדוגמה: ישראל ישראלי"
-            className={errors?.contactName ? 'border-red-500' : ''}
-          />
-          {errors?.contactName && <p className="text-xs text-red-500 mt-1">{errors.contactName}</p>}
-        </div>
+        <IconInput
+          id="contactName"
+          name="contactName"
+          label="שם איש קשר"
+          value={formData.contactName || ''}
+          onChange={handleChange}
+          placeholder="לדוגמה: ישראל ישראלי"
+          error={errors?.contactName}
+          icon={<User />}
+          iconPosition="right"
+        />
 
-        <div>
-          <Label htmlFor="phone">מספר טלפון</Label>
-          <Input
-            id="phone"
-            name="phone"
-            type="tel"
-            value={formData.phone || ''}
-            onChange={handleChange}
-            placeholder="לדוגמה: 050-1234567"
-            className={errors?.phone ? 'border-red-500' : ''}
-          />
-          {errors?.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
-        </div>
+        <IconInput
+          id="phone"
+          name="phone"
+          type="tel"
+          label="מספר טלפון"
+          value={formData.phone || ''}
+          onChange={handleChange}
+          placeholder="לדוגמה: 050-1234567"
+          error={errors?.phone}
+          icon={<Phone />}
+          iconPosition="right"
+        />
 
-        <div>
-          <Label htmlFor="email">כתובת אימייל</Label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            value={formData.email || ''}
-            onChange={handleChange}
-            placeholder="לדוגמה: user@example.com"
-            className={errors?.email ? 'border-red-500' : ''}
-          />
-          {errors?.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-        </div>
+        <IconInput
+          id="email"
+          name="email"
+          type="email"
+          label="כתובת אימייל"
+          value={formData.email || ''}
+          onChange={handleChange}
+          placeholder="לדוגמה: user@example.com"
+          error={errors?.email}
+          icon={<Mail />}
+          iconPosition="right"
+        />
       </div>
     </div>
   );
