@@ -24,21 +24,7 @@ export const useAuthInitialization = (
     console.log('[UNIFIED_AUTH] Determining role for user:', currentUser.id);
 
     try {
-      // Check cache first for faster subsequent loads
-      const cachedData = optimizedAuthService.getCachedUserAuthData(currentUser.id);
-      if (cachedData) {
-        console.log('[UNIFIED_AUTH] Using cached auth data');
-        updateAuthState({
-          role: cachedData.role,
-          clientId: cachedData.clientId,
-          hasLinkedClientRecord: cachedData.hasLinkedClientRecord,
-          hasError: false,
-          errorMessage: null
-        });
-        return;
-      }
-
-      // Use the new optimized service
+      // Use the optimized service to get auth data (which handles caching internally)
       console.log('[UNIFIED_AUTH] Calling optimized auth service...');
       const authResult = await optimizedAuthService.getUserAuthData(currentUser.id);
 
@@ -56,11 +42,9 @@ export const useAuthInitialization = (
         role: authResult.role,
         clientId: authResult.clientId,
         hasLinkedClientRecord: authResult.hasLinkedClientRecord,
-        restaurantName: authResult.restaurantName
+        restaurantName: authResult.restaurantName,
+        fromCache: authResult.fromCache
       });
-
-      // Cache the successful result
-      optimizedAuthService.cacheUserAuthData(currentUser.id, authResult);
 
       updateAuthState({
         role: authResult.role,
@@ -93,7 +77,7 @@ export const useAuthInitialization = (
       // Clear cache on sign out
       if (event === 'SIGNED_OUT') {
         if (session?.user?.id) {
-          optimizedAuthService.clearCachedAuthData(session.user.id);
+          optimizedAuthService.clearAuthCache(session.user.id);
         }
         updateAuthState({
           user: null,

@@ -14,6 +14,9 @@ export const useLeads = (filters?: LeadsFilter) => {
   const queryClient = useQueryClient();
   const { applyOptimisticUpdate, confirmUpdate, revertUpdate } = useOptimisticUpdates<Lead>();
   
+  // Create a serialized cache key from filters
+  const filtersCacheKey = filters ? JSON.stringify(filters) : 'no-filters';
+  
   // Use cached query for leads data
   const {
     data: leads = [],
@@ -23,7 +26,7 @@ export const useLeads = (filters?: LeadsFilter) => {
   } = useCachedQuery({
     queryKey: ["leads", filters],
     queryFn: () => fetchLeads(filters),
-    cacheKey: `leads_${JSON.stringify(filters || {})}`,
+    cacheKey: `leads_${filtersCacheKey}`,
     cacheTTL: 3 * 60 * 1000, // 3 minutes for leads (they change frequently)
     backgroundRefresh: true,
     onCacheHit: (data) => console.log(`[CACHE] Leads cache hit: ${data.length} leads`),
