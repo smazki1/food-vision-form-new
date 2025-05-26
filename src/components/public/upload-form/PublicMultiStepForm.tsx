@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
 import FormProgress from './components/FormProgress';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
 import ItemDetailsStep from './steps/ItemDetailsStep';
@@ -56,53 +55,51 @@ const PublicMultiStepForm: React.FC = () => {
   const CurrentStepComponent = stepComponents[currentStep as keyof typeof stepComponents];
 
   return (
-    <NewItemFormProvider>
-      <div className="min-h-screen bg-gray-50 py-8 px-4" dir="rtl">
-        <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
-              <h1 className="text-2xl font-bold text-center mb-2">
-                העלאת פריט חדש
-              </h1>
-              <p className="text-orange-100 text-center">
-                מלאו את הפרטים הנדרשים להעלאת הפריט שלכם
-              </p>
-            </div>
+    <div className="min-h-screen bg-gray-50 py-8 px-4" dir="rtl">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6">
+            <h1 className="text-2xl font-bold text-center mb-2">
+              העלאת פריט חדש
+            </h1>
+            <p className="text-orange-100 text-center">
+              מלאו את הפרטים הנדרשים להעלאת הפריט שלכם
+            </p>
+          </div>
 
-            {/* Progress */}
-            <div className="p-6 border-b border-gray-200">
-              <FormProgress 
-                formSteps={formSteps} 
-                currentStepId={currentStep} 
-              />
-            </div>
+          {/* Progress */}
+          <div className="p-6 border-b border-gray-200">
+            <FormProgress 
+              formSteps={formSteps} 
+              currentStepId={currentStep} 
+            />
+          </div>
 
-            {/* Step Content */}
-            <div className="p-6 min-h-[400px]">
-              <CurrentStepComponent 
-                errors={errors}
-                onNext={currentStep === 4 ? handleSubmit : handleNext}
+          {/* Step Content */}
+          <div className="p-6 min-h-[400px]">
+            <CurrentStepComponent 
+              errors={errors}
+              onNext={currentStep === 4 ? handleSubmit : handleNext}
+              isSubmitting={isSubmitting}
+            />
+          </div>
+
+          {/* Navigation */}
+          {currentStep < 4 && (
+            <div className="p-6 border-t border-gray-200">
+              <NavigationButtons
+                currentStep={currentStep}
+                totalSteps={formSteps.length}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
                 isSubmitting={isSubmitting}
               />
             </div>
-
-            {/* Navigation */}
-            {currentStep < 4 && (
-              <div className="p-6 border-t border-gray-200">
-                <NavigationButtons
-                  currentStep={currentStep}
-                  totalSteps={formSteps.length}
-                  onNext={handleNext}
-                  onPrevious={handlePrevious}
-                  isSubmitting={isSubmitting}
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
-    </NewItemFormProvider>
+    </div>
   );
 };
 
