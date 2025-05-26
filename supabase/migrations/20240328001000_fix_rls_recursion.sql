@@ -2,7 +2,7 @@
 ALTER TABLE "public"."clients" DISABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies on clients table
-SELECT drop_all_policies('clients');
+-- SELECT drop_all_policies('clients');
 
 -- Create a security definer function to check client ownership
 -- This function will run with elevated privileges to avoid RLS recursion
@@ -32,6 +32,11 @@ $$;
 
 -- Re-enable RLS
 ALTER TABLE "public"."clients" ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing client policies before recreating them to avoid "already exists" error
+DROP POLICY IF EXISTS "admin_full_access_clients" ON public.clients;
+DROP POLICY IF EXISTS "customers_view_own_client" ON public.clients;
+DROP POLICY IF EXISTS "customers_update_own_client" ON public.clients;
 
 -- Create simplified policies for clients table that don't cause recursion
 CREATE POLICY "admin_full_access_clients"

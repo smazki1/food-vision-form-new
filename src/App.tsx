@@ -1,8 +1,8 @@
-// Our refined Auth Providers and ProtectedRoute
+// Providers and protected routing
 import { UnifiedAuthProvider } from "@/providers/UnifiedAuthProvider";
 import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
 import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
-import { ProtectedRoute } from "@/components/ProtectedRoute"; 
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Layouts
 import { CustomerLayout } from "@/layouts/CustomerLayout";
@@ -16,7 +16,8 @@ import ForgotPassword from "./pages/customer/ForgotPassword";
 import ResetPassword from "./pages/customer/ResetPassword";
 import AdminLogin from "./pages/AdminLogin";
 import FoodVisionForm from "./pages/FoodVisionForm";
-// import AccountSetupPage from "./pages/AccountSetupPage"; // Decide if/how to integrate
+import PublicUploadPage from "./pages/PublicUploadPage";
+// import AccountSetupPage from "./pages/AccountSetupPage";
 
 // Admin pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -45,45 +46,44 @@ import CustomerPackageDetailsPage from "./pages/customer/CustomerPackageDetailsP
 // Editor pages
 import EditorDashboardPage from "./pages/editor/EditorDashboardPage";
 import SubmissionProcessingPage from "./pages/editor/SubmissionProcessingPage";
+
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-// import { ThemeProvider } from './providers/theme-provider'; // Commented out
+// import { ThemeProvider } from './providers/theme-provider'; // Optional
 import { TooltipProvider } from '@/components/ui/tooltip';
 
-
-// Create a client
+// React Query Client config
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60000, // 1 minute
       retry: 1,
-      refetchOnWindowFocus: false
-    }
-  }
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* <ThemeProvider defaultTheme="light" storageKey="food-vision-theme"> */}
-        <TooltipProvider>
-          <Router>
-            <UnifiedAuthProvider>
-              <CurrentUserRoleProvider>
+      <TooltipProvider>
+        <Router>
+          <UnifiedAuthProvider>
+            <CurrentUserRoleProvider>
               <Routes>
                 {/* Public routes */}
-                <Route path="/" element={<Navigate to="/login" replace />} /> 
+                <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<CustomerLogin />} />
                 <Route path="/admin-login" element={<AdminLogin />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
-                
-                {/* Food Vision Form - might need ClientAuthProvider if it interacts with client data */}
-                <Route path="/food-vision-form" element={<FoodVisionForm />} /> 
-                                
-                {/* Customer routes - protected */}
-                <Route 
+                <Route path="/public-upload" element={<PublicUploadPage />} />
+                <Route path="/food-vision-form" element={<FoodVisionForm />} />
+
+                {/* Protected Customer routes */}
+                <Route
                   element={
                     <ClientAuthProvider>
                       <ProtectedRoute />
@@ -106,9 +106,8 @@ function App() {
                     </Route>
                   </Route>
                 </Route>
-                
-                {/* Admin routes - TODO: Implement Admin specific protection if needed */}
-                {/* For now, assuming they might also use a form of ProtectedRoute or specific admin auth logic */}
+
+                {/* Admin routes */}
                 <Route path="/admin" element={<AdminLayout />}>
                   <Route index element={<Navigate to="/admin/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
@@ -122,21 +121,21 @@ function App() {
                   <Route path="alerts" element={<AlertsDashboard />} />
                   <Route path="users" element={<UserManagementPage />} />
                 </Route>
-                
-                {/* Editor routes - TODO: Implement Editor specific protection */}
+
+                {/* Editor routes */}
                 <Route path="/editor" element={<EditorLayout />}>
                   <Route index element={<Navigate to="/editor/dashboard" replace />} />
                   <Route path="dashboard" element={<EditorDashboardPage />} />
                   <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
                 </Route>
-                
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
-              </CurrentUserRoleProvider>
-            </UnifiedAuthProvider>
-          </Router>
-          <SonnerToaster />
-        </TooltipProvider>
+            </CurrentUserRoleProvider>
+          </UnifiedAuthProvider>
+        </Router>
+        <SonnerToaster />
+      </TooltipProvider>
       {/* </ThemeProvider> */}
     </QueryClientProvider>
   );
