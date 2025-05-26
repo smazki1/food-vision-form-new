@@ -94,7 +94,7 @@ export function DashboardSearch() {
           submissions: (submissionsResults.data || []).map((submission) => ({
             id: submission.submission_id,
             name: submission.item_name_at_submission,
-            client_name: submission.clients?.restaurant_name || "",
+            client_name: (submission.clients as any)?.restaurant_name || "",
           })),
         });
       } catch (error) {

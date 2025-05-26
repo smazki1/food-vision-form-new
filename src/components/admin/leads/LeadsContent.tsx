@@ -51,7 +51,6 @@ export const LeadsContent: React.FC<LeadsContentProps> = ({
         <LeadsTable
           leads={leads}
           onEdit={onEdit}
-          onConvertToClient={onConvertToClient}
           isLoading={loading}
           sortBy={sortBy}
           sortDirection={sortDirection}
