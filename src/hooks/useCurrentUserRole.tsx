@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +15,9 @@ export type CurrentUserRoleStatus =
   | 'ERROR_SESSION'
   | 'ERROR_FETCHING_ROLE';
 
+// Export AuthRoleStatus as alias for backward compatibility
+export type AuthRoleStatus = CurrentUserRoleStatus;
+
 export interface CurrentUserRoleState {
   status: CurrentUserRoleStatus;
   role: UserRole | null;
@@ -22,7 +26,7 @@ export interface CurrentUserRoleState {
   isEditor: boolean;
   userId: string | null;
   error: string | null;
-  isLoading: boolean; // Add this property
+  isLoading: boolean;
 }
 
 const CurrentUserRoleContext = createContext<CurrentUserRoleState | undefined>(undefined);
@@ -46,9 +50,7 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
   const fetchUserRole = useCallback(async (userId: string) => {
     console.log('[useCurrentUserRole] Fetching role for user:', userId);
     const { data: role, error } = await supabase
-      .rpc('get_my_role')
-      .select()
-      .single();
+      .rpc('get_my_role');
 
     if (error) {
       console.error('[useCurrentUserRole] Error fetching role:', error);
@@ -63,22 +65,20 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
     error: rpcQueryError,
     isLoading: isRpcLoading,
     refetch: refetchRole,
-  } = useQuery(
-    ['user-role', authSession.user?.id],
-    () => fetchUserRole(authSession.user!.id),
-    {
-      enabled: !!authSession.user?.id && status !== 'CHECKING_SESSION' && status !== 'INITIALIZING',
-      retry: false,
-      onSuccess: (data) => {
-        setStatus('ROLE_DETERMINED');
-        toast.dismiss('user-role-error-toast');
-      },
-      onError: (err: any) => {
-        setStatus('ERROR_FETCHING_ROLE');
-        toast.error(`Error determining user role. ${err.message}`, { id: 'user-role-error-toast' });
-      },
-    }
-  );
+  } = useQuery({
+    queryKey: ['user-role', authSession.user?.id],
+    queryFn: () => fetchUserRole(authSession.user!.id),
+    enabled: !!authSession.user?.id && status !== 'CHECKING_SESSION' && status !== 'INITIALIZING',
+    retry: false,
+    onSuccess: (data) => {
+      setStatus('ROLE_DETERMINED');
+      toast.dismiss('user-role-error-toast');
+    },
+    onError: (err: any) => {
+      setStatus('ERROR_FETCHING_ROLE');
+      toast.error(`Error determining user role. ${err.message}`, { id: 'user-role-error-toast' });
+    },
+  });
 
   useEffect(() => {
     setStatus('CHECKING_SESSION');
@@ -130,7 +130,7 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
     isEditor: rpcRole === 'editor',
     userId: authSession.user?.id || null,
     error: rpcQueryError?.message || null,
-    isLoading: status === 'CHECKING_SESSION' || status === 'FETCHING_ROLE' || status === 'INITIALIZING', // Add this property
+    isLoading: status === 'CHECKING_SESSION' || status === 'FETCHING_ROLE' || status === 'INITIALIZING',
   };
 
   console.log('[useCurrentUserRole_Logic] FINAL State produced by logic hook:', finalState);

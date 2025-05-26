@@ -1,92 +1,94 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-// Removed FoodItem import as we are fetching string URLs directly from DB
 
-// The type of item as stored in the submission (usually singular)
-export type SubmissionItemType = "dish" | "cocktail" | "drink";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
-// This interface helps in asserting the type of the data object later
-interface ItemWithReferenceImageUrls {
-  reference_image_urls: string[];
-  // Include other common fields if necessary, or keep it minimal
+interface OriginalImage {
+  image_id: string;
+  image_url: string;
+  item_type: string;
+  item_name: string;
+  uploaded_at: string;
 }
 
-/**
- * Fetches the original reference images for a given item.
- * @param originalItemId The ID of the original item (dish, cocktail, drink).
- * @param itemType The type of the item from the submission (e.g., 'dish', 'cocktail', 'drink').
- * @returns The query result containing an array of reference image URLs or null.
- */
-export const useOriginalImages = (originalItemId?: string, itemType?: SubmissionItemType) => {
-  return useQuery<string[] | null, Error>({
-    queryKey: ["originalImages", originalItemId, itemType],
+export const useOriginalImages = (submissionId: string | undefined) => {
+  return useQuery({
+    queryKey: ['original-images', submissionId],
     queryFn: async () => {
-      if (!originalItemId || !itemType) {
-        console.log("[useOriginalImages] Bailing out: originalItemId or itemType missing", { originalItemId, itemType });
-        return null;
+      if (!submissionId) {
+        throw new Error('Submission ID is required');
       }
 
-      let tableName: string;
-      let idColumnName: string; // Will be set in the switch
-      const selectColumnName: string = "reference_image_urls";
+      console.log('[useOriginalImages] Fetching original images for submission:', submissionId);
+      
+      // Get the submission details including original_item_id
+      const { data: submission, error: submissionError } = await supabase
+        .from('customer_submissions')
+        .select('original_item_id, item_type')
+        .eq('submission_id', submissionId)
+        .single();
 
-      switch (itemType) {
-        case "dish":
-          tableName = "dishes";
-          idColumnName = "dish_id"; // Corrected: Assuming original_item_id in submissions FKs to dish_id in dishes
+      if (submissionError) {
+        console.error('[useOriginalImages] Error fetching submission:', submissionError);
+        throw submissionError;
+      }
+
+      if (!submission?.original_item_id) {
+        console.log('[useOriginalImages] No original_item_id found for submission');
+        return [];
+      }
+
+      const { original_item_id, item_type } = submission;
+      console.log('[useOriginalImages] Found original_item_id:', original_item_id, 'type:', item_type);
+
+      // Determine which table to query based on item_type
+      let tableName = '';
+      switch (item_type) {
+        case 'dish':
+          tableName = 'dishes';
           break;
-        case "cocktail":
-          tableName = "cocktails";
-          idColumnName = "cocktail_id"; // Assuming original_item_id in submissions FKs to cocktail_id in cocktails
+        case 'cocktail':
+          tableName = 'cocktails';
           break;
-        case "drink":
-          tableName = "drinks";
-          idColumnName = "drink_id";    // Assuming original_item_id in submissions FKs to drink_id in drinks
+        case 'drink':
+          tableName = 'drinks';
           break;
         default:
-          console.error(`[useOriginalImages] Unknown item type: ${itemType}`);
-          return null;
+          console.error('[useOriginalImages] Unknown item_type:', item_type);
+          throw new Error(`Unknown item type: ${item_type}`);
       }
 
-      console.log(`[useOriginalImages] Preparing to query Supabase. 
-        Table: ${tableName}, 
-        ID Column: ${idColumnName}, 
-        Select Column: ${selectColumnName}, 
-        Item ID: ${originalItemId}`
-      );
-
-      // @ts-ignore 
+      // Get the original item and its reference images
       const { data, error } = await supabase
-        .from(tableName) 
-        .select(selectColumnName)
-        .eq(idColumnName, originalItemId)
+        .from(tableName)
+        .select('name, reference_image_urls')
+        .eq(`${item_type}_id`, original_item_id)
         .single();
-      
-      console.log("[useOriginalImages] Supabase response:", { data, error });
 
       if (error) {
-        console.error(
-          `[useOriginalImages] Supabase error object while fetching from ${tableName} for ID ${originalItemId}:`,
-          JSON.stringify(error, null, 2)
-        );
-        if (error.code === 'PGRST116') {
-          return null; 
-        }
-        throw new Error(
-          `Failed to fetch original images from ${tableName} for ID ${originalItemId}: ${error.message}`
-        );
+        console.error('[useOriginalImages] Error fetching original item:', error);
+        throw error;
       }
 
-      if (data && typeof data === 'object' && selectColumnName in data && Array.isArray((data as any)[selectColumnName])) {
-        const typedData = data as ItemWithReferenceImageUrls;
-        console.log(`[useOriginalImages] Successfully fetched original images:`, typedData.reference_image_urls);
-        return typedData.reference_image_urls;
-      } else {
-        console.log(`[useOriginalImages] No reference image URLs found or data format is unexpected from ${tableName} for ID ${originalItemId}. Data:`, data);
-        return null;
+      if (!data) {
+        console.log('[useOriginalImages] No data found for original item');
+        return [];
       }
+
+      // Transform the reference_image_urls array into OriginalImage objects
+      const referenceImages = data.reference_image_urls || [];
+      const originalImages: OriginalImage[] = referenceImages.map((url: string, index: number) => ({
+        image_id: `${original_item_id}_${index}`,
+        image_url: url,
+        item_type,
+        item_name: data.name,
+        uploaded_at: new Date().toISOString(), // We don't have the exact upload time, so use current time
+      }));
+
+      console.log('[useOriginalImages] Found original images:', originalImages.length);
+      return originalImages;
     },
-    enabled: !!originalItemId && !!itemType,
-    staleTime: 5 * 60 * 1000, 
+    enabled: !!submissionId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
-}; 
+};

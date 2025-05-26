@@ -1,3 +1,4 @@
+
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -107,13 +108,14 @@ describe('ClientsList', () => {
     vi.resetAllMocks(); 
 
     mockedUseCurrentUserRole.mockReturnValue({
-      status: 'ROLE_DETERMINED' as currentUserRoleHookModule.AuthRoleStatus,
+      status: 'ROLE_DETERMINED' as currentUserRoleHookModule.CurrentUserRoleStatus,
       role: 'admin' as UserRole,
       isAdmin: true,
       isAccountManager: false,
       isEditor: false,
       userId: 'test-admin-user',
       error: null,
+      isLoading: false,
     });
 
     mockedUseClients.mockReturnValue(getDefaultMockClientsReturnValue());
