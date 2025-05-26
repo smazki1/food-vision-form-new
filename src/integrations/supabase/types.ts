@@ -44,6 +44,44 @@ export type Database = {
           },
         ]
       }
+      client_packages: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          package_name: string
+          remaining_dishes: number
+          total_dishes: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          package_name: string
+          remaining_dishes: number
+          total_dishes: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          package_name?: string
+          remaining_dishes?: number
+          total_dishes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_packages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           app_notifications: boolean | null
@@ -152,6 +190,7 @@ export type Database = {
           assigned_editor_id: string | null
           assigned_package_id_at_submission: string | null
           client_id: string
+          created_at: string
           edit_count: number | null
           edit_history: Json | null
           final_approval_timestamp: string | null
@@ -176,6 +215,7 @@ export type Database = {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
           client_id: string
+          created_at?: string
           edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
@@ -200,6 +240,7 @@ export type Database = {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
           client_id?: string
+          created_at?: string
           edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
@@ -535,6 +576,23 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_auth_data: {
+        Args: { user_uid: string }
+        Returns: {
+          user_role: string
+          client_id: string
+          restaurant_name: string
+          has_client_record: boolean
+        }[]
+      }
+      get_user_client_id: {
+        Args: { user_uid: string }
+        Returns: string
+      }
       has_role: {
         Args: { user_id: string; role_name: string }
         Returns: boolean
@@ -544,6 +602,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_admin_or_account_manager: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

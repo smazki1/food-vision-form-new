@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, ReactNode } from 'react';
+import React, { useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { UnifiedAuthContext } from '@/contexts/UnifiedAuthContext';
 import { useUnifiedAuthState } from '@/hooks/useUnifiedAuthState';
@@ -13,7 +13,7 @@ interface UnifiedAuthProviderProps {
 export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ children }) => {
   const { updateAuthState, ...authState } = useUnifiedAuthState();
   
-  // Initialize authentication
+  // Initialize authentication with optimized flow
   useAuthInitialization(updateAuthState);
   
   // Define auth actions

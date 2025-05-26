@@ -6,12 +6,13 @@ import { UserRole } from '@/types/unifiedAuthTypes';
 
 /**
  * Hook to handle authentication initialization and user role determination
+ * Optimized version using unified database query
  */
 export const useAuthInitialization = (
   updateAuthState: (updates: any) => void
 ) => {
   /**
-   * Determines user role and client ID
+   * Determines user role and client ID using optimized SQL function
    */
   const determineUserRole = useCallback(async (currentUser: User): Promise<void> => {
     if (!currentUser) {
@@ -22,85 +23,60 @@ export const useAuthInitialization = (
     console.log('[UNIFIED_AUTH] Determining role for user:', currentUser.id);
 
     try {
-      // FIRST: Verify we can access the database at all
-      console.log('[UNIFIED_AUTH] Testing database connection...');
-      const { data: testData, error: testError } = await supabase.from('clients').select('count').limit(1);
-      console.log('[UNIFIED_AUTH] Database test result:', { success: !testError, error: testError?.message });
-      
-      // Check for client record FIRST (most users are clients)
-      console.log('[UNIFIED_AUTH] Checking for client record...');
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('client_id, restaurant_name')
-        .eq('user_auth_id', currentUser.id)
-        .maybeSingle();
+      // Use the new optimized SQL function
+      console.log('[UNIFIED_AUTH] Calling optimized get_user_auth_data function...');
+      const { data: authData, error: authError } = await supabase
+        .rpc('get_user_auth_data', { user_uid: currentUser.id });
 
-      console.log('[UNIFIED_AUTH] Client query result:', { 
-        success: !clientError, 
-        hasData: !!clientData,
-        clientId: clientData?.client_id || null,
-        error: clientError?.message || null,
-        errorCode: clientError?.code || null 
+      console.log('[UNIFIED_AUTH] Auth data result:', { 
+        success: !authError, 
+        data: authData,
+        error: authError?.message || null,
+        errorCode: authError?.code || null 
       });
 
-      if (clientError) {
-        console.error('[UNIFIED_AUTH] Client query error:', clientError);
-        
-        // If it's an RLS error, we might be an admin/editor
-        if (clientError.code === 'PGRST116' || clientError.message?.includes('permission')) {
-          console.log('[UNIFIED_AUTH] Client access denied, checking for staff roles...');
-        } else {
-          throw clientError;
-        }
-      } else if (clientData) {
-        // User is a customer
-        updateAuthState({
-          role: 'customer' as UserRole,
-          clientId: clientData.client_id,
-          hasLinkedClientRecord: true
+      if (authError) {
+        console.error('[UNIFIED_AUTH] Auth data query error:', authError);
+        updateAuthState({ 
+          hasError: true,
+          errorMessage: `Failed to determine user role: ${authError.message}`,
+          loading: false
         });
-        console.log('[UNIFIED_AUTH] User identified as customer:', clientData.client_id);
         return;
       }
 
-      // Check for user roles (admin/editor)
-      console.log('[UNIFIED_AUTH] Checking for user roles...');
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', currentUser.id);
-
-      console.log('[UNIFIED_AUTH] Roles query result:', { 
-        success: !rolesError, 
-        roles: userRoles,
-        error: rolesError?.message || null 
-      });
-
-      if (rolesError) {
-        console.error('[UNIFIED_AUTH] Roles query error:', rolesError);
-        throw rolesError;
-      } else if (userRoles && userRoles.length > 0) {
-        // User has an explicit role
-        const userRole = userRoles[0].role as UserRole;
+      if (!authData || authData.length === 0) {
+        console.warn('[UNIFIED_AUTH] No auth data returned for user');
         updateAuthState({
-          role: userRole,
-          clientId: null, // Admins/editors don't have client records
-          hasLinkedClientRecord: false
+          role: null,
+          clientId: null,
+          hasLinkedClientRecord: false,
+          hasError: true,
+          errorMessage: 'User has no defined role or client record'
         });
-        console.log('[UNIFIED_AUTH] User role determined:', userRole);
         return;
       }
 
-      // If we get here, user has no role and no client record
-      console.warn('[UNIFIED_AUTH] User has no defined role or client record');
+      const userAuthData = authData[0];
+      const role = userAuthData.user_role as UserRole;
+      const clientId = userAuthData.client_id;
+      const hasLinkedClientRecord = userAuthData.has_client_record;
+
+      console.log('[UNIFIED_AUTH] User auth data processed:', {
+        role,
+        clientId,
+        hasLinkedClientRecord,
+        restaurantName: userAuthData.restaurant_name
+      });
+
       updateAuthState({
-        role: null,
-        clientId: null,
-        hasLinkedClientRecord: false,
-        hasError: true,
-        errorMessage: 'User has no defined role or client record'
+        role,
+        clientId,
+        hasLinkedClientRecord,
+        hasError: false,
+        errorMessage: null
       });
-      
+
     } catch (error) {
       console.error('[UNIFIED_AUTH] Error determining user role:', error);
       updateAuthState({ 
@@ -115,7 +91,7 @@ export const useAuthInitialization = (
    * Handles auth state changes from Supabase
    */
   useEffect(() => {
-    console.log('[UNIFIED_AUTH] Setting up auth state listener...');
+    console.log('[UNIFIED_AUTH] Setting up optimized auth state listener...');
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -178,7 +154,7 @@ export const useAuthInitialization = (
             isAuthenticated: true,
           });
           
-          // Determine role
+          // Determine role using optimized function
           await determineUserRole(session.user);
         }
         
