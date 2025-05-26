@@ -3,6 +3,7 @@
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -50,14 +51,14 @@ const createWrapper = () => {
 describe('useCurrentUserRole - Error Handling', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (supabase.auth.onAuthStateChange as vi.Mock).mockReturnValue({
+    (supabase.auth.onAuthStateChange as Mock).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
   });
 
   it('should transition to ERROR_SESSION if getSession resolves with an error', async () => {
     const sessionError = new Error('Session fetch failed');
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: null }, error: sessionError });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: null }, error: sessionError });
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
 
     await waitFor(() => expect(result.current.status).toBe('ERROR_SESSION'));
@@ -68,8 +69,8 @@ describe('useCurrentUserRole - Error Handling', () => {
   it('should transition to ERROR_FETCHING_ROLE if rpc call fails', async () => {
     const mockSession = { user: { id: 'user-rpc-fail' } };
     const rpcError = { message: 'RPC failed DETAIL' };
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as vi.Mock).mockRejectedValue(rpcError); 
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
+    (supabase.rpc as Mock).mockRejectedValue(rpcError); 
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     

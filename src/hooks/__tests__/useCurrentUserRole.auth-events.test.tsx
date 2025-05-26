@@ -3,6 +3,7 @@
 
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -50,10 +51,10 @@ const createWrapper = () => {
 describe('useCurrentUserRole - Auth Events', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (supabase.auth.onAuthStateChange as vi.Mock).mockReturnValue({
+    (supabase.auth.onAuthStateChange as Mock).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: null }, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: null }, error: null });
   });
 
   it('should handle SIGNED_IN auth event and determine role', async () => {
@@ -63,9 +64,9 @@ describe('useCurrentUserRole - Auth Events', () => {
     const mockSession = { user: { id: 'user-signed-in' } };
     const mockUserRole: UserRole = 'admin';
 
-    (supabase.rpc as vi.Mock).mockResolvedValue({ data: mockUserRole, error: null });
+    (supabase.rpc as Mock).mockResolvedValue({ data: mockUserRole, error: null });
 
-    const authCallback = (supabase.auth.onAuthStateChange as vi.Mock).mock.calls[0][0];
+    const authCallback = (supabase.auth.onAuthStateChange as Mock).mock.calls[0][0];
     act(() => {
       authCallback('SIGNED_IN', mockSession);
     });
@@ -81,14 +82,14 @@ describe('useCurrentUserRole - Auth Events', () => {
   it('should handle SIGNED_OUT auth event', async () => {
     const mockInitialSession = { user: { id: 'user-123' } };
     const mockInitialAdminRole: UserRole = 'admin';
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: mockInitialSession }, error: null });
-    (supabase.rpc as vi.Mock).mockResolvedValue({ data: mockInitialAdminRole, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockInitialSession }, error: null });
+    (supabase.rpc as Mock).mockResolvedValue({ data: mockInitialAdminRole, error: null });
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('ROLE_DETERMINED'));
     expect(result.current.role).toBe(mockInitialAdminRole);
 
-    const authCallback = (supabase.auth.onAuthStateChange as vi.Mock).mock.calls[0][0];
+    const authCallback = (supabase.auth.onAuthStateChange as Mock).mock.calls[0][0];
     act(() => {
       authCallback('SIGNED_OUT', null);
     });

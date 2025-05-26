@@ -76,7 +76,7 @@ export function DashboardSearch() {
             .select(`
               submission_id, 
               item_name_at_submission, 
-              clients (restaurant_name)
+              clients!inner (restaurant_name)
             `)
             .ilike("item_name_at_submission", `%${debouncedSearchQuery}%`)
             .limit(5),

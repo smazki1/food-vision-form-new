@@ -3,6 +3,7 @@
 
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -51,7 +52,7 @@ const createWrapper = () => {
 describe('useCurrentUserRole - Role Determination', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (supabase.auth.onAuthStateChange as vi.Mock).mockReturnValue({
+    (supabase.auth.onAuthStateChange as Mock).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
   });
@@ -59,8 +60,8 @@ describe('useCurrentUserRole - Role Determination', () => {
   it('should transition to ROLE_DETERMINED with admin role', async () => {
     const mockSession = { user: { id: 'user-123' } };
     const mockAdminRole: UserRole = 'admin';
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as vi.Mock).mockResolvedValue({ data: mockAdminRole, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
+    (supabase.rpc as Mock).mockResolvedValue({ data: mockAdminRole, error: null });
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
 
@@ -77,8 +78,8 @@ describe('useCurrentUserRole - Role Determination', () => {
   it('should transition to ROLE_DETERMINED with editor role', async () => {
     const mockSession = { user: { id: 'user-editor' } };
     const mockEditorRole: UserRole = 'editor';
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as vi.Mock).mockResolvedValue({ data: mockEditorRole, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
+    (supabase.rpc as Mock).mockResolvedValue({ data: mockEditorRole, error: null });
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('ROLE_DETERMINED'));
@@ -90,8 +91,8 @@ describe('useCurrentUserRole - Role Determination', () => {
   it('should transition to ROLE_DETERMINED with account_manager role', async () => {
     const mockSession = { user: { id: 'user-am' } };
     const mockAmRole: UserRole = 'account_manager';
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as vi.Mock).mockResolvedValue({ data: mockAmRole, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
+    (supabase.rpc as Mock).mockResolvedValue({ data: mockAmRole, error: null });
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     await waitFor(() => expect(result.current.status).toBe('ROLE_DETERMINED'));

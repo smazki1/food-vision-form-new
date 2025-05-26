@@ -3,6 +3,7 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -50,12 +51,12 @@ const createWrapper = () => {
 describe('useCurrentUserRole - Cleanup', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    (supabase.auth.getSession as vi.Mock).mockResolvedValue({ data: { session: null }, error: null });
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: null }, error: null });
   });
 
   it('should clean up auth listener on unmount', () => {
     const unsubscribeMock = vi.fn();
-    (supabase.auth.onAuthStateChange as vi.Mock).mockReturnValueOnce({
+    (supabase.auth.onAuthStateChange as Mock).mockReturnValueOnce({
       data: { subscription: { unsubscribe: unsubscribeMock } },
     });
 
