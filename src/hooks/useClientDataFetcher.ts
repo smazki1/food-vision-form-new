@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { ClientAuthState } from '@/types/clientAuthTypes';
@@ -32,23 +32,28 @@ export const useClientDataFetcher = (
   updateClientAuthState: (updates: Partial<ClientAuthState>) => void,
   onError: (errorMessage: string) => void
 ) => {
-  const [hasAttempted, setHasAttempted] = useState(false);
+  const [attemptCounter, setAttemptCounter] = useState(0);
+  const maxAttempts = 1;
 
-  const shouldEnableQuery = 
+  // Ensure shouldEnableQuery is always a boolean
+  const shouldEnableQuery = Boolean(
     user && 
     isAuthenticated && 
     initialized && 
     !authLoading && 
     connectionVerified &&
-    !hasAttempted; // Only attempt once
+    attemptCounter < maxAttempts
+  );
 
-  console.log("[CLIENT_DATA_FETCHER] Query enabled:", shouldEnableQuery, {
+  console.log("[CLIENT_DATA_FETCHER] Query configuration:", {
     user: !!user,
     isAuthenticated,
     initialized,
     authLoading,
     connectionVerified,
-    hasAttempted
+    attemptCounter,
+    maxAttempts,
+    shouldEnableQuery
   });
 
   const { 
@@ -67,6 +72,8 @@ export const useClientDataFetcher = (
       console.log("[CLIENT_DATA_FETCHER] Fetching client data for user:", user.id);
       
       try {
+        setAttemptCounter(prev => prev + 1);
+        
         const { data, error } = await supabase
           .from('clients')
           .select(`
@@ -94,23 +101,21 @@ export const useClientDataFetcher = (
         }
 
         console.log("[CLIENT_DATA_FETCHER] Query result:", data);
-        setHasAttempted(true);
         return data && data.length > 0 ? data[0] : null;
       } catch (err) {
         console.error("[CLIENT_DATA_FETCHER] Query exception:", err);
-        setHasAttempted(true);
         throw err;
       }
     },
     enabled: shouldEnableQuery,
-    retry: 1,
+    retry: false,
     staleTime: 30000,
     refetchOnWindowFocus: false
   });
 
   // Handle successful data fetch
   useEffect(() => {
-    if (clientData !== undefined && !clientQueryLoading && hasAttempted) {
+    if (clientData !== undefined && !clientQueryLoading && attemptCounter > 0) {
       console.log("[CLIENT_DATA_FETCHER] Processing client data:", clientData);
 
       if (clientData) {
@@ -129,11 +134,11 @@ export const useClientDataFetcher = (
         });
       }
     }
-  }, [clientData, clientQueryLoading, updateClientAuthState, hasAttempted]);
+  }, [clientData, clientQueryLoading, updateClientAuthState, attemptCounter]);
 
   // Handle query errors
   useEffect(() => {
-    if (clientQueryError && hasAttempted) {
+    if (clientQueryError && attemptCounter > 0) {
       console.error("[CLIENT_DATA_FETCHER] Query error occurred:", clientQueryError);
 
       const errorMessage = clientQueryError instanceof Error 
@@ -148,18 +153,18 @@ export const useClientDataFetcher = (
         authenticating: false
       });
     }
-  }, [clientQueryError, onError, updateClientAuthState, hasAttempted]);
+  }, [clientQueryError, onError, updateClientAuthState, attemptCounter]);
 
-  // Reset attempt flag when refresh is triggered
+  // Reset attempt counter when refresh is triggered
   useEffect(() => {
     if (refreshToggle !== undefined) {
-      console.log("[CLIENT_DATA_FETCHER] Resetting attempt flag due to refresh");
-      setHasAttempted(false);
+      console.log("[CLIENT_DATA_FETCHER] Resetting attempt counter due to refresh");
+      setAttemptCounter(0);
     }
   }, [refreshToggle]);
 
   return { 
     clientData, 
-    clientQueryLoading: clientQueryLoading && !hasAttempted
+    clientQueryLoading: clientQueryLoading && attemptCounter <= maxAttempts
   };
 };
