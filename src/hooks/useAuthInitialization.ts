@@ -1,7 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { unifiedAuthService } from '@/services/unifiedAuthService';
+import { optimizedAuthService } from '@/services/optimizedAuthService';
 import { UnifiedAuthState } from '@/types/unifiedAuthTypes';
 
 export const useAuthInitialization = (
@@ -137,7 +137,7 @@ const determineUserRole = async (
       loading: true // Keep loading while determining role
     });
 
-    const authData = await unifiedAuthService.getUserAuthData(user.id);
+    const authData = await optimizedAuthService.getUserAuthData(user.id);
     
     console.log("[AUTH_INIT] User auth data processed:", {
       role: authData.role,
