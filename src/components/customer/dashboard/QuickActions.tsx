@@ -4,7 +4,7 @@ import { QuickActionCard } from "./QuickActionCard";
 
 export const QuickActions: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* REMOVED QuickActionCard for "הגשת פריטים חדשים" */}
       {/* 
       <QuickActionCard

@@ -36,8 +36,8 @@ export const SubmissionsStatusOverview: React.FC<SubmissionsStatusOverviewProps>
   isLoading
 }) => {
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="w-full max-w-2xl">
+      <CardHeader className="pb-3 text-center">
         <CardTitle className="text-2xl">סטטוס מנות</CardTitle>
         <CardDescription>סקירת מספר המנות לפי סטטוס</CardDescription>
       </CardHeader>

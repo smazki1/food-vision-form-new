@@ -119,7 +119,7 @@ export function CustomerDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full flex flex-col items-center space-y-6">
       {/* Welcome message */}
       <WelcomeSection clientProfile={clientProfile} />
 

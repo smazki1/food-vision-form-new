@@ -7,7 +7,7 @@ interface WelcomeSectionProps {
 
 export const WelcomeSection: React.FC<WelcomeSectionProps> = ({ clientProfile }) => {
   return (
-    <div className="mb-6">
+    <div className="w-full mb-6 text-center">
       <h1 className="text-3xl font-bold">שלום, {clientProfile?.contact_name || "לקוח/ה יקר/ה"}</h1>
       <p className="text-muted-foreground">ברוכים הבאים למערכת Food Vision</p>
     </div>
