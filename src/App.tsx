@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +16,7 @@ const AdminRoute = lazy(() => import("./components/AdminRoute"));
 const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
-const PublicUploadPage = lazy(() => import("./pages/public/PublicUploadPage"));
+const PublicUploadPage = lazy(() => import("./pages/PublicUploadPage"));
 
 // Customer pages
 const CustomerHomePage = lazy(() => import("./pages/customer/CustomerHomePage"));
