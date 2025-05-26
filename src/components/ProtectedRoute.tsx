@@ -4,7 +4,7 @@ import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { toast } from 'sonner';
 
-export const ProtectedRoute = () => {
+const ProtectedRoute = () => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   const { 
     clientId, 
@@ -73,9 +73,9 @@ export const ProtectedRoute = () => {
 
   // Condition 2: If not authenticated after all loading attempts, redirect to login.
   if (!isAuthenticated) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - NOT Authenticated. Redirecting to /login.");
+    console.log("[AUTH_DEBUG] ProtectedRoute - NOT Authenticated. Redirecting to /customer-login.");
     // Toast logic from original code can be added here if needed for non-authenticated redirect
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/customer-login" state={{ from: location }} replace />;
   }
 
   // If we reach here: User IS Authenticated.
@@ -96,3 +96,5 @@ export const ProtectedRoute = () => {
     
     return <Outlet />;
 };
+
+export default ProtectedRoute;

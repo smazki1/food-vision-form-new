@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useClients_Simplified_V2 } from "@/hooks/useClients"; 
@@ -14,7 +13,7 @@ const AdminContentLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="p-2 sm:p-4 md:p-6 lg:p-8 max-w-7xl mx-auto">{children}</div>
 );
 
-export function ClientsList() {
+const ClientsList = () => {
   const { t } = useTranslation();
   const currentUserRoleData = useCurrentUserRole();
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,4 +162,6 @@ export function ClientsList() {
       )}
     </AdminContentLayout>
   );
-}
+};
+
+export default ClientsList;
