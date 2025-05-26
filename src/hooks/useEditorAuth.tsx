@@ -12,7 +12,7 @@ export function useEditorAuth() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
-  const { role, isLoading: isRoleLoading } = useCurrentUserRole();
+  const { role, isLoading } = useCurrentUserRole(); // Use isLoading instead of isRoleLoading
   
   // Check if user is authenticated as editor
   useEffect(() => {
@@ -46,11 +46,11 @@ export function useEditorAuth() {
   
   // Check if user has editor role
   useEffect(() => {
-    if (!isRoleLoading && role !== 'editor' && !isChecking && isAuthenticated) {
+    if (!isLoading && role !== 'editor' && !isChecking && isAuthenticated) {
       toast.error("אין לך הרשאות גישה לאזור העורכים");
       navigate("/admin/dashboard");
     }
-  }, [role, isRoleLoading, isAuthenticated, isChecking, navigate]);
+  }, [role, isLoading, isAuthenticated, isChecking, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem("adminAuthenticated");
@@ -63,7 +63,7 @@ export function useEditorAuth() {
     isAuthenticated,
     isChecking,
     role,
-    isRoleLoading,
+    isRoleLoading: isLoading, // Keep backward compatibility
     handleLogout
   };
 }

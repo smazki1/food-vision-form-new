@@ -3,16 +3,17 @@ import { useEffect, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/unifiedAuthTypes';
+import { optimizedAuthService } from '@/services/optimizedAuthService';
 
 /**
  * Hook to handle authentication initialization and user role determination
- * Optimized version using unified database query
+ * Optimized version using unified database query and caching
  */
 export const useAuthInitialization = (
   updateAuthState: (updates: any) => void
 ) => {
   /**
-   * Determines user role and client ID using optimized SQL function
+   * Determines user role and client ID using optimized SQL function with caching
    */
   const determineUserRole = useCallback(async (currentUser: User): Promise<void> => {
     if (!currentUser) {
@@ -23,56 +24,48 @@ export const useAuthInitialization = (
     console.log('[UNIFIED_AUTH] Determining role for user:', currentUser.id);
 
     try {
-      // Use the new optimized SQL function
-      console.log('[UNIFIED_AUTH] Calling optimized get_user_auth_data function...');
-      const { data: authData, error: authError } = await supabase
-        .rpc('get_user_auth_data', { user_uid: currentUser.id });
+      // Check cache first for faster subsequent loads
+      const cachedData = optimizedAuthService.getCachedUserAuthData(currentUser.id);
+      if (cachedData) {
+        console.log('[UNIFIED_AUTH] Using cached auth data');
+        updateAuthState({
+          role: cachedData.role,
+          clientId: cachedData.clientId,
+          hasLinkedClientRecord: cachedData.hasLinkedClientRecord,
+          hasError: false,
+          errorMessage: null
+        });
+        return;
+      }
 
-      console.log('[UNIFIED_AUTH] Auth data result:', { 
-        success: !authError, 
-        data: authData,
-        error: authError?.message || null,
-        errorCode: authError?.code || null 
-      });
+      // Use the new optimized service
+      console.log('[UNIFIED_AUTH] Calling optimized auth service...');
+      const authResult = await optimizedAuthService.getUserAuthData(currentUser.id);
 
-      if (authError) {
-        console.error('[UNIFIED_AUTH] Auth data query error:', authError);
+      if (authResult.error) {
+        console.error('[UNIFIED_AUTH] Auth data error:', authResult.error);
         updateAuthState({ 
           hasError: true,
-          errorMessage: `Failed to determine user role: ${authError.message}`,
+          errorMessage: `Failed to determine user role: ${authResult.error}`,
           loading: false
         });
         return;
       }
 
-      if (!authData || authData.length === 0) {
-        console.warn('[UNIFIED_AUTH] No auth data returned for user');
-        updateAuthState({
-          role: null,
-          clientId: null,
-          hasLinkedClientRecord: false,
-          hasError: true,
-          errorMessage: 'User has no defined role or client record'
-        });
-        return;
-      }
-
-      const userAuthData = authData[0];
-      const role = userAuthData.user_role as UserRole;
-      const clientId = userAuthData.client_id;
-      const hasLinkedClientRecord = userAuthData.has_client_record;
-
       console.log('[UNIFIED_AUTH] User auth data processed:', {
-        role,
-        clientId,
-        hasLinkedClientRecord,
-        restaurantName: userAuthData.restaurant_name
+        role: authResult.role,
+        clientId: authResult.clientId,
+        hasLinkedClientRecord: authResult.hasLinkedClientRecord,
+        restaurantName: authResult.restaurantName
       });
 
+      // Cache the successful result
+      optimizedAuthService.cacheUserAuthData(currentUser.id, authResult);
+
       updateAuthState({
-        role,
-        clientId,
-        hasLinkedClientRecord,
+        role: authResult.role,
+        clientId: authResult.clientId,
+        hasLinkedClientRecord: authResult.hasLinkedClientRecord,
         hasError: false,
         errorMessage: null
       });
@@ -97,6 +90,24 @@ export const useAuthInitialization = (
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('[UNIFIED_AUTH] Auth state changed:', event, session?.user?.id);
       
+      // Clear cache on sign out
+      if (event === 'SIGNED_OUT') {
+        if (session?.user?.id) {
+          optimizedAuthService.clearCachedAuthData(session.user.id);
+        }
+        updateAuthState({
+          user: null,
+          session: null,
+          isAuthenticated: false,
+          role: null,
+          clientId: null,
+          hasLinkedClientRecord: false,
+          loading: false,
+          initialized: true
+        });
+        return;
+      }
+      
       // Update state based on auth event
       if (event === 'SIGNED_IN' && session?.user) {
         updateAuthState({ 
@@ -110,18 +121,6 @@ export const useAuthInitialization = (
         setTimeout(() => {
           determineUserRole(session.user);
         }, 0);
-      } 
-      else if (event === 'SIGNED_OUT') {
-        updateAuthState({
-          user: null,
-          session: null,
-          isAuthenticated: false,
-          role: null,
-          clientId: null,
-          hasLinkedClientRecord: false,
-          loading: false,
-          initialized: true
-        });
       }
     });
 

@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 
 export interface Package {
@@ -13,6 +14,9 @@ export interface Package {
   created_at: string;
   updated_at: string;
 }
+
+// Add ServicePackage as an alias for Package for backward compatibility
+export type ServicePackage = Package;
 
 // Updated with real IDs from the database for the primary three tiers
 export const MOCK_PACKAGES: Package[] = [

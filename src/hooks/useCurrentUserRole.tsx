@@ -1,220 +1,146 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { UserRole } from "@/types/auth";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { UserRole } from '@/types/auth';
+import { toast } from 'sonner';
 
-export type AuthRoleStatus =
-  | "INITIALIZING"
-  | "CHECKING_SESSION"
-  | "NO_SESSION"
-  | "FETCHING_ROLE"
-  | "ROLE_DETERMINED"
-  | "ERROR_SESSION"
-  | "ERROR_FETCHING_ROLE";
+export type CurrentUserRoleStatus = 
+  | 'INITIALIZING'
+  | 'CHECKING_SESSION' 
+  | 'NO_SESSION'
+  | 'FETCHING_ROLE'
+  | 'ROLE_DETERMINED'
+  | 'ERROR_SESSION'
+  | 'ERROR_FETCHING_ROLE';
 
 export interface CurrentUserRoleState {
-  status: AuthRoleStatus;
+  status: CurrentUserRoleStatus;
   role: UserRole | null;
   isAdmin: boolean;
   isAccountManager: boolean;
   isEditor: boolean;
   userId: string | null;
   error: string | null;
+  isLoading: boolean; // Add this property
 }
 
-const initialState: CurrentUserRoleState = {
-  status: "INITIALIZING",
-  role: null,
-  isAdmin: false,
-  isAccountManager: false,
-  isEditor: false,
-  userId: null,
-  error: null,
+const CurrentUserRoleContext = createContext<CurrentUserRoleState | undefined>(undefined);
+
+export const CurrentUserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const state = useCurrentUserRoleLogic();
+  return (
+    <CurrentUserRoleContext.Provider value={state}>
+      {children}
+    </CurrentUserRoleContext.Provider>
+  );
 };
 
-// Create the context
-const CurrentUserRoleContext = createContext<CurrentUserRoleState | undefined>(
-  undefined
-);
-
-const USER_ROLE_TOAST_ID = 'user-role-error-toast';
-
-// Internal logic hook
 function useCurrentUserRoleLogic(): CurrentUserRoleState {
-  const [currentState, setCurrentState] = useState<CurrentUserRoleState>(initialState);
-  const [hasAuthenticatedSession, setHasAuthenticatedSession] = useState<boolean>(false);
-  const queryClient = useQueryClient();
+  const [authSession, setAuthSession] = useState<{ user: User | null; hasAuthSession: boolean }>({
+    user: null,
+    hasAuthSession: false,
+  });
+  const [status, setStatus] = useState<CurrentUserRoleStatus>('INITIALIZING');
+
+  const fetchUserRole = useCallback(async (userId: string) => {
+    console.log('[useCurrentUserRole] Fetching role for user:', userId);
+    const { data: role, error } = await supabase
+      .rpc('get_my_role')
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[useCurrentUserRole] Error fetching role:', error);
+      throw new Error(error.message);
+    }
+
+    return role as UserRole;
+  }, []);
+
+  const {
+    data: rpcRole,
+    error: rpcQueryError,
+    isLoading: isRpcLoading,
+    refetch: refetchRole,
+  } = useQuery(
+    ['user-role', authSession.user?.id],
+    () => fetchUserRole(authSession.user!.id),
+    {
+      enabled: !!authSession.user?.id && status !== 'CHECKING_SESSION' && status !== 'INITIALIZING',
+      retry: false,
+      onSuccess: (data) => {
+        setStatus('ROLE_DETERMINED');
+        toast.dismiss('user-role-error-toast');
+      },
+      onError: (err: any) => {
+        setStatus('ERROR_FETCHING_ROLE');
+        toast.error(`Error determining user role. ${err.message}`, { id: 'user-role-error-toast' });
+      },
+    }
+  );
 
   useEffect(() => {
-    console.log("[useCurrentUserRole_Logic] Effect: Main - Initializing session check and auth listener.");
-    setCurrentState(prev => ({ ...prev, status: "CHECKING_SESSION" }));
-
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error("[useCurrentUserRole_Logic] Error fetching initial session:", sessionError);
-          setCurrentState(prev => ({ ...initialState, status: "ERROR_SESSION", error: sessionError.message, userId: null }));
-          setHasAuthenticatedSession(false);
-          toast.error("Session error: " + sessionError.message, { id: USER_ROLE_TOAST_ID });
-        } else if (!session) {
-          console.log("[useCurrentUserRole_Logic] No active initial session found.");
-          setCurrentState(prev => ({ ...initialState, status: "NO_SESSION", userId: null }));
-          setHasAuthenticatedSession(false);
-          toast.dismiss(USER_ROLE_TOAST_ID);
-        } else {
-          console.log("[useCurrentUserRole_Logic] Initial session found. User ID:", session.user.id);
-          setCurrentState(prev => ({ ...initialState, status: "FETCHING_ROLE", userId: session.user.id }));
-          setHasAuthenticatedSession(true);
-          toast.dismiss(USER_ROLE_TOAST_ID);
+    setStatus('CHECKING_SESSION');
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Session error:", error);
+          setStatus('ERROR_SESSION');
+          toast.error(`Session error: ${error.message}`, { id: 'user-role-error-toast' });
+          return;
         }
-      } catch (e: any) {
-        console.error("[useCurrentUserRole_Logic] Exception during getInitialSession:", e);
-        setCurrentState(prev => ({ ...initialState, status: "ERROR_SESSION", error: e.message, userId: null }));
-        setHasAuthenticatedSession(false);
-        toast.error("Session exception: " + e.message, { id: USER_ROLE_TOAST_ID });
-      }
-    };
 
-    getInitialSession();
+        if (!data.session) {
+          setStatus('NO_SESSION');
+          return;
+        }
+
+        setAuthSession({ user: data.session.user, hasAuthSession: true });
+      });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("[useCurrentUserRole_Logic] Auth state changed:", event, "User:", session?.user?.id);
-        queryClient.invalidateQueries({ queryKey: ['current-user-role-rpc', session?.user?.id] });
+      async (event, session) => {
+        console.log('[useCurrentUserRole] Auth state change event:', event);
 
-        if (event === "SIGNED_OUT" || !session) {
-          setCurrentState({ ...initialState, status: "NO_SESSION" });
-          setHasAuthenticatedSession(false);
-          toast.dismiss(USER_ROLE_TOAST_ID);
-        } else if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") {
-          setCurrentState(prev => ({
-            ...initialState,
-            status: "FETCHING_ROLE",
-            userId: session.user.id
-          }));
-          setHasAuthenticatedSession(true);
-          toast.dismiss(USER_ROLE_TOAST_ID);
+        if (event === 'SIGNED_IN' && session) {
+          setAuthSession({ user: session.user, hasAuthSession: true });
+          setStatus('FETCHING_ROLE');
+          refetchRole();
+        }
+
+        if (event === 'SIGNED_OUT') {
+          setAuthSession({ user: null, hasAuthSession: false });
+          setStatus('NO_SESSION');
         }
       }
     );
 
     return () => {
       authListener.subscription.unsubscribe();
-      toast.dismiss(USER_ROLE_TOAST_ID);
+      toast.dismiss('user-role-error-toast');
     };
-  }, [queryClient]);
+  }, [refetchRole]);
 
-  const { 
-    data: rpcRole,
-    error: rpcQueryError, 
-    isLoading: isRpcQueryLoading, 
-    isFetching: isRpcQueryFetching,
-  } = useQuery<UserRole | null, Error>(
-    {
-      queryKey: ['current-user-role-rpc', currentState.userId],
-      queryFn: async (): Promise<UserRole | null> => {
-        console.log("[useCurrentUserRole_Logic] queryFn: Calling RPC 'get_my_role'. Current state userId:", currentState.userId);
-        
-        const { data, error } = await supabase.rpc('get_my_role', {});
-        
-        if (error) {
-          console.error("[useCurrentUserRole_Logic] queryFn: RPC error calling 'get_my_role':", error);
-          throw new Error(error.message || "RPC call failed"); 
-        }
-        console.log("[useCurrentUserRole_Logic] queryFn: Successfully called RPC. Role data:", data);
-        return data as UserRole | null;
-      },
-      enabled: hasAuthenticatedSession && !!currentState.userId,
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, 
-    }
-  );
+  const finalState: CurrentUserRoleState = {
+    status,
+    role: rpcRole || null,
+    isAdmin: rpcRole === 'admin',
+    isAccountManager: rpcRole === 'account_manager', 
+    isEditor: rpcRole === 'editor',
+    userId: authSession.user?.id || null,
+    error: rpcQueryError?.message || null,
+    isLoading: status === 'CHECKING_SESSION' || status === 'FETCHING_ROLE' || status === 'INITIALIZING', // Add this property
+  };
 
-  useEffect(() => {
-    console.log("[useCurrentUserRole_Logic] Effect: Processing RPC query results. HasAuthSession:", hasAuthenticatedSession, "isRpcQueryLoading/Fetching:", isRpcQueryLoading, isRpcQueryFetching, "rpcRole:", rpcRole, "rpcQueryError:", rpcQueryError, "Current Status:", currentState.status, "User ID from state:", currentState.userId);
-
-    if (!hasAuthenticatedSession) {
-      const nonResettableStatuses: AuthRoleStatus[] = [
-        "NO_SESSION", 
-        "INITIALIZING", 
-        "CHECKING_SESSION", 
-        "ERROR_SESSION"
-      ];
-      if (!nonResettableStatuses.includes(currentState.status)) {
-         setCurrentState(prev => ({ ...initialState, status: "NO_SESSION" }));
-         toast.dismiss(USER_ROLE_TOAST_ID);
-      }
-      return;
-    }
-    
-    if (isRpcQueryLoading || isRpcQueryFetching) {
-      setCurrentState(prev => ({ 
-        ...prev, 
-        status: "FETCHING_ROLE", 
-        userId: prev.userId || currentState.userId,
-        role: null, 
-        isAdmin: false, 
-        isAccountManager: false, 
-        isEditor: false, 
-        error: null 
-      }));
-      return;
-    }
-
-    if (rpcQueryError) {
-      console.error("[useCurrentUserRole_Logic] Processing: RPC query error:", rpcQueryError);
-      toast.error("Error determining user role. " + rpcQueryError.message, { id: USER_ROLE_TOAST_ID });
-      setCurrentState(prev => ({
-        ...initialState,
-        userId: currentState.userId, 
-        status: "ERROR_FETCHING_ROLE",
-        error: rpcQueryError.message,
-      }));
-      return;
-    }
-
-    toast.dismiss(USER_ROLE_TOAST_ID);
-    console.log("[useCurrentUserRole_Logic] Processing: RPC query finished. Role from RPC:", rpcRole);
-    
-    setCurrentState(prev => ({
-      userId: currentState.userId || prev.userId, 
-      status: "ROLE_DETERMINED",
-      role: rpcRole,
-      isAdmin: rpcRole === 'admin',
-      isAccountManager: rpcRole === 'account_manager',
-      isEditor: rpcRole === 'editor',
-      error: null,
-    }));
-
-  }, [hasAuthenticatedSession, rpcRole, rpcQueryError, isRpcQueryLoading, isRpcQueryFetching, currentState.status, currentState.userId]);
-
-  useEffect(() => {
-    console.log("[useCurrentUserRole_Logic] FINAL State produced by logic hook:", currentState);
-  }, [currentState]);
-  
-  return currentState;
+  console.log('[useCurrentUserRole_Logic] FINAL State produced by logic hook:', finalState);
+  return finalState;
 }
 
-// Provider component
-export const CurrentUserRoleProvider = ({ children }: { children: ReactNode }): JSX.Element => {
-  const currentUserRoleState = useCurrentUserRoleLogic();
-  return (
-    <CurrentUserRoleContext.Provider value={currentUserRoleState}>
-      {children}
-    </CurrentUserRoleContext.Provider>
-  );
-};
-
-// Custom hook to consume the context
-export const useCurrentUserRole = (): CurrentUserRoleState => {
+export function useCurrentUserRole(): CurrentUserRoleState {
   const context = useContext(CurrentUserRoleContext);
-  if (context === undefined) {
-    throw new Error("useCurrentUserRole must be used within a CurrentUserRoleProvider");
+  if (!context) {
+    throw new Error('useCurrentUserRole must be used within a CurrentUserRoleProvider');
   }
-  // console.log("[useCurrentUserRole_Consumer] Consuming context state:", context); // Kept for debugging if needed
   return context;
-};
- 
+}

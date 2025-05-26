@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -22,7 +21,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, isLoading: isRoleLoading } = useCurrentUserRole();
+  const { role, isLoading: isRoleLoading } = useCurrentUserRole(); // Use isLoading instead of isRoleLoading
 
   // Check if already authenticated and redirect if needed
   useEffect(() => {
