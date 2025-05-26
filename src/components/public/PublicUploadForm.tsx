@@ -17,7 +17,6 @@ interface FormData {
   description: string;
   category: string;
   ingredients: string;
-  price: string;
   images: File[];
 }
 
@@ -29,7 +28,6 @@ const PublicUploadForm: React.FC = () => {
     description: '',
     category: '',
     ingredients: '',
-    price: '',
     images: []
   });
   
@@ -90,6 +88,8 @@ const PublicUploadForm: React.FC = () => {
       const fileName = `${Date.now()}-${sanitizedFileName}`;
       const filePath = `public-submissions/${fileName}`;
       
+      console.log(`[Upload] Uploading to: ${filePath}`);
+      
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('food-vision-images')
         .upload(filePath, file);
@@ -104,6 +104,7 @@ const PublicUploadForm: React.FC = () => {
         .getPublicUrl(filePath);
         
       uploadedUrls.push(publicUrlData.publicUrl);
+      console.log(`[Upload] Successfully uploaded: ${publicUrlData.publicUrl}`);
     }
     
     return uploadedUrls;
@@ -122,7 +123,9 @@ const PublicUploadForm: React.FC = () => {
 
     try {
       // Upload images first
+      console.log('[Submit] Starting image upload...');
       const uploadedImageUrls = await uploadImages();
+      console.log('[Submit] Images uploaded:', uploadedImageUrls);
       
       // Prepare parameters for the RPC call
       const rpcParams = {
@@ -133,9 +136,10 @@ const PublicUploadForm: React.FC = () => {
         p_category: formData.itemType !== 'cocktail' ? (formData.category.trim() || null) : null,
         p_ingredients: formData.itemType === 'cocktail' ? 
           (formData.ingredients.trim() ? formData.ingredients.split(',').map(i => i.trim()) : null) : null,
-        p_price: formData.price ? parseFloat(formData.price) : null,
         p_reference_image_urls: uploadedImageUrls
       };
+
+      console.log('[Submit] Calling RPC with params:', rpcParams);
 
       // Call the RPC function
       const { data: submissionData, error: submissionError } = await supabase.rpc(
@@ -145,13 +149,13 @@ const PublicUploadForm: React.FC = () => {
 
       if (submissionError) {
         console.error('Error submitting item via RPC:', submissionError);
-        throw submissionError;
+        throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
       }
 
-      const result = submissionData as { success: boolean; message: string; client_found: boolean };
+      console.log('[Submit] RPC response:', submissionData);
       
-      if (result.success) {
-        toast.success(result.message);
+      if (submissionData && submissionData.success) {
+        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
         // Reset form
         setFormData({
           restaurantName: '',
@@ -160,14 +164,13 @@ const PublicUploadForm: React.FC = () => {
           description: '',
           category: '',
           ingredients: '',
-          price: '',
           images: []
         });
         // Reset file input
         const fileInput = document.getElementById('images') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       } else {
-        throw new Error(result.message || 'שגיאה לא ידועה');
+        throw new Error('שגיאה לא ידועה בהגשה');
       }
 
     } catch (error: any) {
@@ -278,20 +281,6 @@ const PublicUploadForm: React.FC = () => {
                   </p>
                 </div>
               )}
-
-              {/* Price */}
-              <div>
-                <Label htmlFor="price">מחיר (₪)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange('price', e.target.value)}
-                  placeholder="הזן מחיר (אופציונלי)"
-                />
-              </div>
 
               {/* Image Upload */}
               <div>
