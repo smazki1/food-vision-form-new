@@ -7,6 +7,7 @@ import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import NavigationButtons from './components/NavigationButtons';
 import { useFormValidation } from './hooks/useFormValidation';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
+import { useNewItemForm } from '@/contexts/NewItemFormContext';
 
 const formSteps = [
   { id: 1, name: 'פרטי המסעדה והפריט' },
@@ -24,6 +25,7 @@ const PublicMultiStepForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { validateStep, errors, clearErrors } = useFormValidation();
   const { submitForm, isSubmitting } = usePublicFormSubmission();
+  const { formData } = useNewItemForm();
 
   const handleNext = async () => {
     const isValid = await validateStep(currentStep);
@@ -43,7 +45,7 @@ const PublicMultiStepForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    const success = await submitForm();
+    const success = await submitForm(formData);
     if (success) {
       setCurrentStep(1);
     }
@@ -79,6 +81,7 @@ const PublicMultiStepForm: React.FC = () => {
               errors={errors}
               onNext={currentStep === 3 ? handleSubmit : handleNext}
               isSubmitting={isSubmitting}
+              onFinalSubmit={currentStep === 3 ? handleSubmit : undefined}
             />
           </div>
 

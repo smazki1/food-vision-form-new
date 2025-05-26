@@ -36,17 +36,6 @@ const allSteps = [
     validate: (data: NewItemFormData) => {
       const newErrors: Record<string, string> = {};
       if (!data.restaurantName?.trim()) newErrors.restaurantName = 'שם המסעדה הוא שדה חובה.';
-      if (!data.contactName?.trim()) newErrors.contactName = 'שם איש קשר הוא שדה חובה.';
-      if (!data.phone?.trim()) {
-        newErrors.phone = 'מספר טלפון הוא שדה חובה.';
-      } else if (!/^\d{9,10}$/.test(data.phone.replace(/-/g, ''))) {
-        newErrors.phone = 'מספר טלפון לא תקין.';
-      }
-      if (!data.email?.trim()) {
-        newErrors.email = 'כתובת אימייל היא שדה חובה.';
-      } else if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(data.email)) {
-        newErrors.email = 'כתובת אימייל לא תקינה.';
-      }
       return newErrors;
     }
   },
@@ -129,9 +118,9 @@ const FoodVisionUploadForm: React.FC = () => {
         try {
           const clientDetailsPayload: FoodVisionClientDetails = {
             restaurantName: formData.restaurantName || '',
-            contactName: formData.contactName || '',
-            phoneNumber: formData.phone || '',
-            email: formData.email || '',
+            contactName: 'לא סופק', // Default value for missing contact name
+            phoneNumber: 'לא סופק', // Default value for missing phone
+            email: 'לא סופק', // Default value for missing email
           };
 
           const authUserId = unifiedUser?.id;
