@@ -1,237 +1,363 @@
-import React, { useState, ChangeEvent, FormEvent } from 'react';
-import { supabase } from '@/integrations/supabase/client'; // Corrected Supabase import path
+
+import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react'; // For spinner
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, X } from 'lucide-react';
 
-type ItemType = 'dish' | 'cocktail' | 'drink';
-
-interface SubmissionResult {
-  success: boolean;
-  submission_id: string;
-  item_id: string;
-  client_found: boolean;
-  client_id: string | null;
-  message: string;
+interface FormData {
+  restaurantName: string;
+  itemType: 'dish' | 'cocktail' | 'drink' | '';
+  itemName: string;
+  description: string;
+  category: string;
+  ingredients: string;
+  price: string;
+  images: File[];
 }
 
 const PublicUploadForm: React.FC = () => {
-  const [restaurantName, setRestaurantName] = useState('');
-  const [itemType, setItemType] = useState<ItemType>('dish');
-  const [itemName, setItemName] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [ingredients, setIngredients] = useState<string[]>([]);
-  const [price, setPrice] = useState<number | ''>('');
-  const [files, setFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [submissionStatus, setSubmissionStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [formData, setFormData] = useState<FormData>({
+    restaurantName: '',
+    itemType: '',
+    itemName: '',
+    description: '',
+    category: '',
+    ingredients: '',
+    price: '',
+    images: []
+  });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(Array.from(e.target.files));
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  const handleIngredientsChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setIngredients(e.target.value.split(',').map(ing => ing.trim()));
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 10) {
+      toast.error('ניתן להעלות עד 10 תמונות בלבד');
+      return;
+    }
+    setFormData(prev => ({ ...prev, images: files }));
+    if (errors.images) {
+      setErrors(prev => ({ ...prev, images: '' }));
+    }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setSubmissionStatus(null);
+  const removeImage = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
 
-    if (!restaurantName || !itemName) {
-        setSubmissionStatus({ type: 'error', message: 'שם מסעדה ושם פריט הם שדות חובה.' });
-        setIsLoading(false);
-        return;
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.restaurantName.trim()) {
+      newErrors.restaurantName = 'שם המסעדה הוא שדה חובה';
+    }
+    if (!formData.itemType) {
+      newErrors.itemType = 'סוג הפריט הוא שדה חובה';
+    }
+    if (!formData.itemName.trim()) {
+      newErrors.itemName = 'שם הפריט הוא שדה חובה';
+    }
+    if (formData.images.length === 0) {
+      newErrors.images = 'יש להעלות לפחות תמונה אחת';
     }
 
-    let imageUrls: string[] = [];
-    if (files.length > 0) {
-      for (const file of files) {
-        const fileName = `${Date.now()}-${file.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('food-vision-images') // Corrected bucket name
-          .upload(`public-submissions/${fileName}`, file);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-        if (uploadError) {
-          console.error('Error uploading image:', uploadError);
-          setSubmissionStatus({ type: 'error', message: `שגיאה בהעלאת תמונה: ${uploadError.message}` });
-          setIsLoading(false);
-          return;
-        }
-        if (uploadData) {
-          // Get public URL
-          const { data: urlData } = supabase.storage.from('food-vision-images').getPublicUrl(uploadData.path);
-          imageUrls.push(urlData.publicUrl);
-        }
+  const uploadImages = async (): Promise<string[]> => {
+    const uploadedUrls: string[] = [];
+    
+    for (const file of formData.images) {
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9_\-\.]/g, '_');
+      const fileName = `${Date.now()}-${sanitizedFileName}`;
+      const filePath = `public-submissions/${fileName}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('food-vision-images')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        console.error('Error uploading file:', uploadError);
+        throw new Error(`שגיאה בהעלאת קובץ: ${file.name}`);
       }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('food-vision-images')
+        .getPublicUrl(filePath);
+        
+      uploadedUrls.push(publicUrlData.publicUrl);
+    }
+    
+    return uploadedUrls;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error('אנא תקן את השגיאות בטופס');
+      return;
     }
 
-    const params = {
-      p_restaurant_name: restaurantName,
-      p_item_type: itemType,
-      p_item_name: itemName,
-      p_description: description || null,
-      p_category: itemType === 'cocktail' ? null : category || null,
-      p_ingredients: itemType === 'cocktail' ? ingredients : null,
-      p_price: price === '' ? null : Number(price),
-      p_reference_image_urls: imageUrls.length > 0 ? imageUrls : null,
-    };
+    setIsSubmitting(true);
+    toast.info('מעלה פרטי פריט ותמונות...');
 
-    const { data, error } = await supabase.rpc('public_submit_item_by_restaurant_name', params);
+    try {
+      // Upload images first
+      const uploadedImageUrls = await uploadImages();
+      
+      // Prepare parameters for the RPC call
+      const rpcParams = {
+        p_restaurant_name: formData.restaurantName.trim(),
+        p_item_type: formData.itemType,
+        p_item_name: formData.itemName.trim(),
+        p_description: formData.description.trim() || null,
+        p_category: formData.itemType !== 'cocktail' ? (formData.category.trim() || null) : null,
+        p_ingredients: formData.itemType === 'cocktail' ? 
+          (formData.ingredients.trim() ? formData.ingredients.split(',').map(i => i.trim()) : null) : null,
+        p_price: formData.price ? parseFloat(formData.price) : null,
+        p_reference_image_urls: uploadedImageUrls
+      };
 
-    setIsLoading(false);
+      // Call the RPC function
+      const { data: submissionData, error: submissionError } = await supabase.rpc(
+        'public_submit_item_by_restaurant_name',
+        rpcParams
+      );
 
-    if (error) {
-      console.error('Error submitting item:', error);
-      setSubmissionStatus({ type: 'error', message: `שגיאה בשליחת הפריט: ${error.message}` });
-    } else if (data) {
-        const result = data as unknown as SubmissionResult; // Cast to SubmissionResult
-        if (result.success) {
-            setSubmissionStatus({ type: 'success', message: result.message || 'הפריט נשלח בהצלחה!' });
-            // Optionally reset form
-            setRestaurantName('');
-            setItemType('dish');
-            setItemName('');
-            setDescription('');
-            setCategory('');
-            setIngredients([]);
-            setPrice('');
-            setFiles([]);
-        } else {
-            setSubmissionStatus({ type: 'error', message: result.message || 'שגיאה בשליחת הפריט.' });
-        }
+      if (submissionError) {
+        console.error('Error submitting item via RPC:', submissionError);
+        throw submissionError;
+      }
+
+      const result = submissionData as { success: boolean; message: string; client_found: boolean };
+      
+      if (result.success) {
+        toast.success(result.message);
+        // Reset form
+        setFormData({
+          restaurantName: '',
+          itemType: '',
+          itemName: '',
+          description: '',
+          category: '',
+          ingredients: '',
+          price: '',
+          images: []
+        });
+        // Reset file input
+        const fileInput = document.getElementById('images') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+      } else {
+        throw new Error(result.message || 'שגיאה לא ידועה');
+      }
+
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      toast.error(`שגיאה בהגשה: ${error.message || 'אירעה שגיאה לא צפויה'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div dir="rtl" className="max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 bg-white shadow-lg rounded-lg">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">העלאת פריט חדש לתפריט</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <Label htmlFor="restaurantName" className="block text-sm font-medium text-gray-700 mb-1">שם המסעדה (חובה)</Label>
-          <Input
-            id="restaurantName"
-            type="text"
-            value={restaurantName}
-            onChange={(e) => setRestaurantName(e.target.value)}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
+    <div className="min-h-screen bg-gray-100 py-8 px-4" dir="rtl">
+      <div className="max-w-2xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">העלאת פריט חדש למסעדה</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Restaurant Name */}
+              <div>
+                <Label htmlFor="restaurantName">שם המסעדה *</Label>
+                <Input
+                  id="restaurantName"
+                  value={formData.restaurantName}
+                  onChange={(e) => handleInputChange('restaurantName', e.target.value)}
+                  placeholder="הזן את שם המסעדה"
+                  className={errors.restaurantName ? 'border-red-500' : ''}
+                />
+                {errors.restaurantName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.restaurantName}</p>
+                )}
+              </div>
 
-        <div>
-          <Label htmlFor="itemType" className="block text-sm font-medium text-gray-700 mb-1">סוג הפריט</Label>
-          <Select value={itemType} onValueChange={(value) => setItemType(value as ItemType)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="בחר סוג פריט" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dish">מנה</SelectItem>
-              <SelectItem value="cocktail">קוקטייל</SelectItem>
-              <SelectItem value="drink">משקה</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+              {/* Item Type */}
+              <div>
+                <Label htmlFor="itemType">סוג הפריט *</Label>
+                <Select 
+                  value={formData.itemType} 
+                  onValueChange={(value) => handleInputChange('itemType', value)}
+                >
+                  <SelectTrigger className={errors.itemType ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="בחר סוג פריט" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dish">מנה</SelectItem>
+                    <SelectItem value="cocktail">קוקטייל</SelectItem>
+                    <SelectItem value="drink">משקה</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.itemType && (
+                  <p className="text-red-500 text-sm mt-1">{errors.itemType}</p>
+                )}
+              </div>
 
-        <div>
-          <Label htmlFor="itemName" className="block text-sm font-medium text-gray-700 mb-1">שם הפריט (חובה)</Label>
-          <Input
-            id="itemName"
-            type="text"
-            value={itemName}
-            onChange={(e) => setItemName(e.target.value)}
-            required
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
+              {/* Item Name */}
+              <div>
+                <Label htmlFor="itemName">שם הפריט *</Label>
+                <Input
+                  id="itemName"
+                  value={formData.itemName}
+                  onChange={(e) => handleInputChange('itemName', e.target.value)}
+                  placeholder="הזן את שם הפריט"
+                  className={errors.itemName ? 'border-red-500' : ''}
+                />
+                {errors.itemName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.itemName}</p>
+                )}
+              </div>
 
-        <div>
-          <Label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">תיאור</Label>
-          <Textarea
-            id="description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
+              {/* Description */}
+              <div>
+                <Label htmlFor="description">תיאור הפריט</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="תאר את הפריט (אופציונלי)"
+                  rows={3}
+                />
+              </div>
 
-        {itemType !== 'cocktail' && (
-          <div>
-            <Label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">קטגוריה</Label>
-            <Input
-              id="category"
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-        )}
+              {/* Category (for dishes and drinks) */}
+              {formData.itemType && formData.itemType !== 'cocktail' && (
+                <div>
+                  <Label htmlFor="category">קטגוריה</Label>
+                  <Input
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) => handleInputChange('category', e.target.value)}
+                    placeholder={`קטגורית ${formData.itemType === 'dish' ? 'המנה' : 'המשקה'} (אופציונלי)`}
+                  />
+                </div>
+              )}
 
-        {itemType === 'cocktail' && (
-          <div>
-            <Label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-1">מרכיבים (מופרדים בפסיק)</Label>
-            <Input
-              id="ingredients"
-              type="text"
-              value={ingredients.join(', ')}
-              onChange={handleIngredientsChange}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-        )}
+              {/* Ingredients (for cocktails) */}
+              {formData.itemType === 'cocktail' && (
+                <div>
+                  <Label htmlFor="ingredients">מרכיבים</Label>
+                  <Input
+                    id="ingredients"
+                    value={formData.ingredients}
+                    onChange={(e) => handleInputChange('ingredients', e.target.value)}
+                    placeholder="הזן מרכיבים מופרדים בפסיק (אופציונלי)"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    לדוגמה: וודקה, מיץ קרנברי, מיץ ליים
+                  </p>
+                </div>
+              )}
 
-        <div>
-          <Label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">מחיר</Label>
-          <Input
-            id="price"
-            type="number"
-            value={price}
-            onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-            step="0.01"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
+              {/* Price */}
+              <div>
+                <Label htmlFor="price">מחיר (₪)</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={(e) => handleInputChange('price', e.target.value)}
+                  placeholder="הזן מחיר (אופציונלי)"
+                />
+              </div>
 
-        <div>
-          <Label htmlFor="files" className="block text-sm font-medium text-gray-700 mb-1">העלאת תמונות</Label>
-          <Input
-            id="files"
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
-          />
-          {files.length > 0 && (
-            <div className="mt-2 text-sm text-gray-600">
-              {files.length} קבצים נבחרו: {files.map(f => f.name).join(', ')}
-            </div>
-          )}
-        </div>
+              {/* Image Upload */}
+              <div>
+                <Label htmlFor="images">תמונות הפריט *</Label>
+                <div className="mt-2">
+                  <input
+                    id="images"
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="images"
+                    className={`border-2 border-dashed rounded-lg p-6 cursor-pointer hover:bg-gray-50 transition-colors flex flex-col items-center justify-center ${
+                      errors.images ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-600">לחץ כדי לבחור תמונות</span>
+                    <span className="text-xs text-gray-400 mt-1">עד 10 תמונות</span>
+                  </label>
+                </div>
+                
+                {/* Preview uploaded images */}
+                {formData.images.length > 0 && (
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {formData.images.map((file, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`תצוגה מקדימה ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {errors.images && (
+                  <p className="text-red-500 text-sm mt-1">{errors.images}</p>
+                )}
+              </div>
 
-        {submissionStatus && (
-          <div className={`p-4 rounded-md ${submissionStatus.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {submissionStatus.message}
-          </div>
-        )}
-
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'שלח פריט'}
-        </Button>
-      </form>
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-3 text-lg"
+              >
+                {isSubmitting ? 'שולח...' : 'שלח פריט למסעדה'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
-export default PublicUploadForm; 
+export default PublicUploadForm;
