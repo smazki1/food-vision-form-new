@@ -12,7 +12,6 @@ import FoodVisionForm from './pages/FoodVisionForm';
 import EditorLayout from './layouts/EditorLayout';
 import SubmissionProcessingPage from './pages/editor/SubmissionProcessingPage';
 import ClientsList from './pages/admin/ClientsList';
-import CustomerLogin as EditorLoginPage from './pages/customer/CustomerLogin';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { DebugPanel } from '@/components/ui/debug-panel';
 import Dashboard from './pages/admin/Dashboard';
@@ -26,7 +25,7 @@ function App() {
           <UnifiedAuthProvider>
             <Routes>
               <Route path="/login" element={<CustomerLogin />} />
-              <Route path="/editor/login" element={<EditorLoginPage />} />
+              <Route path="/editor/login" element={<CustomerLogin />} />
               <Route path="/food-vision" element={<FoodVisionForm />} />
 
               {/* Admin Routes */}
