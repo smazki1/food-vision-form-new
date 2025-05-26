@@ -92,9 +92,7 @@ export const useClientDataFetcher = (
     enabled: shouldEnableQuery,
     retry: 1,
     staleTime: 30000, // 30 seconds
-    refetchOnWindowFocus: false,
-    // Reduced timeout to 3 seconds for faster failure
-    timeout: 3000
+    refetchOnWindowFocus: false
   });
 
   // Set up timeout protection - reduced to 3 seconds
@@ -110,7 +108,7 @@ export const useClientDataFetcher = (
         console.warn("[CLIENT_DATA_FETCHER] Query timeout reached, forcing fallback");
         setForcedTimeout(true);
         onError("Client data query timed out.");
-      }, 3000); // Reduced from 7 seconds to 3 seconds
+      }, 3000); // 3 seconds timeout
 
       return () => {
         if (timeoutRef.current) {
