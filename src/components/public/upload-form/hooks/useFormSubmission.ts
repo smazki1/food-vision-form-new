@@ -1,32 +1,18 @@
 
 import { useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
-import { toast } from 'sonner';
+import { usePublicFormSubmission as useRealSubmission } from '@/hooks/usePublicFormSubmission';
 
 export const useFormSubmission = () => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { formData, resetFormData } = useNewItemForm();
+  const { submitForm: realSubmitForm, isSubmitting } = useRealSubmission();
 
   const submitForm = async (): Promise<boolean> => {
-    setIsSubmitting(true);
-    
-    try {
-      // Simulate submission delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('Form submitted:', formData);
-      
-      toast.success('הפריט נשלח בהצלחה! תקבלו עדכון בקרוב.');
+    const success = await realSubmitForm(formData);
+    if (success) {
       resetFormData();
-      
-      return true;
-    } catch (error) {
-      console.error('Submission error:', error);
-      toast.error('אירעה שגיאה בשליחת הפריט. אנא נסו שוב.');
-      return false;
-    } finally {
-      setIsSubmitting(false);
     }
+    return success;
   };
 
   return {

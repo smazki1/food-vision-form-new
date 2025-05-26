@@ -1,32 +1,29 @@
 
 import React, { useState } from 'react';
 import FormProgress from './components/FormProgress';
-import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
-import ItemDetailsStep from './steps/ItemDetailsStep';
+import CombinedDetailsStep from './steps/CombinedDetailsStep';
 import ImageUploadStep from './steps/ImageUploadStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import NavigationButtons from './components/NavigationButtons';
 import { useFormValidation } from './hooks/useFormValidation';
-import { useFormSubmission } from './hooks/useFormSubmission';
+import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
 
 const formSteps = [
-  { id: 1, name: 'פרטי המסעדה' },
-  { id: 2, name: 'פרטי המנה' },
-  { id: 3, name: 'העלאת תמונות' },
-  { id: 4, name: 'סקירה ואישור' }
+  { id: 1, name: 'פרטי המסעדה והפריט' },
+  { id: 2, name: 'העלאת תמונות' },
+  { id: 3, name: 'סקירה ואישור' }
 ];
 
 const stepComponents = {
-  1: RestaurantDetailsStep,
-  2: ItemDetailsStep,
-  3: ImageUploadStep,
-  4: ReviewSubmitStep
+  1: CombinedDetailsStep,
+  2: ImageUploadStep,
+  3: ReviewSubmitStep
 };
 
 const PublicMultiStepForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { validateStep, errors, clearErrors } = useFormValidation();
-  const { submitForm, isSubmitting } = useFormSubmission();
+  const { submitForm, isSubmitting } = usePublicFormSubmission();
 
   const handleNext = async () => {
     const isValid = await validateStep(currentStep);
@@ -80,13 +77,13 @@ const PublicMultiStepForm: React.FC = () => {
           <div className="p-6 min-h-[400px]">
             <CurrentStepComponent 
               errors={errors}
-              onNext={currentStep === 4 ? handleSubmit : handleNext}
+              onNext={currentStep === 3 ? handleSubmit : handleNext}
               isSubmitting={isSubmitting}
             />
           </div>
 
           {/* Navigation */}
-          {currentStep < 4 && (
+          {currentStep < 3 && (
             <div className="p-6 border-t border-gray-200">
               <NavigationButtons
                 currentStep={currentStep}

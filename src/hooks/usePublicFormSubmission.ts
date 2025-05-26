@@ -108,7 +108,11 @@ export const usePublicFormSubmission = () => {
       console.log('[PublicSubmit] RPC response:', submissionData);
       
       if (submissionData && typeof submissionData === 'object' && submissionData.success) {
-        toast.success(submissionData.message || 'הפריט הוגש בהצלחה!');
+        if (submissionData.client_found) {
+          toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
+        } else {
+          toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
+        }
         console.log('[PublicSubmit] Submission completed successfully');
         return true;
       } else {

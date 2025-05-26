@@ -10,26 +10,10 @@ export const useFormValidation = () => {
     const newErrors: Record<string, string> = {};
 
     switch (step) {
-      case 1: // Restaurant Details
+      case 1: // Combined Details Step
         if (!formData.restaurantName?.trim()) {
           newErrors.restaurantName = 'שם המסעדה הוא שדה חובה';
         }
-        if (!formData.contactName?.trim()) {
-          newErrors.contactName = 'שם איש הקשר הוא שדה חובה';
-        }
-        if (!formData.phoneNumber?.trim()) {
-          newErrors.phoneNumber = 'מספר טלפון הוא שדה חובה';
-        } else if (!/^05\d{8}$/.test(formData.phoneNumber.replace(/[-\s]/g, ''))) {
-          newErrors.phoneNumber = 'מספר טלפון לא תקין';
-        }
-        if (!formData.emailAddress?.trim()) {
-          newErrors.emailAddress = 'כתובת אימייל היא שדה חובה';
-        } else if (!/\S+@\S+\.\S+/.test(formData.emailAddress)) {
-          newErrors.emailAddress = 'כתובת אימייל לא תקינה';
-        }
-        break;
-
-      case 2: // Item Details
         if (!formData.itemName?.trim()) {
           newErrors.itemName = 'שם הפריט הוא שדה חובה';
         }
@@ -38,7 +22,7 @@ export const useFormValidation = () => {
         }
         break;
 
-      case 3: // Image Upload
+      case 2: // Image Upload
         if (formData.referenceImages.length === 0) {
           newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
         }
@@ -47,7 +31,7 @@ export const useFormValidation = () => {
         }
         break;
 
-      case 4: // Review
+      case 3: // Review
         // Final validation
         if (!formData.restaurantName?.trim()) {
           newErrors.restaurantName = 'שם המסעדה הוא שדה חובה';

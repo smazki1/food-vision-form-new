@@ -9,14 +9,8 @@ export interface NewItemFormData {
   description?: string;
   specialNotes?: string;
   referenceImages: File[]; 
-  // Restaurant details
+  // Restaurant details - only restaurant name needed for public form
   restaurantName?: string;
-  contactName?: string;
-  phone?: string;
-  email?: string;
-  // Legacy field names for compatibility
-  phoneNumber?: string;
-  emailAddress?: string;
 }
 
 interface NewItemFormContextType {
@@ -32,11 +26,6 @@ const defaultFormData: NewItemFormData = {
   specialNotes: '',
   referenceImages: [],
   restaurantName: '',
-  contactName: '',
-  phone: '',
-  email: '',
-  phoneNumber: '',
-  emailAddress: '',
 };
 
 export const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
