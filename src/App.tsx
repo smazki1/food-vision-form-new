@@ -2,7 +2,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { UnifiedAuthProvider } from './contexts/UnifiedAuthContext';
+import { UnifiedAuthProvider } from './providers/UnifiedAuthProvider';
 import AdminLayout from './layouts/AdminLayout';
 import LeadsManagement from './pages/admin/LeadsManagement';
 import PackagesManagementPage from './pages/admin/PackagesManagementPage';
@@ -11,7 +11,7 @@ import CustomerLogin from './pages/customer/CustomerLogin';
 import FoodVisionForm from './pages/FoodVisionForm';
 import EditorLayout from './layouts/EditorLayout';
 import SubmissionProcessingPage from './pages/editor/SubmissionProcessingPage';
-import ClientsList from './pages/admin/ClientsList';
+import { ClientsList } from './pages/admin/ClientsList';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { DebugPanel } from '@/components/ui/debug-panel';
 import Dashboard from './pages/admin/Dashboard';
