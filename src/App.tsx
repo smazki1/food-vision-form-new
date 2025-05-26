@@ -1,21 +1,22 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
-import { UnifiedAuthProvider } from './contexts/AuthContext';
+import { UnifiedAuthProvider } from './contexts/UnifiedAuthContext';
 import AdminLayout from './layouts/AdminLayout';
-import LeadsPage from './pages/admin/LeadsPage';
-import PackagesPage from './pages/admin/PackagesPage';
+import LeadsManagement from './pages/admin/LeadsManagement';
+import PackagesManagementPage from './pages/admin/PackagesManagementPage';
 import SettingsPage from './pages/admin/SettingsPage';
-import LoginPage from './pages/LoginPage';
-import FoodVision from './pages/FoodVision';
+import CustomerLogin from './pages/customer/CustomerLogin';
+import FoodVisionForm from './pages/FoodVisionForm';
 import EditorLayout from './layouts/EditorLayout';
-import SubmissionPage from './pages/editor/SubmissionPage';
-import ClientManagementPage from './pages/admin/ClientManagementPage';
-import EditorLoginPage from './pages/EditorLoginPage';
+import SubmissionProcessingPage from './pages/editor/SubmissionProcessingPage';
+import ClientsList from './pages/admin/ClientsList';
+import CustomerLogin as EditorLoginPage from './pages/customer/CustomerLogin';
 import { EnhancedErrorBoundary } from '@/components/ui/enhanced-error-boundary';
 import { DebugPanel } from '@/components/ui/debug-panel';
-import AnalyticsDashboard from './pages/admin/AnalyticsDashboard';
-import EditorDashboard from './pages/editor/EditorDashboard';
+import Dashboard from './pages/admin/Dashboard';
+import EditorDashboardPage from './pages/editor/EditorDashboardPage';
 
 function App() {
   return (
@@ -24,23 +25,23 @@ function App() {
         <Router>
           <UnifiedAuthProvider>
             <Routes>
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<CustomerLogin />} />
               <Route path="/editor/login" element={<EditorLoginPage />} />
-              <Route path="/food-vision" element={<FoodVision />} />
+              <Route path="/food-vision" element={<FoodVisionForm />} />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AnalyticsDashboard />} />
-                <Route path="leads" element={<LeadsPage />} />
-                <Route path="packages" element={<PackagesPage />} />
+                <Route index element={<Dashboard />} />
+                <Route path="leads" element={<LeadsManagement />} />
+                <Route path="packages" element={<PackagesManagementPage />} />
                 <Route path="settings" element={<SettingsPage />} />
-                <Route path="clients" element={<ClientManagementPage />} />
+                <Route path="clients" element={<ClientsList />} />
               </Route>
 
               {/* Editor Routes */}
               <Route path="/editor" element={<EditorLayout />}>
-                <Route index element={<EditorDashboard />} />
-                <Route path="submission/:submissionId" element={<SubmissionPage />} />
+                <Route index element={<EditorDashboardPage />} />
+                <Route path="submission/:submissionId" element={<SubmissionProcessingPage />} />
               </Route>
             </Routes>
           </UnifiedAuthProvider>
