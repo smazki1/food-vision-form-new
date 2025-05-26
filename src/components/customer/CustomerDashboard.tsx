@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useClientProfile } from "@/hooks/useClientProfile";
 import { useClientDashboardStats } from "@/hooks/useClientDashboardStats";
@@ -6,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { useUnifiedAuth } from "@/hooks/useUnifiedAuth";
 import { useClientAuth } from "@/hooks/useClientAuth";
+import { Button } from "@/components/ui/button";
 
 // Import the components
 import { WelcomeSection } from "./dashboard/WelcomeSection";
@@ -15,11 +17,39 @@ import { QuickActions } from "./dashboard/QuickActions";
 
 export function CustomerDashboard() {
   const { user } = useUnifiedAuth();
-  const { clientId, hasLinkedClientRecord, clientRecordStatus, errorState } = useClientAuth();
+  const { clientId, hasLinkedClientRecord, clientRecordStatus, errorState, refreshClientAuth } = useClientAuth();
   const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);
 
   const isLoading = profileLoading || statsLoading;
+
+  // Show retry option for timeout errors
+  if (errorState && errorState.includes('timed out')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 space-y-4">
+        <Alert className="bg-amber-50 border-amber-200 max-w-md">
+          <AlertCircle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-800">טעינה איטית</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            הטעינה לוקחת יותר זמן מהרגיל. אנא נסו לרענן.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={refreshClientAuth}
+          className="w-full max-w-xs"
+        >
+          רענן את הדף
+        </Button>
+        <Button 
+          variant="outline"
+          onClick={() => window.location.reload()}
+          className="w-full max-w-xs"
+        >
+          טען מחדש
+        </Button>
+      </div>
+    );
+  }
 
   // Handle the case where user is authenticated but no client record is linked
   if (clientRecordStatus === 'not-found' && !isLoading) {
@@ -36,7 +66,7 @@ export function CustomerDashboard() {
   }
 
   // Handle error state
-  if (errorState && !isLoading) {
+  if (errorState && !isLoading && !errorState.includes('timed out')) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
@@ -54,29 +84,6 @@ export function CustomerDashboard() {
     return statusCounts.some(item => item.count > 0);
   }, [statusCounts]);
 
-  // Debug logging in development
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[CustomerDashboard] Debug:', {
-        clientId,
-        hasLinkedClientRecord,
-        clientRecordStatus,
-        clientProfile: {
-          clientId: clientProfile?.client_id,
-          restaurantName: clientProfile?.restaurant_name,
-          remainingServings: clientProfile?.remaining_servings,
-          currentPackageId: clientProfile?.current_package_id
-        },
-        profileLoading,
-        profileError,
-        statusCounts,
-        statsLoading,
-        statsError,
-        hasSubmissions
-      });
-    }
-  }, [clientProfile, profileLoading, profileError, statusCounts, statsLoading, statsError, hasSubmissions, clientId, hasLinkedClientRecord, clientRecordStatus]);
-
   // Handle errors with more detail
   if (profileError || statsError) {
     const error = profileError || statsError;
@@ -88,11 +95,6 @@ export function CustomerDashboard() {
           <div>
             {typeof error === 'string' ? error : error?.message || "אירעה שגיאה בטעינת הנתונים"}
           </div>
-          {process.env.NODE_ENV === 'development' && error && (
-            <pre className="mt-2 text-xs">
-              {JSON.stringify(error, null, 2)}
-            </pre>
-          )}
         </AlertDescription>
       </Alert>
     );
