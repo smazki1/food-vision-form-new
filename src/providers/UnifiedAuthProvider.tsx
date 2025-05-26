@@ -1,4 +1,3 @@
-
 import React, { useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { UnifiedAuthContext } from '@/contexts/UnifiedAuthContext';
@@ -28,6 +27,8 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       }
 
       // Auth state will be updated by the onAuthStateChange listener
+      // On successful sign-in, we don't immediately set loading:false, 
+      // as role determination (which sets loading) will follow.
       return { success: true };
     } catch (error) {
       console.error('[UNIFIED_AUTH] Login exception:', error);
@@ -43,18 +44,51 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     updateAuthState({ loading: true });
     try {
       const { success, error } = await unifiedAuthService.signOut();
+
+      // Regardless of service success/failure, or onAuthStateChange timing,
+      // immediately update the context to reflect a signed-out state.
+      updateAuthState({ 
+        user: null, 
+        session: null,
+        isAuthenticated: false, 
+        role: null, 
+        clientId: null,
+        hasLinkedClientRecord: false,
+        loading: false, // Crucially, set loading to false
+        initialized: true, // Assume it was initialized before if sign out is called
+        hasError: false, // Clear any previous auth error on successful sign out initiation
+        errorMessage: null
+      });
+
       if (!success) {
-        updateAuthState({ loading: false });
+        // If the service itself reported an error, log it and reflect in return.
+        // The state is already cleared above.
+        console.warn('[UNIFIED_AUTH] unifiedAuthService.signOut reported an error:', error);
+        // Optionally, set a specific error message in state if needed, e.g.:
+        // updateAuthState({ hasError: true, errorMessage: error }); 
         return { success: false, error };
       }
-      // Auth state will be updated by the onAuthStateChange listener
+      
+      console.log('[UNIFIED_AUTH] Sign out process initiated, state cleared.');
       return { success: true };
     } catch (error) {
-      console.error('[UNIFIED_AUTH] Sign out error:', error);
-      updateAuthState({ loading: false });
+      console.error('[UNIFIED_AUTH] Sign out exception:', error);
+      // Ensure state is cleared and error is reflected in case of an exception
+      updateAuthState({ 
+        user: null, 
+        session: null, 
+        isAuthenticated: false, 
+        role: null, 
+        clientId: null, 
+        hasLinkedClientRecord: false,
+        loading: false, 
+        initialized: true, // Assume initialized
+        hasError: true, 
+        errorMessage: error instanceof Error ? error.message : 'התרחשה שגיאה חריגה בתהליך היציאה.' 
+      });
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : 'התרחשה שגיאה בתהליך היציאה. אנא נסה שוב מאוחר יותר.' 
+        error: error instanceof Error ? error.message : 'התרחשה שגיאה חריגה בתהליך היציאה.' 
       };
     }
   }, [updateAuthState]);

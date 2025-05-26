@@ -98,7 +98,7 @@ export const clientAuthService = {
       // await new Promise(resolve => setTimeout(resolve, 6000)); // 6-second delay
       // console.log("[TEMP_TEST_DELAY] Finished 6-second delay.");
       // END <<<< TEMPORARY DELAY FOR TESTING >>>> END
-
+      
       return data?.client_id || null;
     } catch (error) {
       // Include stack trace for better debugging

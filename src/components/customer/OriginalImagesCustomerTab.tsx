@@ -35,7 +35,7 @@ const OriginalImagesCustomerTab: React.FC<OriginalImagesCustomerTabProps> = ({
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>שגיאה בטעינת תמונות מקוריות</AlertTitle>
         <AlertDescription>
-          {errorOriginalImages.message || "לא ניתן היה לטעון את התמונות המקוריות שלך."}
+          {errorOriginalImages.message || "לא ניתן היה לטעון את התמונות המקוריות שלכם/ן."}
         </AlertDescription>
       </Alert>
     );
@@ -53,7 +53,7 @@ const OriginalImagesCustomerTab: React.FC<OriginalImagesCustomerTabProps> = ({
   return (
     <div className="space-y-4 pt-4">
       <p className="text-sm text-muted-foreground">
-        אלו התמונות המקוריות שהעלית עבור פריט זה. צוות העריכה ישתמש בהן כרפרנס.
+        אלו התמונות המקוריות שהעליתם/ן עבור פריט זה. צוות העריכה ישתמש בהן כרפרנס.
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {originalImages.map((url, index) => (

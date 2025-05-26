@@ -45,69 +45,69 @@ const ItemDetailsStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
       </div>
       <div className="space-y-6">
         <IconInput
-          id="itemName"
-          name="itemName"
+              id="itemName"
+              name="itemName"
           label="שם הפריט"
-          value={formData.itemName}
-          onChange={handleChange}
-          placeholder="לדוגמה: פסטה קרבונרה, מוחיטו קלאסי"
+              value={formData.itemName}
+              onChange={handleChange}
+              placeholder="לדוגמה: פסטה קרבונרה, מוחיטו קלאסי"
           error={errors?.itemName}
           iconPosition="right"
           required
-        />
+            />
 
-        <div className="space-y-2">
+          <div className="space-y-2">
           <Label htmlFor="itemType" className="font-medium text-gray-700">
             סוג הפריט <span className="text-red-600 ml-1">*</span>
-          </Label>
-          <Select 
-            name="itemType" 
-            value={formData.itemType}
-            onValueChange={handleSelectChange}
-          >
-            <SelectTrigger 
-              id="itemType" 
+            </Label>
+            <Select 
+              name="itemType" 
+              value={formData.itemType}
+              onValueChange={handleSelectChange}
+            >
+              <SelectTrigger 
+                id="itemType" 
               className={cn(
                 "w-full h-12 px-4 py-3 rounded-md border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/50 transition-colors duration-150 ease-in-out bg-background",
                 errors?.itemType ? "border-red-500 focus:border-red-500 focus:ring-red-500/50 text-red-700 placeholder-red-400" : "border-gray-300"
               )}
               aria-invalid={!!errors?.itemType}
-            >
-              <SelectValue placeholder="בחר סוג פריט" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dish">מנה</SelectItem>
-              <SelectItem value="cocktail">קוקטייל</SelectItem>
-              <SelectItem value="drink">משקה</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors?.itemType && (
+              >
+              <SelectValue placeholder="בחרו סוג פריט" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dish">מנה</SelectItem>
+                <SelectItem value="cocktail">קוקטייל</SelectItem>
+                <SelectItem value="drink">משקה</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors?.itemType && (
             <p className="text-xs text-red-500 mt-1">{errors.itemType}</p>
-          )}
-        </div>
+            )}
+          </div>
 
         <IconTextarea
-          id="description"
-          name="description"
+              id="description"
+              name="description"
           label="מרכיבים עיקריים (אופציונלי)"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="פרט את המרכיבים העיקריים של הפריט (לדוגמה: רוטב עגבניות, בזיליקום, פרמזן)"
+              value={formData.description}
+              onChange={handleChange}
+          placeholder="פרטו את המרכיבים העיקריים של הפריט (לדוגמה: רוטב עגבניות, בזיליקום, פרמזן)"
           rows={4}
           error={errors?.description}
-        />
+            />
 
         <IconTextarea
-          id="specialNotes"
-          name="specialNotes"
+              id="specialNotes"
+              name="specialNotes"
           label="הערות מיוחדות (אופציונלי)"
-          value={formData.specialNotes}
-          onChange={handleChange}
+              value={formData.specialNotes}
+              onChange={handleChange}
           placeholder="לצילום או עיבוד (לדוגמה: ללא גלוטן, דגש על צבעוניות)"
           rows={4}
           error={errors?.specialNotes}
-        />
-      </div>
+            />
+          </div>
     </div>
   );
 };

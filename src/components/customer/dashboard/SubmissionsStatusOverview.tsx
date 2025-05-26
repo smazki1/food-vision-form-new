@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +73,7 @@ export const SubmissionsStatusOverview: React.FC<SubmissionsStatusOverviewProps>
               </pre>
             )}
             <Button className="mt-4" asChild>
-              <Link to="/food-vision-form">העלה מנות עכשיו</Link>
+              <Link to="/food-vision-form">העלו מנות עכשיו</Link>
             </Button>
           </div>
         )}
@@ -82,7 +81,7 @@ export const SubmissionsStatusOverview: React.FC<SubmissionsStatusOverviewProps>
         <div className="flex justify-center">
           <Button variant="outline" asChild>
             <Link to="/customer/submissions">
-              צפה בכל המנות
+              צפו בכל המנות
               <ArrowRight className="mr-2 h-4 w-4" />
             </Link>
           </Button>

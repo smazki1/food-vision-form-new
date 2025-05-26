@@ -98,7 +98,7 @@ const ResetPassword: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle>איפוס סיסמה</CardTitle>
           <CardDescription>
-            {hasHashParams ? "הזן את הסיסמה החדשה שלך" : "לינק לא תקין או פג תוקף"}
+            {hasHashParams ? "הזינו את הסיסמה החדשה שלכם/ן" : "לינק לא תקין או פג תוקף"}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -110,7 +110,7 @@ const ResetPassword: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="הכנס סיסמה חדשה"
+                placeholder="הכניסו סיסמה חדשה"
                 required
                 minLength={6}
                 dir="ltr"
@@ -124,7 +124,7 @@ const ResetPassword: React.FC = () => {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="הכנס את הסיסמה שוב"
+                placeholder="הכניסו את הסיסמה שוב"
                 required
                 minLength={6}
                 dir="ltr"
@@ -143,7 +143,7 @@ const ResetPassword: React.FC = () => {
               ) : isSuccess ? (
                 "הסיסמה עודכנה בהצלחה"
               ) : (
-                "עדכן סיסמה"
+                "עדכון סיסמה"
               )}
             </Button>
           </CardFooter>

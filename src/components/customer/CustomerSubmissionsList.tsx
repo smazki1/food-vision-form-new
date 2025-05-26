@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useSubmissions } from "@/hooks/useSubmissions";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -104,7 +103,7 @@ export function CustomerSubmissionsList() {
         <CardHeader>
           <CardTitle>שגיאה בטעינת הגשות</CardTitle>
           <CardDescription>
-            אירעה שגיאה בעת טעינת רשימת ההגשות שלך. אנא נסה שוב מאוחר יותר.
+            אירעה שגיאה בעת טעינת רשימת ההגשות שלכם/ן. אנא נסו שוב מאוחר יותר.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -153,7 +152,7 @@ export function CustomerSubmissionsList() {
             </Select>
             {(statusFilter !== "all" || typeFilter !== "all" || searchTerm) && (
               <Button variant="ghost" onClick={clearFilters}>
-                נקה סינונים
+                ניקוי סינונים
               </Button>
             )}
           </div>
@@ -195,7 +194,7 @@ export function CustomerSubmissionsList() {
                       >
                         <Link to={`/customer/submissions/${submission.submission_id}`}>
                           <EyeIcon className="h-4 w-4 ml-2" />
-                          צפה ועריכה
+                          צפייה ועריכה
                         </Link>
                       </Button>
                     </TableCell>
@@ -205,19 +204,15 @@ export function CustomerSubmissionsList() {
             </Table>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-lg text-muted-foreground mb-4">
-              {statusFilter || typeFilter || searchTerm
-                ? "לא נמצאו מנות התואמות את הסינונים שבחרת"
-                : "אין מנות שהועלו עדיין"}
+          <div className="text-center py-10">
+            <FilterIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+            <h3 className="mt-4 text-lg font-medium">אין הגשות מתאימות</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              לא נמצאו הגשות התואמות את החיפוש והסינונים שלכם/ן
             </p>
-            {statusFilter || typeFilter || searchTerm ? (
-              <Button onClick={clearFilters}>נקה סינונים</Button>
-            ) : (
-              <Button asChild>
-                <Link to="/food-vision-form">העלה מנות חדשות</Link>
+            <Button variant="link" onClick={clearFilters} className="mt-2">
+              נסו לשנות את תנאי החיפוש או נקו את הסינונים
               </Button>
-            )}
           </div>
         )}
       </CardContent>

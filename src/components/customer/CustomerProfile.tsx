@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientProfile } from "@/hooks/useClientProfile";
@@ -12,48 +11,36 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Edit3, KeyRound, Package, LogOut, Bell } from 'lucide-react';
+import { User, Package, LogOut, MessageCircle, LifeBuoy } from 'lucide-react';
 import { Client } from '@/types/client';
 
 export function CustomerProfile() {
   const { userAuthId } = useClientAuth();
-  const { user } = useUnifiedAuth();
+  const { user, signOut: unifiedSignOut } = useUnifiedAuth();
   console.log("[CustomerProfile] userAuthId from useClientAuth:", userAuthId);
-  const { clientProfile, loading: profileLoading, error: profileError, updateNotificationPreferences }: { clientProfile: Client | null; loading: boolean; error: string | null; updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; } = useClientProfile(userAuthId || undefined);
+  const { clientProfile, loading: profileLoading, error: profileError }: { clientProfile: Client | null; loading: boolean; error: string | null; updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; } = useClientProfile(userAuthId || user?.id || undefined);
   const { packageName, remainingDishes, totalDishes } = useClientPackage();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    if (!unifiedSignOut) { 
+        toast({ title: "שגיאה", description: "פונקציית התנתקות לא זמינה.", variant: "destructive"});
+        return;
+    }
+    console.log("[CustomerProfile] Attempting sign out via unifiedSignOut...");
+    const { success, error } = await unifiedSignOut(); 
+
+    if (error || !success) {
+      console.error("[CustomerProfile] Sign out failed:", error);
       toast({
         title: "שגיאה בהתנתקות",
-        description: error.message,
+        description: String(error) || "אירעה שגיאה לא ידועה.",
         variant: "destructive",
       });
     } else {
+      console.log("[CustomerProfile] Sign out successful from context, navigating to /login");
       navigate('/login');
-    }
-  };
-
-  const handleNotificationChange = async (
-    emailEnabled: boolean, 
-    appEnabled: boolean
-  ) => {
-    if (!clientProfile) return;
-    const success = await updateNotificationPreferences(emailEnabled, appEnabled);
-    if (success) {
-      toast({
-        title: "הגדרות התראות עודכנו",
-        description: "העדפות התראות שלך נשמרו בהצלחה",
-      });
-    } else {
-      toast({
-        title: "שגיאה בעדכון הגדרות",
-        description: "אירעה שגיאה בעת עדכון העדפות ההתראות",
-        variant: "destructive",
-      });
     }
   };
 
@@ -86,7 +73,7 @@ export function CustomerProfile() {
           <CardHeader className="items-center text-center">
             <CardTitle className="text-xl text-destructive">שגיאה בטעינת פרופיל</CardTitle>
             <CardDescription className="text-base">
-              {profileError || "אירעה שגיאה בעת טעינת פרופיל המשתמש שלך. אנא נסה שוב מאוחר יותר."}
+              {profileError || "אירעה שגיאה בעת טעינת פרופיל המשתמש/ת. אנא נסו שוב מאוחר יותר."}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -96,11 +83,17 @@ export function CustomerProfile() {
 
   if (!clientProfile) {
     return (
-      <div className="p-4 text-center">
-         <p>לא נטענו נתוני פרופיל.</p>
+      <div dir="rtl" className="p-4 text-center">
+         <p>לא נטענו נתוני פרופIL.</p>
       </div>
     ); 
   }
+
+  const openWhatsApp = () => {
+    const phoneNumber = "+972527772807";
+    const message = encodeURIComponent("שלום, אני צריך עזרה בנוגע לחשבון שלי בפוד ויז'ן.");
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+  };
 
   return (
     <div dir="rtl" className="p-4 space-y-6 pb-20 bg-slate-50 min-h-screen">
@@ -129,68 +122,36 @@ export function CustomerProfile() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold">הגדרות חשבון</CardTitle>
+        <CardHeader className="flex flex-col items-center space-y-1 text-center pb-2">
+          <div className="flex flex-row items-center space-x-2 rtl:space-x-reverse">
+            <LifeBuoy className="h-6 w-6 text-primary" />
+            <CardTitle className="text-lg font-semibold">זקוקים לעזרה?</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-1">
-          <Button variant="ghost" className="w-full justify-start px-3">
-            <Edit3 className="w-4 h-4 ml-2" />
-            ערוך פרופיל
-          </Button>
-          <Button variant="ghost" className="w-full justify-start px-3">
-            <KeyRound className="w-4 h-4 ml-2" />
-            שנה סיסמה
+        <CardContent className="space-y-3 pt-3 text-center">
+          <CardDescription>
+            צוות התמיכה שלנו זמין עבורכם/ן וישמח לסייע בכל שאלה או בעיה.
+          </CardDescription>
+          <Button 
+            className="w-full h-12 text-base bg-green-500 hover:bg-green-600 text-white"
+            onClick={openWhatsApp}
+          >
+            <MessageCircle className="w-5 h-5 ml-2 rtl:mr-2 rtl:ml-0" />
+            שלח הודעת WhatsApp
           </Button>
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg font-semibold">התראות</CardTitle>
-          <Bell className="w-5 h-5 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="email-notifications" className="flex flex-col gap-1 flex-1 mr-4">
-              <span>התראות באימייל</span>
-              <span className="font-normal text-xs text-muted-foreground">
-                עדכונים על מנות, חשבונות ועוד.
-              </span>
-            </Label>
-            <Switch 
-              id="email-notifications" 
-              checked={clientProfile.email_notifications || false}
-              onCheckedChange={(checked) => {
-                handleNotificationChange(checked, clientProfile.app_notifications || false);
-              }}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="app-notifications" className="flex flex-col gap-1 flex-1 mr-4">
-              <span>התראות באפליקציה</span>
-              <span className="font-normal text-xs text-muted-foreground">
-                התראות פנימיות בתוך המערכת.
-              </span>
-            </Label>
-            <Switch 
-              id="app-notifications" 
-              checked={clientProfile.app_notifications || false}
-              onCheckedChange={(checked) => {
-                handleNotificationChange(clientProfile.email_notifications || false, checked);
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
+      <div className="w-full flex justify-center pt-4">
       <Button 
         variant="destructive" 
-        className="w-full h-12 text-base mt-6"
+          className="h-12 text-base px-8"
         onClick={handleLogout}
       >
         <LogOut className="w-5 h-5 ml-2" />
-        התנתק
+          התנתקות
       </Button>
+      </div>
     </div>
   );
 }

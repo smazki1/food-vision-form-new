@@ -89,13 +89,11 @@ const FoodVisionUploadForm: React.FC = () => {
   const { user: unifiedUser } = useUnifiedAuth();
   const [formSteps, setFormSteps] = useState(allSteps);
   const [currentStepId, setCurrentStepId] = useState(allSteps[0].id);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
   
   const { formData, resetFormData, updateFormData } = useNewItemForm();
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCreatingClient, setIsCreatingClient] = useState(false);
-  
-  const { refreshSubmissions } = useSubmissions();
   const { remainingDishes } = useClientPackage();
   const navigate = useNavigate();
 
@@ -127,7 +125,7 @@ const FoodVisionUploadForm: React.FC = () => {
       setStepErrors(newErrors);
       if (Object.keys(newErrors).length === 0) {
         setIsCreatingClient(true);
-        toast.info("יוצר או מאמת את פרטי המסעדה...");
+        toast.info("יוצרים או מאמתים את פרטי המסעדה...");
         try {
           const clientDetailsPayload: FoodVisionClientDetails = {
             restaurantName: formData.restaurantName || '',
@@ -164,7 +162,7 @@ const FoodVisionUploadForm: React.FC = () => {
           let errorMessage = "שגיאה באימות פרטי המסעדה.";
           if (error.message) {
             errorMessage = error.message.includes("duplicate key value violates unique constraint") 
-              ? "כתובת אימייל זו כבר משויכת למסעדה קיימת. אנא השתמש בכתובת אחרת או התחבר אם זו המסעדה שלך."
+              ? "כתובת אימייל זו כבר משויכת למסעדה קיימת. אנא השתמשו בכתובת אחרת או התחברו אם זו המסעדה שלכם/ן."
               : error.message;
           }
           setStepErrors({ submit: errorMessage });
@@ -192,7 +190,7 @@ const FoodVisionUploadForm: React.FC = () => {
           window.scrollTo(0, 0);
         } else {
           console.warn("[FoodVisionUploadForm] Reached end of steps via footer button. This should ideally be handled by ReviewSubmitStep's button.")
-          await handleSubmit(); 
+          await handleSubmit();
         }
       }
     }
@@ -214,7 +212,7 @@ const FoodVisionUploadForm: React.FC = () => {
     const finalClientId = clientId;
 
     if (!finalClientId) {
-      toast.error("שגיאה: לא זוהה מזהה לקוח. אנא התחבר או השלם את פרטי המסעדה.");
+      toast.error("שגיאה: לא זוהה מזהה לקוח. אנא התחברו או השלימו את פרטי המסעדה.");
       if (!formSteps.find(s => s.id === 1)) {
          setFormSteps(allSteps);
          setCurrentStepId(allSteps[0].id);
@@ -230,14 +228,14 @@ const FoodVisionUploadForm: React.FC = () => {
       const newErrors = reviewStepConfig.validate(formData);
       setStepErrors(newErrors);
       if (Object.keys(newErrors).length > 0) {
-        toast.error("אנא תקן את השגיאות בטופס הסקירה.");
+        toast.error("אנא תקנו את השגיאות בטופס הסקירה.");
         if (currentStepId !== 4) setCurrentStepId(4);
         return;
       }
     }
 
     if (remainingDishes !== undefined && remainingDishes <= 0) {
-        const noDishesError = "אין לך מספיק מנות נותרות בחבילה כדי לבצע הגשה זו.";
+        const noDishesError = "אין לכם/ן מספיק מנות נותרות בחבילה כדי לבצע הגשה זו.";
         setStepErrors({ submit: noDishesError }); 
         toast.error(noDishesError);
         if (currentStepId !== 4) setCurrentStepId(4);
@@ -245,7 +243,7 @@ const FoodVisionUploadForm: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    toast.info("מעלה תמונות ושומר הגשה...");
+    toast.info("מעלים תמונות ושומרים הגשה...");
     let newItemId = uuidv4();
 
     try {
@@ -311,9 +309,9 @@ const FoodVisionUploadForm: React.FC = () => {
           detailedMessage += `: ${itemInsertError.details}`;
         } else if (itemInsertError.hint) {
           detailedMessage += ` (רמז: ${itemInsertError.hint})`;
-        }
+      }
         if (Object.keys(itemInsertError).length === 0) {
-            detailedMessage += ". נראה שהייתה בעיה כללית בגישה לטבלה או בהרשאות. בדוק את הגדרות ה-RLS ב-Supabase.";
+            detailedMessage += ". נראה שהייתה בעיה כללית בגישה לטבלה או בהרשאות. יש לבדוק את הגדרות ה-RLS ב-Supabase.";
         }
         throw new Error(detailedMessage);
       }
@@ -345,13 +343,13 @@ const FoodVisionUploadForm: React.FC = () => {
         setCurrentStepId(allSteps[0].id);
       }
       setStepErrors({});
-      refreshSubmissions();
       navigate('/customer/home');
 
     } catch (error: any) {
       console.error("Submission process error:", error);
-      setStepErrors({ submit: error.message || "אירעה שגיאה במהלך ההגשה. נסה שוב." });
-      toast.error(error.message || "אירעה שגיאה במהלך ההגשה. נסה שוב.");
+      const submissionErrorMessage = error.message || "אירעה שגיאה במהלך ההגשה. נסו שוב.";
+      setStepErrors({ submit: submissionErrorMessage });
+      toast.error(submissionErrorMessage);
       if (currentStepId !== 4) setCurrentStepId(4);
     } finally {
       setIsSubmitting(false);
@@ -372,77 +370,77 @@ const FoodVisionUploadForm: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="p-4 bg-white shadow-md sticky top-0 z-10">
+      <div className="relative p-4 bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto">
             <FormProgress currentStepId={currentStepId} formSteps={typedFormSteps} />
         </div>
       </div>
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
-        <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6 md:p-8">
-          <div className="mt-0">
-            <CurrentStepComponent 
-              setExternalErrors={setStepErrors}
-              clearExternalErrors={handleClearStepErrors}
-              errors={stepErrors}
-              {...(currentStepConfig?.id === 4 && { onFinalSubmit: handleSubmit })}
-            />
-          </div>
-
-          {Object.keys(stepErrors).length > 0 && 
-           !stepErrors.restaurantName && !stepErrors.contactName && !stepErrors.phone && !stepErrors.email && 
-           !stepErrors.itemName && !stepErrors.itemType && !stepErrors.referenceImages && !stepErrors.finalCheck && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-md">
-              <p className="text-sm text-red-700 font-semibold mb-1">אנא תקן את השגיאות הבאות:</p>
-              <ul className="list-disc list-inside text-sm text-red-600">
-                {Object.entries(stepErrors)
-                  .filter(([key]) => key === 'submit')
-                  .map(([key, error], index) => (
-                  <li key={index}>{error}</li>
+        <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
+          {currentStepId !== 1 && !clientId && (
+             <Alert className="mb-6">
+                <InfoIcon className="h-4 w-4" />
+                <AlertDescription>
+                  נראה שלא השלמת את פרטי המסעדה. 
+                  <Button variant="link" className="p-0 h-auto text-amber-700 hover:underline" onClick={() => {
+                      setFormSteps(allSteps);
+                      setCurrentStepId(allSteps[0].id);
+                  }}>
+                    לחץ כאן
+                  </Button>
+                  {' '}להשלמת הפרטים או התחבר למערכת.
+                </AlertDescription>
+              </Alert>
+          )}
+          <CurrentStepComponent 
+            setExternalErrors={setStepErrors} 
+            clearExternalErrors={handleClearStepErrors} 
+            errors={stepErrors}
+            onFinalSubmit={handleSubmit} 
+          />
+          
+          {Object.keys(stepErrors).length > 0 && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <h3 className="text-sm font-semibold text-red-700 mb-1">שגיאות:</h3>
+              <ul className="list-disc list-inside text-xs text-red-600 space-y-0.5">
+                {Object.entries(stepErrors).map(([key, value]) => (
+                  <li key={key}>{value}</li>
                 ))}
               </ul>
             </div>
           )}
+
+          <div className={cn(
+            "mt-8 flex",
+            formSteps.length === 1 || (currentStepId === formSteps[0].id && clientId) ? "justify-end" : "justify-between"
+          )}>
+            {(formSteps.length > 1 && !(currentStepId === formSteps[0].id && clientId) )&& (
+              <Button 
+                variant="outline"
+                onClick={handlePrevious} 
+                disabled={isSubmitting || isCreatingClient}
+              >
+                <ChevronRight className="ml-2 h-4 w-4" />
+                הקודם
+              </Button>
+            )}
+            <Button 
+              onClick={currentStepId === formSteps[formSteps.length -1].id ? handleSubmit : handleNext} 
+              disabled={isSubmitting || isCreatingClient}
+              className={cn(currentStepId === formSteps[formSteps.length -1].id && "bg-green-600 hover:bg-green-700")}
+            >
+              {isSubmitting ? 
+                'שולח...' : 
+                currentStepId === formSteps[formSteps.length -1].id ? 
+                  'שלח הגשה' : 
+                  (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
+              }
+              {currentStepId !== formSteps[formSteps.length -1].id && <ChevronLeft className="mr-2 h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </main>
-
-      <footer className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-top-md z-10 md:py-5">
-        <div className={cn(
-          "mx-auto flex items-center max-w-5xl",
-          (!isFirstStepInCurrentFlow && isLastStepInCurrentFlow) || (isFirstStepInCurrentFlow && !isLastStepInCurrentFlow) ? "justify-center" : "justify-between",
-          "md:gap-x-3"
-        )}>
-          
-          {!isLastStepInCurrentFlow && (
-            <Button 
-              onClick={handleNext} 
-              className={cn(
-                "py-4 px-6 text-base font-medium rounded-xl transition-all duration-150 ease-in-out hover:-translate-y-px hover:shadow-md focus-visible:ring-ring",
-                isFirstStepInCurrentFlow ? "w-full md:w-auto md:max-w-sm" : "flex-1 md:flex-none md:w-auto",
-                "bg-orange-500 text-white hover:bg-orange-600 focus-visible:ring-orange-500"
-              )}
-              disabled={isSubmitting || isCreatingClient}
-            >
-              הבא
-            </Button>
-          )}
-          
-          {!isFirstStepInCurrentFlow && (
-            <Button 
-              variant="outline" 
-              onClick={handlePrevious} 
-              className={cn(
-                "py-4 px-6 text-base font-medium rounded-xl transition-all duration-150 ease-in-out hover:-translate-y-px hover:shadow-md focus-visible:ring-ring",
-                isLastStepInCurrentFlow ? "w-full md:w-auto md:max-w-sm" : "flex-1 md:flex-none md:w-auto",
-                "border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50"
-              )}
-              disabled={isSubmitting || isCreatingClient}
-            >
-              חזור
-            </Button>
-          )}
-        </div>
-      </footer>
     </div>
   );
 };

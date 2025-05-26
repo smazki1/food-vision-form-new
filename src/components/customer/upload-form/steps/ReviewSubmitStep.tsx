@@ -55,7 +55,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
       <div>
         <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800 text-center">סקירה ואישור</h2>
         <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
-          אנא בדוק את כל הפרטים שהזנת לפני ההגשה הסופית. ודא שהכל תקין.
+          אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית. ודאו שהכל תקין.
         </p>
       </div>
 
@@ -97,30 +97,30 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
             <ImageIcon className="h-6 w-6 text-primary ml-3" /> 
             <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
           </div>
-        {referenceImages.length > 0 ? (
+          {referenceImages.length > 0 ? (
           <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white"> 
-            {referenceImages.map((file, index) => (
+              {referenceImages.map((file, index) => (
               <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video"> 
-                <img 
-                  src={URL.createObjectURL(file)} 
+                  <img 
+                    src={URL.createObjectURL(file)} 
                   alt={`תצוגה מקדימה ${index + 1}`} 
                   className="w-full h-full object-contain"
                   onLoad={() => URL.revokeObjectURL(file.name)}
-                />
+                  />
                 <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
-                  {file.name}
+                    {file.name}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
+              ))}
+            </div>
+          ) : (
           <div className="p-4 border border-gray-200 rounded-md bg-white">
             <p className="text-muted-foreground text-center py-4">לא הועלו תמונות.</p>
           </div>
-        )}
+          )}
         <Separator className="my-6" />
       </section>
-      
+
       {/* Submission Cost / Package Info Alert */}
       <Alert 
         variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} 
@@ -135,10 +135,10 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
         <InfoIcon className="h-5 w-5" />
         <AlertDescription className="text-sm mr-2"> 
           {remainingDishes !== undefined && remainingDishes <= 0 ? (
-            <>הגשה זו לא תתאפשר. <strong>לא נותרו לך מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
+            <>הגשה זו לא תתאפשר. <strong>לא נותרו לכם/ן מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
           ) : (
             <>
-              הגשה זו תנצל מנה אחת מהחבילה שלך.
+              הגשה זו תנצל מנה אחת מהחבילה שלכם/ן.
             </>
           )}
         </AlertDescription>
@@ -160,7 +160,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
             )}
         >
             <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-            <span className="leading-tight">✓ בדקתי הכל - הגש עכשיו!</span>
+            <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
         </Button>
       )}

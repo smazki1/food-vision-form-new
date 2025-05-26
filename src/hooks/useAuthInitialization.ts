@@ -1,5 +1,4 @@
-
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { UserRole } from '@/types/unifiedAuthTypes';
@@ -10,57 +9,78 @@ import { optimizedAuthService } from '@/services/optimizedAuthService';
  * Optimized version using unified database query and caching
  */
 export const useAuthInitialization = (
-  updateAuthState: (updates: any) => void
+  updateAuthState: (updates: Partial<{
+    user: User | null;
+    session: any | null; // Consider using Session type from @supabase/supabase-js
+    isAuthenticated: boolean;
+    role: string | null; // Assuming UserRole is a string enum or similar
+    clientId: string | null;
+    restaurantName: string | null;
+    hasLinkedClientRecord: boolean;
+    loading: boolean;
+    initialized: boolean;
+    hasError: boolean;
+    errorMessage: string | null;
+  }>) => void
 ) => {
+  const isDeterminingRole = useRef(false);
+  const initialCheckComplete = useRef(false);
+
   /**
    * Determines user role and client ID using optimized SQL function with caching
    */
   const determineUserRole = useCallback(async (currentUser: User): Promise<void> => {
-    if (!currentUser) {
-      updateAuthState({ role: null, clientId: null });
+    if (isDeterminingRole.current) {
+      console.log('[AUTH_INIT] determineUserRole already in progress for user:', currentUser.id);
       return;
     }
-
-    console.log('[UNIFIED_AUTH] Determining role for user:', currentUser.id);
+    console.log('[AUTH_INIT] determineUserRole START for user:', currentUser.id);
+    isDeterminingRole.current = true;
 
     try {
-      // Use the optimized service to get auth data (which handles caching internally)
-      console.log('[UNIFIED_AUTH] Calling optimized auth service...');
+      console.log('[AUTH_INIT] Calling optimized auth service for user:', currentUser.id);
       const authResult = await optimizedAuthService.getUserAuthData(currentUser.id);
 
       if (authResult.error) {
-        console.error('[UNIFIED_AUTH] Auth data error:', authResult.error);
-        updateAuthState({ 
+        console.error('[AUTH_INIT] Auth data error:', authResult.error);
+        updateAuthState({
+          role: null,
+          clientId: null,
+          restaurantName: null,
+          hasLinkedClientRecord: false,
           hasError: true,
           errorMessage: `Failed to determine user role: ${authResult.error}`,
-          loading: false
+          loading: false, // Ensure loading is set to false on error
         });
         return;
       }
 
-      console.log('[UNIFIED_AUTH] User auth data processed:', {
-        role: authResult.role,
-        clientId: authResult.clientId,
-        hasLinkedClientRecord: authResult.hasLinkedClientRecord,
-        restaurantName: authResult.restaurantName,
-        fromCache: authResult.fromCache
-      });
-
+      console.log('[AUTH_INIT] User auth data processed:', authResult);
       updateAuthState({
         role: authResult.role,
         clientId: authResult.clientId,
+        restaurantName: authResult.restaurantName,
         hasLinkedClientRecord: authResult.hasLinkedClientRecord,
         hasError: false,
-        errorMessage: null
+        errorMessage: null,
+        loading: false, // Ensure loading is set to false on success
       });
 
-    } catch (error) {
-      console.error('[UNIFIED_AUTH] Error determining user role:', error);
-      updateAuthState({ 
+    } catch (error: any) {
+      console.error('[AUTH_INIT] Error in determineUserRole:', error);
+      updateAuthState({
+        role: null,
+        clientId: null,
+        restaurantName: null,
+        hasLinkedClientRecord: false,
         hasError: true,
         errorMessage: `Failed to determine user role: ${error.message}`,
-        loading: false
+        loading: false,
       });
+    } finally {
+      console.log('[AUTH_INIT] determineUserRole END for user:', currentUser.id);
+      isDeterminingRole.current = false;
+      initialCheckComplete.current = true; // Mark as complete after first attempt
     }
   }, [updateAuthState]);
 
@@ -68,16 +88,18 @@ export const useAuthInitialization = (
    * Handles auth state changes from Supabase
    */
   useEffect(() => {
-    console.log('[UNIFIED_AUTH] Setting up optimized auth state listener...');
+    console.log('[AUTH_INIT] Setting up auth state listener...');
     
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[UNIFIED_AUTH] Auth state changed:', event, session?.user?.id);
+      console.log(`[AUTH_INIT] onAuthStateChange: Event - ${event}, User - ${session?.user?.id}, InitialCheck - ${initialCheckComplete.current}`);
       
-      // Clear cache on sign out
       if (event === 'SIGNED_OUT') {
+        console.log('[AUTH_INIT] SIGNED_OUT detected.');
         if (session?.user?.id) {
           optimizedAuthService.clearAuthCache(session.user.id);
+        } else {
+          // If user ID is not available on session, might need a broader cache clear or rely on TTL
+          console.warn('[AUTH_INIT] User ID not available on SIGNED_OUT session to clear specific cache.');
         }
         updateAuthState({
           user: null,
@@ -85,39 +107,98 @@ export const useAuthInitialization = (
           isAuthenticated: false,
           role: null,
           clientId: null,
+          restaurantName: null,
           hasLinkedClientRecord: false,
           loading: false,
-          initialized: true
+          initialized: true, // Signed out, so considered initialized
+          hasError: false,
+          errorMessage: null,
         });
+        isDeterminingRole.current = false; // Reset flag on sign out
         return;
       }
       
-      // Update state based on auth event
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[AUTH_INIT] SIGNED_IN detected for user:', session.user.id);
         updateAuthState({ 
           user: session.user,
           session: session,
           isAuthenticated: true,
-          loading: true // Still need to fetch role
+          loading: true, // Set loading true before determining role
+          hasError: false, 
+          errorMessage: null
         });
         
-        // Determine role in next tick to avoid Supabase SDK deadlock
+        // Determine role in next tick to allow state update
+        // And prevent potential race if onAuthStateChange fires rapidly
         setTimeout(() => {
-          determineUserRole(session.user);
+          determineUserRole(session.user!);
         }, 0);
+      } else if (event === 'INITIAL_SESSION' && session?.user) {
+        console.log('[AUTH_INIT] INITIAL_SESSION with user:', session.user.id);
+        updateAuthState({
+          user: session.user,
+          session: session,
+          isAuthenticated: true,
+          loading: true, // Set loading true before determining role
+          initialized: false, // Not fully initialized until role is determined
+        });
+        setTimeout(() => {
+            determineUserRole(session.user!);
+        }, 0);
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        console.log('[AUTH_INIT] INITIAL_SESSION with no user session.');
+        updateAuthState({
+          user: null,
+          session: null,
+          isAuthenticated: false,
+          role: null,
+          clientId: null,
+          restaurantName: null,
+          hasLinkedClientRecord: false,
+          loading: false,
+          initialized: true, // No session, so considered initialized
+        });
+        initialCheckComplete.current = true;
+      } else if (event === 'USER_UPDATED' && session?.user) {
+        console.log('[AUTH_INIT] USER_UPDATED detected for user:', session.user.id);
+        updateAuthState({
+            user: session.user, // Update user object
+            session: session, // Update session object
+            loading: true, // May need to re-verify role if email/phone changes affect it
+        });
+        setTimeout(() => {
+            determineUserRole(session.user!); // Re-determine role
+        }, 0);
+      } else if (event === 'PASSWORD_RECOVERY') {
+        console.log('[AUTH_INIT] PASSWORD_RECOVERY event detected.');
+        // Typically, no immediate state change needed here until user signs in with new password
+        updateAuthState({ loading: false });
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        console.log('[AUTH_INIT] TOKEN_REFRESHED for user:', session.user.id);
+        // Session object is updated, ensure our state reflects this.
+        // Role typically doesn't change on token refresh alone.
+        updateAuthState({
+            user: session.user,
+            session: session,
+            isAuthenticated: true,
+            loading: false, // Role is likely still valid
+        });
       }
     });
 
-    // Check for existing session on mount
+    // Check for existing session on mount if not already handled by INITIAL_SESSION
     const checkInitialSession = async () => {
-      console.log('[UNIFIED_AUTH] Checking for existing session...');
+      if (initialCheckComplete.current) return; // Already checked or in progress
+
+      console.log('[AUTH_INIT] checkInitialSession explicit call START');
+      updateAuthState({ loading: true, initialized: false });
       
       try {
-        updateAuthState({ loading: true });
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('[UNIFIED_AUTH] Session error:', error);
+          console.error('[AUTH_INIT] Session error during initial check:', error);
           updateAuthState({ 
             hasError: true,
             errorMessage: error.message,
@@ -127,41 +208,63 @@ export const useAuthInitialization = (
           return;
         }
         
-        const { session } = data;
-        console.log('[UNIFIED_AUTH] Initial session check:', { hasSession: !!session });
+        const { session: initialSession } = data;
+        console.log('[AUTH_INIT] Initial session from getSession():', initialSession ? initialSession.user?.id : 'No session');
         
-        if (session?.user) {
+        if (initialSession?.user) {
+          if (!isDeterminingRole.current) { // Prevent race if onAuthStateChange already fired
+            updateAuthState({
+              user: initialSession.user,
+              session: initialSession,
+              isAuthenticated: true,
+              loading: true,
+              initialized: false,
+            });
+            // Call determineUserRole without setTimeout if it's the very first check
+            await determineUserRole(initialSession.user);
+          } else {
+             console.log('[AUTH_INIT] Role determination already triggered by onAuthStateChange for initial session.');
+          }
+        } else {
           updateAuthState({
-            user: session.user,
-            session: session,
-            isAuthenticated: true,
+            user: null,
+            session: null,
+            isAuthenticated: false,
+            role: null,
+            clientId: null,
+            restaurantName: null,
+            hasLinkedClientRecord: false,
+            loading: false,
+            initialized: true
           });
-          
-          // Determine role using optimized function
-          await determineUserRole(session.user);
         }
-        
-        // Mark initialization as complete
+      } catch (err: any) {
+        console.error('[AUTH_INIT] Error in checkInitialSession:', err);
         updateAuthState({ 
-          loading: false,
-          initialized: true
+          hasError: true, 
+          errorMessage: err.message, 
+          loading: false, 
+          initialized: true 
         });
-      } catch (error) {
-        console.error('[UNIFIED_AUTH] Initial session check error:', error);
-        updateAuthState({
-          hasError: true,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error during initialization',
-          loading: false,
-          initialized: true
-        });
+      } finally {
+        initialCheckComplete.current = true;
+        // Loading state should be managed by determineUserRole or the error blocks
+        console.log('[AUTH_INIT] checkInitialSession explicit call END');
       }
     };
-    
-    checkInitialSession();
-    
-    // Cleanup
+
+    // Supabase typically triggers INITIAL_SESSION itself.
+    // Calling getSession() might be redundant if onAuthStateChange handles INITIAL_SESSION correctly and promptly.
+    // However, keeping it as a fallback or for certainty.
+    // Let's ensure initialCheckComplete guards it.
+    if (!initialCheckComplete.current) {
+        checkInitialSession();
+    }
+
     return () => {
-      subscription.unsubscribe();
+      console.log('[AUTH_INIT] Unsubscribing from auth state changes.');
+      subscription?.unsubscribe();
+      isDeterminingRole.current = false; // Reset on cleanup
     };
-  }, [updateAuthState, determineUserRole]);
+  }, [determineUserRole, updateAuthState]);
 };

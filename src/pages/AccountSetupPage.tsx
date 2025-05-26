@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -86,7 +85,7 @@ const AccountSetupPage: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle>השלמת הקמת חשבון</CardTitle>
           <CardDescription>
-            נא למלא את הפרטים הבאים כדי להשלים את הקמת חשבון הלקוח שלך
+            נא למלא את הפרטים הבאים כדי להשלים את הקמת חשבון הלקוח שלכם/ן
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -99,7 +98,7 @@ const AccountSetupPage: React.FC = () => {
                   <FormItem>
                     <FormLabel>שם המסעדה</FormLabel>
                     <FormControl>
-                      <Input placeholder="הזן את שם המסעדה" {...field} />
+                      <Input placeholder="הזינו את שם המסעדה" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -113,7 +112,7 @@ const AccountSetupPage: React.FC = () => {
                   <FormItem>
                     <FormLabel>שם איש קשר</FormLabel>
                     <FormControl>
-                      <Input placeholder="הזן את שם איש הקשר" {...field} />
+                      <Input placeholder="הזינו את שם איש הקשר" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -127,7 +126,7 @@ const AccountSetupPage: React.FC = () => {
                   <FormItem>
                     <FormLabel>מספר טלפון</FormLabel>
                     <FormControl>
-                      <Input placeholder="הזן את מספר הטלפון" type="tel" {...field} />
+                      <Input placeholder="הזינו את מספר הטלפון" type="tel" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,7 +140,7 @@ const AccountSetupPage: React.FC = () => {
                   <FormItem>
                     <FormLabel>אימייל</FormLabel>
                     <FormControl>
-                      <Input placeholder="הזן את האימייל" type="email" {...field} />
+                      <Input placeholder="הזינו את האימייל" type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -156,7 +155,7 @@ const AccountSetupPage: React.FC = () => {
                     מעבד...
                   </div>
                 ) : (
-                  'צור רשומת לקוח'
+                  'יצירת רשומת לקוח'
                 )}
               </Button>
             </CardFooter>

@@ -28,8 +28,8 @@ export function CustomerDashboard() {
         <AlertCircle className="h-4 w-4 text-amber-500" />
         <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
         <AlertDescription className="text-amber-700">
-          החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. 
-          אנא צור קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
+          החשבון שלכם מאומת, אך אינו מקושר לפרופיל לקוח במערכת.
+          אנא צרו קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
         </AlertDescription>
       </Alert>
     );
@@ -112,7 +112,7 @@ export function CustomerDashboard() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          לא נמצא פרופיל לקוח. אנא התחבר מחדש או צור קשר עם התמיכה.
+          לא נמצא פרופיל לקוח. אנא התחברו מחדש או צרו קשר עם התמיכה.
         </AlertDescription>
       </Alert>
     );

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { 
   Dialog, 
@@ -38,7 +37,7 @@ export function ShareDialog({ open, onOpenChange, imageUrl, itemName }: ShareDia
     } catch (err) {
       toast({
         title: "שגיאה בהעתקת הקישור",
-        description: "אירעה שגיאה בעת העתקת הקישור. נסה להעתיק באופן ידני.",
+        description: "אירעה שגיאה בעת העתקת הקישור. נסו להעתיק באופן ידני.",
         variant: "destructive",
       });
     }
@@ -56,7 +55,7 @@ export function ShareDialog({ open, onOpenChange, imageUrl, itemName }: ShareDia
       case "instagram":
         toast({
           title: "שיתוף באינסטגרם",
-          description: "לא ניתן לשתף ישירות לאינסטגרם דרך האתר. אנא הורד את התמונה ושתף באפליקציה.",
+          description: "לא ניתן לשתף ישירות לאינסטגרם דרך האתר. אנא הורידו את התמונה ושתפו באפליקציה.",
         });
         return;
       case "whatsapp":
@@ -79,9 +78,9 @@ export function ShareDialog({ open, onOpenChange, imageUrl, itemName }: ShareDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>שתף תמונה</DialogTitle>
+          <DialogTitle>שתפו תמונה</DialogTitle>
           <DialogDescription>
-            שתף תמונה זו ברשתות החברתיות או באמצעות קישור ישיר
+            שתפו תמונה זו ברשתות החברתיות או באמצעות קישור ישיר
           </DialogDescription>
         </DialogHeader>
         
@@ -163,7 +162,7 @@ export function ShareDialog({ open, onOpenChange, imageUrl, itemName }: ShareDia
                 <div className="flex gap-2">
                   <Input value={imageUrl} readOnly className="flex-1" />
                   <Button onClick={handleCopyLink} variant="secondary">
-                    {copied ? "הועתק!" : "העתק"}
+                    {copied ? "הועתק!" : "העתיקו"}
                   </Button>
                 </div>
                 

@@ -93,7 +93,7 @@ export function CustomerGallery() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">הגלריה שלי</h1>
-        <p className="text-muted-foreground">כל התמונות המאושרות שלך במקום אחד</p>
+        <p className="text-muted-foreground">כל התמונות המאושרות שלכם/ן במקום אחד</p>
       </div>
 
       {/* Filters and Search */}
@@ -101,7 +101,7 @@ export function CustomerGallery() {
         <div className="relative w-full sm:w-auto flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="חפש לפי שם מנה..."
+            placeholder="חיפוש לפי שם מנה..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -114,7 +114,7 @@ export function CustomerGallery() {
             onValueChange={(value) => setSelectedType(value === "__ALL__" ? null : value)}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="סנן לפי סוג" />
+              <SelectValue placeholder="סינון לפי סוג" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__ALL__">הכל</SelectItem>
@@ -126,7 +126,7 @@ export function CustomerGallery() {
 
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="מיין לפי" />
+              <SelectValue placeholder="מיון לפי" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">החדש ביותר</SelectItem>
@@ -201,7 +201,7 @@ export function CustomerGallery() {
         <div className="text-center py-12 border rounded-md">
           <h3 className="text-lg font-medium">אין תמונות בגלריה</h3>
           <p className="text-muted-foreground mt-2">
-            עדיין אין מנות מאושרות בגלריה שלך. לאחר שתאשר את המנות המעובדות, הן יופיעו כאן.
+            עדיין אין מנות מאושרות בגלריה שלכם/ן. לאחר שתאשרו את המנות המעובדות, הן יופיעו כאן.
           </p>
         </div>
       )}

@@ -20,7 +20,7 @@ const ForgotPassword: React.FC = () => {
       const { success, error } = await forgotPassword(email);
       
       if (success) {
-        toast.success("הוראות לאיפוס הסיסמה נשלחו לכתובת האימייל שלך");
+        toast.success("הוראות לאיפוס הסיסמה נשלחו לכתובת האימייל שלכם/ן");
       } else {
         toast.error(error || "לא ניתן לשלוח הוראות לאיפוס סיסמה");
       }
@@ -37,7 +37,7 @@ const ForgotPassword: React.FC = () => {
         <CardHeader className="text-center">
           <CardTitle>שחזור סיסמה</CardTitle>
           <CardDescription>
-            הזן את כתובת האימייל שלך ונשלח לך קישור לאיפוס הסיסמה
+            הזינו את כתובת האימייל שלכם/ן ונשלח לכם/ן קישור לאיפוס הסיסמה
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -49,7 +49,7 @@ const ForgotPassword: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="הכנס את כתובת האימייל שלך"
+                placeholder="הכניסו את כתובת האימייל שלכם/ן"
                 required
                 dir="ltr"
               />
@@ -64,7 +64,7 @@ const ForgotPassword: React.FC = () => {
               {isLoading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
               ) : (
-                "שלח קישור לאיפוס סיסמה"
+                "שליחת קישור לאיפוס סיסמה"
               )}
             </Button>
             <Link

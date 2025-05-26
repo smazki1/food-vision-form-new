@@ -68,7 +68,7 @@ const CustomerLogin: React.FC = () => {
 
       if (success) {
         console.log("[AUTH_DEBUG] CustomerLogin - Login successful, waiting for auth state update");
-        toast.success("התחברת בהצלחה");
+        toast.success("ההתחברות בוצעה בהצלחה");
         // Let the useEffect handle redirection
       } else {
         console.error("[AUTH_DEBUG] CustomerLogin - Login failed:", error);
@@ -85,6 +85,7 @@ const CustomerLogin: React.FC = () => {
 
   // If still checking authentication status, show loading
   if (authLoading && !isRedirecting) {
+    console.log("[CustomerLogin] Rendering: Auth Loading Spinner");
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -94,6 +95,7 @@ const CustomerLogin: React.FC = () => {
 
   // If already authenticated, show loading with redirect message
   if (isAuthenticated && user) {
+    console.log("[CustomerLogin] Rendering: Authenticated, redirecting message");
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -104,14 +106,14 @@ const CustomerLogin: React.FC = () => {
     );
   }
 
+  console.log("[CustomerLogin] Rendering: Login Form");
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle>התחברות למערכת</CardTitle>
           <CardDescription>
-            התחבר כדי לצפות ולנהל את המנות שלך
-            <div className="mt-2 text-sm">Cursor Test - Local to Preview</div>
+            התחברו כדי לצפות ולנהל את המנות שלכם
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleLogin}>
@@ -123,7 +125,7 @@ const CustomerLogin: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="הכנס את כתובת האימייל שלך"
+                placeholder="הכניסו את כתובת האימייל שלכם"
                 required
                 dir="ltr"
               />
@@ -135,7 +137,7 @@ const CustomerLogin: React.FC = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="הכנס את הסיסמה שלך"
+                placeholder="הכניסו את הסיסמה שלכם"
                 required
                 dir="ltr"
               />
@@ -150,22 +152,21 @@ const CustomerLogin: React.FC = () => {
               {isLoading || isRedirecting ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
               ) : (
-                "התחבר"
+                "התחברות"
               )}
             </Button>
             <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
-              <Link
-                to="/forgot-password"
-                className="hover:text-primary transition-colors"
+              <button
+                type="button"
+                onClick={() => {
+                  const phoneNumber = "+972527772807";
+                  const message = encodeURIComponent("שלום, שכחתי את הסיסמה שלי ואני זקוק לעזרה.");
+                  window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
+                }}
+                className="hover:text-primary transition-colors cursor-pointer"
               >
-                שכחת סיסמה?
-              </Link>
-              <Link
-                to="/"
-                className="hover:text-primary transition-colors"
-              >
-                עדיין לא לקוח שלנו? הגש פרטים
-              </Link>
+                שכחתם סיסמה? צרו קשר
+              </button>
             </div>
           </CardFooter>
         </form>

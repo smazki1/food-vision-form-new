@@ -54,14 +54,14 @@ export function SubmissionDetailsPage() {
     if (success) {
       toast({
         title: "בקשת עריכה נשלחה",
-        description: "בקשת העריכה שלך התקבלה ותטופל בקרוב",
+        description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
       });
       setEditNote("");
       setEditDialogOpen(false);
     } else {
       toast({
         title: "שגיאה בשליחת בקשת העריכה",
-        description: "אירעה שגיאה בעת שליחת בקשת העריכה. אנא נסה שוב מאוחר יותר.",
+        description: "אירעה שגיאה בעת שליחת בקשת העריכה. אנא נסו שוב מאוחר יותר.",
         variant: "destructive",
       });
     }
@@ -78,7 +78,7 @@ export function SubmissionDetailsPage() {
     } else {
       toast({
         title: "שגיאה באישור המנה",
-        description: "אירעה שגיאה בעת אישור המנה. אנא נסה שוב מאוחר יותר.",
+        description: "אירעה שגיאה בעת אישור המנה. אנא נסו שוב מאוחר יותר.",
         variant: "destructive",
       });
     }
@@ -93,12 +93,12 @@ export function SubmissionDetailsPage() {
       setNewMessage("");
       toast({
         title: "ההודעה נשלחה",
-        description: "ההודעה שלך נשלחה לצוות העריכה",
+        description: "ההודעה שלכם נשלחה לצוות העריכה",
       });
     } else {
       toast({
         title: "שגיאה בשליחת ההודעה",
-        description: "אירעה שגיאה בעת שליחת ההודעה. אנא נסה שוב מאוחר יותר.",
+        description: "אירעה שגיאה בעת שליחת ההודעה. אנא נסו שוב מאוחר יותר.",
         variant: "destructive",
       });
     }
@@ -117,7 +117,7 @@ export function SubmissionDetailsPage() {
     } else {
       toast({
         title: "שגיאה בעדכון התמונה הראשית",
-        description: "אירעה שגיאה בעת עדכון התמונה הראשית. אנא נסה שוב מאוחר יותר.",
+        description: "אירעה שגיאה בעת עדכון התמונה הראשית. אנא נסו שוב מאוחר יותר.",
         variant: "destructive",
       });
     }
@@ -134,7 +134,7 @@ export function SubmissionDetailsPage() {
     
     toast({
       title: "הורדת תמונה",
-      description: "התמונה מורדת למחשב שלך",
+      description: "התמונה מורדת למחשב שלכם",
     });
   };
 
@@ -161,7 +161,7 @@ export function SubmissionDetailsPage() {
         <CardHeader>
           <CardTitle>שגיאה בטעינת פרטי הגשה</CardTitle>
           <CardDescription>
-            אירעה שגיאה בעת טעינת פרטי ההגשה. אנא נסה שוב מאוחר יותר.
+            אירעה שגיאה בעת טעינת פרטי ההגשה. אנא נסו שוב מאוחר יותר.
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -225,12 +225,12 @@ export function SubmissionDetailsPage() {
                 <DialogHeader>
                   <DialogTitle>בקשת עריכה</DialogTitle>
                   <DialogDescription>
-                    תאר את השינויים שתרצה לראות בתמונה המעובדת
+                    תארו את השינויים שתרצו לראות בתמונה המעובדת
                   </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
                   <Textarea
-                    placeholder="תאר את העריכות הנדרשות..."
+                    placeholder="תארו את העריכות הנדרשות..."
                     className="h-40"
                     value={editNote}
                     onChange={(e) => setEditNote(e.target.value)}
@@ -241,7 +241,7 @@ export function SubmissionDetailsPage() {
                     ביטול
                   </Button>
                   <Button onClick={handleRequestEdit}>
-                    שלח בקשה
+                    שליחת בקשה
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -281,7 +281,7 @@ export function SubmissionDetailsPage() {
               <CardTitle>תמונות מעובדות</CardTitle>
               <CardDescription>
                 {hasProcessedImages 
-                  ? "צפה בתמונות המעובדות של המנה" 
+                  ? "צפו בתמונות המעובדות של המנה" 
                   : "אין תמונות מעובדות עדיין"}
               </CardDescription>
             </CardHeader>
@@ -488,7 +488,7 @@ export function SubmissionDetailsPage() {
             <CardHeader>
               <CardTitle>תמונות מקוריות</CardTitle>
               <CardDescription>
-                אלו התמונות שהעלית במקור עבור פריט זה.
+                אלו התמונות שהעליתם במקור עבור פריט זה.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -553,7 +553,7 @@ export function SubmissionDetailsPage() {
             <CardHeader>
               <CardTitle>תקשורת</CardTitle>
               <CardDescription>
-                שלח הודעות לצוות העריכה וצפה בהיסטוריית ההודעות
+                שלחו הודעות לצוות העריכה וצפו בהיסטוריית ההודעות
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -601,7 +601,7 @@ export function SubmissionDetailsPage() {
                 
                 <div className="flex gap-2">
                   <Textarea
-                    placeholder="כתוב הודעה..."
+                    placeholder="כתבו הודעה..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="resize-none"

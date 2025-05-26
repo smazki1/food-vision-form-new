@@ -44,7 +44,7 @@ export const useConnectionVerifier = (
         const { success, error: connError } = await clientAuthService.testDatabaseConnection();
         if (!isMounted) return;
         clearTimeout(timeoutId); // Clear timeout as soon as test finishes
-
+        
         const duration = Date.now() - startTime;
         console.log(`[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection test completed in ${duration}ms`);
         
@@ -70,13 +70,13 @@ export const useConnectionVerifier = (
           if (isMounted && !connectionVerified) {
             console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Forcing connection verification to true after exception.");
             setConnectionVerified(true);
-          }
+          } 
         }, 500);
       }
     };
     
     if (!connectionChecked) { // Only run the test if not already checked in this effect cycle
-        testConnection();
+    testConnection();
     } else {
         console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Skipping testConnection, already checked.");
     }

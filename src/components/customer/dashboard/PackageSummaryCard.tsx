@@ -14,7 +14,7 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-2xl">חבילה נוכחית</CardTitle>
-        <CardDescription>פרטי החבילה הנוכחית שלך ומספר המנות שנותרו</CardDescription>
+        <CardDescription>פרטי החבילה הנוכחית שלכם/ן ומספר המנות שנותרו</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
         <div className="flex flex-col items-center gap-4">
@@ -36,7 +36,7 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
           </div>
           <Button asChild>
             <Link to="/customer/profile">
-              צפה בפרטי החבילה
+              צפו בפרטי החבילה
             </Link>
           </Button>
         </div>
@@ -44,7 +44,7 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
         {clientProfile?.remaining_servings && clientProfile.remaining_servings < 5 && (
           <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
             <p className="text-amber-700 text-sm">
-              נותרו לך {clientProfile.remaining_servings} מנות בלבד! צור קשר איתנו לרכישת מנות נוספות.
+              נותרו לכם/ן {clientProfile.remaining_servings} מנות בלבד! צרו קשר איתנו לרכישת מנות נוספות.
             </p>
           </div>
         )}

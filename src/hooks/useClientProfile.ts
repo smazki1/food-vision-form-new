@@ -49,13 +49,13 @@ export function useClientProfile(userId?: string) {
 
         if (basicClientError && basicClientError.message !== 'JSON object requested, multiple (or no) rows returned') {
           console.error("[useClientProfile] Error fetching basic client data for user_auth_id " + userId + ":", basicClientError);
-          setError(`שגיאה בטעינת פרטי הלקוח: ${basicClientError.message}`);
+          setError(`שגיאה בטעינת פרטי הלקוח/ה: ${basicClientError.message}`);
           return null;
         }
 
         if (!basicClientData) {
           console.warn("[useClientProfile] No client data found for user_auth_id:", userId, "(Result from Supabase was null/empty)");
-          setError("לא נמצאו פרטי לקוח עבור המשתמש הנוכחי.");
+          setError("לא נמצאו פרטי לקוח/ה עבור המשתמש/ת הנוכחי/ת.");
           return null;
         }
         console.log("[useClientProfile] Basic client data successfully processed:", basicClientData);
@@ -100,7 +100,7 @@ export function useClientProfile(userId?: string) {
 
           if (clientError && clientError.message !== 'JSON object requested, multiple (or no) rows returned') {
             console.error("[useClientProfile] Error fetching full client profile (with package) for user_auth_id " + userId + ":", clientError);
-            setError(`שגיאה בטעינת פרטי החבילה של הלקוח: ${clientError.message}`);
+            setError(`שגיאה בטעינת פרטי החבילה של הלקוח/ה: ${clientError.message}`);
             return basicClientData; 
           }
           

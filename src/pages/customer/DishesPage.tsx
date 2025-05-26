@@ -36,7 +36,7 @@ export function DishesPage() {
 
       if (submissionsError) {
         console.error('Error fetching submissions:', submissionsError);
-        toast.error('שגיאה בטעינת המנות. נסה שוב מאוחר יותר.');
+        toast.error('שגיאה בטעינת המנות. נסו שוב מאוחר יותר.');
         return;
       }
 
@@ -141,8 +141,8 @@ export function DishesPage() {
           </div>
         ) : (
           <div className="text-center py-10 text-gray-500">
-            <p>לא נמצאו מנות התואמות את החיפוש שלך.</p>
-            {dishes.length === 0 && clientId && <p>עדיין לא הוספת מנות.</p>}
+            <p>לא נמצאו מנות התואמות את החיפוש שלכם/ן.</p>
+            {dishes.length === 0 && clientId && <p>עדיין לא הוספתם/ן מנות.</p>}
           </div>
         )}
       </div>

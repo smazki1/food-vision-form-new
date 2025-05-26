@@ -35,17 +35,13 @@ export const useClientDataFetcher = (
       console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Enabling client data query for user:", user.id);
       }
     } else if (initialized && !loading && !isAuthenticated) {
-      // If auth is initialized and user is not authenticated, we can stop authenticating
-      onUpdate({
-        clientId: null,
-        authenticating: false,
-        clientRecordStatus: 'not-found', // Or 'idle' if more appropriate before any attempt
-        hasNoClientRecord: true, // This might be premature if no attempt was made
-        errorState: null
-      });
-      setClientQueryEnabled(false);
-      setQueryStartTime(null);
-      console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - User not authenticated, resetting client auth state");
+      // If auth is initialized and user is not authenticated, 
+      // disable querying but let ClientAuthProvider handle the broader state reset.
+      if (clientQueryEnabled) { // Only act if it was previously enabled
+        setClientQueryEnabled(false);
+        setQueryStartTime(null);
+        console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - User not authenticated by useUnifiedAuth, disabling client data query. ClientAuthProvider will reset state.");
+      }
     } else {
       // This log can be noisy if conditions frequently change, consider conditional logging
       // console.log("[AUTH_DEBUG_FINAL] useClientDataFetcher - Not ready to fetch client data yet:", {

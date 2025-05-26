@@ -57,7 +57,7 @@ export function DashboardPage() {
               className="w-3/4 sm:w-1/2 md:w-2/3 h-11 text-base"
             >
               <Link to="/customer/package-details">
-                צפה בפרטי החבילה 
+                פרטי החבילה
               </Link>
             </Button>
             

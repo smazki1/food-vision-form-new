@@ -43,13 +43,13 @@ export function CustomerLayout() {
       await supabase.auth.signOut();
       toast({
         title: "התנתקות בוצעה בהצלחה",
-        description: "התנתקת בהצלחה מהמערכת",
+        description: "התנתקתם/ן בהצלחה מהמערכת",
       });
     } catch (error) {
       console.error("Logout error:", error);
       toast({
         title: "שגיאה בהתנתקות",
-        description: "אירעה שגיאה בעת ההתנתקות. אנא נסה שוב.",
+        description: "אירעה שגיאה בעת ההתנתקות. אנא נסו שוב.",
         variant: "destructive",
       });
     }
@@ -62,7 +62,7 @@ export function CustomerLayout() {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         <div className="mt-4 text-sm text-muted-foreground text-center">
           המערכת בגרסת בטא - הטעינה עשויה לקחת מספר שניות. <br />
-          במקרה של המתנה ממושכת, אנא רענן את הדף
+          במקרה של המתנה ממושכת, אנא רעננו את הדף
         </div>
       </div>
     );
@@ -74,8 +74,8 @@ export function CustomerLayout() {
       <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
       <AlertDescription className="text-amber-700">
-        החשבון שלך מאומת, אך אינו מקושר לפרופיל לקוח במערכת. חלק מהתכונות עלולות להיות מוגבלות.
-        אנא צור קשר עם התמיכה לסיוע.
+        החשבון שלכם/ן מאומת, אך אינו מקושר לפרופיל לקוח במערכת. חלק מהתכונות עלולות להיות מוגבלות.
+        אנא צרו קשר עם התמיכה לסיוע.
       </AlertDescription>
     </Alert>
   );

@@ -53,9 +53,9 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors }) => {
       <div>
         <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800">העלאת תמונות</h2>
         <p className="text-sm md:text-base text-muted-foreground mb-8">
-          העלה תמונות ברורות ואיכותיות של הפריט. מומלץ להעלות בין 1 ל-10 תמונות מזוויות שונות.
+          העלו תמונות ברורות ואיכותיות של הפריט. מומלץ להעלות בין 1 ל-10 תמונות מזוויות שונות.
         </p>
-      </div>
+        </div>
 
       <div className="space-y-4">
         <div
@@ -69,7 +69,7 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors }) => {
           <input {...getInputProps()} />
           <UploadCloud className={cn("h-12 w-12 md:h-16 md:w-16 mb-4", isDragActive ? "text-primary" : "text-gray-400")} />
           <p className="text-base md:text-lg font-medium text-gray-700 mb-1">
-            {isDragActive ? 'שחרר כאן את הקבצים' : 'גרור לכאן תמונות או לחץ לבחירה'}
+            {isDragActive ? 'שחררו כאן את הקבצים' : 'גררו לכאן תמונות או לחצו לבחירה'}
           </p>
           <p className="text-xs md:text-sm text-muted-foreground">
             תומך ב-JPG, PNG, WEBP (מקסימום 20MB לתמונה, עד 10 תמונות)
@@ -84,15 +84,15 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors }) => {
         )}
       </div>
 
-      {formData.referenceImages.length > 0 && (
+        {formData.referenceImages.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-700">תמונות שהועלו ({formData.referenceImages.length}/10)</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {formData.referenceImages.map((file, index) => (
+              {formData.referenceImages.map((file, index) => (
               <div key={index}
                    className="relative group aspect-square bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200">
-                <img
-                  src={URL.createObjectURL(file)}
+                  <img
+                    src={URL.createObjectURL(file)}
                   alt={`תצוגה מקדימה ${index + 1}`}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                   onLoad={() => URL.revokeObjectURL(file.name)}
@@ -102,17 +102,17 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors }) => {
                     variant="destructive"
                     size="icon"
                     onClick={(e) => { e.preventDefault(); removeImage(index); }}
-                    aria-label="הסר תמונה"
+                    aria-label="הסרת תמונה"
                     className="rounded-full h-9 w-9 md:h-10 md:w-10"
                   >
                     <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
                   </Button>
                 </div>
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {formData.referenceImages.length > 0 && (
         <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
@@ -124,21 +124,21 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors }) => {
               { id: "colors", label: "הצבעים חיים ומושכים" }
             ].map(item => (
               <div key={item.id} className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Checkbox
+              <Checkbox
                   id={item.id}
                   checked={checklist[item.id as keyof typeof checklist]}
-                  onCheckedChange={(checked) => 
+                onCheckedChange={(checked) => 
                     setChecklist(prev => ({ ...prev, [item.id]: checked as boolean }))
-                  }
+                }
                   className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <label
+              />
+              <label
                   htmlFor={item.id}
                   className="text-sm md:text-base text-gray-700 leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
+              >
                   {item.label}
-                </label>
-              </div>
+              </label>
+            </div>
             ))}
           </div>
         </div>

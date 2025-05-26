@@ -1,8 +1,11 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { triggerMakeWebhook } from "@/utils/webhook-trigger";
+import { supabase } from "@/integrations/supabase/client";
 import { ClientDetails, FoodItem, AdditionalDetails } from "@/types/food-vision";
 import { createBatchSubmissions, getClientRemainingServings } from "@/api/submissionApi";
+import { processDishItems, processCocktailItems, processDrinkItems } from "@/utils/item-utils";
+import { uploadFileToStorage } from "@/utils/storage-utils";
+import { processAdditionalDetails } from "@/utils/additional-details-utils";
 
 export const useFoodVisionSubmit = ({
   clientDetails,
@@ -21,126 +24,129 @@ export const useFoodVisionSubmit = ({
   return useCallback(async (options?: { clientId?: string }) => {
     const currentClientId = options?.clientId;
 
-    // Validate required fields
     if (!clientDetails.restaurantName ||
         !clientDetails.contactName ||
         !clientDetails.phoneNumber ||
         !clientDetails.email) {
-      toast.error("אנא מלא את כל שדות החובה בכרטיסיית פרטי הלקוח");
+      toast.error("אנא מלאו את כל שדות החובה בפרטי המסעדה.");
       setActiveTab("client");
-      return { success: false, message: "חסרים שדות חובה בפרטי הלקוח" };
+      return { success: false, message: "חסרים שדות חובה בפרטי המסעדה" };
     }
-    
-    // Calculate total new items being submitted
-    const totalNewItems = 
-      (Array.isArray(dishes) ? dishes.length : 0) + 
-      (Array.isArray(cocktails) ? cocktails.length : 0) + 
+
+    const totalNewItems =
+      (Array.isArray(dishes) ? dishes.length : 0) +
+      (Array.isArray(cocktails) ? cocktails.length : 0) +
       (Array.isArray(drinks) ? drinks.length : 0);
-    
-    // If there are no items to submit, but client details might be new (e.g. first time for an unauth user)
-    // We might still want to run getOrCreateClient part of triggerMakeWebhook
-    // For now, let's assume if totalNewItems is 0, it's not a full valid submission for creating customer_submissions.
-    // This could be adjusted if just saving client details is a valid standalone action.
-    if (totalNewItems === 0 && !additionalDetails.visualStyle && !additionalDetails.brandColors && !additionalDetails.generalNotes && !additionalDetails.brandingMaterials) {
-        toast.info("אנא הוסף לפחות פריט אחד או פרטים נוספים לשליחה.");
-        return { success: false, message: "אין פריטים לשליחה" };
+
+    if (totalNewItems === 0 && !additionalDetails.visualStyle && !additionalDetails.brandColors && !additionalDetails.generalNotes && !(additionalDetails.brandingMaterials && additionalDetails.brandingMaterials.length > 0)) {
+      toast.info("אנא הוסיפו לפחות פריט אחד או פרטים נוספים לשליחה.");
+      return { success: false, message: "אין פריטים או פרטים נוספים לשליחה" };
     }
-    
-    // If client is authenticated, check if they have enough servings
-    if (currentClientId) {
-      try {
-        const remainingServings = await getClientRemainingServings(currentClientId);
-        
-        if (remainingServings < totalNewItems) {
-          toast.error(`אין מספיק מנות בחבילה. נותרו ${remainingServings} מנות, אך ניסית להגיש ${totalNewItems} פריטים.`);
-          return { success: false, message: "אין מספיק מנות בחבילה" };
-        }
-      } catch (error) {
-        console.error("Error checking remaining servings:", error);
-        // Continue with submission as the trigger will enforce servings check
-      }
-    }
-    
-    // Begin submission process
+
     setIsSubmitting(true);
-    
+
     try {
-      const completeFormData = {
-        clientDetails,
-        dishes: Array.isArray(dishes) ? dishes : [],
-        cocktails: Array.isArray(cocktails) ? cocktails : [],
-        drinks: Array.isArray(drinks) ? drinks : [],
-        additionalDetails
-      };
-      
-      // Trigger webhook to send data (which will create the items in respective tables)
-      const webhookResult = await triggerMakeWebhook(completeFormData);
-      
-      if (!webhookResult.success) {
-        // Error messages are handled by triggerMakeWebhook or getOrCreateClient via toast
-        // Ensure submission state is reset
-        setIsSubmitting(false);
-        return { success: false, message: webhookResult.error || "עיבוד ראשוני נכשל" };
-      }
-
-      // Use the clientId and createdItemsInfo from webhookResult
-      const resolvedClientId = webhookResult.clientId;
-      const itemsForSubmission = webhookResult.createdItemsInfo || [];
-
-      // If a client was identified/created AND items were processed successfully by webhook-trigger
-      // (which implies dishes/cocktails/drinks were saved and their DB IDs are in itemsForSubmission)
-      // then create the customer_submission records.
-      if (resolvedClientId && itemsForSubmission.length > 0) {
-         // Check remaining servings if client is identified
+      if (currentClientId) {
+        // --- FLOW FOR AUTHENTICATED CLIENT (currentClientId is from 'clients' table) ---
+        let remainingServings = 0;
         try {
-          const remainingServings = await getClientRemainingServings(resolvedClientId);
+          remainingServings = await getClientRemainingServings(currentClientId);
           if (remainingServings < totalNewItems) {
-            toast.error(`אין מספיק מנות בחבילה. נותרו ${remainingServings} מנות, אך ניסית להגיש ${totalNewItems} פריטים.`);
+            toast.error(`אין מספיק מנות בחבילה. נותרו ${remainingServings} מנות, אך ניסיתן להגיש ${totalNewItems} פריטים.`);
             setIsSubmitting(false);
             return { success: false, message: "אין מספיק מנות בחבילה" };
           }
-        } catch (servingsError) {
-          console.error("Error checking remaining servings:", servingsError);
-          // Decide if this is a hard stop or a warning. For now, let's make it a hard stop.
-          toast.error("שגיאה בבדיקת יתרת המנות. אנא נסה שוב.");
+        } catch (error) {
+          console.error("Error checking remaining servings:", error);
+          toast.error("שגיאה בבדיקת יתרת המנות. אנא נסו שנית.");
           setIsSubmitting(false);
           return { success: false, message: "שגיאה בבדיקת יתרת המנות" };
         }
+
+        const createdItemsInfo: Array<{ originalItemId: string; itemType: "dish" | "cocktail" | "drink"; itemName: string }> = [];
+        if (dishes && dishes.length > 0) {
+          const dishIds = await processDishItems(dishes, currentClientId);
+          dishIds.forEach((id, index) => createdItemsInfo.push({ originalItemId: id, itemType: "dish", itemName: dishes[index].name }));
+        }
+        if (cocktails && cocktails.length > 0) {
+          const cocktailIds = await processCocktailItems(cocktails, currentClientId);
+          cocktailIds.forEach((id, index) => createdItemsInfo.push({ originalItemId: id, itemType: "cocktail", itemName: cocktails[index].name }));
+        }
+        if (drinks && drinks.length > 0) {
+          const drinkIds = await processDrinkItems(drinks, currentClientId);
+          drinkIds.forEach((id, index) => createdItemsInfo.push({ originalItemId: id, itemType: "drink", itemName: drinks[index].name }));
+        }
+
+        let uploadedBrandingMaterialUrl: string | undefined = undefined;
+        if (additionalDetails.brandingMaterials && additionalDetails.brandingMaterials[0] instanceof File) {
+          uploadedBrandingMaterialUrl = await uploadFileToStorage(additionalDetails.brandingMaterials[0]);
+        }
+        const detailsToProcess = { ...additionalDetails };
+        delete detailsToProcess.brandingMaterials;
+        if (uploadedBrandingMaterialUrl) {
+          (detailsToProcess as any).brandingMaterialUrl = uploadedBrandingMaterialUrl;
+        }
+        await processAdditionalDetails(detailsToProcess, currentClientId);
+
+        if (createdItemsInfo.length > 0) {
+          await createBatchSubmissions(currentClientId, createdItemsInfo);
+          console.log("Batch submissions created successfully for client:", currentClientId);
+        } else {
+          console.log("Only additional details processed for client:", currentClientId);
+        }
+
+      } else {
+        // --- FLOW FOR NEW LEAD (No currentClientId, user is not from 'clients' table) ---
+        const leadSubmissionData = {
+          dishes: Array.isArray(dishes) ? dishes : [],
+          cocktails: Array.isArray(cocktails) ? cocktails : [],
+          drinks: Array.isArray(drinks) ? drinks : [],
+          additional_details: additionalDetails, // Assuming additionalDetails structure is suitable for JSONB
+        };
         
-        await createBatchSubmissions(resolvedClientId, itemsForSubmission);
-        console.log("Batch submissions created successfully for client:", resolvedClientId);
-      } else if (resolvedClientId && totalNewItems === 0 && (additionalDetails.visualStyle || additionalDetails.brandColors || additionalDetails.generalNotes || (additionalDetails as any).brandingMaterialUrl)){
-        // Case: Only additional details were submitted for an existing/new client, no new items to make submissions for.
-        // This is fine, getOrCreateClient and processAdditionalDetails already ran.
-        console.log("Additional details processed for client:", resolvedClientId, "No new items for batch submission.");
-      } else if (!resolvedClientId && totalNewItems > 0) {
-        // This case should ideally be caught by webhookResult.success being false earlier if client ID is essential
-        console.warn("Items processed but no client ID was resolved. Batch submissions not created.");
+        let uploadedBrandingMaterialUrlLead: string | undefined = undefined;
+        if (additionalDetails.brandingMaterials && additionalDetails.brandingMaterials[0] instanceof File) {
+          uploadedBrandingMaterialUrlLead = await uploadFileToStorage(additionalDetails.brandingMaterials[0]);
+        }
+
+        const leadPayload = {
+          email: clientDetails.email,
+          restaurant_name: clientDetails.restaurantName,
+          contact_name: clientDetails.contactName,
+          phone_number: clientDetails.phoneNumber,
+          status: 'new_form_submission', // Or a more descriptive status
+          submission_data: leadSubmissionData, // Storing all items and details
+          branding_material_url: uploadedBrandingMaterialUrlLead, // Store the URL directly if available
+          visual_style_notes: additionalDetails.visualStyle, // Example: store individual fields if preferred
+          brand_colors_notes: additionalDetails.brandColors,
+          general_notes: additionalDetails.generalNotes,
+        };
+
+        const { error: leadInsertError } = await supabase
+          .from('leads')
+          .insert(leadPayload);
+
+        if (leadInsertError) {
+          console.error("Error inserting new lead:", leadInsertError);
+          toast.error(`שגיאה בשמירת הפנייה: ${leadInsertError.message}`);
+          setIsSubmitting(false);
+          return { success: false, message: "שגיאה בשמירת הפנייה" };
+        }
+        console.log("New lead created successfully with email:", clientDetails.email);
       }
-      
-      // Clear form data after successful submission
+
+      // Common success steps: Clear form, show toast
       localStorage.removeItem("foodVisionForm");
-      setClientDetails({
-        restaurantName: "",
-        contactName: "",
-        phoneNumber: "",
-        email: "",
-      });
+      setClientDetails({ restaurantName: "", contactName: "", phoneNumber: "", email: "" });
       setDishes([]);
       setCocktails([]);
       setDrinks([]);
-      setAdditionalDetails({
-        visualStyle: "",
-        brandColors: "",
-        generalNotes: "",
-        brandingMaterials: null,
-      });
+      setAdditionalDetails({ visualStyle: "", brandColors: "", generalNotes: "", brandingMaterials: null });
       
-      // Show success message
-      toast.success("תודה! הטופס נשלח בהצלחה. נחזור אליך תוך 24 שעות.");
-      console.log("[useFoodVisionSubmitDebug] All DB operations successful. Returning success:true.");
+      toast.success("תודה! הטופס נשלח בהצלחה. נחזור אליכן תוך 24 שעות.");
       setIsSubmitting(false);
       return { success: true };
+
     } catch (error: any) {
       console.error("Error in useFoodVisionSubmit:", error);
       toast.error(`אירעה שגיאה בתהליך השליחה: ${error.message || 'Unknown error'}`);

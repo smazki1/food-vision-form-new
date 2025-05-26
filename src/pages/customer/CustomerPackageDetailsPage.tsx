@@ -22,7 +22,7 @@ const CustomerPackageDetailsPage: React.FC = () => {
           <div className="w-16 h-16 mx-auto bg-primary text-primary-foreground rounded-full flex items-center justify-center mb-4">
             <PackageIcon size={32} />
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-800">פרטי החבילה שלך</CardTitle>
+          <CardTitle className="text-3xl font-bold text-gray-800">פרטי החבילה שלכם/ן</CardTitle>
           {packageName && <CardDescription className="text-lg text-gray-600 mt-1">{packageName}</CardDescription>}
         </CardHeader>
         <CardContent className="p-6 md:p-8">
@@ -52,7 +52,7 @@ const CustomerPackageDetailsPage: React.FC = () => {
               שדרג חבילה
             </Button>
             <p className="text-sm text-muted-foreground">
-              זקוק לעזרה או מידע נוסף? <Link to="/contact-support" className="text-primary hover:underline">צור קשר עם התמיכה</Link>
+              זקוקים/ות לעזרה או מידע נוסף? <Link to="/contact-support" className="text-primary hover:underline">צרו קשר עם התמיכה</Link>
             </p>
           </div>
         </CardContent>
