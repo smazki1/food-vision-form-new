@@ -1,15 +1,54 @@
 
 import React from "react";
+import { SmartLoading } from "@/components/ui/smart-loading";
+import { ProgressiveSkeleton } from "@/components/ui/progressive-skeleton";
 
-const LoadingState: React.FC = () => {
-  return (
-    <div className="p-6 animate-pulse">
-      <div className="h-8 bg-muted rounded w-1/3 mb-4"></div>
-      <div className="h-4 bg-muted rounded w-1/2 mb-8"></div>
-      <div className="space-y-4">
-        <div className="h-10 bg-muted rounded"></div>
-        <div className="h-48 bg-muted rounded"></div>
+interface LoadingStateProps {
+  message?: string;
+  showSkeleton?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
+}
+
+const LoadingState: React.FC<LoadingStateProps> = ({ 
+  message = "טוען פרטי הגשה...",
+  showSkeleton = true,
+  error,
+  onRetry
+}) => {
+  if (error) {
+    return (
+      <div className="p-6 flex flex-col items-center">
+        <SmartLoading
+          isLoading={false}
+          error={error}
+          onRetry={onRetry}
+          message="שגיאה בטעינת פרטי ההגשה"
+          size="lg"
+        />
       </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      {showSkeleton ? (
+        <div className="space-y-6">
+          <ProgressiveSkeleton variant="card" lines={2} showImage={false} />
+          <ProgressiveSkeleton variant="form" lines={3} />
+          <ProgressiveSkeleton variant="list" lines={4} showAvatar={true} />
+        </div>
+      ) : (
+        <div className="flex justify-center items-center h-64">
+          <SmartLoading
+            isLoading={true}
+            message={message}
+            phases={['initial', 'fetching', 'processing']}
+            showProgress={true}
+            size="lg"
+          />
+        </div>
+      )}
     </div>
   );
 };
