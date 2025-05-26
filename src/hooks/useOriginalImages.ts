@@ -2,6 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+export type SubmissionItemType = 'dish' | 'cocktail' | 'drink';
+
 interface OriginalImage {
   image_id: string;
   image_url: string;
@@ -13,7 +15,7 @@ interface OriginalImage {
 export const useOriginalImages = (submissionId: string | undefined) => {
   return useQuery({
     queryKey: ['original-images', submissionId],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       if (!submissionId) {
         throw new Error('Submission ID is required');
       }
@@ -69,23 +71,15 @@ export const useOriginalImages = (submissionId: string | undefined) => {
         throw error;
       }
 
-      if (!data) {
-        console.log('[useOriginalImages] No data found for original item');
+      if (!data?.reference_image_urls) {
+        console.log('[useOriginalImages] No reference images found for original item');
         return [];
       }
 
-      // Transform the reference_image_urls array into OriginalImage objects
-      const referenceImages = data.reference_image_urls || [];
-      const originalImages: OriginalImage[] = referenceImages.map((url: string, index: number) => ({
-        image_id: `${original_item_id}_${index}`,
-        image_url: url,
-        item_type,
-        item_name: data.name,
-        uploaded_at: new Date().toISOString(), // We don't have the exact upload time, so use current time
-      }));
-
-      console.log('[useOriginalImages] Found original images:', originalImages.length);
-      return originalImages;
+      // Return the reference_image_urls array directly as strings
+      const referenceImages: string[] = data.reference_image_urls || [];
+      console.log('[useOriginalImages] Found original images:', referenceImages.length);
+      return referenceImages;
     },
     enabled: !!submissionId,
     staleTime: 5 * 60 * 1000, // 5 minutes

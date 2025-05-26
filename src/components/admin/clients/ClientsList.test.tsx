@@ -2,17 +2,15 @@
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { MockedFunction } from 'vitest'; // Explicit import
+import type { MockedFunction } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-// import userEvent from '@testing-library/user-event'; // Not used yet
 import { ClientsList } from '@/pages/admin/ClientsList';
-import * as useClientsHookModule from '@/hooks/useClients'; // Import the hook module
+import * as useClientsHookModule from '@/hooks/useClients';
 import { Client } from '@/types/client';
 import { BrowserRouter } from 'react-router-dom';
-import * as currentUserRoleHookModule from '@/hooks/useCurrentUserRole'; // Import the entire module
-import { UserRole } from '@/types/auth'; // UserRole is still a direct type import
+import * as currentUserRoleHookModule from '@/hooks/useCurrentUserRole';
+import { UserRole } from '@/types/auth';
 import { QueryClient, QueryClientProvider, QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
-// import { PostgrestError } from '@supabase/supabase-js'; // Not directly used in the hook's return signature for error, it's wrapped in Error
 
 // Mock sonner
 vi.mock('sonner', () => ({
@@ -78,7 +76,6 @@ const mockClients: Client[] = [
 const mockedUseCurrentUserRole = currentUserRoleHookModule.useCurrentUserRole as MockedFunction<typeof currentUserRoleHookModule.useCurrentUserRole>;
 // Typed mock for useClients_Simplified_V2
 const mockedUseClients = useClientsHookModule.useClients_Simplified_V2 as MockedFunction<typeof useClientsHookModule.useClients_Simplified_V2>;
-
 
 // Create a new QueryClient instance for each test run to ensure isolation
 const createTestQueryClient = () => new QueryClient({
@@ -186,5 +183,4 @@ describe('ClientsList', () => {
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
   });
-
-}); 
+});

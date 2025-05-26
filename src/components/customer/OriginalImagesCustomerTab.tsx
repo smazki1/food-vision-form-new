@@ -1,26 +1,24 @@
+
 import React from 'react';
-import { Submission } from "@/api/submissionApi"; // Assuming Submission type is appropriate
-import { useOriginalImages, SubmissionItemType } from "@/hooks/useOriginalImages";
+import { Submission } from "@/api/submissionApi";
+import { useOriginalImages } from "@/hooks/useOriginalImages";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, Image as ImageIcon, Maximize } from "lucide-react";
 
 interface OriginalImagesCustomerTabProps {
-  submission: Submission; // Use the Submission type from your API
-  onImageClick: (imageUrl: string | null) => void; // For lightbox
+  submission: Submission;
+  onImageClick: (imageUrl: string | null) => void;
 }
 
 const OriginalImagesCustomerTab: React.FC<OriginalImagesCustomerTabProps> = ({ 
   submission, 
   onImageClick 
 }) => {
-  // Ensure submission.item_type conforms to SubmissionItemType for the hook
-  const itemTypeForHook: SubmissionItemType = submission.item_type;
-
   const { 
     data: originalImages, 
     isLoading: isLoadingOriginalImages, 
     error: errorOriginalImages 
-  } = useOriginalImages(submission.original_item_id, itemTypeForHook);
+  } = useOriginalImages(submission.submission_id);
 
   if (isLoadingOriginalImages) {
     return (
@@ -79,4 +77,4 @@ const OriginalImagesCustomerTab: React.FC<OriginalImagesCustomerTabProps> = ({
   );
 };
 
-export default OriginalImagesCustomerTab; 
+export default OriginalImagesCustomerTab;

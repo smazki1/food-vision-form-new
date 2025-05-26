@@ -70,15 +70,22 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
     queryFn: () => fetchUserRole(authSession.user!.id),
     enabled: !!authSession.user?.id && status !== 'CHECKING_SESSION' && status !== 'INITIALIZING',
     retry: false,
-    onSuccess: (data) => {
+  });
+
+  // Handle query success/error with useEffect
+  useEffect(() => {
+    if (rpcRole !== undefined && !rpcQueryError) {
       setStatus('ROLE_DETERMINED');
       toast.dismiss('user-role-error-toast');
-    },
-    onError: (err: any) => {
+    }
+  }, [rpcRole, rpcQueryError]);
+
+  useEffect(() => {
+    if (rpcQueryError) {
       setStatus('ERROR_FETCHING_ROLE');
-      toast.error(`Error determining user role. ${err.message}`, { id: 'user-role-error-toast' });
-    },
-  });
+      toast.error(`Error determining user role. ${rpcQueryError.message}`, { id: 'user-role-error-toast' });
+    }
+  }, [rpcQueryError]);
 
   useEffect(() => {
     setStatus('CHECKING_SESSION');
@@ -124,7 +131,7 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
 
   const finalState: CurrentUserRoleState = {
     status,
-    role: rpcRole || null,
+    role: (rpcRole as UserRole) || null,
     isAdmin: rpcRole === 'admin',
     isAccountManager: rpcRole === 'account_manager', 
     isEditor: rpcRole === 'editor',

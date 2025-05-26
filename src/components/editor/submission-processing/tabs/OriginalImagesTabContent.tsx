@@ -1,24 +1,24 @@
+
 import React from 'react';
 import { Submission } from "@/api/submissionApi";
-import { useOriginalImages, SubmissionItemType } from "@/hooks/useOriginalImages";
+import { useOriginalImages } from "@/hooks/useOriginalImages";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Loader2, AlertTriangle, Image as ImageIcon } from "lucide-react";
 
 interface OriginalImagesTabContentProps {
   submission: Submission;
-  setLightboxImage: (imageUrl: string | null) => void; // To allow opening images in lightbox
+  setLightboxImage: (imageUrl: string | null) => void;
 }
 
 const OriginalImagesTabContent: React.FC<OriginalImagesTabContentProps> = ({ 
   submission, 
   setLightboxImage 
 }) => {
-  const itemTypeForHook: SubmissionItemType = submission.item_type;
   const { 
     data: originalImages, 
     isLoading: isLoadingOriginalImages, 
     error: errorOriginalImages 
-  } = useOriginalImages(submission.original_item_id, itemTypeForHook);
+  } = useOriginalImages(submission.submission_id);
 
   if (isLoadingOriginalImages) {
     return (
@@ -69,4 +69,4 @@ const OriginalImagesTabContent: React.FC<OriginalImagesTabContentProps> = ({
   );
 };
 
-export default OriginalImagesTabContent; 
+export default OriginalImagesTabContent;

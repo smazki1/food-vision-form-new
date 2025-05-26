@@ -1,3 +1,4 @@
+
 /// <reference types="vitest/globals" />
 
 import { renderHook, waitFor, act } from '@testing-library/react';
@@ -220,4 +221,4 @@ describe('useCurrentUserRole', () => {
     expect(result.current.role).toBeNull();
     expect(result.current.isAdmin).toBe(false);
   });
-}); 
+});
