@@ -32,18 +32,24 @@ export const useClientDataFetcher = (
   updateClientAuthState: (updates: Partial<ClientAuthState>) => void,
   onError: (errorMessage: string) => void
 ) => {
-  const [forcedTimeout, setForcedTimeout] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [hasAttempted, setHasAttempted] = useState(false);
 
   const shouldEnableQuery = 
     user && 
     isAuthenticated && 
     initialized && 
     !authLoading && 
-    connectionVerified && 
-    !forcedTimeout;
+    connectionVerified &&
+    !hasAttempted; // Only attempt once
 
-  console.log("[CLIENT_DATA_FETCHER] Query enabled:", shouldEnableQuery);
+  console.log("[CLIENT_DATA_FETCHER] Query enabled:", shouldEnableQuery, {
+    user: !!user,
+    isAuthenticated,
+    initialized,
+    authLoading,
+    connectionVerified,
+    hasAttempted
+  });
 
   const { 
     data: clientData, 
@@ -60,72 +66,52 @@ export const useClientDataFetcher = (
 
       console.log("[CLIENT_DATA_FETCHER] Fetching client data for user:", user.id);
       
-      const { data, error } = await supabase
-        .from('clients')
-        .select(`
-          client_id,
-          user_auth_id,
-          email_notifications,
-          app_notifications,
-          current_package_id,
-          restaurant_name,
-          contact_name,
-          phone,
-          email,
-          client_status,
-          remaining_servings,
-          created_at,
-          last_activity_at,
-          internal_notes,
-          original_lead_id
-        `)
-        .eq('user_auth_id', user.id);
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select(`
+            client_id,
+            user_auth_id,
+            email_notifications,
+            app_notifications,
+            current_package_id,
+            restaurant_name,
+            contact_name,
+            phone,
+            email,
+            client_status,
+            remaining_servings,
+            created_at,
+            last_activity_at,
+            internal_notes,
+            original_lead_id
+          `)
+          .eq('user_auth_id', user.id);
 
-      if (error) {
-        console.error("[CLIENT_DATA_FETCHER] Query error:", error);
-        throw error;
+        if (error) {
+          console.error("[CLIENT_DATA_FETCHER] Query error:", error);
+          throw error;
+        }
+
+        console.log("[CLIENT_DATA_FETCHER] Query result:", data);
+        setHasAttempted(true);
+        return data && data.length > 0 ? data[0] : null;
+      } catch (err) {
+        console.error("[CLIENT_DATA_FETCHER] Query exception:", err);
+        setHasAttempted(true);
+        throw err;
       }
-
-      console.log("[CLIENT_DATA_FETCHER] Query result:", data);
-      return data && data.length > 0 ? data[0] : null;
     },
     enabled: shouldEnableQuery,
     retry: 1,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
     refetchOnWindowFocus: false
   });
 
-  // Set up timeout protection - reduced to 3 seconds
-  useEffect(() => {
-    if (clientQueryLoading && shouldEnableQuery) {
-      console.log("[CLIENT_DATA_FETCHER] Starting timeout protection");
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        console.warn("[CLIENT_DATA_FETCHER] Query timeout reached, forcing fallback");
-        setForcedTimeout(true);
-        onError("Client data query timed out.");
-      }, 3000); // 3 seconds timeout
-
-      return () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      };
-    }
-  }, [clientQueryLoading, shouldEnableQuery, onError]);
-
   // Handle successful data fetch
   useEffect(() => {
-    if (clientData !== undefined && !clientQueryLoading && !forcedTimeout) {
+    if (clientData !== undefined && !clientQueryLoading && hasAttempted) {
       console.log("[CLIENT_DATA_FETCHER] Processing client data:", clientData);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
 
       if (clientData) {
         updateClientAuthState({
@@ -143,35 +129,37 @@ export const useClientDataFetcher = (
         });
       }
     }
-  }, [clientData, clientQueryLoading, updateClientAuthState, forcedTimeout]);
+  }, [clientData, clientQueryLoading, updateClientAuthState, hasAttempted]);
 
   // Handle query errors
   useEffect(() => {
-    if (clientQueryError && !forcedTimeout) {
+    if (clientQueryError && hasAttempted) {
       console.error("[CLIENT_DATA_FETCHER] Query error occurred:", clientQueryError);
-      
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
 
       const errorMessage = clientQueryError instanceof Error 
         ? clientQueryError.message 
         : 'Failed to fetch client data';
       
       onError(errorMessage);
+      updateClientAuthState({
+        clientId: null,
+        clientRecordStatus: 'error',
+        errorState: errorMessage,
+        authenticating: false
+      });
     }
-  }, [clientQueryError, onError, forcedTimeout]);
+  }, [clientQueryError, onError, updateClientAuthState, hasAttempted]);
 
-  // Reset forced timeout when query conditions change
+  // Reset attempt flag when refresh is triggered
   useEffect(() => {
-    if (!shouldEnableQuery && forcedTimeout) {
-      console.log("[CLIENT_DATA_FETCHER] Resetting forced timeout");
-      setForcedTimeout(false);
+    if (refreshToggle !== undefined) {
+      console.log("[CLIENT_DATA_FETCHER] Resetting attempt flag due to refresh");
+      setHasAttempted(false);
     }
-  }, [shouldEnableQuery, forcedTimeout]);
+  }, [refreshToggle]);
 
   return { 
     clientData, 
-    clientQueryLoading: clientQueryLoading && !forcedTimeout
+    clientQueryLoading: clientQueryLoading && !hasAttempted
   };
 };

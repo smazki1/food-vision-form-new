@@ -23,29 +23,32 @@ export function CustomerDashboard() {
 
   const isLoading = profileLoading || statsLoading;
 
-  // Show retry option for timeout errors
-  if (errorState && errorState.includes('timed out')) {
+  console.log("[CUSTOMER_DASHBOARD] State:", {
+    clientId,
+    hasLinkedClientRecord,
+    clientRecordStatus,
+    errorState,
+    isLoading,
+    profileError,
+    statsError
+  });
+
+  // Handle error states with simplified retry
+  if (errorState) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 space-y-4">
-        <Alert className="bg-amber-50 border-amber-200 max-w-md">
-          <AlertCircle className="h-4 w-4 text-amber-500" />
-          <AlertTitle className="text-amber-800">טעינה איטית</AlertTitle>
-          <AlertDescription className="text-amber-700">
-            הטעינה לוקחת יותר זמן מהרגיל. אנא נסו לרענן.
+        <Alert className="bg-red-50 border-red-200 max-w-md">
+          <AlertCircle className="h-4 w-4 text-red-500" />
+          <AlertTitle className="text-red-800">שגיאה בטעינת הנתונים</AlertTitle>
+          <AlertDescription className="text-red-700">
+            {errorState}
           </AlertDescription>
         </Alert>
         <Button 
           onClick={refreshClientAuth}
           className="w-full max-w-xs"
         >
-          רענן את הדף
-        </Button>
-        <Button 
-          variant="outline"
-          onClick={() => window.location.reload()}
-          className="w-full max-w-xs"
-        >
-          טען מחדש
+          נסה שוב
         </Button>
       </div>
     );
@@ -54,55 +57,52 @@ export function CustomerDashboard() {
   // Handle the case where user is authenticated but no client record is linked
   if (clientRecordStatus === 'not-found' && !isLoading) {
     return (
-      <Alert className="bg-amber-50 border-amber-200">
-        <AlertCircle className="h-4 w-4 text-amber-500" />
-        <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
-        <AlertDescription className="text-amber-700">
-          החשבון שלכם מאומת, אך אינו מקושר לפרופיל לקוח במערכת.
-          אנא צרו קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 space-y-4">
+        <Alert className="bg-amber-50 border-amber-200 max-w-md">
+          <AlertCircle className="h-4 w-4 text-amber-500" />
+          <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            החשבון שלכם מאומת, אך אינו מקושר לפרופיל לקוח במערכת.
+            אנא צרו קשר עם התמיכה לסיוע בהשלמת תהליך הרישום.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={refreshClientAuth}
+          variant="outline"
+          className="w-full max-w-xs"
+        >
+          רענן
+        </Button>
+      </div>
     );
   }
 
-  // Handle error state
-  if (errorState && !isLoading && !errorState.includes('timed out')) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>שגיאה בטעינת פרופיל לקוח</AlertTitle>
-        <AlertDescription>
-          {errorState}
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Check if there are any submissions with count > 0
-  const hasSubmissions = React.useMemo(() => {
-    if (!statusCounts) return false;
-    return statusCounts.some(item => item.count > 0);
-  }, [statusCounts]);
-
-  // Handle errors with more detail
+  // Handle other errors
   if (profileError || statsError) {
     const error = profileError || statsError;
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>שגיאה בטעינת הנתונים</AlertTitle>
-        <AlertDescription>
-          <div>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 space-y-4">
+        <Alert variant="destructive" className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>שגיאה בטעינת הנתונים</AlertTitle>
+          <AlertDescription>
             {typeof error === 'string' ? error : error?.message || "אירעה שגיאה בטעינת הנתונים"}
-          </div>
-        </AlertDescription>
-      </Alert>
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={() => window.location.reload()}
+          variant="outline"
+          className="w-full max-w-xs"
+        >
+          טען מחדש
+        </Button>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4">
         <Skeleton className="h-36 w-full" />
         <Skeleton className="h-64 w-full" />
       </div>
@@ -111,14 +111,28 @@ export function CustomerDashboard() {
 
   if (!clientProfile) {
     return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          לא נמצא פרופיל לקוח. אנא התחברו מחדש או צרו קשר עם התמיכה.
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 space-y-4">
+        <Alert className="max-w-md">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            לא נמצא פרופיל לקוח. אנא התחברו מחדש או צרו קשר עם התמיכה.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={refreshClientAuth}
+          className="w-full max-w-xs"
+        >
+          נסה שוב
+        </Button>
+      </div>
     );
   }
+
+  // Check if there are any submissions with count > 0
+  const hasSubmissions = React.useMemo(() => {
+    if (!statusCounts) return false;
+    return statusCounts.some(item => item.count > 0);
+  }, [statusCounts]);
 
   return (
     <div className="w-full flex flex-col items-center space-y-6">
