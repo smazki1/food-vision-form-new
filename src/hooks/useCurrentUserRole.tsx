@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,7 +39,7 @@ export const CurrentUserRoleProvider: React.FC<{ children: React.ReactNode }> = 
   );
 };
 
-function useCurrentUserRoleLogic(): CurrentUserRoleState {
+export function useCurrentUserRoleLogic(): CurrentUserRoleState {
   const [authSession, setAuthSession] = useState<{ user: User | null; hasAuthSession: boolean }>({
     user: null,
     hasAuthSession: false,
@@ -74,6 +73,12 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
 
   // Handle query success/error with useEffect
   useEffect(() => {
+    if (authSession.user && isRpcLoading) {
+      setStatus('FETCHING_ROLE');
+    }
+  }, [authSession.user, isRpcLoading]);
+
+  useEffect(() => {
     if (rpcRole !== undefined && !rpcQueryError) {
       setStatus('ROLE_DETERMINED');
       toast.dismiss('user-role-error-toast');
@@ -92,33 +97,50 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
     supabase.auth.getSession()
       .then(({ data, error }) => {
         if (error) {
-          console.error("Session error:", error);
+          console.error("[useCurrentUserRole] Session error:", error);
           setStatus('ERROR_SESSION');
           toast.error(`Session error: ${error.message}`, { id: 'user-role-error-toast' });
+          setAuthSession({ user: null, hasAuthSession: false });
           return;
         }
 
         if (!data.session) {
           setStatus('NO_SESSION');
+          setAuthSession({ user: null, hasAuthSession: false });
           return;
         }
-
+        
+        console.log("[useCurrentUserRole] getSession successful. User:", data.session.user.id);
         setAuthSession({ user: data.session.user, hasAuthSession: true });
+        setStatus('FETCHING_ROLE');
+      }).catch(err => {
+        console.error("[useCurrentUserRole] Unhandled error in getSession promise chain:", err);
+        setStatus('ERROR_SESSION');
+        toast.error(`Unexpected session error: ${err.message || 'Unknown error'}`, { id: 'user-role-error-toast' });
+        setAuthSession({ user: null, hasAuthSession: false });
       });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[useCurrentUserRole] Auth state change event:', event);
+        console.log('[useCurrentUserRole] Auth state change event:', event, "Session:", session ? session.user.id : null);
 
         if (event === 'SIGNED_IN' && session) {
           setAuthSession({ user: session.user, hasAuthSession: true });
-          setStatus('FETCHING_ROLE');
+          setStatus('FETCHING_ROLE'); 
           refetchRole();
-        }
-
-        if (event === 'SIGNED_OUT') {
+        } else if (event === 'SIGNED_OUT') {
           setAuthSession({ user: null, hasAuthSession: false });
           setStatus('NO_SESSION');
+        } else if (event === 'INITIAL_SESSION' && session) {
+          console.log("[useCurrentUserRole] Auth event INITIAL_SESSION. User:", session.user.id);
+          setAuthSession({ user: session.user, hasAuthSession: true });
+          setStatus('FETCHING_ROLE'); 
+          refetchRole();
+        } else if (event === 'USER_UPDATED' && session) {
+          console.log("[useCurrentUserRole] Auth event USER_UPDATED. User:", session.user.id);
+          setAuthSession({ user: session.user, hasAuthSession: true });
+          setStatus('FETCHING_ROLE');
+          refetchRole();
         }
       }
     );
@@ -127,7 +149,7 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
       authListener.subscription.unsubscribe();
       toast.dismiss('user-role-error-toast');
     };
-  }, [refetchRole]);
+  }, []);
 
   const finalState: CurrentUserRoleState = {
     status,
@@ -137,7 +159,7 @@ function useCurrentUserRoleLogic(): CurrentUserRoleState {
     isEditor: rpcRole === 'editor',
     userId: authSession.user?.id || null,
     error: rpcQueryError?.message || null,
-    isLoading: status === 'CHECKING_SESSION' || status === 'FETCHING_ROLE' || status === 'INITIALIZING',
+    isLoading: status === 'INITIALIZING' || status === 'CHECKING_SESSION' || status === 'FETCHING_ROLE' || isRpcLoading,
   };
 
   console.log('[useCurrentUserRole_Logic] FINAL State produced by logic hook:', finalState);

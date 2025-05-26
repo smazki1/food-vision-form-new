@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +16,9 @@ import { Client } from "@/types/client";
 import { usePackageForm } from "./hooks/usePackageForm";
 import { assignPackageSchema } from "./schema";
 import { PackageSelectionField } from "./components/PackageSelectionField";
-import { ServingsCountField } from "./components/ServingsCountField";
+import { TotalServingsDisplayField } from "./components/TotalServingsDisplayField";
+import { ServingsUsedField } from "./components/ServingsUsedField";
+import { InitialRemainingServingsDisplayField } from "./components/InitialRemainingServingsDisplayField";
 import { PaymentStatusField } from "./components/PaymentStatusField";
 import { ExpirationDateField } from "./components/ExpirationDateField";
 import { NotesField } from "./components/NotesField";
@@ -60,7 +61,13 @@ export function AssignPackageDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <PackageSelectionField selectedPackage={selectedPackage} />
-            <ServingsCountField />
+            {selectedPackage && (
+              <>
+                <TotalServingsDisplayField />
+                <ServingsUsedField />
+                <InitialRemainingServingsDisplayField />
+              </>
+            )}
             <PaymentStatusField />
             <ExpirationDateField />
             <NotesField />
@@ -69,7 +76,7 @@ export function AssignPackageDialog({
               <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
                 ביטול
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isSubmitting || !selectedPackage}>
                 {isSubmitting ? "מקצה..." : "הקצה חבילה"}
               </Button>
             </DialogFooter>

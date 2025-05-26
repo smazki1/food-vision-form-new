@@ -26,19 +26,26 @@ const AdminLogin: React.FC = () => {
   // Check if already authenticated and redirect if needed
   useEffect(() => {
     const checkAuth = async () => {
-      const isAuthenticated = localStorage.getItem("adminAuthenticated") === "true";
-      if (isAuthenticated && location.pathname === "/admin-login") {
-        console.log("Already authenticated, checking role");
+      const localAdminAuth = localStorage.getItem("adminAuthenticated") === "true";
+      console.log("[AdminLogin useEffect] Checking auth:", { localAdminAuth, currentRole: role, isRoleLoading });
+
+      if (localAdminAuth && location.pathname === "/admin-login") {
+        console.log("[AdminLogin useEffect] Already authenticated locally, waiting for role...");
         
-        // Wait for role to load
-        if (isRoleLoading) return;
+        if (isRoleLoading) {
+          console.log("[AdminLogin useEffect] Role is loading, will re-check.");
+          return;
+        }
         
+        console.log("[AdminLogin useEffect] Role loaded:", role);
         if (role === 'editor') {
-          console.log("User has editor role, redirecting to editor dashboard");
+          console.log("[AdminLogin useEffect] User has editor role, redirecting to editor dashboard");
           navigate("/editor/dashboard");
-        } else {
-          console.log("User has admin role, redirecting to admin dashboard");
+        } else if (role === 'admin') {
+          console.log("[AdminLogin useEffect] User has admin role, redirecting to admin dashboard");
           navigate("/admin/dashboard");
+        } else {
+          console.log("[AdminLogin useEffect] User has local auth but unexpected role or no role, staying or redirecting to login:", role);
         }
       }
     };

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Card,
@@ -9,7 +8,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AssignPackageDialog } from "../client-details/assign-package";
+import { AssignPackageDialog, AssignPackageFormValues } from "../client-details/assign-package";
 import { BadgePlus, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { AddServingsForm } from "./AddServingsForm";
@@ -34,13 +33,13 @@ export function PackageSection({
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
 
-  const handleAssignPackage = async (values: any) => {
+  const handleAssignPackage = async (values: AssignPackageFormValues) => {
     try {
       setIsAssigning(true);
       await assignPackageToClient(
         client.client_id,
         values.packageId,
-        values.servingsCount,
+        values.initial_remaining_servings,
         values.notes,
         values.expirationDate
       );
@@ -48,7 +47,6 @@ export function PackageSection({
       toast.success("החבילה הוקצתה בהצלחה");
       setIsAssignDialogOpen(false);
       
-      // Refresh client data
       if (onClientUpdate) {
         onClientUpdate();
       }
