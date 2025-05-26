@@ -35,7 +35,7 @@ export const useClientDataFetcher = (
   const [attemptCounter, setAttemptCounter] = useState(0);
   const maxAttempts = 1;
 
-  // Ensure shouldEnableQuery is always a boolean
+  // Only enable if user is authenticated, initialized, not loading, and connection is verified
   const shouldEnableQuery = Boolean(
     user && 
     isAuthenticated && 

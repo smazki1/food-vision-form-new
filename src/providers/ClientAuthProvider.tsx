@@ -54,7 +54,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const refreshClientAuth = useCallback(() => {
     console.log("[CLIENT_AUTH_PROVIDER] Refreshing client auth state");
     setRefreshToggle(prev => !prev);
-    // Reset error state when refreshing
     updateClientAuthState({ 
       errorState: null, 
       clientRecordStatus: 'loading',
@@ -64,7 +63,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   useEffect(() => {
     console.log('[CLIENT_AUTH_PROVIDER] Auth state update:', {
-      initialized, authLoading, isAuthenticated: isAuthenticated,
+      initialized, 
+      authLoading, 
+      isAuthenticated,
       clientQueryLoading,
       authenticating,
       clientRecordStatus,
@@ -77,7 +78,10 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     // Stage 1: Handle initial loading from useUnifiedAuth
     if (!initialized || authLoading) {
       if (authenticating !== true || clientRecordStatus !== 'loading') {
-        updateClientAuthState({ authenticating: true, clientRecordStatus: 'loading' });
+        updateClientAuthState({ 
+          authenticating: true, 
+          clientRecordStatus: 'loading' 
+        });
       }
       return;
     }
@@ -98,10 +102,13 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     // Stage 3: User IS authenticated - handle client data fetching
     if (clientQueryLoading) {
       if (authenticating !== true || (clientRecordStatus !== 'loading' && clientRecordStatus !== 'error')) {
-        updateClientAuthState({ authenticating: true, clientRecordStatus: 'loading' });
+        updateClientAuthState({ 
+          authenticating: true, 
+          clientRecordStatus: 'loading' 
+        });
       }
     } else {
-      // Query is not loading - set authenticating to false if it's not already
+      // Query is not loading - set authenticating to false if needed
       if (clientRecordStatus !== 'loading' && authenticating !== false) {
         updateClientAuthState({ authenticating: false });
       }
@@ -123,12 +130,16 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   const contextValue: ClientAuthContextType = useMemo(() => {
     const finalIsAuthenticated = isAuthenticated && 
+                               initialized &&
+                               !authLoading &&
                                (clientRecordStatus === 'found' || clientRecordStatus === 'not-found') &&
                                !errorState &&
                                connectionVerified;
     
     console.log('[CLIENT_AUTH_PROVIDER] Context value:', {
       supabaseIsAuthenticated: isAuthenticated,
+      initialized,
+      authLoading,
       clientRecordStatus,
       errorState,
       connectionVerified,
@@ -151,7 +162,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     };
   }, [
     clientId, user?.id, authenticating, clientRecordStatus, errorState, 
-    isAuthenticated, connectionVerified, refreshClientAuth
+    isAuthenticated, initialized, authLoading, connectionVerified, refreshClientAuth
   ]);
 
   return (
