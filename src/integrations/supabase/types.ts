@@ -146,33 +146,45 @@ export type Database = {
       }
       cocktails: {
         Row: {
-          client_id: string
+          client_id: string | null
           cocktail_id: string
           created_at: string
           description: string | null
+          id: string | null
+          image_urls: string[] | null
           ingredients: string | null
+          ingredients_array: string[] | null
           name: string
           notes: string | null
+          price: number | null
           reference_image_urls: string[] | null
         }
         Insert: {
-          client_id: string
+          client_id?: string | null
           cocktail_id?: string
           created_at?: string
           description?: string | null
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
+          ingredients_array?: string[] | null
           name: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Update: {
-          client_id?: string
+          client_id?: string | null
           cocktail_id?: string
           created_at?: string
           description?: string | null
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
+          ingredients_array?: string[] | null
           name?: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Relationships: [
@@ -189,7 +201,7 @@ export type Database = {
         Row: {
           assigned_editor_id: string | null
           assigned_package_id_at_submission: string | null
-          client_id: string
+          client_id: string | null
           created_at: string
           edit_count: number | null
           edit_history: Json | null
@@ -198,6 +210,7 @@ export type Database = {
           item_name_at_submission: string
           item_type: string
           main_processed_image_url: string | null
+          original_image_urls: string[] | null
           original_item_id: string
           priority: string | null
           processed_image_urls: string[] | null
@@ -214,7 +227,7 @@ export type Database = {
         Insert: {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
-          client_id: string
+          client_id?: string | null
           created_at?: string
           edit_count?: number | null
           edit_history?: Json | null
@@ -223,6 +236,7 @@ export type Database = {
           item_name_at_submission: string
           item_type: string
           main_processed_image_url?: string | null
+          original_image_urls?: string[] | null
           original_item_id: string
           priority?: string | null
           processed_image_urls?: string[] | null
@@ -239,7 +253,7 @@ export type Database = {
         Update: {
           assigned_editor_id?: string | null
           assigned_package_id_at_submission?: string | null
-          client_id?: string
+          client_id?: string | null
           created_at?: string
           edit_count?: number | null
           edit_history?: Json | null
@@ -248,6 +262,7 @@ export type Database = {
           item_name_at_submission?: string
           item_type?: string
           main_processed_image_url?: string | null
+          original_image_urls?: string[] | null
           original_item_id?: string
           priority?: string | null
           processed_image_urls?: string[] | null
@@ -280,33 +295,45 @@ export type Database = {
       }
       dishes: {
         Row: {
-          client_id: string
+          category: string | null
+          client_id: string | null
           created_at: string
           description: string | null
           dish_id: string
+          id: string | null
+          image_urls: string[] | null
           ingredients: string | null
           name: string
           notes: string | null
+          price: number | null
           reference_image_urls: string[] | null
         }
         Insert: {
-          client_id: string
+          category?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           dish_id?: string
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
           name: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Update: {
-          client_id?: string
+          category?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           dish_id?: string
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
           name?: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Relationships: [
@@ -321,33 +348,45 @@ export type Database = {
       }
       drinks: {
         Row: {
-          client_id: string
+          category: string | null
+          client_id: string | null
           created_at: string
           description: string | null
           drink_id: string
+          id: string | null
+          image_urls: string[] | null
           ingredients: string | null
           name: string
           notes: string | null
+          price: number | null
           reference_image_urls: string[] | null
         }
         Insert: {
-          client_id: string
+          category?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           drink_id?: string
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
           name: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Update: {
-          client_id?: string
+          category?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
           drink_id?: string
+          id?: string | null
+          image_urls?: string[] | null
           ingredients?: string | null
           name?: string
           notes?: string | null
+          price?: number | null
           reference_image_urls?: string[] | null
         }
         Relationships: [
@@ -616,6 +655,29 @@ export type Database = {
       is_editor: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      public_submit_item_by_restaurant_name: {
+        Args:
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_price?: number
+              p_reference_image_urls?: string[]
+            }
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+            }
+        Returns: Json
       }
     }
     Enums: {

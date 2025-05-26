@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 
 export type ItemType = 'dish' | 'cocktail' | 'drink' | '';
@@ -8,11 +9,8 @@ export interface NewItemFormData {
   description?: string;
   specialNotes?: string;
   referenceImages: File[]; 
-  // Add more fields as needed from the specification
+  // Restaurant details - only restaurant name needed for public form
   restaurantName?: string;
-  contactName?: string;
-  phone?: string;
-  email?: string;
 }
 
 interface NewItemFormContextType {
@@ -28,9 +26,6 @@ const defaultFormData: NewItemFormData = {
   specialNotes: '',
   referenceImages: [],
   restaurantName: '',
-  contactName: '',
-  phone: '',
-  email: '',
 };
 
 export const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
@@ -59,4 +54,4 @@ export const useNewItemForm = () => {
     throw new Error('useNewItemForm must be used within a NewItemFormProvider');
   }
   return context;
-}; 
+};

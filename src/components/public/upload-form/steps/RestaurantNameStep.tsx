@@ -1,41 +1,42 @@
-import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useNewItemForm } from '@/contexts/NewItemFormContext';
-import { PublicStepProps } from '../PublicFoodVisionUploadForm'; // Adjust path as needed
 
-const RestaurantNameStep: React.FC<PublicStepProps> = ({ errors, clearExternalErrors, setExternalErrors }) => {
+import React from 'react';
+import { useNewItemForm } from '@/contexts/NewItemFormContext';
+import { PublicStepProps } from '../PublicFoodVisionUploadForm';
+import { IconInput } from '@/components/ui/icon-input';
+
+const RestaurantNameStep: React.FC<PublicStepProps> = ({ errors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateFormData({ restaurantName: e.target.value });
-    if (errors?.restaurantName && clearExternalErrors) {
+    const { name, value } = e.target;
+    updateFormData({ [name]: value });
+    if (errors && errors[name] && clearExternalErrors) {
       clearExternalErrors();
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="restaurantName">שם המסעדה</Label>
-        <Input
+    <div className="space-y-6" dir="rtl">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl md:text-3xl font-semibold text-gray-800">שם המסעדה</h2>
+        <p className="text-gray-600 mt-2">אנא הזינו את שם המסעדה</p>
+      </div>
+      
+      <div className="space-y-6">
+        <IconInput
           id="restaurantName"
-          type="text"
+          name="restaurantName"
+          label="שם המסעדה"
           value={formData.restaurantName || ''}
           onChange={handleChange}
-          placeholder="לדוגמה: מסעדת השלום"
-          className={errors?.restaurantName ? 'border-red-500' : ''}
+          placeholder="לדוגמה: מסעדת השף הקטן"
+          error={errors?.restaurantName}
+          iconPosition="right"
           required
         />
-        {errors?.restaurantName && (
-          <p className="text-sm text-red-500 mt-1">{errors.restaurantName}</p>
-        )}
       </div>
-      <p className="text-xs text-gray-500">
-        אנא הזינו את שם המסעדה המדויק כפי שהוא רשום אצלנו. אם אינכם בטוחים, אנא צרו קשר.
-      </p>
     </div>
   );
 };
 
-export default RestaurantNameStep; 
+export default RestaurantNameStep;

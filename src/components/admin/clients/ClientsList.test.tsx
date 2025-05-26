@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MockedFunction } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import { ClientsList } from '@/pages/admin/ClientsList';
+import ClientsList from '@/pages/admin/ClientsList';
 import * as useClientsHookModule from '@/hooks/useClients';
 import { Client } from '@/types/client';
 import { BrowserRouter } from 'react-router-dom';

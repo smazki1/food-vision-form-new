@@ -1,142 +1,124 @@
-// Providers and protected routing
+
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UnifiedAuthProvider } from "@/providers/UnifiedAuthProvider";
-import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
-import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Suspense, lazy } from "react";
 
-// Layouts
-import { CustomerLayout } from "@/layouts/CustomerLayout";
-import AdminLayout from "@/layouts/AdminLayout";
-import EditorLayout from "@/layouts/EditorLayout";
+// Lazy load components
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+const PublicOnlyRoute = lazy(() => import("./components/PublicOnlyRoute"));
+const AdminRoute = lazy(() => import("./components/AdminRoute"));
 
-// Public pages
-import NotFound from "./pages/NotFound";
-import CustomerLogin from "./pages/customer/CustomerLogin";
-import ForgotPassword from "./pages/customer/ForgotPassword";
-import ResetPassword from "./pages/customer/ResetPassword";
-import AdminLogin from "./pages/AdminLogin";
-import FoodVisionForm from "./pages/FoodVisionForm";
-import PublicUploadPage from "./pages/PublicUploadPage";
-// import AccountSetupPage from "./pages/AccountSetupPage";
-
-// Admin pages
-import Dashboard from "./pages/admin/Dashboard";
-import LeadsManagement from "./pages/admin/LeadsManagement";
-import { ClientsList } from "./pages/admin/ClientsList";
-import ClientDetails from "./pages/admin/ClientDetails";
-import PackagesManagementPage from "./pages/admin/PackagesManagementPage";
-import SubmissionsPage from "./pages/admin/SubmissionsPage";
-import SubmissionsQueuePage from "./pages/admin/SubmissionsQueuePage";
-import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
-import AlertsDashboard from "./pages/admin/AlertsDashboard";
-import UserManagementPage from "./pages/admin/UserManagementPage";
+// Lazy load pages
+const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PublicUploadPage = lazy(() => import("./pages/PublicUploadPage"));
 
 // Customer pages
-import CustomerHomePage from "./pages/customer/CustomerHomePage";
-import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
-import CustomerSubmissionsPage from "./pages/customer/CustomerSubmissionsPage";
-import CustomerProfilePage from "./pages/customer/CustomerProfilePage";
-import CustomerGalleryPage from "./pages/customer/CustomerGalleryPage";
-import SubmissionDetailsPage from "./pages/customer/SubmissionDetailsPage";
-import FoodVisionUploadFormPage from "./pages/customer/FoodVisionUploadFormPage";
-import CustomerSubmissionsStatusPage from "./pages/customer/CustomerSubmissionsStatusPage";
-import { DishesPage } from "./pages/customer/DishesPage";
-import CustomerPackageDetailsPage from "./pages/customer/CustomerPackageDetailsPage";
+const CustomerHomePage = lazy(() => import("./pages/customer/CustomerHomePage"));
+const CustomerDashboardPage = lazy(() => import("./pages/customer/CustomerDashboardPage"));
+const FoodVisionUploadFormPage = lazy(() => import("./pages/customer/FoodVisionUploadFormPage"));
 
-// Editor pages
-import EditorDashboardPage from "./pages/editor/EditorDashboardPage";
-import SubmissionProcessingPage from "./pages/editor/SubmissionProcessingPage";
+// Admin pages
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const ClientsList = lazy(() => import("./pages/admin/ClientsList"));
+const ClientDetails = lazy(() => import("./pages/admin/ClientDetails"));
 
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Toaster as SonnerToaster } from '@/components/ui/sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-// import { ThemeProvider } from './providers/theme-provider'; // Optional
-import { TooltipProvider } from '@/components/ui/tooltip';
-
-// React Query Client config
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60000, // 1 minute
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      {/* <ThemeProvider defaultTheme="light" storageKey="food-vision-theme"> */}
-      <TooltipProvider>
-        <Router>
-          <UnifiedAuthProvider>
-            <CurrentUserRoleProvider>
+      <UnifiedAuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<div>Loading...</div>}>
               <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<CustomerLogin />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                {/* Public Routes */}
                 <Route path="/public-upload" element={<PublicUploadPage />} />
-                <Route path="/food-vision-form" element={<FoodVisionForm />} />
-
-                {/* Protected Customer routes */}
+                
                 <Route
+                  path="/customer-login"
                   element={
-                    <ClientAuthProvider>
-                      <ProtectedRoute />
-                    </ClientAuthProvider>
+                    <PublicOnlyRoute>
+                      <CustomerLogin />
+                    </PublicOnlyRoute>
                   }
-                >
-                  <Route element={<CustomerLayout />}>
-                    <Route path="/customer">
-                      <Route index element={<Navigate to="/customer/home" replace />} />
-                      <Route path="home" element={<CustomerHomePage />} />
-                      <Route path="dashboard" element={<CustomerDashboardPage />} />
-                      <Route path="submissions" element={<CustomerSubmissionsPage />} />
-                      <Route path="dishes" element={<DishesPage />} />
-                      <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                      <Route path="gallery" element={<CustomerGalleryPage />} />
-                      <Route path="profile" element={<CustomerProfilePage />} />
-                      <Route path="new-submission" element={<FoodVisionUploadFormPage />} />
-                      <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
-                      <Route path="package-details" element={<CustomerPackageDetailsPage />} />
-                    </Route>
-                  </Route>
-                </Route>
+                />
+                <Route
+                  path="/admin-login"
+                  element={
+                    <PublicOnlyRoute>
+                      <AdminLogin />
+                    </PublicOnlyRoute>
+                  }
+                />
 
-                {/* Admin routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="leads" element={<LeadsManagement />} />
-                  <Route path="clients" element={<ClientsList />} />
-                  <Route path="clients/:clientId" element={<ClientDetails />} />
-                  <Route path="packages" element={<PackagesManagementPage />} />
-                  <Route path="submissions" element={<SubmissionsPage />} />
-                  <Route path="queue" element={<SubmissionsQueuePage />} />
-                  <Route path="analytics" element={<SubmissionsAnalytics />} />
-                  <Route path="alerts" element={<AlertsDashboard />} />
-                  <Route path="users" element={<UserManagementPage />} />
-                </Route>
+                {/* Customer Protected Routes */}
+                <Route
+                  path="/"
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <CustomerHomePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/customer-dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <CustomerDashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/upload"
+                  element={
+                    <ProtectedRoute allowedRoles={['customer']}>
+                      <FoodVisionUploadFormPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-                {/* Editor routes */}
-                <Route path="/editor" element={<EditorLayout />}>
-                  <Route index element={<Navigate to="/editor/dashboard" replace />} />
-                  <Route path="dashboard" element={<EditorDashboardPage />} />
-                  <Route path="submissions/:submissionId" element={<SubmissionProcessingPage />} />
-                </Route>
+                {/* Admin Protected Routes */}
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <Dashboard />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/clients"
+                  element={
+                    <AdminRoute>
+                      <ClientsList />
+                    </AdminRoute>
+                  }
+                />
+                <Route
+                  path="/admin/clients/:clientId"
+                  element={
+                    <AdminRoute>
+                      <ClientDetails />
+                    </AdminRoute>
+                  }
+                />
 
+                {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </CurrentUserRoleProvider>
-          </UnifiedAuthProvider>
-        </Router>
-        <SonnerToaster />
-      </TooltipProvider>
-      {/* </ThemeProvider> */}
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </UnifiedAuthProvider>
     </QueryClientProvider>
   );
 }

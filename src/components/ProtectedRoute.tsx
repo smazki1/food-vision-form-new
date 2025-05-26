@@ -1,10 +1,16 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { toast } from 'sonner';
 
-export const ProtectedRoute = () => {
+interface ProtectedRouteProps {
+  children?: React.ReactNode;
+  allowedRoles?: string[];
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = ['customer'] }) => {
   const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
   const { 
     clientId, 
@@ -73,14 +79,14 @@ export const ProtectedRoute = () => {
 
   // Condition 2: If not authenticated after all loading attempts, redirect to login.
   if (!isAuthenticated) {
-    console.log("[AUTH_DEBUG] ProtectedRoute - NOT Authenticated. Redirecting to /login.");
+    console.log("[AUTH_DEBUG] ProtectedRoute - NOT Authenticated. Redirecting to /customer-login.");
     // Toast logic from original code can be added here if needed for non-authenticated redirect
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/customer-login" state={{ from: location }} replace />;
   }
 
   // If we reach here: User IS Authenticated.
-  // Render the Outlet. The presence or absence of clientId will be handled by the specific page.
-  console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated. Rendering Outlet.", {
+  // Render the children or Outlet. The presence or absence of clientId will be handled by the specific page.
+  console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated. Rendering content.", {
     clientId, clientRecordStatus, errorState
   });
     
@@ -94,5 +100,7 @@ export const ProtectedRoute = () => {
      // toast.info("Complete your profile or first submission to link your account fully.", { duration: 5000 });
     }
     
-    return <Outlet />;
+    return children ? <>{children}</> : <Outlet />;
 };
+
+export default ProtectedRoute;

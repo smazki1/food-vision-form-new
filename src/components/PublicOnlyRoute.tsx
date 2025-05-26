@@ -5,14 +5,16 @@ import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 
 interface PublicOnlyRouteProps {
   redirectPath?: string;
+  children?: React.ReactNode;
 }
 
 /**
  * Route component that only allows access when the user is NOT authenticated
  * Redirects authenticated users to their appropriate dashboard
  */
-export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ 
-  redirectPath = '/customer/dashboard'
+const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ 
+  redirectPath = '/customer-dashboard',
+  children
 }) => {
   const { isAuthenticated, user, role, loading } = useUnifiedAuth();
   const location = useLocation();
@@ -35,14 +37,14 @@ export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({
     
     switch (role) {
       case 'admin':
-        dashboardPath = '/admin/dashboard';
+        dashboardPath = '/admin';
         break;
       case 'editor':
         dashboardPath = '/editor/dashboard';
         break;
       case 'customer':
       default:
-        dashboardPath = '/customer/dashboard';
+        dashboardPath = '/customer-dashboard';
     }
     
     console.log(`[PUBLIC_ROUTE] Authenticated ${role} user, redirecting to`, dashboardPath);
@@ -50,5 +52,7 @@ export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({
   }
   
   // Not authenticated, allow access to public route
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
+
+export default PublicOnlyRoute;

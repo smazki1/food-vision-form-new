@@ -21,35 +21,40 @@ export const useAuthInitialization = (
 
       console.log("[AUTH_INIT] Starting initialization");
       
-      // Set initialization timeout
+      // Set longer initialization timeout
       timeoutRef.current = setTimeout(() => {
         if (!hasInitialized.current && isMounted) {
           console.warn("[AUTH_INIT] Initialization timeout - forcing completion");
+          hasInitialized.current = true;
           updateAuthState({
             loading: false,
             initialized: true,
             user: null,
             session: null,
-            isAuthenticated: false
+            isAuthenticated: false,
+            role: null,
+            clientId: null,
+            hasLinkedClientRecord: false
           });
         }
-      }, 5000);
+      }, 10000); // Increased timeout to 10 seconds
 
       try {
-        // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!isMounted) return;
 
         if (error) {
           console.error("[AUTH_INIT] Session error:", error);
+          hasInitialized.current = true;
           updateAuthState({
             loading: false,
             initialized: true,
             hasError: true,
             errorMessage: error.message,
             user: null,
-            session: null
+            session: null,
+            isAuthenticated: false
           });
           return;
         }
@@ -66,23 +71,29 @@ export const useAuthInitialization = (
             session: null,
             isAuthenticated: false,
             loading: false,
-            initialized: true
+            initialized: true,
+            role: null,
+            clientId: null,
+            hasLinkedClientRecord: false
           });
         }
       } catch (error) {
         console.error("[AUTH_INIT] Initialization error:", error);
         if (isMounted) {
+          hasInitialized.current = true;
           updateAuthState({
             loading: false,
             initialized: true,
             hasError: true,
-            errorMessage: error instanceof Error ? error.message : 'Failed to initialize auth'
+            errorMessage: error instanceof Error ? error.message : 'Failed to initialize auth',
+            user: null,
+            session: null,
+            isAuthenticated: false
           });
         }
       }
     };
 
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
@@ -90,6 +101,7 @@ export const useAuthInitialization = (
         console.log("[AUTH_INIT] Auth state change:", event, session?.user?.id);
 
         if (event === 'SIGNED_OUT') {
+          hasInitialized.current = true;
           updateAuthState({
             user: null,
             session: null,
@@ -104,12 +116,12 @@ export const useAuthInitialization = (
         }
 
         if (event === 'SIGNED_IN' && session?.user) {
+          hasInitialized.current = true;
           await determineUserRole(session.user, session, updateAuthState);
         }
       }
     );
 
-    // Start initialization
     initializeAuth();
 
     return () => {
@@ -134,7 +146,7 @@ const determineUserRole = async (
       user,
       session,
       isAuthenticated: true,
-      loading: true // Keep loading while determining role
+      loading: true
     });
 
     const authData = await optimizedAuthService.getUserAuthData(user.id);
