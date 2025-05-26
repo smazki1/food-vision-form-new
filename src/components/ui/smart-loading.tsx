@@ -3,6 +3,7 @@ import React from 'react';
 import { EnhancedLoadingSpinner, LoadingState } from './enhanced-loading-spinner';
 import { useProgressiveLoading, LoadingPhase } from '@/hooks/useProgressiveLoading';
 import { useErrorRecovery } from '@/hooks/useErrorRecovery';
+import { usePerformanceMonitoring } from '@/hooks/usePerformanceMonitoring';
 
 interface SmartLoadingProps {
   isLoading: boolean;
@@ -15,6 +16,7 @@ interface SmartLoadingProps {
   showProgress?: boolean;
   className?: string;
   maxRetries?: number;
+  componentName?: string;
 }
 
 export const SmartLoading: React.FC<SmartLoadingProps> = ({
@@ -27,8 +29,14 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
   size = 'md',
   showProgress = true,
   className,
-  maxRetries = 3
+  maxRetries = 3,
+  componentName = 'SmartLoading'
 }) => {
+  const { recordError, startTiming } = usePerformanceMonitoring({
+    componentName,
+    trackMounts: true
+  });
+
   const {
     currentPhase: progressivePhase,
     progress,
@@ -47,6 +55,9 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
     maxRetries,
     onRetry: () => {
       goToPhase('fetching');
+    },
+    onError: (error) => {
+      recordError(error, 'Error Recovery');
     }
   });
 
@@ -63,9 +74,16 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
 
   const handleRetry = async () => {
     if (onRetry) {
-      await executeWithRecovery(async () => {
-        await onRetry();
-      });
+      const stopTiming = startTiming('Retry Operation');
+      try {
+        await executeWithRecovery(async () => {
+          await onRetry();
+        });
+      } catch (error) {
+        recordError(error as Error, 'Retry Failed');
+      } finally {
+        stopTiming();
+      }
     }
   };
 
@@ -73,12 +91,13 @@ export const SmartLoading: React.FC<SmartLoadingProps> = ({
   React.useEffect(() => {
     if (error) {
       goToPhase('error');
+      recordError(error, 'Loading Error');
     } else if (!isLoading && effectivePhase !== 'complete') {
       goToPhase('complete');
     } else if (isLoading && effectivePhase === 'initial') {
       goToPhase('fetching');
     }
-  }, [isLoading, error, effectivePhase, goToPhase]);
+  }, [isLoading, error, effectivePhase, goToPhase, recordError]);
 
   return (
     <EnhancedLoadingSpinner

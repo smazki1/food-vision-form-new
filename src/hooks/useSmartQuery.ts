@@ -1,6 +1,7 @@
 
 import { useErrorRecovery } from './useErrorRecovery';
 import { useProgressiveLoading, LoadingPhase } from './useProgressiveLoading';
+import { usePerformanceMonitoring } from './usePerformanceMonitoring';
 import { useEffect } from 'react';
 
 interface UseSmartQueryOptions {
@@ -9,6 +10,7 @@ interface UseSmartQueryOptions {
   autoRetry?: boolean;
   onError?: (error: Error) => void;
   onSuccess?: () => void;
+  componentName?: string;
 }
 
 export function useSmartQuery<T>(
@@ -25,8 +27,14 @@ export function useSmartQuery<T>(
     maxRetries = 3,
     autoRetry = false,
     onError,
-    onSuccess
+    onSuccess,
+    componentName = 'SmartQuery'
   } = options;
+
+  const { recordError, recordMetric, startTiming } = usePerformanceMonitoring({
+    componentName,
+    trackMounts: true
+  });
 
   const {
     currentPhase,
@@ -46,20 +54,28 @@ export function useSmartQuery<T>(
     retry
   } = useErrorRecovery({
     maxRetries,
-    onError,
+    onError: (error, attemptNumber) => {
+      recordError(error, `Query Error (Attempt ${attemptNumber})`);
+      onError?.(error);
+    },
     onMaxRetriesReached: (error) => {
       console.error('[SMART_QUERY] Max retries reached:', error);
+      recordError(error, 'Max Retries Reached');
       onError?.(error);
     }
   });
 
-  // Handle query state changes
+  // Handle query state changes with performance tracking
   useEffect(() => {
     if (queryResult.error) {
       goToPhase('error');
+      recordError(queryResult.error, 'Query Failed');
       if (autoRetry && queryResult.refetch) {
+        const stopTiming = startTiming('Auto Retry');
         executeWithRecovery(async () => {
           await queryResult.refetch?.();
+        }).finally(() => {
+          stopTiming();
         });
       }
     } else if (queryResult.isLoading) {
@@ -68,16 +84,22 @@ export function useSmartQuery<T>(
       }
     } else if (queryResult.data) {
       goToPhase('complete');
+      recordMetric('Query Success', 1);
       onSuccess?.();
     }
-  }, [queryResult.isLoading, queryResult.error, queryResult.data, goToPhase, currentPhase, autoRetry, executeWithRecovery, queryResult.refetch, onSuccess]);
+  }, [queryResult.isLoading, queryResult.error, queryResult.data, goToPhase, currentPhase, autoRetry, executeWithRecovery, queryResult.refetch, onSuccess, recordError, recordMetric, startTiming]);
 
   const handleRetry = async () => {
     if (queryResult.refetch) {
       reset();
-      await retry(async () => {
-        await queryResult.refetch?.();
-      });
+      const stopTiming = startTiming('Manual Retry');
+      try {
+        await retry(async () => {
+          await queryResult.refetch?.();
+        });
+      } finally {
+        stopTiming();
+      }
     }
   };
 
