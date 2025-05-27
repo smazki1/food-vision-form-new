@@ -7,8 +7,8 @@ import { clientAuthService } from '@/services/clientAuthService';
 export const useConnectionVerifier = (
   onConnectionError: (error: string) => void
 ) => {
-  const [connectionVerified, setConnectionVerified] = useState<boolean>(false);
-  const [connectionChecked, setConnectionChecked] = useState<boolean>(false);
+  const [connectionVerified, setConnectionVerified] = useState<boolean>(true);
+  const [connectionChecked, setConnectionChecked] = useState<boolean>(true);
 
   // Use a ref to store the latest onConnectionError callback
   const onConnectionErrorRef = useRef(onConnectionError);
@@ -31,10 +31,9 @@ export const useConnectionVerifier = (
     timeoutId = setTimeout(() => {
       if (isMounted && !connectionChecked) {
         console.warn("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection check timed out after 5s");
-        if (!connectionVerified) { // Only if not already successfully verified
-            setConnectionVerified(true); // Or consider false if timeout is a hard failure for verification
-            onConnectionErrorRef.current("Database connection check timed out. Some features may be limited.");
-        }
+        // If timed out, connection is NOT verified
+        setConnectionVerified(false);
+        onConnectionErrorRef.current("Database connection check timed out. Please check your internet connection.");
         setConnectionChecked(true);
       }
     }, 5000);
@@ -51,9 +50,13 @@ export const useConnectionVerifier = (
         if (connError) {
           onConnectionErrorRef.current(`Database connection error: ${connError.message}`);
           setConnectionVerified(false);
-        } else {
+        } else if (success) { // Ensure success is true as well
           setConnectionVerified(true);
-          onConnectionErrorRef.current('');
+          onConnectionErrorRef.current(''); // Clear any previous error
+        } else {
+          // If not an error but also not success (shouldn't happen with current service)
+          onConnectionErrorRef.current('Database connection test was inconclusive.');
+          setConnectionVerified(false);
         }
         setConnectionChecked(true);
 
@@ -64,14 +67,6 @@ export const useConnectionVerifier = (
         setConnectionVerified(false);
         setConnectionChecked(true);
         onConnectionErrorRef.current(`Database connection failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        
-        // This timeout for forcing true might be problematic, consider removing if not essential for offline
-        setTimeout(() => {
-          if (isMounted && !connectionVerified) {
-            console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Forcing connection verification to true after exception.");
-            setConnectionVerified(true);
-          } 
-        }, 500);
       }
     };
     

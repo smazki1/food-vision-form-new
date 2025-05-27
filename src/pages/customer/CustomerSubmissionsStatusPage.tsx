@@ -59,6 +59,12 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
   
   const { user: unifiedUser } = useUnifiedAuth();
 
+  const sortedSubmissions = React.useMemo(() => {
+    // Ensure submissions is always an array for the sort function
+    const submissionsArray = submissions || []; 
+    return [...submissionsArray].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
+  }, [submissions]);
+
   console.log("[CustomerSubmissionsStatusPage] Component state:", {
     effectiveClientId,
     effectiveAuthenticated,
@@ -70,8 +76,10 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     timestamp: Date.now()
   });
 
-  if (authLoading || submissionsLoading || !effectiveClientId && effectiveAuthenticated) {
-    return (
+  let content;
+
+  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated && !error)) {
+    content = (
       <div dir="rtl" className="text-center p-10">
         <div className="flex items-center justify-center gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -79,10 +87,8 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  if (!effectiveAuthenticated) {
-    return (
+  } else if (!effectiveAuthenticated) {
+    content = (
       <div dir="rtl" className="text-center p-10">
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -92,10 +98,8 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
         </Alert>
       </div>
     );
-  }
-
-  if (!effectiveClientId) {
-    return (
+  } else if (!effectiveClientId) {
+    content = (
       <div dir="rtl" className="text-center p-10">
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -106,14 +110,14 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
         <div className="mt-4 text-sm text-gray-600">
           <p>פרטי דיבוג:</p>
           <p>משתמש: {unifiedUser?.id}</p>
-          <p>לקוח מאוחד (מ-useSubmissions): {effectiveClientId || 'לא נמצא'}</p>
+          <p>אימייל משתמש: {unifiedUser?.email}</p>
+          <p>סטטוס אימות (useSubmissions): {effectiveAuthenticated ? 'מאומת' : 'לא מאומת'}</p>
+          <p>מזהה לקוח (useSubmissions): {effectiveClientId || 'לא נמצא'}</p>
         </div>
       </div>
     );
-  }
-
-  if (error) {
-    return (
+  } else if (error) {
+    content = (
       <div dir="rtl" className="text-center p-10">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -127,20 +131,67 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
         </Button>
       </div>
     );
+  } else if (sortedSubmissions.length === 0) {
+    content = (
+      <div className="text-center text-gray-500 py-10">
+        <p>לא נמצאו הגשות עבור לקוח זה.</p>
+        <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
+        <div className="mt-4 text-sm">
+          <p>מידע דיבוג:</p>
+          <p>לקוח ID: {effectiveClientId}</p>
+          <p>משתמש ID: {unifiedUser?.id}</p>
+          <p>מאומת: {effectiveAuthenticated ? 'כן' : 'לא'}</p>
+        </div>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[200px]">שם הפריט</TableHead>
+              <TableHead>סוג</TableHead>
+              <TableHead>סטטוס</TableHead>
+              <TableHead className="text-right">תאריך העלאה</TableHead>
+              <TableHead className="text-right">פעולות</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedSubmissions.map((item: ProcessedItem) => {
+              const statusInfoLocal = getStatusIconAndStyle(item.submission_status);
+              return (
+                <TableRow key={item.submission_id}>
+                  <TableCell className="font-medium truncate" title={item.item_name_at_submission}>{item.item_name_at_submission}</TableCell>
+                  <TableCell>{getItemTypeName(item.item_type)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={`border-transparent ${statusInfoLocal.style}`}>
+                      {statusInfoLocal.icon}
+                      <span className="ml-2">{statusInfoLocal.hebrewStatus}</span>
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{new Date(item.uploaded_at).toLocaleDateString('he-IL')}</TableCell>
+                  <TableCell className="text-right">
+                    <Button asChild variant="ghost" size="sm">
+                      <Link to={`/customer/submissions/${item.submission_id}`}>צפה בפרטים</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    );
   }
-
-  const sortedSubmissions = React.useMemo(() => {
-    if (!submissions) return [];
-    return [...submissions].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
-  }, [submissions]);
 
   return (
     <div dir="rtl" className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">סטטוס הגשות</h1>
         <div className="flex gap-2">
-          <Button onClick={refreshSubmissions} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 ml-2" />
+          <Button onClick={refreshSubmissions} variant="outline" size="sm" disabled={authLoading || submissionsLoading}>
+            <RefreshCw className={`h-4 w-4 ml-2 ${authLoading || submissionsLoading ? 'animate-spin' : ''}`} />
             רענן
           </Button>
           <Button asChild>
@@ -152,64 +203,16 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
       <div className="mb-4">
         <Alert>
           <AlertDescription>
-            מציג הגשות עבור לקוח ID: {effectiveClientId}
+            {effectiveClientId ? `מציג הגשות עבור לקוח ID: ${effectiveClientId}` : 'מנסה לאתר פרטי לקוח...'}
             <br />
-            משתמש: {unifiedUser?.email}
+            משתמש: {unifiedUser?.email || (effectiveAuthenticated ? 'טוען אימייל...' : 'לא מחובר')}
             <br />
-            סה"כ הגשות נמצאו: {submissions?.length || 0}
+            {effectiveClientId && `סה"כ הגשות נמצאו: ${submissions?.length || 0}`}
           </AlertDescription>
         </Alert>
       </div>
-
-      {sortedSubmissions.length === 0 ? (
-        <div className="text-center text-gray-500 py-10">
-          <p>לא נמצאו הגשות עבור לקוח זה.</p>
-          <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
-          <div className="mt-4 text-sm">
-            <p>מידע דיבוג:</p>
-            <p>לקוח ID: {effectiveClientId}</p>
-            <p>משתמש ID: {unifiedUser?.id}</p>
-            <p>מאומת: {effectiveAuthenticated ? 'כן' : 'לא'}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">שם הפריט</TableHead>
-                <TableHead>סוג</TableHead>
-                <TableHead>סטטוס</TableHead>
-                <TableHead className="text-right">תאריך העלאה</TableHead>
-                <TableHead className="text-right">פעולות</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedSubmissions.map((item: ProcessedItem) => {
-                const statusInfoLocal = getStatusIconAndStyle(item.submission_status);
-                return (
-                  <TableRow key={item.submission_id}>
-                    <TableCell className="font-medium truncate" title={item.item_name_at_submission}>{item.item_name_at_submission}</TableCell>
-                    <TableCell>{getItemTypeName(item.item_type)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`border-transparent ${statusInfoLocal.style}`}>
-                        {statusInfoLocal.icon}
-                        <span className="ml-2">{statusInfoLocal.hebrewStatus}</span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{new Date(item.uploaded_at).toLocaleDateString('he-IL')}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="link" className="p-0 h-auto text-primary">
-                        <Link to={`/customer/submissions/${item.submission_id}`}>פרטים</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      
+      {content}
     </div>
   );
 };
