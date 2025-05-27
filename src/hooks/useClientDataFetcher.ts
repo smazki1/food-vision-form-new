@@ -80,8 +80,17 @@ export const useClientDataFetcher = (
 
   // Handle query results and update auth state
   useEffect(() => {
+    console.log("[CLIENT_DATA_FETCHER] Effect triggered with:", {
+      shouldFetch,
+      isSuccess,
+      isError,
+      clientQueryLoading,
+      clientData,
+      clientQueryError: clientQueryError?.message
+    });
+
     if (!shouldFetch) {
-      console.log("[CLIENT_DATA_FETCHER] Should not fetch, setting appropriate state");
+      console.log("[CLIENT_DATA_FETCHER] Should not fetch, clearing state");
       updateClientAuthState({
         clientId: null,
         clientRecordStatus: 'not-found',
@@ -93,8 +102,8 @@ export const useClientDataFetcher = (
 
     // Handle successful query completion
     if (isSuccess) {
-      if (clientData) {
-        console.log("[CLIENT_DATA_FETCHER] Client found:", clientData.client_id);
+      if (clientData && clientData.client_id) {
+        console.log("[CLIENT_DATA_FETCHER] Client found, updating state with clientId:", clientData.client_id);
         updateClientAuthState({
           clientId: clientData.client_id,
           clientRecordStatus: 'found',
@@ -137,21 +146,57 @@ export const useClientDataFetcher = (
     }
   }, [shouldFetch, isSuccess, isError, clientData, clientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError]);
 
-  // Add timeout handling for stuck loading states
+  // Force completion if stuck too long
   useEffect(() => {
     if (!shouldFetch || !clientQueryLoading) return;
 
     const timeout = setTimeout(() => {
       console.warn("[CLIENT_DATA_FETCHER] Query timeout - forcing completion");
-      updateClientAuthState({
-        clientRecordStatus: 'error',
-        authenticating: false,
-        errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
-      });
-    }, 10000); // 10 second timeout
+      
+      // Try to get client data one more time before giving up
+      if (user?.id) {
+        supabase
+          .from('clients')
+          .select('client_id, restaurant_name')
+          .eq('user_auth_id', user.id)
+          .maybeSingle()
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("[CLIENT_DATA_FETCHER] Timeout retry failed:", error);
+              updateClientAuthState({
+                clientRecordStatus: 'error',
+                authenticating: false,
+                errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
+              });
+            } else if (data && data.client_id) {
+              console.log("[CLIENT_DATA_FETCHER] Timeout retry succeeded, found client:", data.client_id);
+              updateClientAuthState({
+                clientId: data.client_id,
+                clientRecordStatus: 'found',
+                authenticating: false,
+                errorState: null
+              });
+            } else {
+              console.log("[CLIENT_DATA_FETCHER] Timeout retry - no client found");
+              updateClientAuthState({
+                clientId: null,
+                clientRecordStatus: 'not-found',
+                authenticating: false,
+                errorState: null
+              });
+            }
+          });
+      } else {
+        updateClientAuthState({
+          clientRecordStatus: 'error',
+          authenticating: false,
+          errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
+        });
+      }
+    }, 8000); // 8 second timeout
 
     return () => clearTimeout(timeout);
-  }, [clientQueryLoading, shouldFetch, updateClientAuthState]);
+  }, [clientQueryLoading, shouldFetch, updateClientAuthState, user?.id]);
 
   const retryFetch = useCallback(() => {
     console.log("[CLIENT_DATA_FETCHER] Manual retry triggered");

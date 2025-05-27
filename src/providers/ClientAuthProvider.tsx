@@ -12,7 +12,7 @@ interface ClientAuthProviderProps {
 }
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
-  const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
+  const { user, loading: authLoading, initialized, isAuthenticated, clientId: unifiedClientId } = useUnifiedAuth();
   const [refreshToggle, setRefreshToggle] = useState(false);
   
   const {
@@ -68,7 +68,33 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     }
   }, [updateClientAuthState, retryFetch]);
 
-  // Simplified effect that only handles the initial loading state
+  // Sync with UnifiedAuth client ID as fallback
+  useEffect(() => {
+    console.log("[CLIENT_AUTH_PROVIDER] Sync check:", {
+      clientAuthClientId: clientId,
+      unifiedClientId,
+      clientRecordStatus,
+      authenticating,
+      isAuthenticated,
+      initialized
+    });
+
+    // If ClientAuth doesn't have a clientId but UnifiedAuth does, sync them
+    if (isAuthenticated && initialized && !authLoading && 
+        unifiedClientId && !clientId && 
+        clientRecordStatus !== 'loading' && !authenticating) {
+      
+      console.log("[CLIENT_AUTH_PROVIDER] Syncing clientId from UnifiedAuth:", unifiedClientId);
+      updateClientAuthState({
+        clientId: unifiedClientId,
+        clientRecordStatus: 'found',
+        authenticating: false,
+        errorState: null
+      });
+    }
+  }, [clientId, unifiedClientId, clientRecordStatus, authenticating, isAuthenticated, initialized, authLoading, updateClientAuthState]);
+
+  // Handle initial loading state
   useEffect(() => {
     console.log('[CLIENT_AUTH_PROVIDER] Auth state update:', {
       initialized, 
@@ -79,6 +105,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       clientRecordStatus,
       errorState,
       clientId,
+      unifiedClientId,
       connectionVerified,
       userId: user?.id
     });
@@ -107,7 +134,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       return;
     }
 
-    // The rest is handled by useClientDataFetcher
+    // The rest is handled by useClientDataFetcher or the sync effect above
   }, [
     initialized, 
     authLoading, 
@@ -121,9 +148,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     connectionVerified
   ]);
 
-  console.log("[CLIENT_AUTH_PROVIDER] ClientId from useClientAuthStateManager (before context memo):", clientId);
+  console.log("[CLIENT_AUTH_PROVIDER] Final clientId from state manager:", clientId);
 
   const contextValue: ClientAuthContextType = useMemo(() => {
+    // Use the effective client ID (prefer ClientAuth, fallback to UnifiedAuth)
+    const effectiveClientId = clientId || unifiedClientId;
+    
     const finalIsAuthenticated = isAuthenticated && 
                                initialized &&
                                !authLoading &&
@@ -139,25 +169,26 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       errorState,
       connectionVerified,
       finalIsAuthenticated,
-      clientId,
+      clientAuthClientId: clientId,
+      unifiedClientId,
+      effectiveClientId,
       userAuthId: user?.id,
-      authenticating,
-      contextClientId: clientId 
+      authenticating
     });
     
     return {
-      clientId,
+      clientId: effectiveClientId,
       userAuthId: user?.id || null,
       authenticating,
       clientRecordStatus,
       errorState,
       isAuthenticated: finalIsAuthenticated,
-      hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
+      hasLinkedClientRecord: clientRecordStatus === 'found' && !!effectiveClientId,
       hasNoClientRecord: clientRecordStatus === 'not-found',
       refreshClientAuth,
     };
   }, [
-    clientId, user?.id, authenticating, clientRecordStatus, errorState, 
+    clientId, unifiedClientId, user?.id, authenticating, clientRecordStatus, errorState, 
     isAuthenticated, initialized, authLoading, connectionVerified, refreshClientAuth
   ]);
 
