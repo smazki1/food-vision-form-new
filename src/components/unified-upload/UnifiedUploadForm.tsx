@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -168,10 +167,13 @@ const UnifiedUploadForm: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Upload images
+      console.log('[UnifiedUploadForm] Starting submission process...');
+      
+      // Upload images first
       const uploadedImageUrls: string[] = [];
       
       for (const file of formData.referenceImages) {
+        console.log('[UnifiedUploadForm] Uploading file:', file.name);
         const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${isAuthenticated ? 'authenticated' : 'public'}/uploads/${fileName}`;
@@ -181,6 +183,7 @@ const UnifiedUploadForm: React.FC = () => {
           .upload(filePath, file);
 
         if (uploadError) {
+          console.error('[UnifiedUploadForm] Upload error:', uploadError);
           throw new Error(`שגיאה בהעלאת תמונה: ${uploadError.message}`);
         }
 
@@ -189,32 +192,83 @@ const UnifiedUploadForm: React.FC = () => {
           .getPublicUrl(filePath);
 
         uploadedImageUrls.push(publicUrl);
+        console.log('[UnifiedUploadForm] Uploaded image URL:', publicUrl);
       }
 
-      // Prepare submission data
-      const submissionData = {
-        item_name_at_submission: formData.itemName,
-        item_type: formData.itemType,
-        submission_status: 'ממתינה לעיבוד' as const,
-        original_image_urls: uploadedImageUrls,
-        client_id: isAuthenticated ? clientId : null,
-        contact_info: !isAuthenticated ? {
-          restaurant_name: formData.restaurantName,
-          email: formData.contactEmail,
-          phone: formData.contactPhone
-        } : null
-      };
+      console.log('[UnifiedUploadForm] All images uploaded successfully');
 
-      // Insert submission
-      const { error: submitError } = await supabase
-        .from('customer_submissions')
-        .insert(submissionData);
+      if (isAuthenticated && clientId) {
+        // Authenticated user submission
+        console.log('[UnifiedUploadForm] Submitting for authenticated user with clientId:', clientId);
+        
+        const submissionData = {
+          client_id: clientId,
+          original_item_id: crypto.randomUUID(),
+          item_type: formData.itemType,
+          item_name_at_submission: formData.itemName,
+          submission_status: 'ממתינה לעיבוד' as const,
+          original_image_urls: uploadedImageUrls
+        };
 
-      if (submitError) {
-        throw new Error(`שגיאה בשמירת ההגשה: ${submitError.message}`);
+        const { error: submitError } = await supabase
+          .from('customer_submissions')
+          .insert(submissionData);
+
+        if (submitError) {
+          console.error('[UnifiedUploadForm] Submission error:', submitError);
+          throw new Error(`שגיאה בשמירת ההגשה: ${submitError.message}`);
+        }
+
+        console.log('[UnifiedUploadForm] Submission successful for authenticated user');
+        toast.success('הטופס נשלח בהצלחה!');
+      } else {
+        // Public/anonymous submission using RPC function
+        console.log('[UnifiedUploadForm] Submitting for public user');
+        
+        let category = null;
+        let ingredients = null;
+        
+        if (formData.itemType === 'cocktail') {
+          ingredients = formData.description?.trim() ? 
+            formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
+        } else {
+          category = formData.description?.trim() || null;
+        }
+
+        const rpcParams = {
+          p_restaurant_name: formData.restaurantName.trim(),
+          p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
+          p_item_name: formData.itemName.trim(),
+          p_description: formData.description?.trim() || null,
+          p_category: category,
+          p_ingredients: ingredients,
+          p_reference_image_urls: uploadedImageUrls,
+        };
+
+        console.log('[UnifiedUploadForm] Calling RPC with params:', rpcParams);
+
+        const { data: submissionData, error: submissionError } = await supabase.rpc(
+          'public_submit_item_by_restaurant_name',
+          rpcParams
+        );
+
+        if (submissionError) {
+          console.error('[UnifiedUploadForm] RPC error:', submissionError);
+          throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
+        }
+
+        console.log('[UnifiedUploadForm] RPC response:', submissionData);
+
+        if (submissionData && typeof submissionData === 'object' && submissionData.success) {
+          if (submissionData.client_found) {
+            toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
+          } else {
+            toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
+          }
+        } else {
+          throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
+        }
       }
-
-      toast.success('הטופס נשלח בהצלחה!');
       
       // Reset form
       setFormData({
@@ -232,7 +286,7 @@ const UnifiedUploadForm: React.FC = () => {
       setErrors({});
       
     } catch (error: any) {
-      console.error('Submission error:', error);
+      console.error('[UnifiedUploadForm] Submission error:', error);
       toast.error(error.message || 'אירעה שגיאה בעת שליחת הטופס');
     } finally {
       setIsSubmitting(false);
