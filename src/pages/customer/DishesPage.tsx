@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -5,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Search, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useClientAuth } from '@/hooks/useClientAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { toast } from 'sonner';
 
 interface Dish {
@@ -12,88 +14,140 @@ interface Dish {
   name: string;
   description: string;
   image_url: string;
-}
-
-interface ItemDetailsFromDB {
-  description: string | null;
-  reference_image_urls: string[] | null;
+  type: 'dish' | 'cocktail' | 'drink';
 }
 
 export function DishesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const { clientId } = useClientAuth();
+  const [loading, setLoading] = useState(true);
+  
+  const { clientId: clientAuthId } = useClientAuth();
+  const { clientId: unifiedClientId } = useUnifiedAuth();
+  
+  // Use clientId from either source - prefer clientAuth but fallback to unified
+  const clientId = clientAuthId || unifiedClientId;
 
   useEffect(() => {
-    async function fetchDishes() {
-      if (!clientId) return;
-
-      const { data: submissionsData, error: submissionsError } = await supabase
-        .from('customer_submissions')
-        .select('submission_id, item_name_at_submission, item_type, original_item_id')
-        .eq('client_id', clientId)
-        .order('created_at', { ascending: false });
-
-      if (submissionsError) {
-        console.error('Error fetching submissions:', submissionsError);
-        toast.error('שגיאה בטעינת המנות. נסו שוב מאוחר יותר.');
+    async function fetchAllDishes() {
+      if (!clientId) {
+        console.log("[DishesPage] No clientId available");
+        setLoading(false);
         return;
       }
 
-      if (submissionsData) {
-        const enrichedDishesPromises = submissionsData.map(async (sub) => {
-          let description = '';
-          let mainImageUrl = '';
+      console.log("[DishesPage] Fetching all dishes for clientId:", clientId);
+      setLoading(true);
 
-          let itemTable = '';
-          let itemIdColumn = '';
+      try {
+        // Fetch all dishes for this client
+        const dishesPromise = supabase
+          .from('dishes')
+          .select('dish_id, name, description, reference_image_urls')
+          .eq('client_id', clientId);
 
-          switch (sub.item_type) {
-            case 'dish': itemTable = 'dishes'; itemIdColumn = 'dish_id'; break;
-            case 'cocktail': itemTable = 'cocktails'; itemIdColumn = 'cocktail_id'; break;
-            case 'drink': itemTable = 'drinks'; itemIdColumn = 'drink_id'; break;
-            default: console.warn(`Unknown item_type: ${sub.item_type} for submission id: ${sub.submission_id}`);
-          }
+        // Fetch all cocktails for this client
+        const cocktailsPromise = supabase
+          .from('cocktails')
+          .select('cocktail_id, name, description, reference_image_urls')
+          .eq('client_id', clientId);
 
-          if (itemTable && sub.original_item_id) {
-            const { data: itemDetails, error: itemError } = await supabase
-              .from(itemTable)
-              .select('description, reference_image_urls')
-              .eq(itemIdColumn, sub.original_item_id)
-              .single<ItemDetailsFromDB>();
+        // Fetch all drinks for this client
+        const drinksPromise = supabase
+          .from('drinks')
+          .select('drink_id, name, description, reference_image_urls')
+          .eq('client_id', clientId);
 
-            if (itemError) {
-              console.error(`Error fetching details for ${sub.item_type} ${sub.original_item_id}:`, itemError.message);
-            } else if (itemDetails) {
-              description = itemDetails.description || '';
-              if (itemDetails.reference_image_urls && itemDetails.reference_image_urls.length > 0) {
-                mainImageUrl = itemDetails.reference_image_urls[0];
-              }
-            }
-          }
-          
-          description = description || sub.item_type;
+        const [dishesResult, cocktailsResult, drinksResult] = await Promise.all([
+          dishesPromise,
+          cocktailsPromise,
+          drinksPromise
+        ]);
 
-          return {
-            id: sub.submission_id,
-            name: sub.item_name_at_submission,
-            description: description,
-            image_url: mainImageUrl || '',
-          };
+        console.log("[DishesPage] Query results:", {
+          dishes: dishesResult,
+          cocktails: cocktailsResult,
+          drinks: drinksResult
         });
 
-        const resolvedDishes = await Promise.all(enrichedDishesPromises);
-        setDishes(resolvedDishes.filter(dish => dish !== null) as Dish[]);
+        const allItems: Dish[] = [];
+
+        // Process dishes
+        if (dishesResult.data) {
+          dishesResult.data.forEach(dish => {
+            allItems.push({
+              id: dish.dish_id,
+              name: dish.name,
+              description: dish.description || 'מנה',
+              image_url: dish.reference_image_urls?.[0] || '',
+              type: 'dish'
+            });
+          });
+        }
+
+        // Process cocktails
+        if (cocktailsResult.data) {
+          cocktailsResult.data.forEach(cocktail => {
+            allItems.push({
+              id: cocktail.cocktail_id,
+              name: cocktail.name,
+              description: cocktail.description || 'קוקטייל',
+              image_url: cocktail.reference_image_urls?.[0] || '',
+              type: 'cocktail'
+            });
+          });
+        }
+
+        // Process drinks
+        if (drinksResult.data) {
+          drinksResult.data.forEach(drink => {
+            allItems.push({
+              id: drink.drink_id,
+              name: drink.name,
+              description: drink.description || 'משקה',
+              image_url: drink.reference_image_urls?.[0] || '',
+              type: 'drink'
+            });
+          });
+        }
+
+        console.log("[DishesPage] Total items found:", allItems.length);
+        setDishes(allItems);
+
+        if (dishesResult.error) {
+          console.error('[DishesPage] Error fetching dishes:', dishesResult.error);
+        }
+        if (cocktailsResult.error) {
+          console.error('[DishesPage] Error fetching cocktails:', cocktailsResult.error);
+        }
+        if (drinksResult.error) {
+          console.error('[DishesPage] Error fetching drinks:', drinksResult.error);
+        }
+
+      } catch (error) {
+        console.error('[DishesPage] Exception fetching dishes:', error);
+        toast.error('שגיאה בטעינת המנות. נסו שוב מאוחר יותר.');
+      } finally {
+        setLoading(false);
       }
     }
 
-    fetchDishes();
+    fetchAllDishes();
   }, [clientId]);
 
   const filteredDishes = dishes.filter(dish =>
     dish.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     dish.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getItemTypeDisplay = (type: string) => {
+    switch (type) {
+      case 'dish': return 'מנה';
+      case 'cocktail': return 'קוקטייל';
+      case 'drink': return 'משקה';
+      default: return type;
+    }
+  };
 
   return (
     <div dir="rtl" className="flex flex-col min-h-screen bg-rose-50 pb-20">
@@ -118,8 +172,20 @@ export function DishesPage() {
       </div>
 
       <div className="flex-1 p-4">
-        <h2 className="text-lg font-semibold mb-4 text-gray-700">מנות</h2>
-        {filteredDishes.length > 0 ? (
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-700">כל הפריטים</h2>
+          {!loading && (
+            <span className="text-sm text-gray-500">
+              {filteredDishes.length} פריטים
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">
+            <p>טוען פריטים...</p>
+          </div>
+        ) : filteredDishes.length > 0 ? (
           <div className="space-y-3">
             {filteredDishes.map((dish) => (
               <Card
@@ -133,7 +199,12 @@ export function DishesPage() {
                   onError={(e) => (e.currentTarget.src = '/placeholder-dish.svg')}
                 />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-800">{dish.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold text-gray-800">{dish.name}</h3>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                      {getItemTypeDisplay(dish.type)}
+                    </span>
+                  </div>
                   <p className="text-sm text-gray-500">{dish.description}</p>
                 </div>
               </Card>
@@ -141,8 +212,13 @@ export function DishesPage() {
           </div>
         ) : (
           <div className="text-center py-10 text-gray-500">
-            <p>לא נמצאו מנות התואמות את החיפוש שלכם/ן.</p>
-            {dishes.length === 0 && clientId && <p>עדיין לא הוספתם/ן מנות.</p>}
+            <p>לא נמצאו פריטים התואמים את החיפוש שלכם/ן.</p>
+            {dishes.length === 0 && clientId && (
+              <p>עדיין לא הוספתם/ן פריטים.</p>
+            )}
+            {!clientId && (
+              <p>נדרש חיבור לחשבון לקוח לצפייה בפריטים.</p>
+            )}
           </div>
         )}
       </div>
