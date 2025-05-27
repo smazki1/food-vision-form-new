@@ -16,6 +16,16 @@ const AdminLayout: React.FC = () => {
   const currentUserState: CurrentUserRoleState = useCurrentUserRole();
   const { status, isAdmin, isAccountManager, role, error: roleError, userId } = currentUserState;
 
+  console.log("[AdminLayout] Current auth state:", {
+    status,
+    isAdmin,
+    isAccountManager,
+    role,
+    userId,
+    error: roleError,
+    forcedReady
+  });
+
   // Force ready state after 8 seconds for mobile (shorter timeout)
   useEffect(() => {
     const forceReadyTimer = setTimeout(() => {
@@ -79,8 +89,15 @@ const AdminLayout: React.FC = () => {
 
   const handleLogout = async () => {
     console.log("[AdminLayout] handleLogout called");
+    
+    // Clear local storage
+    localStorage.removeItem("adminAuthenticated");
+    localStorage.removeItem("adminAuthTime");
+    
+    // Sign out from Supabase
     const { error } = await supabase.auth.signOut();
     if (error) {
+      console.error("[AdminLayout] Logout error:", error);
       toast.error("Logout failed: " + error.message);
     } else {
       toast.info("התנתקת בהצלחה");

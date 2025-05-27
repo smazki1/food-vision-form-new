@@ -657,26 +657,15 @@ export type Database = {
         Returns: boolean
       }
       public_submit_item_by_restaurant_name: {
-        Args:
-          | {
-              p_restaurant_name: string
-              p_item_type: string
-              p_item_name: string
-              p_description?: string
-              p_category?: string
-              p_ingredients?: string[]
-              p_price?: number
-              p_reference_image_urls?: string[]
-            }
-          | {
-              p_restaurant_name: string
-              p_item_type: string
-              p_item_name: string
-              p_description?: string
-              p_category?: string
-              p_ingredients?: string[]
-              p_reference_image_urls?: string[]
-            }
+        Args: {
+          p_restaurant_name: string
+          p_item_type: string
+          p_item_name: string
+          p_description?: string
+          p_category?: string
+          p_ingredients?: string[]
+          p_reference_image_urls?: string[]
+        }
         Returns: Json
       }
     }
