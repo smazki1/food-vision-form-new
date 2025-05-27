@@ -1,172 +1,144 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ClientAuthState } from '@/types/clientAuthTypes';
+import { User } from '@supabase/supabase-js';
 
-interface ClientData {
-  client_id: string;
-  user_auth_id: string;
-  email_notifications: boolean;
-  app_notifications: boolean;
-  current_package_id: string | null;
-  restaurant_name: string;
-  contact_name: string;
-  phone: string;
-  email: string;
-  client_status: string;
-  remaining_servings: number;
-  created_at: string;
-  last_activity_at: string | null;
-  internal_notes: string | null;
-  original_lead_id: string | null;
+interface ClientAuthStateUpdater {
+  (updates: {
+    clientId?: string | null;
+    authenticating?: boolean;
+    clientRecordStatus?: 'loading' | 'found' | 'not-found' | 'error';
+    errorState?: string | null;
+  }): void;
 }
 
 export const useClientDataFetcher = (
-  user: any,
+  user: User | null,
   isAuthenticated: boolean,
   initialized: boolean,
   authLoading: boolean,
   connectionVerified: boolean,
   refreshToggle: boolean,
-  updateClientAuthState: (updates: Partial<ClientAuthState>) => void,
-  onError: (errorMessage: string) => void
+  updateClientAuthState: ClientAuthStateUpdater,
+  handleClientDataFetchError: (error: string) => void
 ) => {
-  const [attemptCounter, setAttemptCounter] = useState(0);
-  const maxAttempts = 1;
+  const shouldFetch = isAuthenticated && 
+                     user && 
+                     initialized && 
+                     !authLoading && 
+                     connectionVerified;
 
-  // Only enable if user is authenticated, initialized, not loading, and connection is verified
-  const shouldEnableQuery = Boolean(
-    user && 
-    isAuthenticated && 
-    initialized && 
-    !authLoading && 
-    connectionVerified &&
-    attemptCounter < maxAttempts
-  );
-
-  console.log("[CLIENT_DATA_FETCHER] Query configuration:", {
-    user: !!user,
+  console.log("[CLIENT_DATA_FETCHER] Should fetch client data:", {
+    shouldFetch,
     isAuthenticated,
+    userId: user?.id,
     initialized,
     authLoading,
     connectionVerified,
-    attemptCounter,
-    maxAttempts,
-    shouldEnableQuery,
-    userIdFromUserObject: user?.id
+    refreshToggle
   });
 
-  const { 
-    data: clientData, 
-    isLoading: clientQueryLoading, 
+  const {
+    data: clientData,
+    isLoading: clientQueryLoading,
     error: clientQueryError,
     refetch
-  } = useQuery<ClientData | null>({
-    queryKey: ['client-data', user?.id, refreshToggle],
+  } = useQuery({
+    queryKey: ['client-by-user-id', user?.id, refreshToggle],
     queryFn: async () => {
       if (!user?.id) {
-        console.warn("[CLIENT_DATA_FETCHER] queryFn: No user ID available, cannot fetch.");
-        return null;
+        throw new Error('No user ID available');
       }
 
-      console.log("[CLIENT_DATA_FETCHER] queryFn: Attempting to fetch client data for user_auth_id:", user.id);
+      console.log("[CLIENT_DATA_FETCHER] Fetching client data for user:", user.id);
       
-      try {
-        setAttemptCounter(prev => prev + 1);
-        
-        const { data, error } = await supabase
-          .from('clients')
-          .select(`
-            client_id,
-            user_auth_id,
-            email_notifications,
-            app_notifications,
-            current_package_id,
-            restaurant_name,
-            contact_name,
-            phone,
-            email,
-            client_status,
-            remaining_servings,
-            created_at,
-            last_activity_at,
-            internal_notes,
-            original_lead_id
-          `)
-          .eq('user_auth_id', user.id);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('client_id, restaurant_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-        if (error) {
-          console.error("[CLIENT_DATA_FETCHER] Query error:", error);
-          throw error;
-        }
-
-        console.log("[CLIENT_DATA_FETCHER] queryFn: Raw data from Supabase for user_auth_id:", user.id, "Result:", data);
-        return data && data.length > 0 ? data[0] : null;
-      } catch (err) {
-        console.error("[CLIENT_DATA_FETCHER] Query exception:", err);
-        throw err;
+      if (error) {
+        console.error("[CLIENT_DATA_FETCHER] Query error:", error);
+        throw error;
       }
+
+      console.log("[CLIENT_DATA_FETCHER] Query result:", data);
+      return data;
     },
-    enabled: shouldEnableQuery,
-    retry: false,
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    enabled: shouldFetch,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: (failureCount, error) => {
+      // Retry up to 2 times for network errors, but not for auth errors
+      if (failureCount >= 2) return false;
+      return !error.message?.includes('JWT');
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Handle successful data fetch
+  // Handle query results and update auth state
   useEffect(() => {
-    if (clientData !== undefined && !clientQueryLoading && attemptCounter > 0) {
-      console.log("[CLIENT_DATA_FETCHER] Processing client data (attempt:", attemptCounter, "):", clientData);
+    if (!shouldFetch) return;
 
+    if (clientQueryError) {
+      const errorMessage = clientQueryError.message || 'שגיאה בטעינת נתוני לקוח';
+      console.error("[CLIENT_DATA_FETCHER] Client query error:", errorMessage);
+      handleClientDataFetchError(errorMessage);
+      return;
+    }
+
+    if (!clientQueryLoading) {
       if (clientData) {
-        console.log("[CLIENT_DATA_FETCHER] Client data found. Calling updateClientAuthState with clientId:", clientData.client_id);
+        console.log("[CLIENT_DATA_FETCHER] Client found:", clientData.client_id);
         updateClientAuthState({
           clientId: clientData.client_id,
           clientRecordStatus: 'found',
-          errorState: null,
-          authenticating: false
+          authenticating: false,
+          errorState: null
         });
       } else {
-        console.log("[CLIENT_DATA_FETCHER] No client data found for user_auth_id:", user?.id, ". Calling updateClientAuthState with clientId: null.");
+        console.log("[CLIENT_DATA_FETCHER] No client record found for user");
         updateClientAuthState({
           clientId: null,
           clientRecordStatus: 'not-found',
-          errorState: null,
-          authenticating: false
+          authenticating: false,
+          errorState: null
         });
       }
     }
-  }, [clientData, clientQueryLoading, updateClientAuthState, attemptCounter]);
+  }, [clientData, clientQueryLoading, clientQueryError, shouldFetch, updateClientAuthState, handleClientDataFetchError]);
 
-  // Handle query errors
+  // Add timeout handling for stuck loading states
   useEffect(() => {
-    if (clientQueryError && attemptCounter > 0) {
-      console.error("[CLIENT_DATA_FETCHER] Query error occurred (attempt:", attemptCounter, "):", clientQueryError);
+    if (!shouldFetch || !clientQueryLoading) return;
 
-      const errorMessage = clientQueryError instanceof Error 
-        ? clientQueryError.message 
-        : 'Failed to fetch client data';
-      
-      onError(errorMessage);
+    const timeout = setTimeout(() => {
+      console.warn("[CLIENT_DATA_FETCHER] Query timeout - forcing completion");
       updateClientAuthState({
-        clientId: null,
         clientRecordStatus: 'error',
-        errorState: errorMessage,
-        authenticating: false
+        authenticating: false,
+        errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
       });
-    }
-  }, [clientQueryError, onError, updateClientAuthState, attemptCounter]);
+    }, 10000); // 10 second timeout
 
-  // Reset attempt counter when refresh is triggered
-  useEffect(() => {
-    if (refreshToggle !== undefined) {
-      console.log("[CLIENT_DATA_FETCHER] Resetting attempt counter due to refresh");
-      setAttemptCounter(0);
-    }
-  }, [refreshToggle]);
+    return () => clearTimeout(timeout);
+  }, [clientQueryLoading, shouldFetch, updateClientAuthState]);
 
-  return { 
-    clientData, 
-    clientQueryLoading: clientQueryLoading && attemptCounter <= maxAttempts
+  const retryFetch = useCallback(() => {
+    console.log("[CLIENT_DATA_FETCHER] Manual retry triggered");
+    updateClientAuthState({
+      clientRecordStatus: 'loading',
+      authenticating: true,
+      errorState: null
+    });
+    refetch();
+  }, [refetch, updateClientAuthState]);
+
+  return {
+    clientData,
+    clientQueryLoading,
+    clientQueryError,
+    retryFetch
   };
 };
