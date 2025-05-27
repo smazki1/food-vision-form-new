@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { NewItemFormData, useNewItemForm } from '@/contexts/NewItemFormContext';
 import { useClientAuth } from '@/hooks/useClientAuth';
@@ -21,11 +20,15 @@ export interface StepProps {
   onFinalSubmit?: () => void;
 }
 
+const LOADING_TIMEOUT = 5000; // 5 seconds timeout for loading state
+
 const FoodVisionUploadForm: React.FC = () => {
   const { clientId, authenticating, refreshClientAuth } = useClientAuth();
   const { formData, resetFormData } = useNewItemForm();
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const { remainingDishes } = useClientPackage();
+  const [forceRender, setForceRender] = useState(false);
+  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
     formSteps,
@@ -40,11 +43,32 @@ const FoodVisionUploadForm: React.FC = () => {
   const { handleRestaurantDetailsSubmit, isCreatingClient } = useRestaurantDetailsSubmission(refreshClientAuth);
   const { handleSubmit: submitForm, isSubmitting } = useFormSubmission();
 
+  // Set up loading timeout
   useEffect(() => {
-    if (!authenticating) {
+    if (authenticating) {
+      loadingTimerRef.current = setTimeout(() => {
+        console.log('[FoodVisionUploadForm] Auth loading timeout exceeded. Forcing render.');
+        setForceRender(true);
+      }, LOADING_TIMEOUT);
+    } else if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+
+    return () => {
+      if (loadingTimerRef.current) {
+        clearTimeout(loadingTimerRef.current);
+        loadingTimerRef.current = null;
+      }
+    };
+  }, [authenticating]);
+
+  // Update steps when auth changes
+  useEffect(() => {
+    if (!authenticating || forceRender) {
       updateStepsForAuthenticatedUser();
     }
-  }, [clientId, authenticating]);
+  }, [clientId, authenticating, forceRender, updateStepsForAuthenticatedUser]);
 
   const typedFormSteps = formSteps.map(step => ({ id: step.id, name: step.name }));
   const CurrentStepComponent = formSteps.find(step => step.id === currentStepId)?.component || (() => <div>שלב לא תקין</div>);
@@ -130,18 +154,18 @@ const FoodVisionUploadForm: React.FC = () => {
     }
   };
 
-  if (authenticating) {
+  if (authenticating && !forceRender) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <p className="ml-4 text-lg">טוען פרטי משתמש...</p>
+      <div className="flex justify-center items-center h-screen" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8B1E3F]"></div>
+        <p className="mr-4 text-lg">טוען פרטי משתמש...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="relative p-4 bg-white shadow-md sticky top-0 z-10">
+    <div className="flex flex-col min-h-screen bg-gray-50" dir="rtl">
+      <div className="relative p-4 bg-[#8B1E3F] shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto">
             <FormProgress currentStepId={currentStepId} formSteps={typedFormSteps} />
         </div>
@@ -149,12 +173,12 @@ const FoodVisionUploadForm: React.FC = () => {
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          {currentStepId !== 1 && !clientId && (
-             <Alert className="mb-6">
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
+          {(currentStepId !== 1 && !clientId) && (
+             <Alert className="mb-6 bg-[#F3752B]/10 border-[#F3752B]">
+                <InfoIcon className="h-4 w-4 text-[#F3752B]" />
+                <AlertDescription className="text-[#333]">
                   נראה שלא השלמת את פרטי המסעדה. 
-                  <Button variant="link" className="p-0 h-auto text-amber-700 hover:underline" onClick={() => {
+                  <Button variant="link" className="p-0 h-auto text-[#8B1E3F] hover:underline" onClick={() => {
                       resetToAllSteps();
                   }}>
                     לחץ כאן
@@ -163,6 +187,16 @@ const FoodVisionUploadForm: React.FC = () => {
                 </AlertDescription>
               </Alert>
           )}
+          
+          <div className="text-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#8B1E3F]">
+              העלאת פריט חדש
+            </h1>
+            <p className="text-gray-600 mt-2">
+              מלאו את הפרטים הנדרשים להעלאת הפריט שלכם
+            </p>
+          </div>
+          
           <CurrentStepComponent 
             setExternalErrors={setStepErrors} 
             clearExternalErrors={handleClearStepErrors} 
@@ -172,7 +206,7 @@ const FoodVisionUploadForm: React.FC = () => {
           
           {Object.keys(stepErrors).length > 0 && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <h3 className="text-sm font-semibold text-red-700 mb-1">שגיאות:</h3>
+              <h3 className="text-sm font-semibold text-red-700 mb-1 text-center">שגיאות:</h3>
               <ul className="list-disc list-inside text-xs text-red-600 space-y-0.5">
                 {Object.entries(stepErrors).map(([key, value]) => (
                   <li key={key}>{value}</li>
@@ -182,23 +216,27 @@ const FoodVisionUploadForm: React.FC = () => {
           )}
 
           <div className={cn(
-            "mt-8 flex",
-            formSteps.length === 1 || (currentStepId === formSteps[0].id && clientId) ? "justify-end" : "justify-between"
+            "mt-8 flex justify-center gap-4",
+            formSteps.length === 1 || (currentStepId === formSteps[0].id && clientId) ? "justify-center" : "justify-center"
           )}>
             {(formSteps.length > 1 && !(currentStepId === formSteps[0].id && clientId) )&& (
               <Button 
                 variant="outline"
                 onClick={handlePrevious} 
                 disabled={isSubmitting || isCreatingClient}
+                className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
               >
-                <ChevronRight className="ml-2 h-4 w-4" />
                 הקודם
               </Button>
             )}
             <Button 
               onClick={currentStepId === formSteps[formSteps.length -1].id ? handleMainSubmit : handleNext} 
               disabled={isSubmitting || isCreatingClient}
-              className={cn(currentStepId === formSteps[formSteps.length -1].id && "bg-green-600 hover:bg-green-700")}
+              className={cn("min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full",
+                currentStepId === formSteps[formSteps.length -1].id 
+                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90" 
+                : "bg-[#F3752B] hover:bg-[#F3752B]/90"
+              )}
             >
               {isSubmitting ? 
                 'שולח...' : 
@@ -206,7 +244,6 @@ const FoodVisionUploadForm: React.FC = () => {
                   'שלח הגשה' : 
                   (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
               }
-              {currentStepId !== formSteps[formSteps.length -1].id && <ChevronLeft className="mr-2 h-4 w-4" />}
             </Button>
           </div>
         </div>

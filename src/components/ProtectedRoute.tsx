@@ -9,6 +9,9 @@ interface ProtectedRouteProps {
   allowedRoles?: string[];
 }
 
+// Reduce timeout to 5 seconds for better user experience
+const LOADING_TIMEOUT = 5000;
+
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = ['customer'] }) => {
   const { 
     user, 
@@ -30,19 +33,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const loadingStartTimeRef = useRef<number>(Date.now());
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
+  // Force timeout after LOADING_TIMEOUT ms rather than using interval checks
   useEffect(() => {
-    const checkLoadingTimeout = () => {
-      if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
-        const loadingDuration = Date.now() - loadingStartTimeRef.current;
-        if (loadingDuration > 10000) { // 10 seconds timeout
-          console.warn("[AUTH_DEBUG] ProtectedRoute - Overall loading timeout exceeded 10s. Will proceed with current auth state.");
-          setLoadingTimedOut(true);
-        }
-      }
-    };
-
-    const intervalId = setInterval(checkLoadingTimeout, 1000); // Check every second
-    return () => clearInterval(intervalId);
+    if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
+      const timeoutId = setTimeout(() => {
+        console.warn(`[AUTH_DEBUG] ProtectedRoute - Overall loading timeout exceeded ${LOADING_TIMEOUT/1000}s. Will proceed with current auth state.`);
+        setLoadingTimedOut(true);
+      }, LOADING_TIMEOUT);
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [initialized, authLoading, clientAuthLoading, loadingTimedOut]);
 
   console.log("[AUTH_DEBUG] ProtectedRoute - State Check:", {
@@ -56,13 +56,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     timestamp: Date.now()
   });
 
-  // Condition 1: Show loading UI if basic auth isn't done, OR if client auth is still actively loading its record.
-  // We consider client auth done loading if clientAuthLoading is false OR if loadingTimedOut is true.
-  const stillLoading = !loadingTimedOut && 
-                       (!initialized || authLoading);
+  // Condition 1: Show loading UI if not timed out and unified auth isn't done
+  // We completely ignore clientAuthLoading state to prevent getting stuck
+  const stillLoading = !loadingTimedOut && (!initialized || authLoading);
 
   if (stillLoading) {
-  const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
+    const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
     console.log("[AUTH_DEBUG] ProtectedRoute - Showing Loading UI...", { currentLoadingTime });
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -72,7 +71,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
             Loading... ({currentLoadingTime}s)
           </div>
         </div>
-        {currentLoadingTime > 5 && (
+        {currentLoadingTime > 2 && (
           <p className="mt-4 text-sm text-muted-foreground">
             Loading is taking longer than expected...
           </p>
@@ -81,9 +80,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
-  // At this point, all initial loading attempts are considered "done" (either completed or timed out).
+  // At this point, either all loading is done or we've timed out
   console.log("[AUTH_DEBUG] ProtectedRoute - Past useUnifiedAuth loading. Final check for redirection.", {
-    isAuthenticated, unifiedClientId, role, clientAuthSpecificClientId, clientAuthLoading, clientRecordStatus, errorState
+    isAuthenticated, unifiedClientId, role, clientAuthSpecificClientId, clientAuthLoading, clientRecordStatus, errorState,
+    note: "EMERGENCY FIX: Ignoring clientAuthLoading for access control"
   });
 
   // Condition 2: If not authenticated after all loading attempts, redirect to login.
@@ -130,7 +130,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
      // Example: toast.info("Finalizing your profile setup. Some specific details might take a moment to appear.", { duration: 5000, id: 'client-auth-not-found-toast' });
   }
     
-    return children ? <>{children}</> : <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;
