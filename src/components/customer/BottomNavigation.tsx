@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Package, Plus, User } from 'lucide-react';
+import { Home, Package, Image, User } from 'lucide-react';
 
 const navItems = [
   {
@@ -11,12 +12,12 @@ const navItems = [
   {
     name: 'מנות',
     icon: Package,
-    path: '/customer/dishes'
+    path: '/customer/submissions-status'
   },
   {
-    name: 'הוסף',
-    icon: Plus,
-    path: '/customer/new-submission'
+    name: 'גלריה',
+    icon: Image,
+    path: '/customer/gallery'
   },
   {
     name: 'חשבון',
