@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { useClientProfile } from "@/hooks/useClientProfile";
-import { useClientPackage } from '@/hooks/useClientPackage';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -14,12 +13,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Package, LogOut, MessageCircle, LifeBuoy } from 'lucide-react';
 import { Client } from '@/types/client';
 
+interface ClientProfileWithPackage extends Client {
+  service_packages?: {
+    package_id: string;
+    package_name: string;
+    total_servings: number;
+  } | null;
+}
+
 export function CustomerProfile() {
   const { userAuthId } = useClientAuth();
   const { user, signOut: unifiedSignOut } = useUnifiedAuth();
   console.log("[CustomerProfile] userAuthId from useClientAuth:", userAuthId);
-  const { clientProfile, loading: profileLoading, error: profileError }: { clientProfile: Client | null; loading: boolean; error: string | null; updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; } = useClientProfile(userAuthId || user?.id || undefined);
-  const { packageName, remainingDishes, totalDishes } = useClientPackage();
+  const { clientProfile, loading: profileLoading, error: profileError, updateNotificationPreferences } = useClientProfile(userAuthId || user?.id || undefined) as { clientProfile: ClientProfileWithPackage | null; loading: boolean; error: string | null; updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; };
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -84,10 +90,14 @@ export function CustomerProfile() {
   if (!clientProfile) {
     return (
       <div dir="rtl" className="p-4 text-center">
-         <p>לא נטענו נתוני פרופIL.</p>
+         <p>לא נטענו נתוני פרופיל.</p>
       </div>
     ); 
   }
+
+  const packageName = clientProfile?.service_packages?.package_name;
+  const remainingDishes = clientProfile?.remaining_servings;
+  const totalDishes = clientProfile?.service_packages?.total_servings;
 
   const openWhatsApp = () => {
     const phoneNumber = "+972527772807";
@@ -115,8 +125,8 @@ export function CustomerProfile() {
         </CardHeader>
         <CardContent>
           <p className="text-sm font-medium">{packageName || 'לא נטענה חבילה'}</p>
-          <p className="text-2xl font-bold text-primary">{remainingDishes}
-            <span className="text-sm font-normal text-muted-foreground"> / {totalDishes} מנות</span>
+          <p className="text-2xl font-bold text-primary">{remainingDishes !== undefined ? remainingDishes : '-'}
+            <span className="text-sm font-normal text-muted-foreground"> / {totalDishes !== undefined ? totalDishes : '-'} מנות</span>
           </p>
         </CardContent>
       </Card>

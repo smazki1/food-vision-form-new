@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -28,6 +27,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   }, [updateClientAuthState]);
 
   const connectionVerified = useConnectionVerifier(handleConnectionError);
+
+  // Log the value of connectionVerified before passing to useClientDataFetcher
+  console.log("[CLIENT_AUTH_PROVIDER] Connection verified status:", connectionVerified);
 
   const handleClientDataFetchError = useCallback((errorMessage: string) => {
     updateClientAuthState({ 
@@ -128,6 +130,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     connectionVerified
   ]);
 
+  // Log the clientId received from useClientAuthStateManager before putting it into context
+  console.log("[CLIENT_AUTH_PROVIDER] ClientId from useClientAuthStateManager (before context memo):", clientId);
+
   const contextValue: ClientAuthContextType = useMemo(() => {
     const finalIsAuthenticated = isAuthenticated && 
                                initialized &&
@@ -146,7 +151,9 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       finalIsAuthenticated,
       clientId,
       userAuthId: user?.id,
-      authenticating
+      authenticating,
+      // Also log the specific clientId being put into context here
+      contextClientId: clientId 
     });
     
     return {

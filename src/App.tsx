@@ -29,6 +29,7 @@ const FoodVisionUploadFormPage = lazy(() => import("./pages/customer/FoodVisionU
 const CustomerSubmissionsStatusPage = lazy(() => import("./pages/customer/CustomerSubmissionsStatusPage"));
 const CustomerProfilePage = lazy(() => import("./pages/customer/CustomerProfilePage"));
 const CustomerGalleryPage = lazy(() => import("./pages/customer/CustomerGalleryPage"));
+const CustomerDishesPage = lazy(() => import("./pages/customer/DishesPage").then(module => ({ default: module.DishesPage })));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -91,6 +92,7 @@ function App() {
                     <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
                     <Route path="profile" element={<CustomerProfilePage />} />
                     <Route path="gallery" element={<CustomerGalleryPage />} />
+                    <Route path="dishes" element={<CustomerDishesPage />} />
                   </Route>
                   
                   {/* Redirect legacy customer paths */}

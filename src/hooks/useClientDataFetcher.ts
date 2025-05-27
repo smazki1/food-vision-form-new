@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,7 +52,8 @@ export const useClientDataFetcher = (
     connectionVerified,
     attemptCounter,
     maxAttempts,
-    shouldEnableQuery
+    shouldEnableQuery,
+    userIdFromUserObject: user?.id
   });
 
   const { 
@@ -65,11 +65,11 @@ export const useClientDataFetcher = (
     queryKey: ['client-data', user?.id, refreshToggle],
     queryFn: async () => {
       if (!user?.id) {
-        console.log("[CLIENT_DATA_FETCHER] No user ID available");
+        console.warn("[CLIENT_DATA_FETCHER] queryFn: No user ID available, cannot fetch.");
         return null;
       }
 
-      console.log("[CLIENT_DATA_FETCHER] Fetching client data for user:", user.id);
+      console.log("[CLIENT_DATA_FETCHER] queryFn: Attempting to fetch client data for user_auth_id:", user.id);
       
       try {
         setAttemptCounter(prev => prev + 1);
@@ -100,7 +100,7 @@ export const useClientDataFetcher = (
           throw error;
         }
 
-        console.log("[CLIENT_DATA_FETCHER] Query result:", data);
+        console.log("[CLIENT_DATA_FETCHER] queryFn: Raw data from Supabase for user_auth_id:", user.id, "Result:", data);
         return data && data.length > 0 ? data[0] : null;
       } catch (err) {
         console.error("[CLIENT_DATA_FETCHER] Query exception:", err);
@@ -116,9 +116,10 @@ export const useClientDataFetcher = (
   // Handle successful data fetch
   useEffect(() => {
     if (clientData !== undefined && !clientQueryLoading && attemptCounter > 0) {
-      console.log("[CLIENT_DATA_FETCHER] Processing client data:", clientData);
+      console.log("[CLIENT_DATA_FETCHER] Processing client data (attempt:", attemptCounter, "):", clientData);
 
       if (clientData) {
+        console.log("[CLIENT_DATA_FETCHER] Client data found. Calling updateClientAuthState with clientId:", clientData.client_id);
         updateClientAuthState({
           clientId: clientData.client_id,
           clientRecordStatus: 'found',
@@ -126,6 +127,7 @@ export const useClientDataFetcher = (
           authenticating: false
         });
       } else {
+        console.log("[CLIENT_DATA_FETCHER] No client data found for user_auth_id:", user?.id, ". Calling updateClientAuthState with clientId: null.");
         updateClientAuthState({
           clientId: null,
           clientRecordStatus: 'not-found',
@@ -139,7 +141,7 @@ export const useClientDataFetcher = (
   // Handle query errors
   useEffect(() => {
     if (clientQueryError && attemptCounter > 0) {
-      console.error("[CLIENT_DATA_FETCHER] Query error occurred:", clientQueryError);
+      console.error("[CLIENT_DATA_FETCHER] Query error occurred (attempt:", attemptCounter, "):", clientQueryError);
 
       const errorMessage = clientQueryError instanceof Error 
         ? clientQueryError.message 

@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Search, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useClientAuth } from '@/hooks/useClientAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { toast } from 'sonner';
 
 interface Dish {
@@ -22,11 +22,16 @@ interface ItemDetailsFromDB {
 export function DishesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const { clientId } = useClientAuth();
+  const { clientId } = useUnifiedAuth();
 
   useEffect(() => {
     async function fetchDishes() {
-      if (!clientId) return;
+      if (!clientId) {
+        console.log("[DishesPage] No clientId from useUnifiedAuth yet, skipping fetch.");
+        setDishes([]);
+        return;
+      }
+      console.log(`[DishesPage] Fetching dishes for clientId: ${clientId}`);
 
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('customer_submissions')

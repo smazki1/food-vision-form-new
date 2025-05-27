@@ -45,9 +45,19 @@ export const getItemTypeName = (type: string | undefined) => {
 };
 
 const CustomerSubmissionsStatusPage: React.FC = () => {
-  const { submissions, loading, error, refreshSubmissions } = useSubmissions();
+  const { submissions, loading, error, refreshSubmissions, clientId } = useSubmissions();
 
-  if (loading) {
+  // Log the state received from the hook
+  console.log("[CustomerSubmissionsStatusPage] State from useSubmissions:", {
+    submissions,
+    loading,
+    error,
+    clientId // Log the received clientId
+  });
+
+  // Show loading if the hook reports loading OR if the clientId isn't available yet
+  // as submissions depend on clientId.
+  if (loading || !clientId) {
     return <div dir="rtl" className="text-center p-10">טוען הגשות...</div>;
   }
 
