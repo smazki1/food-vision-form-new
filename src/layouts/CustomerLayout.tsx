@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -79,41 +80,20 @@ export function CustomerLayout() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Mobile Header - REMOVED as per request */}
-      {/*
-      <header className="sticky top-0 z-50 bg-white border-b md:hidden">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
-              FV
-            </div>
-            <h1 className="text-xl font-bold">Food Vision</h1>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="text-gray-500"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-      */}
-
-      {/* Desktop Sidebar - REMOVED header part and logout button */}
+      {/* Desktop Sidebar */}
       <aside className="hidden md:block md:w-64 border-r p-4 bg-card">
-        {/* Logo and Title - REMOVED as per request */}
-        {/* 
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">
-            FV
-          </div>
-          <h1 className="text-xl font-bold">Food Vision</h1>
-        </div>
-        */}
-
         <nav className="flex flex-col gap-1">
+          <Button
+            variant={isActive("/customer/dashboard") ? "default" : "ghost"}
+            className="justify-start"
+            asChild
+          >
+            <Link to="/customer/dashboard">
+              <Home className="ml-2 h-4 w-4" />
+              לוח בקרה
+            </Link>
+          </Button>
+
           <Button
             variant={isActive("/customer/home") ? "default" : "ghost"}
             className="justify-start"
@@ -144,6 +124,17 @@ export function CustomerLayout() {
             <Link to="/customer/gallery">
               <Image className="ml-2 h-4 w-4" />
               הגלריה שלי
+            </Link>
+          </Button>
+
+          <Button
+            variant={isActive("/customer/upload") ? "default" : "ghost"}
+            className="justify-start"
+            asChild
+          >
+            <Link to="/customer/upload">
+              <Package className="ml-2 h-4 w-4" />
+              העלאת מנה חדשה
             </Link>
           </Button>
 

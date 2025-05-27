@@ -16,13 +16,13 @@ const CustomerLayout = lazy(() =>
   import("./layouts/CustomerLayout").then(module => ({ default: module.CustomerLayout }))
 );
 
-// Lazy load pages
+// Lazy load pages - Use the existing CustomerLogin page
 const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PublicUploadPage = lazy(() => import("./pages/PublicUploadPage"));
 
-// Customer pages
+// Customer pages - verify all existing components are properly imported
 const CustomerHomePage = lazy(() => import("./pages/customer/CustomerHomePage"));
 const CustomerDashboardPage = lazy(() => import("./pages/customer/CustomerDashboardPage"));
 const FoodVisionUploadFormPage = lazy(() => import("./pages/customer/FoodVisionUploadFormPage"));
@@ -30,6 +30,9 @@ const CustomerSubmissionsStatusPage = lazy(() => import("./pages/customer/Custom
 const CustomerProfilePage = lazy(() => import("./pages/customer/CustomerProfilePage"));
 const CustomerGalleryPage = lazy(() => import("./pages/customer/CustomerGalleryPage"));
 const CustomerDishesPage = lazy(() => import("./pages/customer/DishesPage").then(module => ({ default: module.DishesPage })));
+const CustomerSubmissionsPage = lazy(() => import("./pages/customer/CustomerSubmissionsPage"));
+const CustomerPackageDetailsPage = lazy(() => import("./pages/customer/CustomerPackageDetailsPage"));
+const SubmissionDetailsPage = lazy(() => import("./pages/customer/SubmissionDetailsPage"));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -76,7 +79,7 @@ function App() {
                     }
                   />
 
-                  {/* Customer Protected Routes */}
+                  {/* Customer Protected Routes - All integrated with CustomerLayout */}
                   <Route
                     path="/customer"
                     element={
@@ -90,9 +93,12 @@ function App() {
                     <Route path="home" element={<CustomerHomePage />} />
                     <Route path="upload" element={<FoodVisionUploadFormPage />} />
                     <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
+                    <Route path="submissions" element={<CustomerSubmissionsPage />} />
+                    <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
                     <Route path="profile" element={<CustomerProfilePage />} />
                     <Route path="gallery" element={<CustomerGalleryPage />} />
                     <Route path="dishes" element={<CustomerDishesPage />} />
+                    <Route path="package-details" element={<CustomerPackageDetailsPage />} />
                   </Route>
                   
                   {/* Redirect legacy customer paths */}
