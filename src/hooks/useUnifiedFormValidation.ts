@@ -14,7 +14,7 @@ export const useUnifiedFormValidation = () => {
     return newErrors;
   };
 
-  const validateItemDetails = (): Record<string, string> => {
+  const validateCombinedUpload = (): Record<string, string> => {
     const newErrors: Record<string, string> = {};
     if (!formData.itemName?.trim()) {
       newErrors.itemName = 'שם הפריט הוא שדה חובה';
@@ -22,11 +22,6 @@ export const useUnifiedFormValidation = () => {
     if (!formData.itemType) {
       newErrors.itemType = 'סוג הפריט הוא שדה חובה';
     }
-    return newErrors;
-  };
-
-  const validateImageUpload = (): Record<string, string> => {
-    const newErrors: Record<string, string> = {};
     if (formData.referenceImages.length === 0) {
       newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
     }
@@ -39,8 +34,7 @@ export const useUnifiedFormValidation = () => {
   const validateAllFields = (): Record<string, string> => {
     return {
       ...validateRestaurantDetails(),
-      ...validateItemDetails(),
-      ...validateImageUpload()
+      ...validateCombinedUpload()
     };
   };
 
@@ -51,13 +45,10 @@ export const useUnifiedFormValidation = () => {
       case 1: // Restaurant Details
         newErrors = validateRestaurantDetails();
         break;
-      case 2: // Item Details
-        newErrors = validateItemDetails();
+      case 2: // Combined Upload (Item Details + Images)
+        newErrors = validateCombinedUpload();
         break;
-      case 3: // Image Upload
-        newErrors = validateImageUpload();
-        break;
-      case 4: // Review
+      case 3: // Review
         newErrors = validateAllFields();
         break;
     }

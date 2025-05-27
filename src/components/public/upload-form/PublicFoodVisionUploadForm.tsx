@@ -5,8 +5,7 @@ import { useUnifiedFormNavigation } from '@/hooks/useUnifiedFormNavigation';
 import { useUnifiedFormValidation } from '@/hooks/useUnifiedFormValidation';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
-import ItemDetailsStep from './steps/ItemDetailsStep';
-import ImageUploadStep from './steps/ImageUploadStep';
+import CombinedUploadStep from './steps/CombinedUploadStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import PublicFormHeader from './components/PublicFormHeader';
 import PublicFormContent from './components/PublicFormContent';
@@ -29,16 +28,11 @@ const publicFormSteps = [
   },
   {
     id: 2,
-    name: 'פרטי הפריט',
-    component: ItemDetailsStep
+    name: 'פרטי העלאה',
+    component: CombinedUploadStep
   },
   {
     id: 3,
-    name: 'העלאת תמונות',
-    component: ImageUploadStep
-  },
-  {
-    id: 4,
     name: 'סקירה ואישור',
     component: ReviewSubmitStep
   }
@@ -91,8 +85,8 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     }
   };
 
-  const showNavigationButtons = currentStepId !== 4; 
-  const isReviewStep = currentStepId === 4;
+  const showNavigationButtons = currentStepId !== 3; 
+  const isReviewStep = currentStepId === 3;
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
