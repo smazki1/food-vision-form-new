@@ -15,7 +15,7 @@ interface ClientData {
   service_packages?: {
     package_name: string;
     total_servings: number;
-  } | null;
+  }[] | null;
 }
 
 export function useClientPackage(): PackageDetails {
@@ -81,10 +81,12 @@ export function useClientPackage(): PackageDetails {
 
         if (clientWithPackage) {
           const data = clientWithPackage as ClientData;
+          // Since we're using inner join, service_packages should be an array with at least one item
+          const packageInfo = data.service_packages?.[0];
           setPackageDetails({
             remainingDishes: data.remaining_servings,
-            totalDishes: data.service_packages?.total_servings || 0,
-            packageName: data.service_packages?.package_name || 'חבילה לא זמינה'
+            totalDishes: packageInfo?.total_servings || 0,
+            packageName: packageInfo?.package_name || 'חבילה לא זמינה'
           });
         }
       } catch (err) {
