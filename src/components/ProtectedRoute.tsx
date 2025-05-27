@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -9,6 +8,9 @@ interface ProtectedRouteProps {
   children?: React.ReactNode;
   allowedRoles?: string[];
 }
+
+// Reduce timeout to 5 seconds for better user experience
+const LOADING_TIMEOUT = 5000;
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles = ['customer'] }) => {
   const { 
@@ -30,19 +32,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   const loadingStartTimeRef = useRef<number>(Date.now());
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
+  // Force timeout after LOADING_TIMEOUT ms rather than using interval checks
   useEffect(() => {
-    const checkLoadingTimeout = () => {
-      if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
-        const loadingDuration = Date.now() - loadingStartTimeRef.current;
-        if (loadingDuration > 5000) { // Reduced to 5 seconds
-          console.warn("[AUTH_DEBUG] ProtectedRoute - Loading timeout exceeded 5s. Will proceed with current auth state.");
-          setLoadingTimedOut(true);
-        }
-      }
-    };
-
-    const intervalId = setInterval(checkLoadingTimeout, 1000);
-    return () => clearInterval(intervalId);
+    if ((!initialized || authLoading || clientAuthLoading) && !loadingTimedOut) {
+      const timeoutId = setTimeout(() => {
+        console.warn(`[AUTH_DEBUG] ProtectedRoute - Overall loading timeout exceeded ${LOADING_TIMEOUT/1000}s. Will proceed with current auth state.`);
+        setLoadingTimedOut(true);
+      }, LOADING_TIMEOUT);
+      
+      return () => clearTimeout(timeoutId);
+    }
   }, [initialized, authLoading, clientAuthLoading, loadingTimedOut]);
 
   console.log("[AUTH_DEBUG] ProtectedRoute - State Check:", {
@@ -56,10 +55,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     timestamp: Date.now()
   });
 
-  // Simplified loading condition - force completion after timeout
-  const stillLoading = !loadingTimedOut && 
-                       (!initialized || authLoading || 
-                        (clientAuthLoading && !clientRecordStatus));
+  // Condition 1: Show loading UI if not timed out and unified auth isn't done
+  // We completely ignore clientAuthLoading state to prevent getting stuck
+  const stillLoading = !loadingTimedOut && (!initialized || authLoading);
 
   if (stillLoading) {
     const currentLoadingTime = Math.round((Date.now() - loadingStartTimeRef.current) / 1000);
@@ -72,7 +70,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
             Loading... ({currentLoadingTime}s)
           </div>
         </div>
-        {currentLoadingTime > 3 && (
+        {currentLoadingTime > 2 && (
           <p className="mt-4 text-sm text-muted-foreground">
             Loading is taking longer than expected...
           </p>
@@ -81,8 +79,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     );
   }
 
-  console.log("[AUTH_DEBUG] ProtectedRoute - Past loading. Final check for redirection.", {
-    isAuthenticated, unifiedClientId, role, clientAuthSpecificClientId, clientAuthLoading, clientRecordStatus, errorState
+  // At this point, either all loading is done or we've timed out
+  console.log("[AUTH_DEBUG] ProtectedRoute - Past useUnifiedAuth loading. Final check for redirection.", {
+    isAuthenticated, unifiedClientId, role, clientAuthSpecificClientId, clientAuthLoading, clientRecordStatus, errorState,
+    note: "EMERGENCY FIX: Ignoring clientAuthLoading for access control"
   });
 
   // Check authentication
@@ -110,6 +110,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
   console.log("[AUTH_DEBUG] ProtectedRoute - Authenticated and authorized. Rendering content.", {
     effectiveClientId, role, clientRecordStatus, errorState
   });
+    
+  // Optional: Show a non-blocking toast if there was an error resolving specific client info from useClientAuth
+  // This provides feedback without blocking the UI, as the core auth check (unified) has passed.
+  if (errorState && clientRecordStatus === 'error') {
+    toast.error(`There was an issue loading some additional profile details: ${errorState}. Core functionalities should work, but some specific info might be unavailable.`, { duration: 7000, id: 'client-auth-error-toast' });
+  }
+  // Optional: Toast if authenticated (unified) but useClientAuth reports no client record yet and is not loading.
+  // This is more of an informational message if the client record is expected to be eventually found by useClientAuth.
+  else if (role === 'customer' && unifiedClientId && !clientAuthSpecificClientId && clientRecordStatus === 'not-found' && !clientAuthLoading) {
+     console.warn("[AUTH_DEBUG] ProtectedRoute - useClientAuth reports no linked client record for this authenticated customer, though unifiedClientId is present. This might be a brief transitional state while client-specific data is fetched, or indicate a need to complete profile linking elsewhere if 'clients' table record isn't found by useClientDataFetcher.");
+     // Example: toast.info("Finalizing your profile setup. Some specific details might take a moment to appear.", { duration: 5000, id: 'client-auth-not-found-toast' });
+  }
     
   return children ? <>{children}</> : <Outlet />;
 };
