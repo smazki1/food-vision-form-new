@@ -45,29 +45,44 @@ export function useSubmissions() {
       }
       
       try {
-        // First, verify we can access the client record
-        const { data: clientCheck, error: clientError } = await supabase
-          .from("clients")
-          .select("client_id, restaurant_name")
-          .eq("client_id", clientId)
-          .single();
+        console.log("[useSubmissions] Starting database queries...");
+        
+        // Simple test query first
+        console.log("[useSubmissions] Testing basic database connection...");
+        const { data: testData, error: testError } = await supabase
+          .from("customer_submissions")
+          .select("submission_id")
+          .limit(1);
           
-        console.log("[useSubmissions] Client check result:", { clientCheck, clientError });
+        console.log("[useSubmissions] Basic connection test result:", { testData, testError });
         
-        if (clientError) {
-          console.error("[useSubmissions] Client access error:", clientError);
-          throw new Error(`Cannot access client record: ${clientError.message}`);
-        }
+        // Check if any submissions exist at all in the database
+        const { count: totalCount, error: countError } = await supabase
+          .from("customer_submissions")
+          .select("*", { count: 'exact', head: true });
+          
+        console.log("[useSubmissions] Total submissions in database:", { totalCount, countError });
         
-        // Check how many submissions exist in total for debugging
-        const { count: totalSubmissions, error: countError } = await supabase
+        // Check submissions for this specific client
+        const { count: clientCount, error: clientCountError } = await supabase
           .from("customer_submissions")
           .select("*", { count: 'exact', head: true })
           .eq("client_id", clientId);
           
-        console.log("[useSubmissions] Total submissions count for client:", { totalSubmissions, countError });
+        console.log("[useSubmissions] Submissions for client:", { clientId, clientCount, clientCountError });
         
-        // Now fetch submissions with ALL required fields
+        // Try to fetch with minimal fields first
+        console.log("[useSubmissions] Fetching minimal submission data...");
+        const { data: minimalData, error: minimalError } = await supabase
+          .from("customer_submissions")
+          .select("submission_id, client_id, item_name_at_submission")
+          .eq("client_id", clientId)
+          .limit(5);
+          
+        console.log("[useSubmissions] Minimal data result:", { minimalData, minimalError });
+        
+        // Now try the full query
+        console.log("[useSubmissions] Fetching full submission data...");
         const { data, error: queryError } = await supabase
           .from("customer_submissions")
           .select(`
@@ -93,7 +108,7 @@ export function useSubmissions() {
           .eq("client_id", clientId)
           .order("uploaded_at", { ascending: false });
           
-        console.log("[useSubmissions] Submissions query result:", {
+        console.log("[useSubmissions] Full query result:", {
           data,
           error: queryError,
           dataLength: data?.length,
@@ -106,19 +121,6 @@ export function useSubmissions() {
           throw new Error(`Failed to fetch submissions: ${queryError.message}`);
         }
         
-        // Additional debugging: check if data exists but is being filtered out
-        if (!data || data.length === 0) {
-          console.warn("[useSubmissions] No submissions found. Checking raw data...");
-          
-          // Try a broader query to see what's in the table
-          const { data: allSubmissions, error: allError } = await supabase
-            .from("customer_submissions")
-            .select("client_id, item_name_at_submission")
-            .limit(5);
-            
-          console.log("[useSubmissions] Sample of all submissions in table:", { allSubmissions, allError });
-        }
-        
         const submissions = data as ProcessedItem[];
         console.log("[useSubmissions] Successfully fetched submissions:", submissions);
         return submissions;
@@ -129,8 +131,10 @@ export function useSubmissions() {
       }
     },
     enabled: !!clientId && isAuthenticated,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 1, // Reduce retries to see errors faster
+    retryDelay: 1000, // Shorter delay
+    staleTime: 0, // Force fresh data
+    gcTime: 0, // Don't cache for debugging
   });
 
   // Fetch remaining servings separately
@@ -142,11 +146,15 @@ export function useSubmissions() {
     queryFn: async () => {
       if (!clientId || !isAuthenticated) return null;
       
+      console.log("[useSubmissions] Fetching client remaining servings for:", clientId);
+      
       const { data, error: clientQueryError } = await supabase
         .from("clients")
         .select("remaining_servings")
         .eq("client_id", clientId)
         .single();
+        
+      console.log("[useSubmissions] Client servings result:", { data, error: clientQueryError });
         
       if (clientQueryError) {
         console.error("[useSubmissions] Error fetching client data:", clientQueryError);
@@ -156,6 +164,9 @@ export function useSubmissions() {
       return data;
     },
     enabled: !!clientId && isAuthenticated,
+    retry: 1,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const refreshSubmissions = () => {
@@ -163,6 +174,16 @@ export function useSubmissions() {
     queryClient.invalidateQueries({ queryKey: ["client-processed-items", clientId] });
     queryClient.invalidateQueries({ queryKey: ["client-remaining-servings", clientId] });
   };
+
+  console.log("[useSubmissions] Hook returning:", {
+    submissions: processedItems,
+    submissionsLength: processedItems?.length,
+    remainingServings: clientData?.remaining_servings || 0,
+    loading,
+    clientLoading,
+    error: error?.message,
+    clientId
+  });
 
   return {
     submissions: processedItems,
