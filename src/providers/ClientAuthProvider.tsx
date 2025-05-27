@@ -77,7 +77,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       initialized
     });
 
-    // If authenticated and UnifiedAuth has clientId but ClientAuth doesn't
     if (isAuthenticated && initialized && !authLoading && 
         unifiedClientId && !clientId && 
         clientRecordStatus !== 'loading' && !authenticating) {
@@ -91,7 +90,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       });
     }
     
-    // Force completion if stuck too long
+    // Force completion after shorter timeout
     if (isAuthenticated && initialized && !authLoading && 
         clientRecordStatus === 'loading' && authenticating) {
       
@@ -103,7 +102,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
           authenticating: false,
           errorState: null
         });
-      }, 2000); // 2 seconds force timeout
+      }, 1000); // Reduced to 1 second
       
       return () => clearTimeout(forceTimeout);
     }
@@ -164,7 +163,6 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   console.log("[CLIENT_AUTH_PROVIDER] Final clientId from state manager:", clientId);
 
   const contextValue: ClientAuthContextType = useMemo(() => {
-    // Use the effective client ID (prefer ClientAuth, fallback to UnifiedAuth)
     const effectiveClientId = clientId || unifiedClientId;
     
     const finalIsAuthenticated = isAuthenticated && 
