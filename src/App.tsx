@@ -33,8 +33,8 @@ const CustomerGalleryPage = lazy(() => import("./pages/customer/CustomerGalleryP
 const CustomerSubmissionsPage = lazy(() => import("./pages/customer/CustomerSubmissionsPage"));
 const CustomerPackageDetailsPage = lazy(() => import("./pages/customer/CustomerPackageDetailsPage"));
 
-// Add the submission details page for individual submission viewing
-const SubmissionDetailsPage = lazy(() => import("./components/customer/SubmissionDetailsPage"));
+// Add the submission details page for individual submission viewing - FIXED: Import from pages directory
+const SubmissionDetailsPage = lazy(() => import("./pages/customer/SubmissionDetailsPage"));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
