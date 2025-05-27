@@ -28,6 +28,13 @@ const FoodVisionUploadFormPage = lazy(() => import("./pages/customer/FoodVisionU
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const ClientsList = lazy(() => import("./pages/admin/ClientsList"));
 const ClientDetails = lazy(() => import("./pages/admin/ClientDetails"));
+const LeadsManagementPage = lazy(() => import("./pages/admin/LeadsManagement"));
+const PackagesManagementPage = lazy(() => import("./pages/admin/PackagesManagementPage"));
+const SubmissionsPage = lazy(() => import("./pages/admin/SubmissionsPage"));
+const SubmissionsQueuePage = lazy(() => import("./pages/admin/SubmissionsQueuePage"));
+const SubmissionsAnalyticsPage = lazy(() => import("./pages/admin/SubmissionsAnalytics"));
+const AlertsDashboardPage = lazy(() => import("./pages/admin/AlertsDashboard"));
+const UserManagementPage = lazy(() => import("./pages/admin/UserManagementPage"));
 
 const queryClient = new QueryClient();
 
@@ -101,6 +108,13 @@ function App() {
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="clients" element={<ClientsList />} />
                     <Route path="clients/:clientId" element={<ClientDetails />} />
+                    <Route path="leads" element={<LeadsManagementPage />} />
+                    <Route path="packages" element={<PackagesManagementPage />} />
+                    <Route path="submissions" element={<SubmissionsPage />} />
+                    <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
+                    <Route path="analytics" element={<SubmissionsAnalyticsPage />} />
+                    <Route path="alerts" element={<AlertsDashboardPage />} />
+                    <Route path="users" element={<UserManagementPage />} />
                   </Route>
 
                   {/* 404 Route */}
