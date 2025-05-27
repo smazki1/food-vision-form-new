@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
 import { useClientAuth } from '@/hooks/useClientAuth';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { Submission as ProcessedItem } from '@/api/submissionApi';
 import { Activity, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import {
@@ -49,15 +50,19 @@ export const getItemTypeName = (type: string | undefined) => {
 
 const CustomerSubmissionsStatusPage: React.FC = () => {
   const { clientId, isAuthenticated, authenticating } = useClientAuth();
+  const { user: unifiedUser, clientId: unifiedClientId } = useUnifiedAuth();
   const { submissions, loading, error, refreshSubmissions } = useSubmissions();
 
   console.log("[CustomerSubmissionsStatusPage] Component state:", {
     clientId,
     isAuthenticated,
     authenticating,
+    unifiedUser: unifiedUser?.id,
+    unifiedClientId,
     submissionsCount: submissions?.length,
     loading,
-    error: error?.message
+    error: error?.message,
+    timestamp: Date.now()
   });
 
   if (authenticating || loading) {
@@ -93,6 +98,12 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
             לא נמצא פרופיל לקוח מקושר לחשבון זה
           </AlertDescription>
         </Alert>
+        <div className="mt-4 text-sm text-gray-600">
+          <p>פרטי דיבוג:</p>
+          <p>משתמש: {unifiedUser?.id}</p>
+          <p>לקוח מאוחד: {unifiedClientId || 'לא נמצא'}</p>
+          <p>לקוח מקומי: {clientId || 'לא נמצא'}</p>
+        </div>
       </div>
     );
   }
@@ -138,14 +149,24 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
         <Alert>
           <AlertDescription>
             מציג הגשות עבור לקוח ID: {clientId}
+            <br />
+            משתמש: {unifiedUser?.email}
+            <br />
+            סה"כ הגשות נמצאו: {submissions?.length || 0}
           </AlertDescription>
         </Alert>
       </div>
 
       {sortedSubmissions.length === 0 ? (
         <div className="text-center text-gray-500 py-10">
-          <p>לא נמצאו הגשות.</p>
+          <p>לא נמצאו הגשות עבור לקוח זה.</p>
           <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
+          <div className="mt-4 text-sm">
+            <p>מידע דיבוג:</p>
+            <p>לקוח ID: {clientId}</p>
+            <p>משתמש ID: {unifiedUser?.id}</p>
+            <p>מאומת: {isAuthenticated ? 'כן' : 'לא'}</p>
+          </div>
         </div>
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">

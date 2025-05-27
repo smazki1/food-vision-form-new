@@ -49,6 +49,14 @@ export function useSubmissions() {
           throw new Error(`Cannot access client record: ${clientError.message}`);
         }
         
+        // Check how many submissions exist in total for debugging
+        const { count: totalSubmissions, error: countError } = await supabase
+          .from("customer_submissions")
+          .select("*", { count: 'exact', head: true })
+          .eq("client_id", clientId);
+          
+        console.log("[useSubmissions] Total submissions count for client:", { totalSubmissions, countError });
+        
         // Now fetch submissions with ALL required fields
         const { data, error: queryError } = await supabase
           .from("customer_submissions")
@@ -79,12 +87,26 @@ export function useSubmissions() {
           data,
           error: queryError,
           dataLength: data?.length,
-          clientId
+          clientId,
+          firstSubmission: data?.[0]
         });
         
         if (queryError) {
           console.error("[useSubmissions] Error fetching processed items:", queryError);
           throw new Error(`Failed to fetch submissions: ${queryError.message}`);
+        }
+        
+        // Additional debugging: check if data exists but is being filtered out
+        if (!data || data.length === 0) {
+          console.warn("[useSubmissions] No submissions found. Checking raw data...");
+          
+          // Try a broader query to see what's in the table
+          const { data: allSubmissions, error: allError } = await supabase
+            .from("customer_submissions")
+            .select("client_id, item_name_at_submission")
+            .limit(5);
+            
+          console.log("[useSubmissions] Sample of all submissions in table:", { allSubmissions, allError });
         }
         
         const submissions = data as ProcessedItem[];
