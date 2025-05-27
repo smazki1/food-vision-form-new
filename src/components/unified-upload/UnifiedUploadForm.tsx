@@ -1,14 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { Upload, X, ChevronRight, ChevronLeft } from 'lucide-react';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
+import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
+import ItemDetailsStep from './steps/ItemDetailsStep';
+import ImageUploadStep from './steps/ImageUploadStep';
+import ReviewStep from './steps/ReviewStep';
+import { useUnifiedFormSubmission } from './hooks/useUnifiedFormSubmission';
+import { useFormValidation } from './hooks/useFormValidation';
 
 interface FormData {
   restaurantName: string;
@@ -30,10 +32,10 @@ const STEPS = [
 
 const UnifiedUploadForm: React.FC = () => {
   const { isAuthenticated, user, clientId, role } = useUnifiedAuth();
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const { isSubmitting, submitForm } = useUnifiedFormSubmission();
+  const { errors, validateStep, clearErrors } = useFormValidation();
   
   const [formData, setFormData] = useState<FormData>({
     restaurantName: '',
@@ -47,7 +49,6 @@ const UnifiedUploadForm: React.FC = () => {
   });
 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Load user data if authenticated
   useEffect(() => {
@@ -82,9 +83,7 @@ const UnifiedUploadForm: React.FC = () => {
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
+    clearErrors();
   };
 
   const handleImageUpload = (files: FileList | null) => {
@@ -121,206 +120,23 @@ const UnifiedUploadForm: React.FC = () => {
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
-  const validateStep = (step: number): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    switch (step) {
-      case 1:
-        if (!formData.restaurantName.trim()) {
-          newErrors.restaurantName = 'שם המסעדה הוא שדה חובה';
-        }
-        if (!isAuthenticated) {
-          if (!formData.contactEmail.trim()) {
-            newErrors.contactEmail = 'אימייל הוא שדה חובה';
-          }
-          if (!formData.contactPhone.trim()) {
-            newErrors.contactPhone = 'מספר טלפון הוא שדה חובה';
-          }
-        }
-        break;
-      case 2:
-        if (!formData.itemName.trim()) {
-          newErrors.itemName = 'שם הפריט הוא שדה חובה';
-        }
-        break;
-      case 3:
-        if (formData.referenceImages.length === 0) {
-          newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
-        }
-        break;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleNext = () => {
-    if (validateStep(currentStep)) {
+    if (validateStep(currentStep, formData, isAuthenticated)) {
       setCurrentStep(prev => Math.min(prev + 1, 4));
     }
   };
 
   const handlePrevious = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
-    setErrors({});
+    clearErrors();
   };
 
   const handleSubmit = async () => {
-    console.log('[UnifiedUploadForm] Starting submission process...');
+    if (!validateStep(4, formData, isAuthenticated)) return;
+
+    const success = await submitForm(formData, isAuthenticated, clientId);
     
-    if (!validateStep(4)) return;
-
-    setIsSubmitting(true);
-    toast.info("מעלה תמונות ושומר הגשה...");
-
-    try {
-      // Upload images first
-      const uploadedImageUrls: string[] = [];
-      
-      for (const file of formData.referenceImages) {
-        console.log('[UnifiedUploadForm] Uploading file:', file.name);
-        const fileExt = file.name.split('.').pop() || 'jpg';
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        let filePath: string;
-        if (isAuthenticated && clientId) {
-          // For authenticated users, organize by client
-          filePath = `${clientId}/${formData.itemType}/${fileName}`;
-        } else {
-          // For public submissions
-          filePath = `public-submissions/${fileName}`;
-        }
-
-        const { error: uploadError } = await supabase.storage
-          .from('food-vision-images')
-          .upload(filePath, file);
-
-        if (uploadError) {
-          console.error('[UnifiedUploadForm] Upload error:', uploadError);
-          throw new Error(`שגיאה בהעלאת תמונה: ${uploadError.message}`);
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('food-vision-images')
-          .getPublicUrl(filePath);
-
-        uploadedImageUrls.push(publicUrl);
-        console.log('[UnifiedUploadForm] Uploaded image URL:', publicUrl);
-      }
-
-      console.log('[UnifiedUploadForm] All images uploaded successfully');
-
-      if (isAuthenticated && clientId) {
-        // Authenticated user submission - create item in specific table and submission record
-        console.log('[UnifiedUploadForm] Submitting for authenticated user with clientId:', clientId);
-        
-        const newItemId = uuidv4();
-        
-        // Insert into specific table
-        const tableNameMap: Record<string, string> = {
-          dish: 'dishes',
-          cocktail: 'cocktails',
-          drink: 'drinks',
-        };
-        
-        const itemTable = tableNameMap[formData.itemType];
-        const itemIdColumn = `${formData.itemType}_id`;
-
-        const itemData = {
-          client_id: clientId,
-          name: formData.itemName,
-          description: formData.description,
-          notes: formData.specialNotes,
-          reference_image_urls: uploadedImageUrls,
-          [itemIdColumn]: newItemId,
-        };
-
-        const { error: itemInsertError } = await supabase.from(itemTable as any).insert(itemData);
-
-        if (itemInsertError) {
-          console.error('[UnifiedUploadForm] Item insert error:', itemInsertError);
-          throw new Error(`שגיאה ביצירת הפריט: ${itemInsertError.message}`);
-        }
-
-        // Create submission record
-        const submissionData = {
-          client_id: clientId,
-          original_item_id: newItemId,
-          item_type: formData.itemType,
-          item_name_at_submission: formData.itemName,
-          submission_status: 'ממתינה לעיבוד' as const,
-          original_image_urls: uploadedImageUrls
-        };
-
-        const { error: submitError } = await supabase
-          .from('customer_submissions')
-          .insert(submissionData);
-
-        if (submitError) {
-          console.error('[UnifiedUploadForm] Submission error:', submitError);
-          // Cleanup the item if submission failed
-          await supabase.from(itemTable as any).delete().eq(itemIdColumn, newItemId);
-          throw new Error(`שגיאה בשמירת ההגשה: ${submitError.message}`);
-        }
-
-        console.log('[UnifiedUploadForm] Submission successful for authenticated user');
-        toast.success('הפריט הוגש בהצלחה!');
-        
-        // Navigate to customer home
-        navigate('/customer/home');
-        
-      } else {
-        // Public/anonymous submission using RPC function
-        console.log('[UnifiedUploadForm] Submitting for public user');
-        
-        let category = null;
-        let ingredients = null;
-        
-        if (formData.itemType === 'cocktail') {
-          ingredients = formData.description?.trim() ? 
-            formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
-        } else {
-          category = formData.description?.trim() || null;
-        }
-
-        const rpcParams = {
-          p_restaurant_name: formData.restaurantName.trim(),
-          p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
-          p_item_name: formData.itemName.trim(),
-          p_description: formData.description?.trim() || null,
-          p_category: category,
-          p_ingredients: ingredients,
-          p_reference_image_urls: uploadedImageUrls,
-        };
-
-        console.log('[UnifiedUploadForm] Calling RPC with params:', rpcParams);
-
-        const { data: submissionData, error: submissionError } = await supabase.rpc(
-          'public_submit_item_by_restaurant_name',
-          rpcParams
-        );
-
-        if (submissionError) {
-          console.error('[UnifiedUploadForm] RPC error:', submissionError);
-          throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
-        }
-
-        console.log('[UnifiedUploadForm] RPC response:', submissionData);
-
-        if (submissionData && typeof submissionData === 'object' && submissionData.success) {
-          if (submissionData.client_found) {
-            toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
-          } else {
-            toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
-          }
-        } else {
-          throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
-        }
-        
-        // Navigate to public home or show success message
-        navigate('/');
-      }
-      
+    if (success) {
       // Reset form
       setFormData({
         restaurantName: isAuthenticated ? formData.restaurantName : '',
@@ -334,13 +150,7 @@ const UnifiedUploadForm: React.FC = () => {
       });
       setImagePreviews([]);
       setCurrentStep(1);
-      setErrors({});
-      
-    } catch (error: any) {
-      console.error('[UnifiedUploadForm] Submission error:', error);
-      toast.error(error.message || 'אירעה שגיאה בעת שליחת הטופס');
-    } finally {
-      setIsSubmitting(false);
+      clearErrors();
     }
   };
 
@@ -348,219 +158,40 @@ const UnifiedUploadForm: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">פרטי המסעדה</h2>
-            
-            {isAuthenticated && (
-              <Alert>
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
-                  הפרטים נטענים אוטומטיט מהפרופיל שלך
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">שם המסעדה *</label>
-              <input
-                type="text"
-                className="w-full p-3 border rounded-md"
-                value={formData.restaurantName}
-                onChange={(e) => handleInputChange('restaurantName', e.target.value)}
-                disabled={isLoadingUserData}
-              />
-              {errors.restaurantName && (
-                <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>
-              )}
-            </div>
-
-            {!isAuthenticated && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium mb-1">אימייל *</label>
-                  <input
-                    type="email"
-                    className="w-full p-3 border rounded-md"
-                    value={formData.contactEmail}
-                    onChange={(e) => handleInputChange('contactEmail', e.target.value)}
-                  />
-                  {errors.contactEmail && (
-                    <p className="text-red-500 text-xs mt-1">{errors.contactEmail}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">מספר טלפון *</label>
-                  <input
-                    type="tel"
-                    className="w-full p-3 border rounded-md"
-                    value={formData.contactPhone}
-                    onChange={(e) => handleInputChange('contactPhone', e.target.value)}
-                  />
-                  {errors.contactPhone && (
-                    <p className="text-red-500 text-xs mt-1">{errors.contactPhone}</p>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+          <RestaurantDetailsStep
+            formData={formData}
+            errors={errors}
+            isAuthenticated={isAuthenticated}
+            isLoadingUserData={isLoadingUserData}
+            onInputChange={handleInputChange}
+          />
         );
-
       case 2:
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">פרטי הפריט</h2>
-            
-            <div>
-              <label className="block text-sm font-medium mb-1">שם הפריט *</label>
-              <input
-                type="text"
-                className="w-full p-3 border rounded-md"
-                value={formData.itemName}
-                onChange={(e) => handleInputChange('itemName', e.target.value)}
-                placeholder="הזן את שם הפריט"
-              />
-              {errors.itemName && (
-                <p className="text-red-500 text-xs mt-1">{errors.itemName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">סוג הפריט</label>
-              <select
-                className="w-full p-3 border rounded-md"
-                value={formData.itemType}
-                onChange={(e) => handleInputChange('itemType', e.target.value as 'dish' | 'cocktail' | 'drink')}
-              >
-                <option value="dish">מנה</option>
-                <option value="cocktail">קוקטייל</option>
-                <option value="drink">משקה</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">תיאור</label>
-              <textarea
-                className="w-full p-3 border rounded-md"
-                rows={3}
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="תאר את הפריט (רכיבים, טעמים, סגנון וכו')"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">הערות מיוחדות</label>
-              <textarea
-                className="w-full p-3 border rounded-md"
-                rows={2}
-                value={formData.specialNotes}
-                onChange={(e) => handleInputChange('specialNotes', e.target.value)}
-                placeholder="הערות נוספות לצוות העיצוב"
-              />
-            </div>
-          </div>
+          <ItemDetailsStep
+            formData={formData}
+            errors={errors}
+            onInputChange={handleInputChange}
+          />
         );
-
       case 3:
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">העלאת תמונות</h2>
-            
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-600 mb-4">גרור תמונות לכאן או לחץ לבחירה</p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => handleImageUpload(e.target.files)}
-                className="hidden"
-                id="file-upload"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('file-upload')?.click()}
-              >
-                בחר תמונות
-              </Button>
-              <p className="text-xs text-gray-500 mt-2">עד 10 תמונות, כל תמונה עד 10MB</p>
-            </div>
-
-            {errors.referenceImages && (
-              <p className="text-red-500 text-xs">{errors.referenceImages}</p>
-            )}
-
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative">
-                    <img
-                      src={preview}
-                      alt={`תצוגה מקדימה ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <ImageUploadStep
+            formData={formData}
+            imagePreviews={imagePreviews}
+            errors={errors}
+            onImageUpload={handleImageUpload}
+            onRemoveImage={removeImage}
+          />
         );
-
       case 4:
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">סקירה ואישור</h2>
-            
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-2">פרטי המסעדה</h3>
-                <p><strong>שם המסעדה:</strong> {formData.restaurantName}</p>
-                {!isAuthenticated && (
-                  <>
-                    <p><strong>אימייל:</strong> {formData.contactEmail}</p>
-                    <p><strong>טלפון:</strong> {formData.contactPhone}</p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-2">פרטי הפריט</h3>
-                <p><strong>שם הפריט:</strong> {formData.itemName}</p>
-                <p><strong>סוג:</strong> {formData.itemType === 'dish' ? 'מנה' : formData.itemType === 'cocktail' ? 'קוקטייל' : 'משקה'}</p>
-                {formData.description && <p><strong>תיאור:</strong> {formData.description}</p>}
-                {formData.specialNotes && <p><strong>הערות:</strong> {formData.specialNotes}</p>}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-medium mb-2">תמונות ({formData.referenceImages.length})</h3>
-                <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                  {imagePreviews.map((preview, index) => (
-                    <img
-                      key={index}
-                      src={preview}
-                      alt={`תמונה ${index + 1}`}
-                      className="w-full h-20 object-cover rounded"
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <ReviewStep
+            formData={formData}
+            imagePreviews={imagePreviews}
+            isAuthenticated={isAuthenticated}
+          />
         );
-
       default:
         return null;
     }
