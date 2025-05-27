@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
@@ -21,7 +22,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { role, isLoading: isRoleLoading } = useCurrentUserRole(); // Use isLoading instead of isRoleLoading
+  const { role, isLoading: isRoleLoading } = useCurrentUserRole();
 
   // Check if already authenticated and redirect if needed
   useEffect(() => {
@@ -53,49 +54,59 @@ const AdminLogin: React.FC = () => {
     checkAuth();
   }, [navigate, location, role, isRoleLoading]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Clear any previous authentication to ensure a clean slate
-    localStorage.removeItem("adminAuthenticated");
-    console.log("Attempting admin login with:", { username });
-
-    // Simple authentication check
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      console.log("Admin credentials match, setting authentication");
-      // Store admin session in localStorage
-      localStorage.setItem("adminAuthenticated", "true");
-      localStorage.setItem("adminAuthTime", Date.now().toString());
-      
-      toast.success("התחברת בהצלחה");
-      navigate("/admin/dashboard");
-    } else {
-      // Try Supabase auth
-      authWithSupabase();
-    }
-  };
-  
-  const authWithSupabase = async () => {
     try {
+      console.log("[AdminLogin] Starting login process with:", { username });
+
+      // Clear any previous authentication to ensure a clean slate
+      localStorage.removeItem("adminAuthenticated");
+      localStorage.removeItem("adminAuthTime");
+
+      // Simple authentication check first
+      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        console.log("[AdminLogin] Admin credentials match, setting authentication");
+        localStorage.setItem("adminAuthenticated", "true");
+        localStorage.setItem("adminAuthTime", Date.now().toString());
+        
+        toast.success("התחברת בהצלחה");
+        navigate("/admin/dashboard");
+        return;
+      }
+
+      // Try Supabase auth if simple auth fails
+      console.log("[AdminLogin] Trying Supabase authentication");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: username,
         password: password
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("[AdminLogin] Supabase auth error:", error);
+        throw error;
+      }
       
       if (data.session) {
-        // Store admin session in localStorage
+        console.log("[AdminLogin] Supabase auth successful, user:", data.user?.id);
+        
+        // Store admin session
         localStorage.setItem("adminAuthenticated", "true");
         localStorage.setItem("adminAuthTime", Date.now().toString());
         
         // Get user role
-        const { data: roleData } = await supabase
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', data.user.id)
           .single();
+        
+        if (roleError) {
+          console.warn("[AdminLogin] Could not fetch user role:", roleError);
+        }
+        
+        console.log("[AdminLogin] User role from DB:", roleData?.role);
         
         toast.success("התחברת בהצלחה");
         
@@ -105,10 +116,10 @@ const AdminLogin: React.FC = () => {
           navigate("/admin/dashboard");
         }
       } else {
-        toast.error("שם משתמש או סיסמה שגויים");
+        throw new Error("No session returned from Supabase");
       }
-    } catch (error) {
-      console.log("Login failed:", error);
+    } catch (error: any) {
+      console.error("[AdminLogin] Login failed:", error);
       toast.error("שם משתמש או סיסמה שגויים");
     } finally {
       setIsLoading(false);
