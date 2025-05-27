@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { useUnifiedFormNavigation } from '@/hooks/useUnifiedFormNavigation';
@@ -17,6 +16,8 @@ export interface PublicStepProps {
   clearExternalErrors?: () => void;
   errors?: Record<string, string>;
   onFinalSubmit?: () => void; 
+  onNext?: () => Promise<void>;
+  isSubmitting?: boolean;
 }
 
 // Define the public form steps with validation

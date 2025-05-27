@@ -1,10 +1,9 @@
-
 import React, { useContext } from 'react';
 import { NewItemFormContext } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils'; 
 import { Button } from '@/components/ui/button';
 
@@ -26,7 +25,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
   );
 };
 
-const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
+const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, isSubmitting }) => {
   const { formData } = useContext(NewItemFormContext);
 
   const { 
@@ -43,29 +42,31 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
   return (
     <div className="space-y-8" dir="rtl">
       <div>
-        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800 text-center">סקירה ואישור</h2>
+        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-[#8B1E3F] text-center">סקירה ואישור</h2>
         <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
           אנא בדקו את כל הפרטים שהזנתם לפני ההגשה הסופית. ודאו שהכל תקין.
         </p>
       </div>
 
       {/* Restaurant Details Section */}
-      <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <Building2 className="h-6 w-6 text-orange-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי המסעדה</h3>
-        </div>
-        <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
-          <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
-        </dl>
-        <Separator className="my-6" />
-      </section>
+      {restaurantName && (
+        <section className="space-y-4">
+          <div className="flex items-center mb-3 justify-center">
+            <Building2 className="h-6 w-6 text-[#F3752B] ml-3" /> 
+            <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי המסעדה</h3>
+          </div>
+          <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
+            <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
+          </dl>
+          <Separator className="my-6" />
+        </section>
+      )}
 
       {/* Item Details Section */}
       <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <ItemIcon className="h-6 w-6 text-orange-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי הפריט</h3>
+        <div className="flex items-center mb-3 justify-center">
+          <ItemIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
+          <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי הפריט</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
@@ -78,11 +79,11 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
 
       {/* Uploaded Images Section */}
       <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <ImageIcon className="h-6 w-6 text-orange-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
-        </div>
-        {referenceImages.length > 0 ? (
+         <div className="flex items-center mb-3 justify-center">
+            <ImageIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
+            <h3 className="text-lg font-semibold text-[#8B1E3F]">תמונות שהועלו ({referenceImages.length})</h3>
+          </div>
+          {referenceImages.length > 0 ? (
           <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white"> 
             {referenceImages.map((file, index) => (
               <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video"> 
@@ -106,8 +107,8 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
         <Separator className="my-6" />
       </section>
 
-      {/* Information Alert */}
-      <Alert className="p-4 rounded-md bg-blue-50 border-blue-500 text-blue-700">
+      {/* Public form info */}
+      <Alert className="p-4 rounded-md bg-[#8B1E3F]/10 border-[#8B1E3F] text-[#8B1E3F]">
         <InfoIcon className="h-5 w-5" />
         <AlertDescription className="text-sm mr-2"> 
           לאחר ההגשה, הפריט יתווסף למערכת ויעבור לבדיקה. אם המסעדה קיימת במערכת, הפריט יתווסף אליה אוטומטית.
@@ -117,31 +118,35 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       {/* Final Confirmation Button */}
       {onFinalSubmit && (
         <Button
-          onClick={onFinalSubmit}
-          disabled={errors && Object.keys(errors).length > 0}
-          className={cn(
-            "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
-            "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
-            "border-2",
-            "bg-orange-500 hover:bg-orange-600 border-orange-600 hover:border-orange-700 text-white focus-visible:ring-orange-500",
-            (errors && Object.keys(errors).length > 0) && "bg-red-500 hover:bg-red-600 border-red-600 hover:border-red-700 text-white focus-visible:ring-red-500"
-          )}
+            onClick={onFinalSubmit}
+            disabled={false || isSubmitting || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit)}
+            className={cn(
+                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-full shadow-lg transition-all duration-200 ease-in-out",
+                "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
+                (false === false) // Temporarily adjusting canSubmit logic, was: canSubmit 
+                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
+                : "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed",
+                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 text-white"
+            )}
         >
-          <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-          <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
-          <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
+            <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
+            <span className="leading-tight">
+              {isSubmitting ? 'שולח...' : '✓ בדקנו הכל - הגישו עכשיו!'}
+            </span>
         </Button>
       )}
 
-      {/* Display submission errors */}
-      {errors && Object.keys(errors).length > 0 && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
-          <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
-          <div>
-            {Object.entries(errors).map(([key, value]) => (
-              <div key={key}>{value}</div>
-            ))}
-          </div>
+      {/* Display any submission errors */}
+      {errors?.finalCheck && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
+            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
+            <span>{errors.finalCheck}</span>
+        </div>
+      )}
+      {errors?.submit && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
+            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
+            <span>{errors.submit}</span>
         </div>
       )}
     </div>
