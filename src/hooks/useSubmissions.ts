@@ -49,7 +49,7 @@ export function useSubmissions() {
           throw new Error(`Cannot access client record: ${clientError.message}`);
         }
         
-        // Now fetch submissions
+        // Now fetch submissions with ALL required fields
         const { data, error: queryError } = await supabase
           .from("customer_submissions")
           .select(`
@@ -58,10 +58,18 @@ export function useSubmissions() {
             original_item_id,
             item_type,
             item_name_at_submission,
+            assigned_package_id_at_submission,
             submission_status,
             uploaded_at,
             processed_image_urls,
             main_processed_image_url,
+            edit_history,
+            edit_count,
+            final_approval_timestamp,
+            internal_team_notes,
+            assigned_editor_id,
+            target_completion_date,
+            priority,
             created_at
           `)
           .eq("client_id", clientId)
