@@ -1,28 +1,46 @@
 
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
-export const validateRestaurantNameStep = (data: NewItemFormData) => {
-  const newErrors: Record<string, string> = {};
-  if (!data.restaurantName?.trim()) newErrors.restaurantName = 'שם המסעדה הוא שדה חובה.';
-  return newErrors;
+export const validateRestaurantNameStep = (formData: NewItemFormData): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (!formData.restaurantName?.trim()) {
+    errors.restaurantName = 'שם המסעדה הוא שדה חובה';
+  }
+  return errors;
 };
 
-export const validateItemDetailsStep = (data: NewItemFormData) => {
-  const newErrors: Record<string, string> = {};
-  if (!data.itemName.trim()) newErrors.itemName = 'שם הפריט הוא שדה חובה.';
-  if (!data.itemType) newErrors.itemType = 'סוג הפריט הוא שדה חובה.';
-  return newErrors;
+export const validateItemDetailsStep = (formData: NewItemFormData): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (!formData.itemName?.trim()) {
+    errors.itemName = 'שם הפריט הוא שדה חובה';
+  }
+  if (!formData.itemType) {
+    errors.itemType = 'סוג הפריט הוא שדה חובה';
+  }
+  return errors;
 };
 
-export const validateImageUploadStep = (data: NewItemFormData) => {
-  const newErrors: Record<string, string> = {};
-  if (data.referenceImages.length < 1) newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת.';
-  if (data.referenceImages.length > 10) newErrors.referenceImages = 'ניתן להעלות עד 10 תמונות.';
-  return newErrors;
+export const validateImageUploadStep = (formData: NewItemFormData): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (formData.referenceImages.length === 0) {
+    errors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+  }
+  if (formData.referenceImages.length > 10) {
+    errors.referenceImages = 'ניתן להעלות עד 10 תמונות';
+  }
+  return errors;
 };
 
-export const validateReviewStep = (data: NewItemFormData) => {
-  const newErrors: Record<string, string> = {};
-  if (data.referenceImages.length === 0) newErrors.finalCheck = "יש להעלות לפחות תמונה אחת לפני ההגשה.";
-  return newErrors;
+export const validateCombinedUploadStep = (formData: NewItemFormData): Record<string, string> => {
+  return {
+    ...validateItemDetailsStep(formData),
+    ...validateImageUploadStep(formData)
+  };
+};
+
+export const validateReviewStep = (formData: NewItemFormData): Record<string, string> => {
+  return {
+    ...validateRestaurantNameStep(formData),
+    ...validateCombinedUploadStep(formData)
+  };
 };

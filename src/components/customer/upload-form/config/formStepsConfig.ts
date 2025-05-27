@@ -12,16 +12,13 @@ export interface FormStep {
   validate?: (formData: NewItemFormData) => Record<string, string>;
 }
 
+// Export FormStepConfig as an alias for FormStep to maintain compatibility
+export type FormStepConfig = FormStep;
+
 const validateRestaurantDetails = (formData: NewItemFormData): Record<string, string> => {
   const errors: Record<string, string> = {};
   if (!formData.restaurantName?.trim()) {
     errors.restaurantName = 'שם המסעדה הוא שדה חובה';
-  }
-  if (!formData.contactEmail?.trim()) {
-    errors.contactEmail = 'אימייל הוא שדה חובה';
-  }
-  if (!formData.contactPhone?.trim()) {
-    errors.contactPhone = 'טלפון הוא שדה חובה';
   }
   return errors;
 };
