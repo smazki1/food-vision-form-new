@@ -1,13 +1,9 @@
+
 import React from 'react';
-import FoodVisionUploadForm from '@/components/customer/upload-form/FoodVisionUploadForm';
-import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
+import UnifiedUploadForm from '@/components/unified-upload/UnifiedUploadForm';
 
 const FoodVisionUploadFormPage: React.FC = () => {
-  return (
-    <NewItemFormProvider>
-      <FoodVisionUploadForm />
-    </NewItemFormProvider>
-  );
+  return <UnifiedUploadForm />;
 };
 
-export default FoodVisionUploadFormPage; 
+export default FoodVisionUploadFormPage;
