@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Package, Image, User } from 'lucide-react';
@@ -30,6 +29,10 @@ export function BottomNavigation() {
   const location = useLocation();
 
   const isActive = (path: string) => {
+    // Ensure /customer/home is considered active when on dashboard
+    if (path === '/customer/dashboard' && location.pathname === '/customer/home') {
+      return true;
+    }
     return location.pathname === path || 
            (path !== '/customer/new-submission' && location.pathname.startsWith(path));
   };

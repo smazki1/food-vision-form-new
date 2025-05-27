@@ -90,7 +90,8 @@ function App() {
                   >
                     <Route index element={<Navigate to="/customer/dashboard" replace />} />
                     <Route path="dashboard" element={<CustomerDashboardPage />} />
-                    <Route path="home" element={<CustomerHomePage />} />
+                    {/* Redirect home to dashboard for backward compatibility */}
+                    <Route path="home" element={<Navigate to="/customer/dashboard" replace />} />
                     <Route path="upload" element={<FoodVisionUploadFormPage />} />
                     <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
                     <Route path="submissions" element={<CustomerSubmissionsPage />} />

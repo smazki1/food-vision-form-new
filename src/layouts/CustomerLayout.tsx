@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -89,17 +88,6 @@ export function CustomerLayout() {
             asChild
           >
             <Link to="/customer/dashboard">
-              <Home className="ml-2 h-4 w-4" />
-              לוח בקרה
-            </Link>
-          </Button>
-
-          <Button
-            variant={isActive("/customer/home") ? "default" : "ghost"}
-            className="justify-start"
-            asChild
-          >
-            <Link to="/customer/home">
               <Home className="ml-2 h-4 w-4" />
               דף הבית
             </Link>
