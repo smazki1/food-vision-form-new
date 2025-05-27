@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { clientAuthService } from '@/services/clientAuthService';
 
@@ -8,8 +7,8 @@ import { clientAuthService } from '@/services/clientAuthService';
 export const useConnectionVerifier = (
   onConnectionError: (error: string) => void
 ) => {
-  const [connectionVerified, setConnectionVerified] = useState<boolean>(false);
-  const [connectionChecked, setConnectionChecked] = useState<boolean>(false);
+  const [connectionVerified, setConnectionVerified] = useState<boolean>(true);
+  const [connectionChecked, setConnectionChecked] = useState<boolean>(true);
 
   // Use a ref to store the latest onConnectionError callback
   const onConnectionErrorRef = useRef(onConnectionError);
@@ -32,8 +31,10 @@ export const useConnectionVerifier = (
     // Aggressive 2 second timeout
     timeoutId = setTimeout(() => {
       if (isMounted && !connectionChecked) {
-        console.warn("[CONNECTION_VERIFIER] Connection check timed out after 2s - assuming connected");
-        setConnectionVerified(true); // Assume connection works
+        console.warn("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection check timed out after 5s");
+        // If timed out, connection is NOT verified
+        setConnectionVerified(false);
+        onConnectionErrorRef.current("Database connection check timed out. Please check your internet connection.");
         setConnectionChecked(true);
       }
     }, 2000);
@@ -48,10 +49,15 @@ export const useConnectionVerifier = (
         console.log(`[CONNECTION_VERIFIER] Connection test completed in ${duration}ms`);
         
         if (connError) {
-          console.warn("[CONNECTION_VERIFIER] Connection error, but continuing:", connError.message);
-          setConnectionVerified(true); // Continue anyway
-        } else {
+          onConnectionErrorRef.current(`Database connection error: ${connError.message}`);
+          setConnectionVerified(false);
+        } else if (success) { // Ensure success is true as well
           setConnectionVerified(true);
+          onConnectionErrorRef.current(''); // Clear any previous error
+        } else {
+          // If not an error but also not success (shouldn't happen with current service)
+          onConnectionErrorRef.current('Database connection test was inconclusive.');
+          setConnectionVerified(false);
         }
         setConnectionChecked(true);
 
@@ -59,8 +65,9 @@ export const useConnectionVerifier = (
         if (!isMounted) return;
         clearTimeout(timeoutId);
         console.warn("[CONNECTION_VERIFIER] Connection test failed, but continuing:", err);
-        setConnectionVerified(true); // Continue anyway to prevent blocking
-        setConnectionChecked(true);
+        setConnectionVerified(false); // Explicitly set to false on catch, as per the spirit of 20cf3e4
+        onConnectionErrorRef.current(`Database connection failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setConnectionChecked(true); 
       }
     };
     

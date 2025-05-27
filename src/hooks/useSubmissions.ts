@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
@@ -111,20 +110,24 @@ export function useSubmissions() {
         packageIdToQuery = processedItems[0].assigned_package_id_at_submission;
         console.log("[useSubmissions] Using package ID from most recent submission:", packageIdToQuery);
       } else {
+        // Fallback: Try to get active_package_id from the clients table
         console.log("[useSubmissions] No package ID on submission, trying to fetch current_package_id from clients table for client:", effectiveClientId);
-        const { data: clientData, error: clientError } = await supabase
-          .from('clients')
-          .select('current_package_id')
-          .eq('client_id', effectiveClientId)
-          .single();
+        try {
+          const { data: clientPackageData, error: clientPackageError } = await supabase
+            .from('clients')
+            .select('current_package_id')
+            .eq('client_id', effectiveClientId)
+            .single();
 
-        if (clientError) {
-          console.error('[useSubmissions] Error fetching current_package_id from client:', clientError);
-        } else if (clientData && clientData.current_package_id) {
-          packageIdToQuery = clientData.current_package_id;
-          console.log("[useSubmissions] Using current_package_id from client record:", packageIdToQuery);
-        } else {
-          console.log("[useSubmissions] No current_package_id found for client:", effectiveClientId);
+          if (clientPackageError) {
+            console.error("[useSubmissions] Error fetching current_package_id from client:", clientPackageError);
+            // Do not throw, let it proceed to fetch package details with null if needed
+          } else if (clientPackageData?.current_package_id) {
+            packageIdToQuery = clientPackageData.current_package_id;
+            console.log("[useSubmissions] Found current_package_id from client:", packageIdToQuery);
+          }
+        } catch (e) {
+          console.error("[useSubmissions] Exception fetching current_package_id:", e);
         }
       }
 
@@ -139,44 +142,73 @@ export function useSubmissions() {
         };
       }
 
-      console.log("[useSubmissions] Querying service_packages with package_id:", packageIdToQuery);
-      const { data: generalPackageData, error: generalPackageError } = await supabase
-          .from('service_packages')
-          .select('package_name, total_servings')
-          .eq('package_id', packageIdToQuery)
-          .single();
-      
-      if (generalPackageError) {
-          console.error('[useSubmissions] Error fetching general package details:', generalPackageError);
-          return {
-              packageName: 'שגיאה בטעינת חבילה',
-              totalSubmissions: null,
-              startDate: null,
-              endDate: null,
-              isActive: false,
-          };
+      console.log("[useSubmissions] Querying client_packages with package_id:", packageIdToQuery, "for client:", effectiveClientId);
+      const { data: clientPackageData, error: clientPackageError } = await supabase
+        .from('client_packages')
+        .select(`
+          package_id,
+          start_date,
+          end_date,
+          is_active,
+          total_dishes,
+          service_packages (package_name)
+        `)
+        .eq('client_id', effectiveClientId)
+        .eq('package_id', packageIdToQuery) // Ensure we match the client and the specific package instance
+        .order('start_date', { ascending: false })
+        .limit(1)
+        .maybeSingle(); // A client might have multiple instances of the same package_id, take the latest active or most recent.
+
+      if (clientPackageError) {
+        console.error('[useSubmissions] Error fetching client package details:', clientPackageError);
+        return {
+          packageName: 'שגיאה בטעינת חבילה',
+          totalSubmissions: null,
+          startDate: null,
+          endDate: null,
+          isActive: false,
+        };
       }
-      if (generalPackageData) {
-          console.log("[useSubmissions] Fetched general package details:", generalPackageData);
-          return {
-              packageName: generalPackageData.package_name,
-              totalSubmissions: generalPackageData.total_servings,
-              startDate: null,
-              endDate: null,
-              isActive: true,
-          };
+
+      if (clientPackageData && clientPackageData.service_packages) {
+        console.log("[useSubmissions] Fetched client package details:", clientPackageData);
+        return {
+          packageName: (clientPackageData.service_packages as any).package_name,
+          totalSubmissions: clientPackageData.total_dishes,
+          startDate: clientPackageData.start_date,
+          endDate: clientPackageData.end_date,
+          isActive: clientPackageData.is_active ?? false,
+        };
       }
       return null;
     },
     enabled: queryEnabled && !!effectiveClientId,
   });
   
-  // Calculate remaining servings safely
+  const submissionsCount = processedItems?.length || 0;
   const totalAllowedSubmissions = packageDetails?.totalSubmissions;
-  const submissionsLength = processedItems?.length || 0;
-  const remainingServings = (totalAllowedSubmissions !== null && totalAllowedSubmissions !== undefined) 
-    ? Math.max(0, totalAllowedSubmissions - submissionsLength)
-    : undefined;
+
+  let remainingServings: number | undefined = undefined;
+  if (packageDetails) { // Check if packageDetails object exists
+    const totalAllowed = packageDetails.totalSubmissions; // Use a local const for clarity
+    if (typeof totalAllowed === 'number') {
+      remainingServings = totalAllowed - submissionsCount;
+    } else if (totalAllowed === null) { 
+      // If totalAllowed is explicitly null (e.g. package not assigned, or error loading package)
+      if (packageDetails.packageName === 'לא משויך לחבילה') {
+        // This case implies the client isn't linked to a specific billable package,
+        // potentially a free tier or special status.
+        remainingServings = Infinity; 
+      } else {
+        // For other cases where totalSubmissions is null (e.g., 'שגיאה בטעינת חבילה', or unexpected null)
+        // It's safer to assume 0 servings as the package state is uncertain or erroneous.
+        remainingServings = 0;
+      }
+    }
+    // If totalAllowed is undefined (i.e., the property doesn't exist on packageDetails),
+    // remainingServings will remain undefined, signaling data fetch incompleteness.
+  } 
+  // If packageDetails itself is null or undefined, remainingServings remains undefined.
 
   const refreshSubmissions = () => {
     console.log("[useSubmissions] Refreshing submissions for clientId:", effectiveClientId);
@@ -186,7 +218,7 @@ export function useSubmissions() {
 
   console.log("[useSubmissions] Hook returning:", {
     submissions: processedItems,
-    submissionsLength,
+    submissionsLength: submissionsCount,
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
@@ -200,8 +232,8 @@ export function useSubmissions() {
   });
 
   return {
-    submissions: processedItems || [],
-    submissionsLength,
+    submissions: processedItems,
+    submissionsLength: submissionsCount,
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
