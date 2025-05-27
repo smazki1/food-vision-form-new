@@ -12,6 +12,9 @@ const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 const PublicOnlyRoute = lazy(() => import("./components/PublicOnlyRoute"));
 const AdminRoute = lazy(() => import("./components/AdminRoute"));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
+const CustomerLayout = lazy(() => 
+  import("./layouts/CustomerLayout").then(module => ({ default: module.CustomerLayout }))
+);
 
 // Lazy load pages
 const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
@@ -23,6 +26,9 @@ const PublicUploadPage = lazy(() => import("./pages/PublicUploadPage"));
 const CustomerHomePage = lazy(() => import("./pages/customer/CustomerHomePage"));
 const CustomerDashboardPage = lazy(() => import("./pages/customer/CustomerDashboardPage"));
 const FoodVisionUploadFormPage = lazy(() => import("./pages/customer/FoodVisionUploadFormPage"));
+const CustomerSubmissionsStatusPage = lazy(() => import("./pages/customer/CustomerSubmissionsStatusPage"));
+const CustomerProfilePage = lazy(() => import("./pages/customer/CustomerProfilePage"));
+const CustomerGalleryPage = lazy(() => import("./pages/customer/CustomerGalleryPage"));
 
 // Admin pages
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -71,29 +77,26 @@ function App() {
 
                   {/* Customer Protected Routes */}
                   <Route
-                    path="/"
+                    path="/customer"
                     element={
                       <ProtectedRoute allowedRoles={['customer']}>
-                        <CustomerHomePage />
+                        <CustomerLayout />
                       </ProtectedRoute>
                     }
-                  />
-                  <Route
-                    path="/customer-dashboard"
-                    element={
-                      <ProtectedRoute allowedRoles={['customer']}>
-                        <CustomerDashboardPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/upload"
-                    element={
-                      <ProtectedRoute allowedRoles={['customer']}>
-                        <FoodVisionUploadFormPage />
-                      </ProtectedRoute>
-                    }
-                  />
+                  >
+                    <Route index element={<Navigate to="/customer/dashboard" replace />} />
+                    <Route path="dashboard" element={<CustomerDashboardPage />} />
+                    <Route path="home" element={<CustomerHomePage />} />
+                    <Route path="upload" element={<FoodVisionUploadFormPage />} />
+                    <Route path="submissions-status" element={<CustomerSubmissionsStatusPage />} />
+                    <Route path="profile" element={<CustomerProfilePage />} />
+                    <Route path="gallery" element={<CustomerGalleryPage />} />
+                  </Route>
+                  
+                  {/* Redirect legacy customer paths */}
+                  <Route path="/" element={<Navigate to="/customer/dashboard" replace />} />
+                  <Route path="/customer-dashboard" element={<Navigate to="/customer/dashboard" replace />} />
+                  <Route path="/upload" element={<Navigate to="/customer/upload" replace />} />
 
                   {/* Admin Protected Routes */}
                   <Route

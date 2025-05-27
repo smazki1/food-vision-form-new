@@ -14,21 +14,20 @@ export function CustomerLayout() {
   const location = useLocation();
   const { 
     clientId, 
-    authenticating, 
-    isAuthenticated, 
     clientRecordStatus,
     errorState
   } = useClientAuth();
-  const { isAuthenticated: unifiedIsAuthenticated, user: unifiedUser } = useUnifiedAuth();
+  const { isAuthenticated: unifiedIsAuthenticated, user: unifiedUser, role: unifiedRole, clientId: unifiedAuthClientId } = useUnifiedAuth();
   const { toast } = useToast();
 
   console.log("[AUTH_DEBUG] CustomerLayout - State received:", {
     clientId,
-    authenticating,
     clientRecordStatus,
     errorState,
-    mainAuthIsAuthenticated: unifiedIsAuthenticated,
-    mainAuthUser: unifiedUser?.id,
+    unifiedIsAuthenticated,
+    unifiedUser: unifiedUser?.id,
+    unifiedRole,
+    unifiedAuthClientId,
     pathname: location.pathname,
     timestamp: Date.now()
   });
@@ -55,21 +54,8 @@ export function CustomerLayout() {
     }
   };
 
-  // If still authenticating, show a loading indicator
-  if (authenticating) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        <div className="mt-4 text-sm text-muted-foreground text-center">
-          המערכת בגרסת בטא - הטעינה עשויה לקחת מספר שניות. <br />
-          במקרה של המתנה ממושכת, אנא רעננו את הדף
-        </div>
-      </div>
-    );
-  }
-
   // Handle the case where user is authenticated but doesn't have a client profile
-  const noClientProfileBanner = isAuthenticated && clientRecordStatus === 'not-found' && (
+  const noClientProfileBanner = unifiedIsAuthenticated && clientRecordStatus === 'not-found' && (
     <Alert className="bg-amber-50 border-amber-200 mb-4">
       <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
@@ -80,7 +66,7 @@ export function CustomerLayout() {
     </Alert>
   );
 
-  // Handle error state with specific message
+  // Handle error state with specific message from useClientAuth
   const errorBanner = errorState && (
     <Alert className="bg-red-50 border-red-200 mb-4">
       <AlertTriangle className="h-4 w-4 text-red-500" />
@@ -91,20 +77,8 @@ export function CustomerLayout() {
     </Alert>
   );
 
-  // If not authenticated, redirect to login
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
-        <h1 className="text-2xl font-bold">יש להתחבר למערכת</h1>
-        <Button asChild>
-          <Link to="/login">התחברות</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background">
       {/* Mobile Header - REMOVED as per request */}
       {/*
       <header className="sticky top-0 z-50 bg-white border-b md:hidden">
@@ -163,11 +137,11 @@ export function CustomerLayout() {
           </Button>
           
           <Button
-            variant={isActive("/customer/home") ? "default" : "ghost"}
+            variant={isActive("/customer/gallery") ? "default" : "ghost"}
             className="justify-start"
             asChild
           >
-            <Link to="/customer/home">
+            <Link to="/customer/gallery">
               <Image className="ml-2 h-4 w-4" />
               הגלריה שלי
             </Link>
