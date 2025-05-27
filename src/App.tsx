@@ -10,6 +10,7 @@ import { Suspense, lazy } from "react";
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 const PublicOnlyRoute = lazy(() => import("./components/PublicOnlyRoute"));
 const AdminRoute = lazy(() => import("./components/AdminRoute"));
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 
 // Lazy load pages
 const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
@@ -88,36 +89,17 @@ function App() {
                 {/* Admin Protected Routes */}
                 <Route
                   path="/admin"
-                  element={ 
-                    <AdminRoute>
-                      <Navigate to="/admin/dashboard" replace />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/dashboard"
                   element={
                     <AdminRoute>
-                      <Dashboard />
+                      <AdminLayout />
                     </AdminRoute>
                   }
-                />
-                <Route
-                  path="/admin/clients"
-                  element={
-                    <AdminRoute>
-                      <ClientsList />
-                    </AdminRoute>
-                  }
-                />
-                <Route
-                  path="/admin/clients/:clientId"
-                  element={
-                    <AdminRoute>
-                      <ClientDetails />
-                    </AdminRoute>
-                  }
-                />
+                >
+                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="clients" element={<ClientsList />} />
+                  <Route path="clients/:clientId" element={<ClientDetails />} />
+                </Route>
 
                 {/* 404 Route */}
                 <Route path="*" element={<NotFound />} />
