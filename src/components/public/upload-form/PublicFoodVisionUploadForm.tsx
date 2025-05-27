@@ -1,10 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import FormProgress from '@/components/customer/upload-form/FormProgress';
-import { cn } from '@/lib/utils';
 import { useUnifiedFormNavigation } from '@/hooks/useUnifiedFormNavigation';
 import { useUnifiedFormValidation } from '@/hooks/useUnifiedFormValidation';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
@@ -12,6 +8,10 @@ import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
 import ItemDetailsStep from './steps/ItemDetailsStep';
 import ImageUploadStep from './steps/ImageUploadStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
+import PublicFormHeader from './components/PublicFormHeader';
+import PublicFormContent from './components/PublicFormContent';
+import PublicFormErrorDisplay from './components/PublicFormErrorDisplay';
+import PublicFormNavigation from './components/PublicFormNavigation';
 
 export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -50,7 +50,6 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   const {
     currentStepId,
     currentStepConfig,
-    currentStepIndex,
     formSteps,
     moveToNextStep,
     moveToPreviousStep,
@@ -97,68 +96,37 @@ const PublicFoodVisionUploadForm: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Header with Progress */}
-      <div className="relative p-4 bg-white shadow-md sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800">
-            העלאת פריט חדש
-          </h1>
-          <FormProgress formSteps={typedFormSteps} currentStepId={currentStepId} />
+      <PublicFormHeader 
+        formSteps={typedFormSteps} 
+        currentStepId={currentStepId} 
+      />
+
+      <PublicFormContent
+        CurrentStepComponent={CurrentStepComponent}
+        currentStepId={currentStepId}
+        setErrors={setErrors}
+        clearErrors={clearErrors}
+        errors={errors}
+        isReviewStep={isReviewStep}
+        onFinalSubmit={handleSubmit}
+      />
+
+      <div className="max-w-2xl mx-auto w-full px-4 md:px-6">
+        <div className="bg-white px-6 md:px-8 pb-6 md:pb-8 rounded-b-lg shadow-lg">
+          <PublicFormErrorDisplay errors={errors} />
+          
+          {showNavigationButtons && (
+            <PublicFormNavigation
+              isFirstStep={isFirstStep}
+              isLastStep={isLastStep}
+              isSubmitting={isSubmitting}
+              currentStepId={currentStepId}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            />
+          )}
         </div>
       </div>
-
-      {/* Main Content */}
-      <main className="flex-grow overflow-y-auto p-4 md:p-6">
-        <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          <CurrentStepComponent 
-            key={currentStepId}
-            setExternalErrors={setErrors} 
-            clearExternalErrors={clearErrors}
-            errors={errors}
-            onFinalSubmit={isReviewStep ? handleSubmit : undefined} 
-          />
-
-          {/* Error Display */}
-          {Object.keys(errors).length > 0 && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <h3 className="text-sm font-semibold text-red-700">אנא תקנו את השגיאות הבאות:</h3>
-              <ul className="list-disc list-inside text-sm text-red-600 mt-1">
-                {Object.entries(errors).map(([key, value]) => (
-                  <li key={key}>{value}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {/* Navigation Buttons */}
-          {showNavigationButtons && (
-            <div className={cn(
-              "flex mt-8 pt-6 border-t",
-              isFirstStep ? "justify-end" : "justify-between"
-            )}>
-              {!isFirstStep && (
-                <Button 
-                  variant="outline" 
-                  onClick={handlePrevious} 
-                  disabled={isSubmitting}
-                  className="flex items-center bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900"
-                >
-                  <ChevronRight className="ml-2 h-4 w-4" /> 
-                  הקודם
-                </Button>
-              )}
-              <Button 
-                onClick={handleNext} 
-                disabled={isSubmitting}
-                className="flex items-center bg-orange-500 hover:bg-orange-600 text-white border-orange-500 hover:border-orange-600"
-              >
-                {isSubmitting ? 'מעבד...' : (currentStepId === 3 ? 'לסקירה ואישור' : 'הבא')}
-                <ChevronLeft className="mr-2 h-4 w-4" /> 
-              </Button>
-            </div>
-          )}
-        </div>
-      </main>
     </div>
   );
 };
