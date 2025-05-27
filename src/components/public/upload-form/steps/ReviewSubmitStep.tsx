@@ -52,7 +52,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       {/* Restaurant Details Section */}
       <section className="space-y-4">
         <div className="flex items-center mb-3">
-          <Building2 className="h-6 w-6 text-primary ml-3" /> 
+          <Building2 className="h-6 w-6 text-orange-500 ml-3" /> 
           <h3 className="text-lg font-semibold text-gray-700">פרטי המסעדה</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
@@ -64,7 +64,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       {/* Item Details Section */}
       <section className="space-y-4">
         <div className="flex items-center mb-3">
-          <ItemIcon className="h-6 w-6 text-primary ml-3" /> 
+          <ItemIcon className="h-6 w-6 text-orange-500 ml-3" /> 
           <h3 className="text-lg font-semibold text-gray-700">פרטי הפריט</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
@@ -79,7 +79,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       {/* Uploaded Images Section */}
       <section className="space-y-4">
         <div className="flex items-center mb-3">
-          <ImageIcon className="h-6 w-6 text-primary ml-3" /> 
+          <ImageIcon className="h-6 w-6 text-orange-500 ml-3" /> 
           <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
         </div>
         {referenceImages.length > 0 ? (

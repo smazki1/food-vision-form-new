@@ -73,7 +73,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
             <SelectTrigger 
               id="itemType" 
               className={cn(
-                "w-full h-12 px-4 py-3 rounded-md border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/50 transition-colors duration-150 ease-in-out bg-background",
+                "w-full h-12 px-4 py-3 rounded-md border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/50 transition-colors duration-150 ease-in-out bg-background",
                 errors?.itemType ? "border-red-500 focus:border-red-500 focus:ring-red-500/50 text-red-700 placeholder-red-400" : "border-gray-300"
               )}
               aria-invalid={!!errors?.itemType}

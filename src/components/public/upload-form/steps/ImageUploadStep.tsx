@@ -64,11 +64,11 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors }) 
           className={cn(
             "border-2 border-dashed rounded-xl p-8 md:p-12 text-center cursor-pointer transition-all duration-200 ease-in-out",
             "flex flex-col items-center justify-center min-h-[200px] md:min-h-[250px]",
-            isDragActive ? 'border-primary bg-primary/10 ring-2 ring-primary/50' : 'border-gray-300 hover:border-primary/70 hover:bg-gray-50/50'
+            isDragActive ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500/50' : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
           )}
         >
           <input {...getInputProps()} />
-          <UploadCloud className={cn("h-12 w-12 md:h-16 md:w-16 mb-4", isDragActive ? "text-primary" : "text-gray-400")} />
+          <UploadCloud className={cn("h-12 w-12 md:h-16 md:w-16 mb-4", isDragActive ? "text-orange-500" : "text-gray-400")} />
           <p className="text-base md:text-lg font-medium text-gray-700 mb-1">
             {isDragActive ? 'שחררו כאן את הקבצים' : 'גררו לכאן תמונות או לחצו לבחירה'}
           </p>
@@ -131,7 +131,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors }) 
                   onCheckedChange={(checked) => 
                     setChecklist(prev => ({ ...prev, [item.id]: checked as boolean }))
                   }
-                  className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
                 />
                 <label
                   htmlFor={item.id}

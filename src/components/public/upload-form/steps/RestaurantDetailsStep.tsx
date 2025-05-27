@@ -33,6 +33,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors, clearExterna
           error={errors?.restaurantName}
           icon={<Store />}
           iconPosition="right"
+          required
         />
       </div>
     </div>
