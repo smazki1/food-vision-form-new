@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { Upload, X, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FormData {
   restaurantName: string;
@@ -28,6 +30,7 @@ const STEPS = [
 
 const UnifiedUploadForm: React.FC = () => {
   const { isAuthenticated, user, clientId, role } = useUnifiedAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
@@ -163,12 +166,14 @@ const UnifiedUploadForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('[UnifiedUploadForm] Starting submission process...');
+    
     if (!validateStep(4)) return;
 
     setIsSubmitting(true);
+    toast.info("מעלה תמונות ושומר הגשה...");
+
     try {
-      console.log('[UnifiedUploadForm] Starting submission process...');
-      
       // Upload images first
       const uploadedImageUrls: string[] = [];
       
@@ -176,7 +181,15 @@ const UnifiedUploadForm: React.FC = () => {
         console.log('[UnifiedUploadForm] Uploading file:', file.name);
         const fileExt = file.name.split('.').pop() || 'jpg';
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `${isAuthenticated ? 'authenticated' : 'public'}/uploads/${fileName}`;
+        
+        let filePath: string;
+        if (isAuthenticated && clientId) {
+          // For authenticated users, organize by client
+          filePath = `${clientId}/${formData.itemType}/${fileName}`;
+        } else {
+          // For public submissions
+          filePath = `public-submissions/${fileName}`;
+        }
 
         const { error: uploadError } = await supabase.storage
           .from('food-vision-images')
@@ -198,12 +211,41 @@ const UnifiedUploadForm: React.FC = () => {
       console.log('[UnifiedUploadForm] All images uploaded successfully');
 
       if (isAuthenticated && clientId) {
-        // Authenticated user submission
+        // Authenticated user submission - create item in specific table and submission record
         console.log('[UnifiedUploadForm] Submitting for authenticated user with clientId:', clientId);
         
+        const newItemId = uuidv4();
+        
+        // Insert into specific table
+        const tableNameMap: Record<string, string> = {
+          dish: 'dishes',
+          cocktail: 'cocktails',
+          drink: 'drinks',
+        };
+        
+        const itemTable = tableNameMap[formData.itemType];
+        const itemIdColumn = `${formData.itemType}_id`;
+
+        const itemData = {
+          client_id: clientId,
+          name: formData.itemName,
+          description: formData.description,
+          notes: formData.specialNotes,
+          reference_image_urls: uploadedImageUrls,
+          [itemIdColumn]: newItemId,
+        };
+
+        const { error: itemInsertError } = await supabase.from(itemTable as any).insert(itemData);
+
+        if (itemInsertError) {
+          console.error('[UnifiedUploadForm] Item insert error:', itemInsertError);
+          throw new Error(`שגיאה ביצירת הפריט: ${itemInsertError.message}`);
+        }
+
+        // Create submission record
         const submissionData = {
           client_id: clientId,
-          original_item_id: crypto.randomUUID(),
+          original_item_id: newItemId,
           item_type: formData.itemType,
           item_name_at_submission: formData.itemName,
           submission_status: 'ממתינה לעיבוד' as const,
@@ -216,11 +258,17 @@ const UnifiedUploadForm: React.FC = () => {
 
         if (submitError) {
           console.error('[UnifiedUploadForm] Submission error:', submitError);
+          // Cleanup the item if submission failed
+          await supabase.from(itemTable as any).delete().eq(itemIdColumn, newItemId);
           throw new Error(`שגיאה בשמירת ההגשה: ${submitError.message}`);
         }
 
         console.log('[UnifiedUploadForm] Submission successful for authenticated user');
-        toast.success('הטופס נשלח בהצלחה!');
+        toast.success('הפריט הוגש בהצלחה!');
+        
+        // Navigate to customer home
+        navigate('/customer/home');
+        
       } else {
         // Public/anonymous submission using RPC function
         console.log('[UnifiedUploadForm] Submitting for public user');
@@ -268,6 +316,9 @@ const UnifiedUploadForm: React.FC = () => {
         } else {
           throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
         }
+        
+        // Navigate to public home or show success message
+        navigate('/');
       }
       
       // Reset form
