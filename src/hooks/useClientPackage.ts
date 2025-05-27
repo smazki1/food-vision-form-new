@@ -1,5 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { useClientAuth } from './useClientAuth';
+import { useUnifiedAuth } from './useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface PackageDetails {
@@ -8,10 +10,12 @@ export interface PackageDetails {
   packageName: string;
 }
 
-interface ClientPackageData {
-  remaining_dishes: number;
-  total_dishes: number;
-  package_name: string;
+interface ClientData {
+  remaining_servings: number;
+  service_packages?: {
+    package_name: string;
+    total_servings: number;
+  } | null;
 }
 
 export function useClientPackage(): PackageDetails {
@@ -20,30 +24,71 @@ export function useClientPackage(): PackageDetails {
     totalDishes: 0,
     packageName: ''
   });
-  const { clientId } = useClientAuth();
+  
+  const { clientId: clientAuthId } = useClientAuth();
+  const { clientId: unifiedClientId } = useUnifiedAuth();
+  
+  // Use clientId from either source
+  const clientId = clientAuthId || unifiedClientId;
 
   useEffect(() => {
     async function fetchPackageDetails() {
-      if (!clientId) return;
-
-      const { data, error } = await supabase
-        .from('client_packages')
-        .select('remaining_dishes, total_dishes, package_name')
-        .eq('client_id', clientId)
-        .single();
-
-      if (error) {
-        console.error("[useClientPackage] Error fetching package details for clientId " + clientId + ":", error);
+      if (!clientId) {
+        console.log("[useClientPackage] No clientId available");
         return;
       }
 
-      if (data) {
-        const packageData = data as ClientPackageData;
-        setPackageDetails({
-          remainingDishes: packageData.remaining_dishes,
-          totalDishes: packageData.total_dishes,
-          packageName: packageData.package_name
-        });
+      console.log("[useClientPackage] Fetching package details for clientId:", clientId);
+
+      try {
+        // First try to get client data with package info
+        const { data: clientWithPackage, error: clientError } = await supabase
+          .from('clients')
+          .select(`
+            remaining_servings,
+            current_package_id,
+            service_packages!inner (
+              package_name,
+              total_servings
+            )
+          `)
+          .eq('client_id', clientId)
+          .single();
+
+        console.log("[useClientPackage] Client with package query result:", { clientWithPackage, clientError });
+
+        if (clientError) {
+          console.error("[useClientPackage] Error fetching client with package:", clientError);
+          
+          // Fallback: try to get basic client data
+          const { data: basicClient, error: basicError } = await supabase
+            .from('clients')
+            .select('remaining_servings')
+            .eq('client_id', clientId)
+            .single();
+            
+          console.log("[useClientPackage] Basic client fallback:", { basicClient, basicError });
+          
+          if (basicClient) {
+            setPackageDetails({
+              remainingDishes: basicClient.remaining_servings,
+              totalDishes: 0,
+              packageName: 'חבילה לא זמינה'
+            });
+          }
+          return;
+        }
+
+        if (clientWithPackage) {
+          const data = clientWithPackage as ClientData;
+          setPackageDetails({
+            remainingDishes: data.remaining_servings,
+            totalDishes: data.service_packages?.total_servings || 0,
+            packageName: data.service_packages?.package_name || 'חבילה לא זמינה'
+          });
+        }
+      } catch (err) {
+        console.error("[useClientPackage] Exception fetching package details:", err);
       }
     }
 
@@ -51,4 +96,4 @@ export function useClientPackage(): PackageDetails {
   }, [clientId]);
 
   return packageDetails;
-} 
+}

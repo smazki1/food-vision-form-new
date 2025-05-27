@@ -2,15 +2,25 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
+import { useUnifiedAuth } from "./useUnifiedAuth";
 import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi";
 
 export function useSubmissions() {
-  const { clientId, isAuthenticated } = useClientAuth();
+  const { clientId: clientAuthId, isAuthenticated: clientAuthAuthenticated } = useClientAuth();
+  const { clientId: unifiedClientId, isAuthenticated: unifiedAuthenticated } = useUnifiedAuth();
   const queryClient = useQueryClient();
   
+  // Use clientId from either source - prefer clientAuth but fallback to unified
+  const clientId = clientAuthId || unifiedClientId;
+  const isAuthenticated = clientAuthAuthenticated || unifiedAuthenticated;
+  
   console.log("[useSubmissions] Hook called with:", {
-    clientId,
-    isAuthenticated,
+    clientAuthId,
+    unifiedClientId,
+    finalClientId: clientId,
+    clientAuthAuthenticated,
+    unifiedAuthenticated,
+    finalAuthenticated: isAuthenticated,
     timestamp: Date.now()
   });
   

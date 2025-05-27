@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
@@ -49,16 +48,23 @@ export const getItemTypeName = (type: string | undefined) => {
 };
 
 const CustomerSubmissionsStatusPage: React.FC = () => {
-  const { clientId, isAuthenticated, authenticating } = useClientAuth();
-  const { user: unifiedUser, clientId: unifiedClientId } = useUnifiedAuth();
+  const { clientId: clientAuthId, isAuthenticated: clientAuthAuthenticated, authenticating } = useClientAuth();
+  const { user: unifiedUser, clientId: unifiedClientId, isAuthenticated: unifiedAuthenticated } = useUnifiedAuth();
   const { submissions, loading, error, refreshSubmissions } = useSubmissions();
 
+  // Use the better clientId and auth status
+  const effectiveClientId = clientAuthId || unifiedClientId;
+  const effectiveAuthenticated = clientAuthAuthenticated || unifiedAuthenticated;
+
   console.log("[CustomerSubmissionsStatusPage] Component state:", {
-    clientId,
-    isAuthenticated,
+    clientAuthId,
+    unifiedClientId,
+    effectiveClientId,
+    clientAuthAuthenticated,
+    unifiedAuthenticated,
+    effectiveAuthenticated,
     authenticating,
     unifiedUser: unifiedUser?.id,
-    unifiedClientId,
     submissionsCount: submissions?.length,
     loading,
     error: error?.message,
@@ -76,7 +82,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!effectiveAuthenticated) {
     return (
       <div dir="rtl" className="text-center p-10">
         <Alert>
@@ -89,7 +95,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     );
   }
 
-  if (!clientId) {
+  if (!effectiveClientId) {
     return (
       <div dir="rtl" className="text-center p-10">
         <Alert>
@@ -102,7 +108,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
           <p>פרטי דיבוג:</p>
           <p>משתמש: {unifiedUser?.id}</p>
           <p>לקוח מאוחד: {unifiedClientId || 'לא נמצא'}</p>
-          <p>לקוח מקומי: {clientId || 'לא נמצא'}</p>
+          <p>לקוח מקומי: {clientAuthId || 'לא נמצא'}</p>
         </div>
       </div>
     );
@@ -148,7 +154,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
       <div className="mb-4">
         <Alert>
           <AlertDescription>
-            מציג הגשות עבור לקוח ID: {clientId}
+            מציג הגשות עבור לקוח ID: {effectiveClientId}
             <br />
             משתמש: {unifiedUser?.email}
             <br />
@@ -163,9 +169,9 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
           <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
           <div className="mt-4 text-sm">
             <p>מידע דיבוג:</p>
-            <p>לקוח ID: {clientId}</p>
+            <p>לקוח ID: {effectiveClientId}</p>
             <p>משתמש ID: {unifiedUser?.id}</p>
-            <p>מאומת: {isAuthenticated ? 'כן' : 'לא'}</p>
+            <p>מאומת: {effectiveAuthenticated ? 'כן' : 'לא'}</p>
           </div>
         </div>
       ) : (
