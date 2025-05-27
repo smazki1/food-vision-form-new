@@ -1,57 +1,60 @@
 
 import { useState } from 'react';
-import { NewItemFormData } from '@/contexts/NewItemFormContext';
-import { publicFormSteps } from '@/components/public/upload-form/config/formStepsConfig';
 
-export const useFormNavigation = () => {
-  const [currentStepId, setCurrentStepId] = useState(publicFormSteps[0].id);
-  const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
+export interface FormStep {
+  id: number;
+  name: string;
+  component?: React.ComponentType<any>;
+  validate?: (formData: any) => Record<string, string>;
+}
 
-  const currentStepConfig = publicFormSteps.find(step => step.id === currentStepId);
-  const currentStepIndex = publicFormSteps.findIndex(step => step.id === currentStepId);
+export const useFormNavigation = (initialSteps: FormStep[], initialStepId: number = 1) => {
+  const [currentStepId, setCurrentStepId] = useState(initialStepId);
+  const [formSteps, setFormSteps] = useState<FormStep[]>(initialSteps);
 
-  const handleNext = async (formData: NewItemFormData, onSubmit?: () => Promise<void>) => {
-    if (currentStepConfig?.validate) {
-      const newErrors = currentStepConfig.validate(formData);
-      setStepErrors(newErrors);
-      
-      if (Object.keys(newErrors).length === 0) {
-        if (currentStepIndex < publicFormSteps.length - 1) {
-          setCurrentStepId(publicFormSteps[currentStepIndex + 1].id);
-          window.scrollTo(0, 0);
-        } else if (onSubmit) {
-          await onSubmit();
-        }
-      }
+  const currentStepIndex = formSteps.findIndex(step => step.id === currentStepId);
+  const currentStepConfig = formSteps.find(step => step.id === currentStepId);
+
+  const moveToNextStep = () => {
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < formSteps.length) {
+      setCurrentStepId(formSteps[nextIndex].id);
     }
   };
 
-  const handlePrevious = () => {
-    setStepErrors({});
-    if (currentStepIndex > 0) {
-      setCurrentStepId(publicFormSteps[currentStepIndex - 1].id);
-      window.scrollTo(0, 0);
+  const moveToPreviousStep = () => {
+    const prevIndex = currentStepIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentStepId(formSteps[prevIndex].id);
     }
   };
 
-  const clearStepErrors = () => {
-    setStepErrors({});
+  const moveToStep = (stepId: number) => {
+    const step = formSteps.find(s => s.id === stepId);
+    if (step) {
+      setCurrentStepId(stepId);
+    }
   };
 
-  const resetNavigation = () => {
-    setCurrentStepId(publicFormSteps[0].id);
-    setStepErrors({});
+  const updateSteps = (newSteps: FormStep[]) => {
+    setFormSteps(newSteps);
+  };
+
+  const resetToStep = (stepId: number) => {
+    moveToStep(stepId);
   };
 
   return {
     currentStepId,
-    currentStepConfig,
     currentStepIndex,
-    stepErrors,
-    setStepErrors,
-    handleNext,
-    handlePrevious,
-    clearStepErrors,
-    resetNavigation
+    currentStepConfig,
+    formSteps,
+    moveToNextStep,
+    moveToPreviousStep,
+    moveToStep,
+    updateSteps,
+    resetToStep,
+    isFirstStep: currentStepIndex === 0,
+    isLastStep: currentStepIndex === formSteps.length - 1
   };
 };

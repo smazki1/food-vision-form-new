@@ -1,75 +1,92 @@
 
-import React from 'react';
-import { useNewItemForm } from '@/contexts/NewItemFormContext';
+import React, { useEffect } from 'react';
+import { useNewItemForm, ItemType } from '@/contexts/NewItemFormContext';
 import { IconInput } from '@/components/ui/icon-input';
-import { IconTextarea } from '@/components/ui/icon-textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Sparkles, ChevronDown } from 'lucide-react';
+import { IconTextarea } from '@/components/ui/icon-textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PublicStepProps } from '../PublicFoodVisionUploadForm';
+import { cn } from '@/lib/utils';
 
-interface ItemDetailsStepProps {
-  errors: Record<string, string>;
-}
-
-const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({ errors }) => {
+const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
+  const errors = externalErrors || {};
 
-  const itemTypeOptions = [
-    { value: 'dish', label: 'מנה' },
-    { value: 'cocktail', label: 'קוקטייל' },
-    { value: 'drink', label: 'משקה' }
-  ];
+  useEffect(() => {
+    return () => {
+      if (clearExternalErrors) clearExternalErrors();
+    };
+  }, [clearExternalErrors]);
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    updateFormData({ [name]: value });
+    if (errors && errors[name] && clearExternalErrors) {
+      clearExternalErrors();
+    }
+  };
+
+  const handleSelectChange = (value: ItemType) => {
+    updateFormData({ itemType: value });
+    if (errors.itemType && clearExternalErrors) {
+      clearExternalErrors();
+    }
+  };
+  
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center mb-4">
-          <Sparkles className="w-8 h-8 text-orange-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          פרטי המנה / מוצר
-        </h2>
-        <p className="text-gray-600">
-          אנא ספרו לנו על הפריט שברצונכם להעלות
+    <div className="space-y-6" dir="rtl">
+      <div>
+        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800">פרטי הפריט</h2>
+        <p className="text-sm md:text-base text-muted-foreground mb-8">
+          אנא מלאו את פרטי הפריט שברצונכם להעלות למערכת.
         </p>
       </div>
-
+      
       <div className="space-y-6">
         <IconInput
           id="itemName"
           name="itemName"
           label="שם הפריט"
-          placeholder="לדוגמה: המבורגר בית, מוהיטו קלאסי"
-          value={formData.itemName || ''}
-          onChange={(e) => updateFormData({ itemName: e.target.value })}
-          error={errors.itemName}
+          value={formData.itemName}
+          onChange={handleChange}
+          placeholder="לדוגמה: פסטה קרבונרה, מוחיטו קלאסי"
+          error={errors?.itemName}
+          iconPosition="right"
           required
         />
 
         <div className="space-y-2">
           <Label htmlFor="itemType" className="font-medium text-gray-700">
-            סוג הפריט <span className="text-red-500">*</span>
+            סוג הפריט <span className="text-red-600 ml-1">*</span>
           </Label>
-          <Select
-            value={formData.itemType || ''}
-            onValueChange={(value) => updateFormData({ itemType: value as 'dish' | 'cocktail' | 'drink' })}
+          <Select 
+            name="itemType" 
+            value={formData.itemType}
+            onValueChange={handleSelectChange}
           >
             <SelectTrigger 
-              className={`w-full h-12 ${errors.itemType ? 'border-red-500 focus:border-red-500 focus:ring-red-500/50' : ''}`}
-              dir="rtl"
+              id="itemType" 
+              className={cn(
+                "w-full h-12 px-4 py-3 rounded-md border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/50 transition-colors duration-150 ease-in-out bg-background",
+                errors?.itemType ? "border-red-500 focus:border-red-500 focus:ring-red-500/50 text-red-700 placeholder-red-400" : "border-gray-300"
+              )}
+              aria-invalid={!!errors?.itemType}
             >
               <SelectValue placeholder="בחרו סוג פריט" />
-              <ChevronDown className="h-4 w-4 opacity-50 mr-2" />
             </SelectTrigger>
-            <SelectContent dir="rtl">
-              {itemTypeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+            <SelectContent>
+              <SelectItem value="dish">מנה</SelectItem>
+              <SelectItem value="cocktail">קוקטייל</SelectItem>
+              <SelectItem value="drink">משקה</SelectItem>
             </SelectContent>
           </Select>
-          {errors.itemType && (
+          {errors?.itemType && (
             <p className="text-xs text-red-500 mt-1">{errors.itemType}</p>
           )}
         </div>
@@ -77,25 +94,27 @@ const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({ errors }) => {
         <IconTextarea
           id="description"
           name="description"
-          label="מרכיבים עיקריים"
-          placeholder="רשמו את המרכיבים העיקריים של הפריט (אופציונלי)"
-          value={formData.description || ''}
-          onChange={(e) => updateFormData({ description: e.target.value })}
-          className="min-h-[100px]"
+          label="מרכיבים עיקריים (אופציונלי)"
+          value={formData.description}
+          onChange={handleChange}
+          placeholder="פרטו את המרכיבים העיקריים של הפריט (לדוגמה: רוטב עגבניות, בזיליקום, פרמזן)"
+          rows={4}
+          error={errors?.description}
         />
 
         <IconTextarea
           id="specialNotes"
           name="specialNotes"
-          label="הערות מיוחדות"
-          placeholder="כל מידע נוסף שחשוב שנדע (אופציונלי)"
-          value={formData.specialNotes || ''}
-          onChange={(e) => updateFormData({ specialNotes: e.target.value })}
-          className="min-h-[80px]"
+          label="הערות מיוחדות (אופציונלי)"
+          value={formData.specialNotes}
+          onChange={handleChange}
+          placeholder="לצילום או עיבוד (לדוגמה: ללא גלוטן, דגש על צבעוניות)"
+          rows={4}
+          error={errors?.specialNotes}
         />
       </div>
     </div>
   );
 };
 
-export default ItemDetailsStep;
+export default ItemDetailsStep; 
