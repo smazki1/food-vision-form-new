@@ -49,6 +49,7 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
+          package_id: string | null
           package_name: string
           remaining_dishes: number
           total_dishes: number
@@ -58,6 +59,7 @@ export type Database = {
           client_id: string
           created_at?: string
           id?: string
+          package_id?: string | null
           package_name: string
           remaining_dishes: number
           total_dishes: number
@@ -67,6 +69,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           id?: string
+          package_id?: string | null
           package_name?: string
           remaining_dishes?: number
           total_dishes?: number
@@ -79,6 +82,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "fk_client_packages_service_packages"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["package_id"]
           },
         ]
       }

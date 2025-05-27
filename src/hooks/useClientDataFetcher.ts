@@ -43,7 +43,9 @@ export const useClientDataFetcher = (
     data: clientData,
     isLoading: clientQueryLoading,
     error: clientQueryError,
-    refetch
+    refetch,
+    isSuccess,
+    isError
   } = useQuery({
     queryKey: ['client-by-user-id', user?.id, refreshToggle],
     queryFn: async () => {
@@ -56,7 +58,7 @@ export const useClientDataFetcher = (
       const { data, error } = await supabase
         .from('clients')
         .select('client_id, restaurant_name')
-        .eq('user_id', user.id)
+        .eq('user_auth_id', user.id)
         .maybeSingle();
 
       if (error) {
@@ -70,7 +72,6 @@ export const useClientDataFetcher = (
     enabled: shouldFetch,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: (failureCount, error) => {
-      // Retry up to 2 times for network errors, but not for auth errors
       if (failureCount >= 2) return false;
       return !error.message?.includes('JWT');
     },
@@ -79,16 +80,19 @@ export const useClientDataFetcher = (
 
   // Handle query results and update auth state
   useEffect(() => {
-    if (!shouldFetch) return;
-
-    if (clientQueryError) {
-      const errorMessage = clientQueryError.message || 'שגיאה בטעינת נתוני לקוח';
-      console.error("[CLIENT_DATA_FETCHER] Client query error:", errorMessage);
-      handleClientDataFetchError(errorMessage);
+    if (!shouldFetch) {
+      console.log("[CLIENT_DATA_FETCHER] Should not fetch, setting appropriate state");
+      updateClientAuthState({
+        clientId: null,
+        clientRecordStatus: 'not-found',
+        authenticating: false,
+        errorState: null
+      });
       return;
     }
 
-    if (!clientQueryLoading) {
+    // Handle successful query completion
+    if (isSuccess) {
       if (clientData) {
         console.log("[CLIENT_DATA_FETCHER] Client found:", clientData.client_id);
         updateClientAuthState({
@@ -106,8 +110,32 @@ export const useClientDataFetcher = (
           errorState: null
         });
       }
+      return;
     }
-  }, [clientData, clientQueryLoading, clientQueryError, shouldFetch, updateClientAuthState, handleClientDataFetchError]);
+
+    // Handle query error
+    if (isError && clientQueryError) {
+      const errorMessage = clientQueryError.message || 'שגיאה בטעינת נתוני לקוח';
+      console.error("[CLIENT_DATA_FETCHER] Client query error:", errorMessage);
+      updateClientAuthState({
+        clientRecordStatus: 'error',
+        authenticating: false,
+        errorState: errorMessage
+      });
+      handleClientDataFetchError(errorMessage);
+      return;
+    }
+
+    // Handle loading state
+    if (clientQueryLoading) {
+      console.log("[CLIENT_DATA_FETCHER] Query is loading");
+      updateClientAuthState({
+        clientRecordStatus: 'loading',
+        authenticating: true,
+        errorState: null
+      });
+    }
+  }, [shouldFetch, isSuccess, isError, clientData, clientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError]);
 
   // Add timeout handling for stuck loading states
   useEffect(() => {

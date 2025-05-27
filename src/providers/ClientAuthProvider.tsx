@@ -63,12 +63,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       authenticating: true 
     });
     
-    // If we have a retry function, use it
     if (retryFetch) {
       setTimeout(() => retryFetch(), 100);
     }
   }, [updateClientAuthState, retryFetch]);
 
+  // Simplified effect that only handles the initial loading state
   useEffect(() => {
     console.log('[CLIENT_AUTH_PROVIDER] Auth state update:', {
       initialized, 
@@ -83,7 +83,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       userId: user?.id
     });
 
-    // Stage 1: Handle initial loading from useUnifiedAuth
+    // Only handle cases where we need to set loading state
     if (!initialized || authLoading) {
       if (authenticating !== true || clientRecordStatus !== 'loading') {
         updateClientAuthState({ 
@@ -94,7 +94,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       return;
     }
 
-    // Stage 2: Handle user not authenticated
+    // If not authenticated, clear client state
     if (!isAuthenticated) {
       if (clientId !== null || authenticating !== false || clientRecordStatus !== 'not-found' || errorState !== null) {
         updateClientAuthState({
@@ -107,26 +107,11 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       return;
     }
 
-    // Stage 3: User IS authenticated - handle client data fetching
-    if (clientQueryLoading) {
-      if (authenticating !== true || (clientRecordStatus !== 'loading' && clientRecordStatus !== 'error')) {
-        updateClientAuthState({ 
-          authenticating: true, 
-          clientRecordStatus: 'loading' 
-        });
-      }
-    } else {
-      // Query is not loading - set authenticating to false if needed
-      if (clientRecordStatus !== 'loading' && authenticating !== false) {
-        updateClientAuthState({ authenticating: false });
-      }
-    }
-
+    // The rest is handled by useClientDataFetcher
   }, [
     initialized, 
     authLoading, 
     isAuthenticated,
-    clientQueryLoading,
     authenticating,
     clientRecordStatus,
     errorState, 
