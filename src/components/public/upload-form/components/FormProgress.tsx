@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,11 +22,11 @@ const FormProgress: React.FC<FormProgressProps> = ({ formSteps, currentStepId })
               {/* Step Circle */}
               <div
                 className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200",
+                  "w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-200",
                   step.id < currentStepId
-                    ? "bg-orange-500 text-white"
+                    ? "bg-[#F3752B] text-white"
                     : step.id === currentStepId
-                    ? "bg-orange-500 text-white ring-4 ring-orange-200"
+                    ? "bg-[#8B1E3F] text-white ring-2 ring-[#8B1E3F]/30"
                     : "bg-gray-200 text-gray-500"
                 )}
               >
@@ -42,8 +41,10 @@ const FormProgress: React.FC<FormProgressProps> = ({ formSteps, currentStepId })
               <span
                 className={cn(
                   "text-xs font-medium mt-2 text-center transition-colors duration-200",
-                  step.id <= currentStepId
-                    ? "text-orange-600"
+                  step.id < currentStepId
+                    ? "text-[#F3752B]"
+                    : step.id === currentStepId
+                    ? "text-[#8B1E3F]"
                     : "text-gray-400"
                 )}
               >
@@ -57,7 +58,7 @@ const FormProgress: React.FC<FormProgressProps> = ({ formSteps, currentStepId })
                 className={cn(
                   "h-0.5 flex-1 mx-2 transition-colors duration-200",
                   step.id < currentStepId
-                    ? "bg-orange-500"
+                    ? "bg-[#F3752B]"
                     : "bg-gray-200"
                 )}
               />
@@ -69,7 +70,7 @@ const FormProgress: React.FC<FormProgressProps> = ({ formSteps, currentStepId })
       {/* Progress Bar */}
       <div className="w-full bg-gray-200 rounded-full h-1">
         <div
-          className="bg-orange-500 h-1 rounded-full transition-all duration-300 ease-out"
+          className="bg-[#F3752B] h-1 rounded-full transition-all duration-300 ease-out"
           style={{ width: `${((currentStepId - 1) / (formSteps.length - 1)) * 100}%` }}
         />
       </div>

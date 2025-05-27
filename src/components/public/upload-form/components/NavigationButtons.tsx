@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
@@ -23,30 +22,30 @@ const NavigationButtons: React.FC<NavigationButtonsProps> = ({
   const isLastStep = currentStep === totalSteps;
 
   return (
-    <div className={cn(
-      "flex",
-      isFirstStep ? "justify-end" : "justify-between"
-    )}>
-      {!isFirstStep && (
-        <Button
-          variant="outline"
-          onClick={onPrevious}
-          disabled={isSubmitting}
-          className="flex items-center space-x-2 space-x-reverse h-11 px-6"
-        >
-          <ChevronRight className="w-4 h-4" />
-          <span>הקודם</span>
-        </Button>
-      )}
+    <div className="flex justify-center">
+      <div className={cn(
+        "flex gap-4 w-full max-w-md",
+        isFirstStep ? "justify-center" : "justify-between"
+      )}>
+        {!isFirstStep && (
+          <Button
+            variant="outline"
+            onClick={onPrevious}
+            disabled={isSubmitting}
+            className="flex-1 py-3 px-6 h-auto rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/5"
+          >
+            הקודם
+          </Button>
+        )}
 
-      <Button
-        onClick={onNext}
-        disabled={isSubmitting}
-        className="flex items-center space-x-2 space-x-reverse h-11 px-6 bg-orange-500 hover:bg-orange-600"
-      >
-        <span>{isSubmitting ? 'מעבד...' : (isLastStep ? 'לסקירה ואישור' : 'הבא')}</span>
-        <ChevronLeft className="w-4 h-4" />
-      </Button>
+        <Button
+          onClick={onNext}
+          disabled={isSubmitting}
+          className={`${isFirstStep ? 'w-full' : 'flex-1'} py-3 px-6 h-auto rounded-full bg-[#F3752B] hover:bg-[#F3752B]/90 text-white`}
+        >
+          {isSubmitting ? 'מעבד...' : (isLastStep ? 'שלח' : 'הבא')}
+        </Button>
+      </div>
     </div>
   );
 };

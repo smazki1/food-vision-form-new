@@ -1,7 +1,6 @@
-
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { CloudUpload, Image as ImageIcon, X } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X } from 'lucide-react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -44,9 +43,9 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ errors }) => {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="flex items-center justify-center mb-4">
-          <ImageIcon className="w-8 h-8 text-orange-500" />
+          <ImageIcon className="w-8 h-8 text-[#F3752B]" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl font-bold text-[#8B1E3F] mb-2">
           העלאת תמונות
         </h2>
         <p className="text-gray-600">
@@ -60,13 +59,13 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ errors }) => {
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200",
           isDragActive
-            ? "border-orange-500 bg-orange-50"
-            : "border-gray-300 hover:border-orange-400 hover:bg-gray-50",
+            ? "border-[#F3752B] bg-[#F3752B]/10"
+            : "border-gray-300 hover:border-[#F3752B] hover:bg-gray-50",
           errors.referenceImages && "border-red-500 bg-red-50"
         )}
       >
         <input {...getInputProps()} />
-        <CloudUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <UploadCloud className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <div className="space-y-2">
           <p className="text-lg font-medium text-gray-700">
             {isDragActive ? 'שחררו כאן את התמונות' : 'לחצו או גררו תמונות לכאן'}
@@ -87,7 +86,7 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ errors }) => {
       {/* Image Preview Grid */}
       {formData.referenceImages.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-[#8B1E3F] text-center">
             תמונות שהועלו ({formData.referenceImages.length})
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -120,15 +119,15 @@ const ImageUploadStep: React.FC<ImageUploadStepProps> = ({ errors }) => {
 
       {/* Quality Checklist */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-[#8B1E3F] text-center">
           רשימת בדיקה לאיכות התמונות
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-md mx-auto">
           {qualityChecklist.map((item, index) => (
             <div key={index} className="flex items-center space-x-2 space-x-reverse">
               <Checkbox
                 id={`quality-${index}`}
-                className="data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                className="data-[state=checked]:bg-[#F3752B] data-[state=checked]:border-[#F3752B]"
               />
               <Label htmlFor={`quality-${index}`} className="text-sm text-gray-700">
                 {item}

@@ -1,10 +1,9 @@
-
 import React, { useContext } from 'react';
 import { NewItemFormContext } from '@/contexts/NewItemFormContext';
 import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm'; // Use a distinct name
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, ChevronLeft } from 'lucide-react';
+import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle } from 'lucide-react';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import { useClientPackage } from '@/hooks/useClientPackage';
 import { cn } from '@/lib/utils'; 
@@ -54,7 +53,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
   return (
     <div className="space-y-8" dir="rtl">
       <div>
-        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800 text-center">סקירה ואישור</h2>
+        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-[#8B1E3F] text-center">סקירה ואישור</h2>
         <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
           אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית. ודאו שהכל תקין.
         </p>
@@ -63,9 +62,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
       {/* Restaurant Details Section */}
       {!clientId && restaurantName && (
         <section className="space-y-4">
-          <div className="flex items-center mb-3">
-            <Building2 className="h-6 w-6 text-primary ml-3" /> 
-            <h3 className="text-lg font-semibold text-gray-700">פרטי המסעדה</h3>
+          <div className="flex items-center mb-3 justify-center">
+            <Building2 className="h-6 w-6 text-[#F3752B] ml-3" /> 
+            <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי המסעדה</h3>
           </div>
           <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
             <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
@@ -76,9 +75,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
 
       {/* Item Details Section */}
       <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <ItemIcon className="h-6 w-6 text-primary ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי הפריט</h3>
+        <div className="flex items-center mb-3 justify-center">
+          <ItemIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
+          <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי הפריט</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
@@ -91,9 +90,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
 
       {/* Uploaded Images Section */}
       <section className="space-y-4">
-         <div className="flex items-center mb-3">
-            <ImageIcon className="h-6 w-6 text-primary ml-3" /> 
-            <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
+         <div className="flex items-center mb-3 justify-center">
+            <ImageIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
+            <h3 className="text-lg font-semibold text-[#8B1E3F]">תמונות שהועלו ({referenceImages.length})</h3>
           </div>
           {referenceImages.length > 0 ? (
           <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white"> 
@@ -126,9 +125,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
           "p-4 rounded-md",
           remainingDishes !== undefined && remainingDishes <= 0 
             ? "bg-red-50 border-red-500 text-red-700"
-            : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <=5 
-                ? "bg-orange-50 border-orange-500 text-orange-700"
-                : "bg-blue-50 border-blue-500 text-blue-700") 
+            : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <= 5 
+                ? "bg-[#F3752B]/10 border-[#F3752B] text-[#F3752B]"
+                : "bg-[#8B1E3F]/10 border-[#8B1E3F] text-[#8B1E3F]") 
       )}>
         <InfoIcon className="h-5 w-5" />
         <AlertDescription className="text-sm mr-2"> 
@@ -148,32 +147,29 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
             onClick={onFinalSubmit}
             disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
             className={cn(
-                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
+                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-full shadow-lg transition-all duration-200 ease-in-out",
                 "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
-                "border-2",
                 canSubmit 
-                ? "bg-orange-500 hover:bg-orange-600 border-orange-600 hover:border-orange-700 text-white focus-visible:ring-orange-500" 
-                : "bg-gray-300 hover:bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed shadow-inner",
-                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 border-red-600 hover:border-red-700 text-white focus-visible:ring-red-500"
+                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
+                : "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed",
+                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 text-white"
             )}
         >
             <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
             <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
-            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
         </Button>
       )}
       
-
       {/* Display any submission errors (specifically for this step, like missing images before confirming) */}
       {errors?.finalCheck && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
             <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
             <span>{errors.finalCheck}</span>
         </div>
       )}
       {/* Display general submit errors (e.g. from API) */}
        {errors?.submit && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
             <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
             <span>{errors.submit}</span>
         </div>
