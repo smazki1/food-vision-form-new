@@ -1,8 +1,9 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
 import { useUnifiedAuth } from "./useUnifiedAuth";
-import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi"; // Renaming import for clarity
+import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi";
 
 export interface ClientPackageInfo {
   packageName: string | null;
@@ -56,7 +57,6 @@ export function useSubmissions() {
       try {
         console.log(`[useSubmissions] queryFn: Fetching submissions for effectiveClientId: ${effectiveClientId}`);
         
-        // The comprehensive select statement from the remote version
         const { data, error: queryError } = await supabase
           .from("customer_submissions")
           .select(`
@@ -99,7 +99,6 @@ export function useSubmissions() {
     enabled: queryEnabled
   });
 
-  // Logic for totalAllowedSubmissions and remainingServings from remote version
   const { data: packageDetails, isLoading: packageDetailsLoading } = useQuery<ClientPackageInfo | null, Error>({
     queryKey: ['clientPackageDetails', effectiveClientId],
     queryFn: async () => {
@@ -107,28 +106,25 @@ export function useSubmissions() {
 
       console.log("[useSubmissions] Fetching package details for client:", effectiveClientId);
 
-      // Attempt to get package_id from the most recent submission
       let packageIdToQuery: string | null = null;
       if (processedItems && processedItems.length > 0 && processedItems[0].assigned_package_id_at_submission) {
         packageIdToQuery = processedItems[0].assigned_package_id_at_submission;
         console.log("[useSubmissions] Using package ID from most recent submission:", packageIdToQuery);
       } else {
-        // Fallback: Get active_package_id from the clients table
-        console.log("[useSubmissions] No package ID on submission, trying to fetch active_package_id from clients table for client:", effectiveClientId);
+        console.log("[useSubmissions] No package ID on submission, trying to fetch current_package_id from clients table for client:", effectiveClientId);
         const { data: clientData, error: clientError } = await supabase
           .from('clients')
-          .select('active_package_id')
-          .eq('id', effectiveClientId)
+          .select('current_package_id')
+          .eq('client_id', effectiveClientId)
           .single();
 
         if (clientError) {
-          console.error('[useSubmissions] Error fetching active_package_id from client:', clientError);
-          // Not throwing error here, as it's a fallback, client might not have an active package
-        } else if (clientData && clientData.active_package_id) {
-          packageIdToQuery = clientData.active_package_id;
-          console.log("[useSubmissions] Using active_package_id from client record:", packageIdToQuery);
+          console.error('[useSubmissions] Error fetching current_package_id from client:', clientError);
+        } else if (clientData && clientData.current_package_id) {
+          packageIdToQuery = clientData.current_package_id;
+          console.log("[useSubmissions] Using current_package_id from client record:", packageIdToQuery);
         } else {
-          console.log("[useSubmissions] No active_package_id found for client:", effectiveClientId);
+          console.log("[useSubmissions] No current_package_id found for client:", effectiveClientId);
         }
       }
 
@@ -136,92 +132,51 @@ export function useSubmissions() {
         console.warn("[useSubmissions] No package ID found to query package details for client:", effectiveClientId);
         return {
           packageName: 'לא משויך לחבילה',
-          totalSubmissions: null, // Or some other default like Infinity or a very large number
+          totalSubmissions: null,
           startDate: null,
           endDate: null,
           isActive: false,
         };
       }
 
-      console.log("[useSubmissions] Querying client_packages with package_id:", packageIdToQuery, "for client:", effectiveClientId);
-      const { data: clientPackageData, error: clientPackageError } = await supabase
-        .from('client_packages')
-        .select(`
-          package_id,
-          start_date,
-          end_date,
-          is_active,
-          total_submissions_allocated,
-          packages (name)
-        `)
-        .eq('client_id', effectiveClientId)
-        .eq('package_id', packageIdToQuery) 
-        .single();
-
-      if (clientPackageError) {
-        console.error('[useSubmissions] Error fetching client package details:', clientPackageError);
-        // If specific client_package link not found, it could be an old package_id or a general one
-        // Try fetching from the 'packages' table directly if it's a general package ID
-        console.log("[useSubmissions] Trying to fetch general package details for package_id:", packageIdToQuery);
-        const { data: generalPackageData, error: generalPackageError } = await supabase
-            .from('packages')
-            .select('name, number_of_dishes')
-            .eq('id', packageIdToQuery)
-            .single();
-        
-        if (generalPackageError) {
-            console.error('[useSubmissions] Error fetching general package details:', generalPackageError);
-            return {
-                packageName: 'שגיאה בטעינת חבילה',
-                totalSubmissions: null,
-                startDate: null,
-                endDate: null,
-                isActive: false,
-            };
-        }
-        if (generalPackageData) {
-            console.log("[useSubmissions] Fetched general package details:", generalPackageData);
-            return {
-                packageName: generalPackageData.name,
-                totalSubmissions: generalPackageData.number_of_dishes,
-                startDate: null, // General packages don't have client-specific dates
-                endDate: null,
-                isActive: true, // Assume active if fetched this way, or add more logic
-            };
-        }
-        return null; // Should not happen if generalPackageData is null and no error
+      console.log("[useSubmissions] Querying service_packages with package_id:", packageIdToQuery);
+      const { data: generalPackageData, error: generalPackageError } = await supabase
+          .from('service_packages')
+          .select('package_name, total_servings')
+          .eq('package_id', packageIdToQuery)
+          .single();
+      
+      if (generalPackageError) {
+          console.error('[useSubmissions] Error fetching general package details:', generalPackageError);
+          return {
+              packageName: 'שגיאה בטעינת חבילה',
+              totalSubmissions: null,
+              startDate: null,
+              endDate: null,
+              isActive: false,
+          };
       }
-
-      if (clientPackageData) {
-        console.log("[useSubmissions] Fetched client-specific package details:", clientPackageData);
-        // Correctly access package name if 'packages' is an array
-        let packageNameFromData: string | null = 'שם חבילה לא ידוע';
-        if (Array.isArray(clientPackageData.packages) && clientPackageData.packages.length > 0 && clientPackageData.packages[0].name) {
-          packageNameFromData = clientPackageData.packages[0].name;
-        } else if (clientPackageData.packages && typeof clientPackageData.packages === 'object' && 'name' in clientPackageData.packages && clientPackageData.packages.name) {
-          // Fallback if it's a single object (though Supabase usually returns array for relations)
-          packageNameFromData = (clientPackageData.packages as { name: string }).name;
-        }
-
-        return {
-          packageName: packageNameFromData,
-          totalSubmissions: clientPackageData.total_submissions_allocated,
-          startDate: clientPackageData.start_date,
-          endDate: clientPackageData.end_date,
-          isActive: clientPackageData.is_active,
-        };
+      if (generalPackageData) {
+          console.log("[useSubmissions] Fetched general package details:", generalPackageData);
+          return {
+              packageName: generalPackageData.package_name,
+              totalSubmissions: generalPackageData.total_servings,
+              startDate: null,
+              endDate: null,
+              isActive: true,
+          };
       }
-      console.warn("[useSubmissions] No client-specific package data found for package_id:", packageIdToQuery, " client:", effectiveClientId);
       return null;
     },
-    enabled: queryEnabled && !!effectiveClientId, // Depends on submissions query being enabled and having a client ID
+    enabled: queryEnabled && !!effectiveClientId,
   });
   
+  // Calculate remaining servings safely
   const totalAllowedSubmissions = packageDetails?.totalSubmissions;
-  const submissionsLength = processedItems.length;
-  const remainingServings = totalAllowedSubmissions !== null && totalAllowedSubmissions !== undefined 
-    ? totalAllowedSubmissions - submissionsLength 
-    : undefined; // Can be null or undefined if package not found or has no limit
+  const submissionsLength = processedItems?.length || 0;
+  const remainingServings = (totalAllowedSubmissions !== null && totalAllowedSubmissions !== undefined) 
+    ? Math.max(0, totalAllowedSubmissions - submissionsLength)
+    : undefined;
 
   const refreshSubmissions = () => {
     console.log("[useSubmissions] Refreshing submissions for clientId:", effectiveClientId);
@@ -235,25 +190,23 @@ export function useSubmissions() {
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
-    loading: loading || (queryEnabled && packageDetailsLoading), // Consider both loading states if queryEnabled
-    clientLoading: unifiedLoading, // Expose the auth loading state
+    loading: loading || (queryEnabled && packageDetailsLoading),
+    clientLoading: unifiedLoading,
     error,
     refreshSubmissions,
-    clientId: effectiveClientId, // Expose effectiveClientId
-    isAuthenticated: unifiedIsAuthenticated, // Expose final auth state
-    isClientAuthAuthenticated: clientAuthIsAuthenticated, // Expose specific client auth state for debugging or specific use cases
-    clientRecordStatus,
+    clientId: effectiveClientId,
+    isAuthenticated: unifiedIsAuthenticated,
     timestamp: Date.now()
   });
 
   return {
-    submissions: processedItems,
+    submissions: processedItems || [],
     submissionsLength,
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
-    loading: loading || (queryEnabled && packageDetailsLoading), // consider packageDetailsLoading only if the main query is enabled
-    clientLoading: unifiedLoading, // for consumers to know if auth is still settling
+    loading: loading || (queryEnabled && packageDetailsLoading),
+    clientLoading: unifiedLoading,
     error,
     refreshSubmissions,
     refreshPackageDetails: () => queryClient.invalidateQueries({ queryKey: ['clientPackageDetails', effectiveClientId] }),

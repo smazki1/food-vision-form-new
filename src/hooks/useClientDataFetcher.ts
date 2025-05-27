@@ -70,10 +70,10 @@ export const useClientDataFetcher = (
       return data;
     },
     enabled: shouldFetch,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
-    retry: 1, // Reduced retry count
-    retryDelay: 1000, // Fixed 1 second delay
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Handle query results and update auth state
@@ -98,7 +98,6 @@ export const useClientDataFetcher = (
       return;
     }
 
-    // Handle successful query completion
     if (isSuccess) {
       if (clientData && clientData.client_id) {
         console.log("[CLIENT_DATA_FETCHER] Client found, updating state with clientId:", clientData.client_id);
@@ -120,7 +119,6 @@ export const useClientDataFetcher = (
       return;
     }
 
-    // Handle query error
     if (isError && clientQueryError) {
       const errorMessage = clientQueryError.message || 'שגיאה בטעינת נתוני לקוח';
       console.error("[CLIENT_DATA_FETCHER] Client query error:", errorMessage);
@@ -133,7 +131,6 @@ export const useClientDataFetcher = (
       return;
     }
 
-    // Handle loading state
     if (clientQueryLoading) {
       console.log("[CLIENT_DATA_FETCHER] Query is loading");
       updateClientAuthState({
@@ -144,7 +141,7 @@ export const useClientDataFetcher = (
     }
   }, [shouldFetch, isSuccess, isError, clientData, clientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError]);
 
-  // Simplified force completion with shorter timeout
+  // Force completion after 1 second
   useEffect(() => {
     if (!shouldFetch || !clientQueryLoading) return;
 
@@ -156,7 +153,7 @@ export const useClientDataFetcher = (
         authenticating: false,
         errorState: null
       });
-    }, 3000); // Reduced to 3 seconds
+    }, 1000); // Force completion after 1 second
 
     return () => clearTimeout(timeout);
   }, [clientQueryLoading, shouldFetch, updateClientAuthState]);

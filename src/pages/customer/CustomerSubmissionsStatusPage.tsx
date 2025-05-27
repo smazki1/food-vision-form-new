@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -70,7 +71,25 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     timestamp: Date.now()
   });
 
-  if (authLoading || submissionsLoading || !effectiveClientId && effectiveAuthenticated) {
+  // Use useMemo to safely sort submissions and prevent React error #310
+  const sortedSubmissions = useMemo(() => {
+    if (!submissions || !Array.isArray(submissions)) {
+      console.warn("[CustomerSubmissionsStatusPage] Invalid submissions data:", submissions);
+      return [];
+    }
+    try {
+      return [...submissions].sort((a, b) => {
+        const dateA = new Date(a.uploaded_at).getTime();
+        const dateB = new Date(b.uploaded_at).getTime();
+        return dateB - dateA;
+      });
+    } catch (err) {
+      console.error("[CustomerSubmissionsStatusPage] Error sorting submissions:", err);
+      return submissions;
+    }
+  }, [submissions]);
+
+  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated)) {
     return (
       <div dir="rtl" className="text-center p-10">
         <div className="flex items-center justify-center gap-2">
@@ -129,11 +148,6 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     );
   }
 
-  const sortedSubmissions = React.useMemo(() => {
-    if (!submissions) return [];
-    return [...submissions].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
-  }, [submissions]);
-
   return (
     <div dir="rtl" className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
@@ -156,7 +170,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
             <br />
             משתמש: {unifiedUser?.email}
             <br />
-            סה"כ הגשות נמצאו: {submissions?.length || 0}
+            סה"כ הגשות נמצאו: {sortedSubmissions?.length || 0}
           </AlertDescription>
         </Alert>
       </div>
