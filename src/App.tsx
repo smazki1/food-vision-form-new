@@ -17,8 +17,8 @@ const CustomerLayout = lazy(() =>
   import("./layouts/CustomerLayout").then(module => ({ default: module.CustomerLayout }))
 );
 
-// Lazy load pages
-const CustomerLogin = lazy(() => import("./pages/CustomerLogin"));
+// Lazy load pages - Use the customer-specific login page
+const CustomerLogin = lazy(() => import("./pages/customer/CustomerLogin"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const PublicUploadPage = lazy(() => import("./pages/PublicUploadPage"));
