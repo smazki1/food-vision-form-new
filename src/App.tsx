@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { UnifiedAuthProvider } from "@/providers/UnifiedAuthProvider";
+import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
 import { Suspense, lazy } from "react";
 
 // Lazy load components
@@ -34,79 +35,81 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <UnifiedAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Suspense fallback={<div>Loading...</div>}>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/public-upload" element={<PublicUploadPage />} />
-                
-                <Route
-                  path="/customer-login"
-                  element={
-                    <PublicOnlyRoute>
-                      <CustomerLogin />
-                    </PublicOnlyRoute>
-                  }
-                />
-                <Route
-                  path="/admin-login"
-                  element={
-                    <PublicOnlyRoute>
-                      <AdminLogin />
-                    </PublicOnlyRoute>
-                  }
-                />
+        <CurrentUserRoleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Suspense fallback={<div>Loading...</div>}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/public-upload" element={<PublicUploadPage />} />
+                  
+                  <Route
+                    path="/customer-login"
+                    element={
+                      <PublicOnlyRoute>
+                        <CustomerLogin />
+                      </PublicOnlyRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin-login"
+                    element={
+                      <PublicOnlyRoute>
+                        <AdminLogin />
+                      </PublicOnlyRoute>
+                    }
+                  />
 
-                {/* Customer Protected Routes */}
-                <Route
-                  path="/"
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerHomePage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/customer-dashboard"
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <CustomerDashboardPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/upload"
-                  element={
-                    <ProtectedRoute allowedRoles={['customer']}>
-                      <FoodVisionUploadFormPage />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Customer Protected Routes */}
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute allowedRoles={['customer']}>
+                        <CustomerHomePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/customer-dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['customer']}>
+                        <CustomerDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/upload"
+                    element={
+                      <ProtectedRoute allowedRoles={['customer']}>
+                        <FoodVisionUploadFormPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Admin Protected Routes */}
-                <Route
-                  path="/admin"
-                  element={
-                    <AdminRoute>
-                      <AdminLayout />
-                    </AdminRoute>
-                  }
-                >
-                  <Route index element={<Navigate to="/admin/dashboard" replace />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="clients" element={<ClientsList />} />
-                  <Route path="clients/:clientId" element={<ClientDetails />} />
-                </Route>
+                  {/* Admin Protected Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <AdminLayout />
+                      </AdminRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="clients" element={<ClientsList />} />
+                    <Route path="clients/:clientId" element={<ClientDetails />} />
+                  </Route>
 
-                {/* 404 Route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
+                  {/* 404 Route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </CurrentUserRoleProvider>
       </UnifiedAuthProvider>
     </QueryClientProvider>
   );

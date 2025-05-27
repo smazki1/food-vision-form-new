@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useRef, createContext, useContext } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizedAuthService } from '@/services/optimizedAuthService';
 import { User } from '@supabase/supabase-js';
@@ -24,30 +23,10 @@ export interface CurrentUserRoleState {
   isLoading: boolean;
 }
 
-// Create context for the provider
 const CurrentUserRoleContext = createContext<CurrentUserRoleState | undefined>(undefined);
 
-// Provider component
-export const CurrentUserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const currentUserRoleState = useCurrentUserRole();
-  
-  return (
-    <CurrentUserRoleContext.Provider value={currentUserRoleState}>
-      {children}
-    </CurrentUserRoleContext.Provider>
-  );
-};
-
-// Hook to use the context (optional, for consistency)
-export const useCurrentUserRoleContext = (): CurrentUserRoleState => {
-  const context = useContext(CurrentUserRoleContext);
-  if (context === undefined) {
-    throw new Error('useCurrentUserRoleContext must be used within a CurrentUserRoleProvider');
-  }
-  return context;
-};
-
-export const useCurrentUserRole = (): CurrentUserRoleState => {
+// Internal "engine" hook with all the state logic
+const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
   const [status, setStatus] = useState<CurrentUserRoleStatus>('INITIALIZING');
   const [role, setRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -55,10 +34,9 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [forceComplete, setForceComplete] = useState(false);
 
-  // Set a safety timeout to prevent infinite loading
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
-      console.warn("[useCurrentUserRole] Safety timeout reached - forcing completion to prevent infinite loading");
+      console.warn("[useCurrentUserRoleEngine] Safety timeout reached - forcing completion");
       setForceComplete(true);
       setStatus('ERROR_FETCHING_ROLE');
       setError('Authentication timeout - please refresh the page');
@@ -72,11 +50,10 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
   }, []);
 
   const handleAuthStateChange = async (event: string, session: any) => {
-    if (forceComplete) return; // Don't process if we've forced completion
+    if (forceComplete) return;
 
-    console.log("[useCurrentUserRole] Auth state change event:", event, "Session:", session?.user?.id);
+    console.log("[useCurrentUserRoleEngine] Auth state change event:", event, "Session:", session?.user?.id);
     
-    // Clear any existing timeout when we get a valid auth state change
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -95,16 +72,16 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
       setStatus('FETCHING_ROLE');
       
       try {
-        console.log("[useCurrentUserRole] Fetching role for user:", session.user.id);
+        console.log("[useCurrentUserRoleEngine] Fetching role for user:", session.user.id);
         const authData = await optimizedAuthService.getUserAuthData(session.user.id);
         
-        if (!forceComplete) { // Only update if we haven't forced completion
+        if (!forceComplete) {
           setRole(authData.role);
           setStatus('ROLE_DETERMINED');
           setError(null);
         }
       } catch (error) {
-        console.error("[useCurrentUserRole] Error fetching role:", error);
+        console.error("[useCurrentUserRoleEngine] Error fetching role:", error);
         if (!forceComplete) {
           setStatus('ERROR_FETCHING_ROLE');
           setError(error instanceof Error ? error.message : 'Failed to fetch user role');
@@ -115,38 +92,33 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
 
   useEffect(() => {
     let isMounted = true;
+    if (forceComplete) return;
 
     const initializeAuth = async () => {
-      if (forceComplete) return;
+      if (forceComplete || !isMounted) return;
 
       try {
         setStatus('CHECKING_SESSION');
-        
-        // Get current session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (!isMounted || forceComplete) return;
 
         if (sessionError) {
-          console.error("[useCurrentUserRole] Session error:", sessionError);
+          console.error("[useCurrentUserRoleEngine] Session error:", sessionError);
           setStatus('ERROR_SESSION');
           setError(sessionError.message);
           return;
         }
-
         await handleAuthStateChange(session ? 'SIGNED_IN' : 'SIGNED_OUT', session);
       } catch (error) {
         if (!isMounted || forceComplete) return;
-        console.error("[useCurrentUserRole] Auth initialization error:", error);
+        console.error("[useCurrentUserRoleEngine] Auth initialization error:", error);
         setStatus('ERROR_SESSION');
         setError(error instanceof Error ? error.message : 'Failed to initialize authentication');
       }
     };
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    // Initialize
     initializeAuth();
 
     return () => {
@@ -155,7 +127,6 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
     };
   }, [forceComplete]);
 
-  // Derive computed values
   const isAdmin = role === 'admin';
   const isAccountManager = role === 'account_manager';
   const isEditor = role === 'editor';
@@ -171,8 +142,28 @@ export const useCurrentUserRole = (): CurrentUserRoleState => {
     error,
     isLoading
   };
-
-  console.log("[useCurrentUserRole_Logic] FINAL State produced by logic hook:", finalState);
-
+  
+  // console.log("[useCurrentUserRoleEngine] FINAL State produced by logic hook:", finalState);
   return finalState;
+};
+
+// Provider component that uses the engine
+export const CurrentUserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const currentUserRoleState = useCurrentUserRoleEngine();
+  
+  return (
+    <CurrentUserRoleContext.Provider value={currentUserRoleState}>
+      {children}
+    </CurrentUserRoleContext.Provider>
+  );
+};
+
+// Exported hook that components will consume from context
+export const useCurrentUserRole = (): CurrentUserRoleState => {
+  const context = useContext(CurrentUserRoleContext);
+  if (context === undefined) {
+    throw new Error('useCurrentUserRole must be used within a CurrentUserRoleProvider');
+  }
+  // console.log("[useCurrentUserRole_Context] Consuming state from context:", context);
+  return context;
 };
