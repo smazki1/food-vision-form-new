@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
-import { Submission as ProcessedItem } from '@/api/submissionApi'; // Using the same type as in useSubmissions
-import { Activity, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { useClientAuth } from '@/hooks/useClientAuth';
+import { Submission as ProcessedItem } from '@/api/submissionApi';
+import { Activity, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -13,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Export the helper function for use in other components
 export const getStatusIconAndStyle = (status?: string): { icon: JSX.Element | null, style: string, hebrewStatus: string } => {
@@ -24,9 +27,9 @@ export const getStatusIconAndStyle = (status?: string): { icon: JSX.Element | nu
     case "מוכנה להצגה":
     case "הושלמה ואושרה":
       return { icon: <CheckCircle2 className="h-4 w-4" />, style: "text-green-600 bg-green-100", hebrewStatus: "הושלמה" };
-    case "נדחתה": // Assuming a 'rejected' status
+    case "נדחתה":
       return { icon: <XCircle className="h-4 w-4" />, style: "text-red-600 bg-red-100", hebrewStatus: "נדחתה" };
-    case "דורש תיקונים": // Assuming a 'needs-revision' status
+    case "דורש תיקונים":
         return { icon: <AlertCircle className="h-4 w-4" />, style: "text-orange-600 bg-orange-100", hebrewStatus: "דורש תיקונים" };
     default:
       return { icon: null, style: "text-gray-600 bg-gray-100", hebrewStatus: status || "לא ידוע" };
@@ -40,22 +43,73 @@ export const getItemTypeName = (type: string | undefined) => {
     case 'dish': return 'מנה';
     case 'cocktail': return 'קוקטייל';
     case 'drink': return 'משקה';
-    default: return type; // Return original type if not matched
+    default: return type;
   }
 };
 
 const CustomerSubmissionsStatusPage: React.FC = () => {
+  const { clientId, isAuthenticated, authenticating } = useClientAuth();
   const { submissions, loading, error, refreshSubmissions } = useSubmissions();
 
-  if (loading) {
-    return <div dir="rtl" className="text-center p-10">טוען הגשות...</div>;
+  console.log("[CustomerSubmissionsStatusPage] Component state:", {
+    clientId,
+    isAuthenticated,
+    authenticating,
+    submissionsCount: submissions?.length,
+    loading,
+    error: error?.message
+  });
+
+  if (authenticating || loading) {
+    return (
+      <div dir="rtl" className="text-center p-10">
+        <div className="flex items-center justify-center gap-2">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          טוען הגשות...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div dir="rtl" className="text-center p-10">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            יש להיות מחובר כדי לצפות בהגשות
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!clientId) {
+    return (
+      <div dir="rtl" className="text-center p-10">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            לא נמצא פרופיל לקוח מקושר לחשבון זה
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div dir="rtl" className="text-center p-10 text-red-500">
-        שגיאה בטעינת ההגשות: {error.message}
-        <Button onClick={refreshSubmissions} className="mt-4">נסה שוב</Button>
+      <div dir="rtl" className="text-center p-10">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            שגיאה בטעינת ההגשות: {error.message}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={refreshSubmissions} className="mt-4" variant="outline">
+          <RefreshCw className="h-4 w-4 ml-2" />
+          נסה שוב
+        </Button>
       </div>
     );
   }
@@ -69,15 +123,29 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     <div dir="rtl" className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">סטטוס הגשות</h1>
-        <Button asChild>
-            <Link to="/customer/new-submission">הוסף הגשה חדשה</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={refreshSubmissions} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 ml-2" />
+            רענן
+          </Button>
+          <Button asChild>
+            <Link to="/customer/upload">הוסף הגשה חדשה</Link>
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <Alert>
+          <AlertDescription>
+            מציג הגשות עבור לקוח ID: {clientId}
+          </AlertDescription>
+        </Alert>
       </div>
 
       {sortedSubmissions.length === 0 ? (
         <div className="text-center text-gray-500 py-10">
           <p>לא נמצאו הגשות.</p>
-          <p>עדיין לא העלית פריטים? <Link to="/customer/new-submission" className="text-primary hover:underline">התחל עכשיו!</Link></p>
+          <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
         </div>
       ) : (
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -106,7 +174,6 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">{new Date(item.uploaded_at).toLocaleDateString('he-IL')}</TableCell>
                     <TableCell className="text-right">
-                       {/* Link to submission details page, once created */}
                       <Button asChild variant="link" className="p-0 h-auto text-primary">
                         <Link to={`/customer/submissions/${item.submission_id}`}>פרטים</Link>
                       </Button>
@@ -122,4 +189,4 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
   );
 };
 
-export default CustomerSubmissionsStatusPage; 
+export default CustomerSubmissionsStatusPage;
