@@ -131,9 +131,9 @@ const FoodVisionUploadForm: React.FC = () => {
     }
   };
 
-  // Check if we're stuck in loading for too long
+  // Simplified loading check with shorter timeouts
   const currentLoadingTime = Math.round((Date.now() - loadingStartTime) / 1000);
-  const isStuckLoading = authenticating && currentLoadingTime > 10;
+  const isStuckLoading = authenticating && currentLoadingTime > 5; // Reduced from 10 to 5
 
   if (authenticating && !isStuckLoading) {
     return (
@@ -141,7 +141,7 @@ const FoodVisionUploadForm: React.FC = () => {
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           <p className="ml-4 text-lg mt-4">טוען פרטי משתמש... ({currentLoadingTime}s)</p>
-          {currentLoadingTime > 5 && (
+          {currentLoadingTime > 3 && (
             <p className="text-sm text-muted-foreground mt-2">
               הטעינה לוקחת יותר זמן מהצפוי...
             </p>
@@ -161,20 +161,27 @@ const FoodVisionUploadForm: React.FC = () => {
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          {/* Error state alert */}
+          {/* Error state alert with immediate action */}
           {(errorState || isStuckLoading) && (
             <Alert className="mb-6 bg-red-50 border-red-200">
               <AlertTriangle className="h-4 w-4 text-red-500" />
               <AlertDescription className="text-red-700">
-                {errorState || "הטעינה תקועה - אנא נסו לרענן"}
+                {errorState || "הטעינה תקועה - העמוד יטען ללא חיבור לנתוני הלקוח"}
                 <Button 
                   variant="link" 
                   className="p-0 h-auto text-red-700 hover:underline mr-2"
-                  onClick={refreshClientAuth}
+                  onClick={() => {
+                    if (isStuckLoading) {
+                      // Force stop loading and continue
+                      updateStepsForAuthenticatedUser();
+                    } else {
+                      refreshClientAuth();
+                    }
+                  }}
                   disabled={isCreatingClient || isSubmitting}
                 >
                   <RefreshCw className="h-3 w-3 ml-1" />
-                  נסו שוב
+                  {isStuckLoading ? 'המשך בלי חיבור' : 'נסו שוב'}
                 </Button>
               </AlertDescription>
             </Alert>

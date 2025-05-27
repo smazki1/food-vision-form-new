@@ -71,11 +71,9 @@ export const useClientDataFetcher = (
     },
     enabled: shouldFetch,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: (failureCount, error) => {
-      if (failureCount >= 2) return false;
-      return !error.message?.includes('JWT');
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    gcTime: 1000 * 60 * 10, // 10 minutes (renamed from cacheTime)
+    retry: 1, // Reduced retry count
+    retryDelay: 1000, // Fixed 1 second delay
   });
 
   // Handle query results and update auth state
@@ -146,57 +144,22 @@ export const useClientDataFetcher = (
     }
   }, [shouldFetch, isSuccess, isError, clientData, clientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError]);
 
-  // Force completion if stuck too long
+  // Simplified force completion with shorter timeout
   useEffect(() => {
     if (!shouldFetch || !clientQueryLoading) return;
 
     const timeout = setTimeout(() => {
       console.warn("[CLIENT_DATA_FETCHER] Query timeout - forcing completion");
       
-      // Try to get client data one more time before giving up
-      if (user?.id) {
-        supabase
-          .from('clients')
-          .select('client_id, restaurant_name')
-          .eq('user_auth_id', user.id)
-          .maybeSingle()
-          .then(({ data, error }) => {
-            if (error) {
-              console.error("[CLIENT_DATA_FETCHER] Timeout retry failed:", error);
-              updateClientAuthState({
-                clientRecordStatus: 'error',
-                authenticating: false,
-                errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
-              });
-            } else if (data && data.client_id) {
-              console.log("[CLIENT_DATA_FETCHER] Timeout retry succeeded, found client:", data.client_id);
-              updateClientAuthState({
-                clientId: data.client_id,
-                clientRecordStatus: 'found',
-                authenticating: false,
-                errorState: null
-              });
-            } else {
-              console.log("[CLIENT_DATA_FETCHER] Timeout retry - no client found");
-              updateClientAuthState({
-                clientId: null,
-                clientRecordStatus: 'not-found',
-                authenticating: false,
-                errorState: null
-              });
-            }
-          });
-      } else {
-        updateClientAuthState({
-          clientRecordStatus: 'error',
-          authenticating: false,
-          errorState: 'זמן קצוב - אנא נסו לרענן את הדף'
-        });
-      }
-    }, 8000); // 8 second timeout
+      updateClientAuthState({
+        clientRecordStatus: 'not-found',
+        authenticating: false,
+        errorState: null
+      });
+    }, 3000); // Reduced to 3 seconds
 
     return () => clearTimeout(timeout);
-  }, [clientQueryLoading, shouldFetch, updateClientAuthState, user?.id]);
+  }, [clientQueryLoading, shouldFetch, updateClientAuthState]);
 
   const retryFetch = useCallback(() => {
     console.log("[CLIENT_DATA_FETCHER] Manual retry triggered");

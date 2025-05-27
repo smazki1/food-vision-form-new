@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { clientAuthService } from '@/services/clientAuthService';
 
 /**
- * Hook to verify database connection with timeout
+ * Hook to verify database connection with aggressive timeout
  */
 export const useConnectionVerifier = (
   onConnectionError: (error: string) => void
@@ -16,11 +17,11 @@ export const useConnectionVerifier = (
     onConnectionErrorRef.current = onConnectionError;
   }, [onConnectionError]);
 
-  // Test database connection on mount
+  // Test database connection on mount with aggressive timeout
   useEffect(() => {
-    console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - useEffect for connection test RUNS");
+    console.log("[CONNECTION_VERIFIER] Starting connection test");
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout | undefined = undefined; // Define timeoutId here
+    let timeoutId: NodeJS.Timeout | undefined = undefined;
     const startTime = Date.now();
     
     const performCleanup = () => {
@@ -28,57 +29,43 @@ export const useConnectionVerifier = (
       if (timeoutId) clearTimeout(timeoutId);
     };
 
+    // Aggressive 2 second timeout
     timeoutId = setTimeout(() => {
       if (isMounted && !connectionChecked) {
-        console.warn("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection check timed out after 5s");
-        if (!connectionVerified) { // Only if not already successfully verified
-            setConnectionVerified(true); // Or consider false if timeout is a hard failure for verification
-            onConnectionErrorRef.current("Database connection check timed out. Some features may be limited.");
-        }
+        console.warn("[CONNECTION_VERIFIER] Connection check timed out after 2s - assuming connected");
+        setConnectionVerified(true); // Assume connection works
         setConnectionChecked(true);
       }
-    }, 5000);
+    }, 2000);
     
     const testConnection = async () => {
       try {
         const { success, error: connError } = await clientAuthService.testDatabaseConnection();
         if (!isMounted) return;
-        clearTimeout(timeoutId); // Clear timeout as soon as test finishes
+        clearTimeout(timeoutId);
         
         const duration = Date.now() - startTime;
-        console.log(`[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection test completed in ${duration}ms`);
+        console.log(`[CONNECTION_VERIFIER] Connection test completed in ${duration}ms`);
         
         if (connError) {
-          onConnectionErrorRef.current(`Database connection error: ${connError.message}`);
-          setConnectionVerified(false);
+          console.warn("[CONNECTION_VERIFIER] Connection error, but continuing:", connError.message);
+          setConnectionVerified(true); // Continue anyway
         } else {
           setConnectionVerified(true);
-          onConnectionErrorRef.current('');
         }
         setConnectionChecked(true);
 
       } catch (err) {
         if (!isMounted) return;
-        clearTimeout(timeoutId); // Clear timeout on error too
-        console.error("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection test exception:", err);
-        setConnectionVerified(false);
+        clearTimeout(timeoutId);
+        console.warn("[CONNECTION_VERIFIER] Connection test failed, but continuing:", err);
+        setConnectionVerified(true); // Continue anyway to prevent blocking
         setConnectionChecked(true);
-        onConnectionErrorRef.current(`Database connection failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
-        
-        // This timeout for forcing true might be problematic, consider removing if not essential for offline
-        setTimeout(() => {
-          if (isMounted && !connectionVerified) {
-            console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Forcing connection verification to true after exception.");
-            setConnectionVerified(true);
-          } 
-        }, 500);
       }
     };
     
-    if (!connectionChecked) { // Only run the test if not already checked in this effect cycle
-    testConnection();
-    } else {
-        console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Skipping testConnection, already checked.");
+    if (!connectionChecked) {
+      testConnection();
     }
     
     return performCleanup;
