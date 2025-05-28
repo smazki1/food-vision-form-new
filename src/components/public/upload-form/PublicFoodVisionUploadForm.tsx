@@ -101,25 +101,23 @@ const PublicFoodVisionUploadForm: React.FC = () => {
               onFinalSubmit={isReviewStep ? handleSubmit : undefined}
             />
 
-            {/* Navigation Buttons */}
+            {/* Navigation Buttons - Centered and Mobile Responsive */}
             {currentStepId !== 4 && (
-              <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-12 pt-8 border-t border-gray-100">
                 {!isFirstStep && (
                   <button
                     onClick={handlePrevious}
                     disabled={isSubmitting}
-                    className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+                    className="w-full sm:w-auto order-2 sm:order-1 px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 min-w-[120px]"
                   >
                     חזור
                   </button>
                 )}
                 
-                <div className="flex-1"></div>
-                
                 <button
                   onClick={handleNext}
                   disabled={isSubmitting}
-                  className="px-8 py-4 bg-[#F3752B] text-white rounded-xl font-semibold hover:bg-orange-600 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50"
+                  className="w-full sm:w-auto order-1 sm:order-2 px-8 py-4 bg-[#F3752B] text-white rounded-xl font-semibold hover:bg-orange-600 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 min-w-[120px]"
                 >
                   {isSubmitting ? 'מעבד...' : 'הבא'}
                 </button>

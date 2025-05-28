@@ -17,6 +17,9 @@ export const validateItemDetailsStep = (formData: NewItemFormData): Record<strin
   if (!formData.itemName?.trim()) {
     errors.itemName = 'שם הפריט הוא שדה חובה';
   }
+  if (!formData.itemType) {
+    errors.itemType = 'יש לבחור סוג פריט';
+  }
   if (!formData.description?.trim()) {
     errors.description = 'תיאור המנה הוא שדה חובה';
   }

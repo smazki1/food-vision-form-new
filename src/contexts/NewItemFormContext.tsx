@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface NewItemFormData {
   restaurantName: string;
-  submitterName?: string;
+  submitterName: string;
   itemName: string;
   itemType: 'dish' | 'cocktail' | 'drink';
   description: string;
