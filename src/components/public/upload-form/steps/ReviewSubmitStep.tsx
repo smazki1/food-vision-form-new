@@ -29,7 +29,8 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
   const { formData } = useNewItemForm();
 
   const { 
-    restaurantName, submitterName,
+    restaurantName,
+    submitterName,
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
 
@@ -43,9 +44,9 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
 
   return (
     <div className="space-y-8" dir="rtl">
-      <div className="text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">סקירה ואישור</h2>
-        <p className="text-lg text-muted-foreground mb-8">
+      <div>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">סקירה ואישור</h2>
+        <p className="text-gray-600 text-lg mb-8 text-center">
           אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית.
         </p>
       </div>
@@ -53,7 +54,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       <section className="space-y-4">
         <div className="flex items-center mb-3">
           <Building2 className="h-6 w-6 text-emerald-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי מסעדה</h3>
+          <h3 className="text-xl font-semibold text-gray-700">פרטי מסעדה</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
@@ -65,7 +66,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       <section className="space-y-4">
         <div className="flex items-center mb-3">
           <ItemIcon className="h-6 w-6 text-emerald-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי הפריט</h3>
+          <h3 className="text-xl font-semibold text-gray-700">פרטי הפריט</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
@@ -79,7 +80,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
       <section className="space-y-4">
          <div className="flex items-center mb-3">
             <ImageIcon className="h-6 w-6 text-emerald-500 ml-3" /> 
-            <h3 className="text-lg font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
+            <h3 className="text-xl font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
           </div>
           {referenceImages.length > 0 ? (
           <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white">
@@ -110,7 +111,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
             onClick={onFinalSubmit}
             disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
             className={cn(
-                "w-full text-lg md:text-xl font-bold py-6 px-8 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
+                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
                 "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
                 "border-2",
                 canSubmit 
@@ -120,7 +121,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
             )}
         >
             <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-            <span className="leading-tight">שלח בקשה</span>
+            <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
         </Button>
       )}

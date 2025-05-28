@@ -1,9 +1,9 @@
 
 import React from 'react';
-import UnifiedUploadForm from '@/components/unified-upload/UnifiedUploadForm';
+import PublicFoodVisionUploadForm from '@/components/public/upload-form/PublicFoodVisionUploadForm';
 
 const PublicUploadPage: React.FC = () => {
-  return <UnifiedUploadForm />;
+  return <PublicFoodVisionUploadForm />;
 };
 
 export default PublicUploadPage;
