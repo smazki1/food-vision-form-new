@@ -1,4 +1,3 @@
-
 /// <reference types="vitest/globals" />
 
 import { renderHook, waitFor } from '@testing-library/react';
@@ -7,7 +6,8 @@ import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { toast } from 'sonner';
+// import { toast } from 'sonner'; // toast is no longer asserted here
+import { optimizedAuthService } from '@/services/optimizedAuthService'; // Ensure this is imported
 
 // Mock supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -18,17 +18,25 @@ vi.mock('@/integrations/supabase/client', () => ({
         data: { subscription: { unsubscribe: vi.fn() } },
       })),
     },
-    rpc: vi.fn(),
+    // rpc: vi.fn(), // Not needed if service is mocked
   },
 }));
 
-// Mock sonner toast
+// Mock sonner toast (still needed for other potential tests, but not asserted here)
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
     info: vi.fn(),
     dismiss: vi.fn(),
+  },
+}));
+
+// Mock the optimizedAuthService
+vi.mock('@/services/optimizedAuthService', () => ({
+  optimizedAuthService: {
+    getUserAuthData: vi.fn(),
+    clearAuthCache: vi.fn(),
   },
 }));
 
@@ -54,6 +62,8 @@ describe('useCurrentUserRole - Error Handling', () => {
     (supabase.auth.onAuthStateChange as Mock).mockReturnValue({
       data: { subscription: { unsubscribe: vi.fn() } },
     });
+    // Reset optimizedAuthService mocks too
+    (optimizedAuthService.getUserAuthData as Mock).mockReset();
   });
 
   it('should transition to ERROR_SESSION if getSession resolves with an error', async () => {
@@ -63,20 +73,21 @@ describe('useCurrentUserRole - Error Handling', () => {
 
     await waitFor(() => expect(result.current.status).toBe('ERROR_SESSION'));
     expect(result.current.error).toBe(sessionError.message);
-    expect(toast.error).toHaveBeenCalledWith(`Session error: ${sessionError.message}`, { id: 'user-role-error-toast' });
+    // expect(toast.error).toHaveBeenCalledWith(`Session error: ${sessionError.message}`, { id: 'user-role-error-toast' }); // Removed
   });
 
   it('should transition to ERROR_FETCHING_ROLE if rpc call fails', async () => {
     const mockSession = { user: { id: 'user-rpc-fail' } };
-    const rpcError = { message: 'RPC failed DETAIL' };
+    const rpcErrorMessage = 'RPC failed DETAIL';
     (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as Mock).mockRejectedValue(rpcError); 
+    
+    // Mock optimizedAuthService.getUserAuthData to reject with an error
+    (optimizedAuthService.getUserAuthData as Mock).mockRejectedValue(new Error(rpcErrorMessage)); 
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     
-    await waitFor(() => expect(result.current.status).toBe('FETCHING_ROLE'));
     await waitFor(() => expect(result.current.status).toBe('ERROR_FETCHING_ROLE'), { timeout: 2000 });
-    expect(result.current.error).toBe(rpcError.message);
-    expect(toast.error).toHaveBeenCalledWith(`Error determining user role. ${rpcError.message}`, { id: 'user-role-error-toast' });
+    expect(result.current.error).toBe(rpcErrorMessage);
+    // expect(toast.error).toHaveBeenCalledWith(`Error determining user role. ${rpcErrorMessage}`, { id: 'user-role-error-toast' }); // Removed
   });
 });

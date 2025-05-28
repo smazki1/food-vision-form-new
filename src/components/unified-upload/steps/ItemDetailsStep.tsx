@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface ItemDetailsStepProps {
@@ -18,14 +17,14 @@ const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({
   onInputChange
 }) => {
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">פרטי הפריט</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-center text-[#8B1E3F] mb-4">פרטי הפריט</h2>
       
-      <div>
-        <label className="block text-sm font-medium mb-1">שם הפריט *</label>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2 text-[#333333]">שם הפריט *</label>
         <input
           type="text"
-          className="w-full p-3 border rounded-md"
+          className="w-full p-3 border rounded-md focus:ring-2 focus:ring-[#8B1E3F] focus:border-[#8B1E3F] transition-all"
           value={formData.itemName}
           onChange={(e) => onInputChange('itemName', e.target.value)}
           placeholder="הזן את שם הפריט"
@@ -35,10 +34,10 @@ const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({
         )}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">סוג הפריט</label>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2 text-[#333333]">סוג הפריט</label>
         <select
-          className="w-full p-3 border rounded-md"
+          className="w-full p-3 border rounded-md focus:ring-2 focus:ring-[#8B1E3F] focus:border-[#8B1E3F] transition-all"
           value={formData.itemType}
           onChange={(e) => onInputChange('itemType', e.target.value)}
         >
@@ -48,10 +47,10 @@ const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({
         </select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">תיאור</label>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2 text-[#333333]">תיאור</label>
         <textarea
-          className="w-full p-3 border rounded-md"
+          className="w-full p-3 border rounded-md focus:ring-2 focus:ring-[#8B1E3F] focus:border-[#8B1E3F] transition-all"
           rows={3}
           value={formData.description}
           onChange={(e) => onInputChange('description', e.target.value)}
@@ -59,10 +58,10 @@ const ItemDetailsStep: React.FC<ItemDetailsStepProps> = ({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">הערות מיוחדות</label>
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2 text-[#333333]">הערות מיוחדות</label>
         <textarea
-          className="w-full p-3 border rounded-md"
+          className="w-full p-3 border rounded-md focus:ring-2 focus:ring-[#8B1E3F] focus:border-[#8B1E3F] transition-all"
           rows={2}
           value={formData.specialNotes}
           onChange={(e) => onInputChange('specialNotes', e.target.value)}

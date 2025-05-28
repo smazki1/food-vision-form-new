@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
 import ItemDetailsStep from './steps/ItemDetailsStep';
@@ -11,6 +9,7 @@ import ImageUploadStep from './steps/ImageUploadStep';
 import ReviewStep from './steps/ReviewStep';
 import { useUnifiedFormSubmission } from './hooks/useUnifiedFormSubmission';
 import { useFormValidation } from './hooks/useFormValidation';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface FormData {
   restaurantName: string;
@@ -36,6 +35,7 @@ const UnifiedUploadForm: React.FC = () => {
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const { isSubmitting, submitForm } = useUnifiedFormSubmission();
   const { errors, validateStep, clearErrors } = useFormValidation();
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
   const [formData, setFormData] = useState<FormData>({
     restaurantName: '',
@@ -137,6 +137,8 @@ const UnifiedUploadForm: React.FC = () => {
     const success = await submitForm(formData, isAuthenticated, clientId);
     
     if (success) {
+      setShowSuccessDialog(true);
+      
       // Reset form
       setFormData({
         restaurantName: isAuthenticated ? formData.restaurantName : '',
@@ -152,6 +154,10 @@ const UnifiedUploadForm: React.FC = () => {
       setCurrentStep(1);
       clearErrors();
     }
+  };
+  
+  const handleNewSubmission = () => {
+    setShowSuccessDialog(false);
   };
 
   const renderStepContent = () => {
@@ -198,25 +204,22 @@ const UnifiedUploadForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div dir="rtl" className="flex flex-col min-h-screen bg-gray-100">
       {/* Progress Header */}
       <div className="p-4 bg-white shadow-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
+              <div key={step.id} className="flex flex-col items-center">
                 <div className={`
                   w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                  ${currentStep >= step.id ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'}
+                  ${currentStep >= step.id ? 'bg-[#8B1E3F] text-white' : 'bg-gray-200 text-gray-600'}
                 `}>
                   {step.id}
                 </div>
-                <span className={`mr-2 text-sm ${currentStep >= step.id ? 'text-primary font-medium' : 'text-gray-500'}`}>
+                <span className={`mt-1 text-sm ${currentStep >= step.id ? 'text-[#8B1E3F] font-medium' : 'text-gray-500'}`}>
                   {step.name}
                 </span>
-                {index < STEPS.length - 1 && (
-                  <ChevronLeft className="h-4 w-4 text-gray-400 mx-2" />
-                )}
               </div>
             ))}
           </div>
@@ -226,35 +229,45 @@ const UnifiedUploadForm: React.FC = () => {
       {/* Form Content */}
       <main className="flex-grow p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-[#8B1E3F]">העלאת פריט חדש</h1>
+            <p className="text-gray-600">אנא מלא את הפרטים הבאים כדי להעלות פריט חדש</p>
+          </div>
+          
           {isLoadingUserData ? (
             <div className="flex justify-center items-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#8B1E3F]"></div>
             </div>
           ) : (
             renderStepContent()
           )}
 
           {/* Navigation */}
-          <div className="mt-8 flex justify-between">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentStep === 1 || isSubmitting}
-            >
-              <ChevronRight className="ml-2 h-4 w-4" />
-              הקודם
-            </Button>
+          <div className="mt-8 flex justify-center gap-4">
+            {currentStep > 1 && (
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={isSubmitting}
+                className="min-w-[120px] border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
+              >
+                הקודם
+              </Button>
+            )}
 
             {currentStep < 4 ? (
-              <Button onClick={handleNext} disabled={isSubmitting}>
+              <Button 
+                onClick={handleNext} 
+                disabled={isSubmitting}
+                className="min-w-[120px] bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
+              >
                 הבא
-                <ChevronLeft className="mr-2 h-4 w-4" />
               </Button>
             ) : (
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-green-600 hover:bg-green-700"
+                className="min-w-[120px] bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white"
               >
                 {isSubmitting ? 'שולח...' : 'שלח הגשה'}
               </Button>
@@ -262,6 +275,26 @@ const UnifiedUploadForm: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="bg-white p-6 rounded-lg max-w-md mx-auto text-center">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#8B1E3F]">ההגשה נשלחה בהצלחה!</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">תודה שהעלית פריט חדש. הצוות שלנו יטפל בבקשתך בהקדם.</p>
+          </div>
+          <DialogFooter className="flex justify-center">
+            <Button 
+              onClick={handleNewSubmission} 
+              className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
+            >
+              העלאה נוספת
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

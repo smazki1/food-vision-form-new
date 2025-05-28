@@ -19,6 +19,9 @@ export interface CurrentUserRoleState {
   isAccountManager: boolean;
   isEditor: boolean;
   userId: string | null;
+  clientId: string | null;
+  restaurantName: string | null;
+  hasLinkedClientRecord: boolean;
   error: string | null;
   isLoading: boolean;
 }
@@ -30,6 +33,9 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
   const [status, setStatus] = useState<CurrentUserRoleStatus>('INITIALIZING');
   const [role, setRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [clientId, setClientId] = useState<string | null>(null);
+  const [restaurantName, setRestaurantName] = useState<string | null>(null);
+  const [hasLinkedClientRecord, setHasLinkedClientRecord] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [forceComplete, setForceComplete] = useState(false);
@@ -63,6 +69,9 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
       setStatus('NO_SESSION');
       setRole(null);
       setUserId(null);
+      setClientId(null);
+      setRestaurantName(null);
+      setHasLinkedClientRecord(false);
       setError(null);
       return;
     }
@@ -77,13 +86,20 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
         
         if (!forceComplete) {
           setRole(authData.role);
+          setClientId(authData.clientId);
+          setRestaurantName(authData.restaurantName);
+          setHasLinkedClientRecord(authData.hasLinkedClientRecord);
           setStatus('ROLE_DETERMINED');
-          setError(null);
+          setError(authData.error || null);
         }
       } catch (error) {
         console.error("[useCurrentUserRoleEngine] Error fetching role:", error);
         if (!forceComplete) {
           setStatus('ERROR_FETCHING_ROLE');
+          setRole(null);
+          setClientId(null);
+          setRestaurantName(null);
+          setHasLinkedClientRecord(false);
           setError(error instanceof Error ? error.message : 'Failed to fetch user role');
         }
       }
@@ -139,6 +155,9 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
     isAccountManager,
     isEditor,
     userId,
+    clientId,
+    restaurantName,
+    hasLinkedClientRecord,
     error,
     isLoading
   };

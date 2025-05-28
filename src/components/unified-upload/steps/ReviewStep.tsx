@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -32,42 +31,47 @@ const ReviewStep: React.FC<ReviewStepProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">סקירה ואישור</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-center text-[#8B1E3F] mb-4">סקירה ואישור</h2>
+      <p className="text-center text-gray-600 mb-4">אנא אשר את הפרטים לפני השליחה</p>
       
-      <Card>
+      <Card className="border-[#8B1E3F]/20 shadow-sm">
         <CardContent className="p-4">
-          <h3 className="font-medium mb-2">פרטי המסעדה</h3>
-          <p><strong>שם המסעדה:</strong> {formData.restaurantName}</p>
-          {!isAuthenticated && (
-            <>
-              <p><strong>אימייל:</strong> {formData.contactEmail}</p>
-              <p><strong>טלפון:</strong> {formData.contactPhone}</p>
-            </>
-          )}
+          <h3 className="font-medium mb-3 text-[#8B1E3F] text-center">פרטי המסעדה</h3>
+          <div className="text-center">
+            <p className="mb-2"><span className="font-semibold">שם המסעדה:</span> {formData.restaurantName}</p>
+            {!isAuthenticated && (
+              <>
+                <p className="mb-2"><span className="font-semibold">אימייל:</span> {formData.contactEmail}</p>
+                <p className="mb-2"><span className="font-semibold">טלפון:</span> {formData.contactPhone}</p>
+              </>
+            )}
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-[#8B1E3F]/20 shadow-sm">
         <CardContent className="p-4">
-          <h3 className="font-medium mb-2">פרטי הפריט</h3>
-          <p><strong>שם הפריט:</strong> {formData.itemName}</p>
-          <p><strong>סוג:</strong> {getItemTypeLabel(formData.itemType)}</p>
-          {formData.description && <p><strong>תיאור:</strong> {formData.description}</p>}
-          {formData.specialNotes && <p><strong>הערות:</strong> {formData.specialNotes}</p>}
+          <h3 className="font-medium mb-3 text-[#8B1E3F] text-center">פרטי הפריט</h3>
+          <div className="text-center">
+            <p className="mb-2"><span className="font-semibold">שם הפריט:</span> {formData.itemName}</p>
+            <p className="mb-2"><span className="font-semibold">סוג:</span> {getItemTypeLabel(formData.itemType)}</p>
+            {formData.description && <p className="mb-2"><span className="font-semibold">תיאור:</span> {formData.description}</p>}
+            {formData.specialNotes && <p className="mb-2"><span className="font-semibold">הערות:</span> {formData.specialNotes}</p>}
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-[#8B1E3F]/20 shadow-sm">
         <CardContent className="p-4">
-          <h3 className="font-medium mb-2">תמונות ({formData.referenceImages.length})</h3>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <h3 className="font-medium mb-3 text-[#8B1E3F] text-center">תמונות ({formData.referenceImages.length})</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {imagePreviews.map((preview, index) => (
               <img
                 key={index}
                 src={preview}
                 alt={`תמונה ${index + 1}`}
-                className="w-full h-20 object-cover rounded"
+                className="w-full h-20 object-cover rounded shadow-sm"
               />
             ))}
           </div>

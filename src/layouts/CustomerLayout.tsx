@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -54,30 +53,36 @@ export function CustomerLayout() {
     }
   };
 
-  // Show client profile warning only if both client systems show no record
-  const noClientProfileBanner = unifiedIsAuthenticated && 
-    clientRecordStatus === 'not-found' && 
-    !unifiedAuthClientId && (
-    <Alert className="bg-amber-50 border-amber-200 mb-4">
-      <AlertTriangle className="h-4 w-4 text-amber-500" />
-      <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
-      <AlertDescription className="text-amber-700">
-        החשבון שלכם/ן מאומת, אך אינו מקושר לפרופיל לקוח במערכת. חלק מהתכונות עלולות להיות מוגבלות.
-        אנא צרו קשר עם התמיכה לסיוע.
+  const errorBanner = errorState ? (
+    <Alert variant="destructive" className="mb-4">
+      <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>שגיאת אימות לקוח</AlertTitle>
+      <AlertDescription>
+        אירעה שגיאה באימות פרטי הלקוח שלך: {errorState}. 
+        ייתכן שחלק מהפונקציונליות לא תפעל כראוי. אם הבעיה נמשכת, אנא צור קשר עם התמיכה.
       </AlertDescription>
     </Alert>
-  );
+  ) : null;
 
-  // Show error banner only for actual errors
-  const errorBanner = errorState && (
-    <Alert className="bg-red-50 border-red-200 mb-4">
-      <AlertTriangle className="h-4 w-4 text-red-500" />
-      <AlertTitle className="text-red-800">שגיאה בטעינת פרופיל לקוח</AlertTitle>
-      <AlertDescription className="text-red-700">
-        {errorState}
+  const noClientProfileBanner = 
+    unifiedIsAuthenticated && 
+    unifiedRole === 'customer' && 
+    !clientId && 
+    clientRecordStatus === 'not-found' &&
+    !errorState &&
+    location.pathname !== '/customer/profile' ? (
+    <Alert variant="default" className="mb-4 bg-yellow-50 border-yellow-300 text-yellow-700">
+      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+      <AlertTitle className="text-yellow-800">נדרש עדכון פרופיל</AlertTitle>
+      <AlertDescription>
+        נראה שעדיין לא השלמת את הגדרת פרופיל הלקוח שלך.
+        <Link to="/customer/profile" className="font-semibold underline ml-1">
+          לחץ כאן להשלמת הפרופיל
+        </Link>
+        {' '}כדי לגשת לכל התכונות.
       </AlertDescription>
     </Alert>
-  );
+  ) : null;
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
@@ -90,17 +95,6 @@ export function CustomerLayout() {
             asChild
           >
             <Link to="/customer/dashboard">
-              <Home className="ml-2 h-4 w-4" />
-              לוח בקרה
-            </Link>
-          </Button>
-
-          <Button
-            variant={isActive("/customer/home") ? "default" : "ghost"}
-            className="justify-start"
-            asChild
-          >
-            <Link to="/customer/home">
               <Home className="ml-2 h-4 w-4" />
               דף הבית
             </Link>

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { NewItemFormData, useNewItemForm } from '@/contexts/NewItemFormContext';
 import { useClientAuth } from '@/hooks/useClientAuth';
-import { ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon, AlertTriangle } from 'lucide-react';
 import { useClientPackage } from '@/hooks/useClientPackage';
@@ -12,6 +12,7 @@ import { allSteps } from './config/formStepsConfig';
 import { useFormNavigation } from './hooks/useFormNavigation';
 import { useRestaurantDetailsSubmission } from './hooks/useRestaurantDetailsSubmission';
 import { useFormSubmission } from './hooks/useFormSubmission';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export interface StepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -29,6 +30,7 @@ const FoodVisionUploadForm: React.FC = () => {
   const { remainingDishes } = useClientPackage();
   const [forceRender, setForceRender] = useState(false);
   const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const {
     formSteps,
@@ -146,12 +148,17 @@ const FoodVisionUploadForm: React.FC = () => {
 
     const success = await submitForm(formData, finalClientId, remainingDishes, setStepErrors);
     if (success) {
+      setShowSuccessDialog(true);
       resetFormData();
       updateStepsForAuthenticatedUser();
       setStepErrors({});
     } else {
       if (currentStepId !== 4) moveToStep(4);
     }
+  };
+  
+  const handleNewSubmission = () => {
+    setShowSuccessDialog(false);
   };
 
   if (authenticating && !forceRender) {
@@ -164,7 +171,7 @@ const FoodVisionUploadForm: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50" dir="rtl">
+    <div className="flex flex-col min-h-screen bg-gray-100" dir="rtl">
       <div className="relative p-4 bg-[#8B1E3F] shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto">
             <FormProgress currentStepId={currentStepId} formSteps={typedFormSteps} />
@@ -173,6 +180,11 @@ const FoodVisionUploadForm: React.FC = () => {
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl font-bold text-[#8B1E3F]">העלאת פריט חדש</h1>
+            <p className="text-gray-600">אנא מלא את הפרטים הבאים כדי להעלות פריט חדש</p>
+          </div>
+          
           {/* Error state alert with immediate action */}
           {errorState && clientRecordStatus === 'error' && (
             <Alert variant="destructive" className="mb-6">
@@ -219,9 +231,9 @@ const FoodVisionUploadForm: React.FC = () => {
           )}
 
           {currentStepId !== 1 && !clientId && !errorState && (
-             <Alert className="mb-6">
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
+             <Alert className="mb-6 bg-[#F3752B]/10 border-[#F3752B] text-[#8B1E3F]">
+                <InfoIcon className="h-4 w-4 mr-2" />
+                <AlertDescription className="text-right">
                   נראה שלא השלמת את פרטי המסעדה. 
                   <Button variant="link" className="p-0 h-auto text-[#8B1E3F] hover:underline" onClick={() => {
                       resetToAllSteps();
@@ -240,16 +252,13 @@ const FoodVisionUploadForm: React.FC = () => {
             onFinalSubmit={handleMainSubmit} 
           />
           
-          <div className={cn(
-            "mt-8 flex justify-center gap-4",
-            formSteps.length === 1 || (currentStepId === formSteps[0].id && clientId) ? "justify-center" : "justify-center"
-          )}>
-            {(formSteps.length > 1 && !(currentStepId === formSteps[0].id && clientId) )&& (
+          <div className="mt-8 flex justify-center gap-4">
+            {(formSteps.length > 1 && !(currentStepId === formSteps[0].id && clientId)) && (
               <Button 
                 variant="outline"
                 onClick={handlePrevious} 
                 disabled={isSubmitting || isCreatingClient}
-                className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
+                className="min-w-[120px] border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
               >
                 הקודם
               </Button>
@@ -257,10 +266,10 @@ const FoodVisionUploadForm: React.FC = () => {
             <Button 
               onClick={currentStepId === formSteps[formSteps.length -1].id ? handleMainSubmit : handleNext} 
               disabled={isSubmitting || isCreatingClient}
-              className={cn("min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full",
+              className={cn("min-w-[120px]",
                 currentStepId === formSteps[formSteps.length -1].id 
-                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90" 
-                : "bg-[#F3752B] hover:bg-[#F3752B]/90"
+                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
+                : "bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
               )}
             >
               {isSubmitting ? 
@@ -273,6 +282,26 @@ const FoodVisionUploadForm: React.FC = () => {
           </div>
         </div>
       </main>
+      
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent className="bg-white p-6 rounded-lg max-w-md mx-auto text-center">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-[#8B1E3F]">ההגשה נשלחה בהצלחה!</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-4">תודה שהעלית פריט חדש. הצוות שלנו יטפל בבקשתך בהקדם.</p>
+          </div>
+          <DialogFooter className="flex justify-center">
+            <Button 
+              onClick={handleNewSubmission} 
+              className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
+            >
+              העלאה נוספת
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

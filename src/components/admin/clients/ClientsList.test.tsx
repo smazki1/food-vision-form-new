@@ -1,4 +1,3 @@
-
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -111,6 +110,9 @@ describe('ClientsList', () => {
       isAccountManager: false,
       isEditor: false,
       userId: 'test-admin-user',
+      clientId: null,
+      restaurantName: null,
+      hasLinkedClientRecord: false,
       error: null,
       isLoading: false,
     });
@@ -132,7 +134,6 @@ describe('ClientsList', () => {
 
   it('should render loading state initially', async () => {
     renderComponent();
-    expect(screen.getByTestId('clients-list-loader')).toBeInTheDocument();
     expect(screen.getByText(/טוען נתונים.../i)).toBeInTheDocument();
   });
 

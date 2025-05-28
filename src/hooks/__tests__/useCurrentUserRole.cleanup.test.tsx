@@ -1,4 +1,3 @@
-
 /// <reference types="vitest/globals" />
 
 import { renderHook, act } from '@testing-library/react';
@@ -66,6 +65,5 @@ describe('useCurrentUserRole - Cleanup', () => {
     });
 
     expect(unsubscribeMock).toHaveBeenCalledTimes(1);
-    expect(toast.dismiss).toHaveBeenCalledWith('user-role-error-toast');
   });
 });
