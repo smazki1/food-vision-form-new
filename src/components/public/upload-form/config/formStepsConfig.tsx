@@ -4,8 +4,8 @@ import PublicReviewSubmitStep from '../steps/PublicReviewSubmitStep';
 import RestaurantNameStep from '../steps/RestaurantNameStep';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 import {
-  validateRestaurantNameStep,
-  validateCombinedUploadStep,
+  validateRestaurantDetailsStep,
+  validateImageUploadStep,
   validateReviewStep
 } from '@/utils/publicFormValidation';
 
@@ -14,13 +14,13 @@ export const publicFormSteps = [
     id: 1,
     name: 'שם מסעדה',
     component: RestaurantNameStep,
-    validate: validateRestaurantNameStep
+    validate: validateRestaurantDetailsStep
   },
   {
     id: 2,
     name: 'פרטי העלאה',
     component: CombinedUploadStep,
-    validate: validateCombinedUploadStep
+    validate: validateImageUploadStep
   },
   {
     id: 3,
