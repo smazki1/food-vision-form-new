@@ -44,12 +44,8 @@ export function useSubmissions() {
     queryKey: ["client-processed-items", effectiveClientId], 
     queryFn: async () => {
       console.log("[useSubmissions] queryFn triggered. Using effectiveClientId:", effectiveClientId, "Is authenticated:", unifiedIsAuthenticated);
-      if (!effectiveClientId) {
-        console.warn("[useSubmissions] queryFn: No effectiveClientId, returning empty array.");
-        return [];
-      }
-      if (!unifiedIsAuthenticated) {
-        console.warn("[useSubmissions] queryFn: User not unifiedAuthenticated, returning empty array.");
+      if (!effectiveClientId || !unifiedIsAuthenticated) {
+        console.warn("[useSubmissions] queryFn: Conditions not met, returning empty array.");
         return [];
       }
       
@@ -110,7 +106,6 @@ export function useSubmissions() {
         packageIdToQuery = processedItems[0].assigned_package_id_at_submission;
         console.log("[useSubmissions] Using package ID from most recent submission:", packageIdToQuery);
       } else {
-        // Fallback: Try to get active_package_id from the clients table
         console.log("[useSubmissions] No package ID on submission, trying to fetch current_package_id from clients table for client:", effectiveClientId);
         try {
           const { data: clientPackageData, error: clientPackageError } = await supabase
@@ -121,7 +116,6 @@ export function useSubmissions() {
 
           if (clientPackageError) {
             console.error("[useSubmissions] Error fetching current_package_id from client:", clientPackageError);
-            // Do not throw, let it proceed to fetch package details with null if needed
           } else if (clientPackageData?.current_package_id) {
             packageIdToQuery = clientPackageData.current_package_id;
             console.log("[useSubmissions] Found current_package_id from client:", packageIdToQuery);
@@ -154,32 +148,73 @@ export function useSubmissions() {
           service_packages (package_name)
         `)
         .eq('client_id', effectiveClientId)
-        .eq('package_id', packageIdToQuery) // Ensure we match the client and the specific package instance
+        .eq('package_id', packageIdToQuery)
         .order('start_date', { ascending: false })
         .limit(1)
-        .maybeSingle(); // A client might have multiple instances of the same package_id, take the latest active or most recent.
+        .maybeSingle();
 
       if (clientPackageError) {
-        console.error('[useSubmissions] Error fetching client package details:', clientPackageError);
+        console.error('[useSubmissions] Error fetching client_packages details:', clientPackageError);
+        // Fallback: Try fetching from the 'service_packages' table directly
+        console.log("[useSubmissions] Fallback: Trying to fetch general package details for package_id:", packageIdToQuery);
+        const { data: generalPackageData, error: generalPackageError } = await supabase
+            .from('service_packages')
+            .select('package_name, total_servings')
+            .eq('package_id', packageIdToQuery)
+            .single();
+        
+        if (generalPackageError) {
+            console.error('[useSubmissions] Error fetching general package details after fallback:', generalPackageError);
+            return {
+                packageName: 'שגיאה בטעינת חבילה',
+                totalSubmissions: null,
+                startDate: null,
+                endDate: null,
+                isActive: false,
+            };
+        }
+        if (generalPackageData) {
+            console.log("[useSubmissions] Fallback: Fetched general package details:", generalPackageData);
+            return {
+                packageName: generalPackageData.package_name,
+                totalSubmissions: generalPackageData.total_servings,
+                startDate: null, 
+                endDate: null,
+                isActive: true, 
+            };
+        }
+        console.warn("[useSubmissions] Fallback: No general package found, returning error state.");
         return {
-          packageName: 'שגיאה בטעינת חבילה',
-          totalSubmissions: null,
-          startDate: null,
-          endDate: null,
-          isActive: false,
-        };
+            packageName: 'פרטי חבילה לא זמינים', // More specific error
+            totalSubmissions: null,
+            startDate: null,
+            endDate: null,
+            isActive: false,
+        }; 
       }
 
-      if (clientPackageData && clientPackageData.service_packages) {
-        console.log("[useSubmissions] Fetched client package details:", clientPackageData);
+      if (clientPackageData) {
+        console.log("[useSubmissions] Fetched client-specific package details:", clientPackageData);
+        let packageNameFromData: string | null = 'שם חבילה לא ידוע';
+        const sp = clientPackageData.service_packages;
+
+        if (Array.isArray(sp) && sp.length > 0 && sp[0].package_name) {
+          packageNameFromData = sp[0].package_name;
+        } else if (sp && typeof sp === 'object' && 'package_name' in sp && (sp as { package_name: string }).package_name) {
+          packageNameFromData = (sp as { package_name: string }).package_name;
+        } else if (typeof sp === 'string') { // If service_packages is just a string (name)
+            packageNameFromData = sp;
+        }
+
         return {
-          packageName: (clientPackageData.service_packages as any).package_name,
+          packageName: packageNameFromData,
           totalSubmissions: clientPackageData.total_dishes,
           startDate: clientPackageData.start_date,
           endDate: clientPackageData.end_date,
-          isActive: clientPackageData.is_active ?? false,
+          isActive: clientPackageData.is_active ?? false, // Ensure isActive has a boolean default
         };
       }
+      console.warn("[useSubmissions] No clientPackageData found after query, returning null for package details.");
       return null;
     },
     enabled: queryEnabled && !!effectiveClientId,
@@ -189,26 +224,20 @@ export function useSubmissions() {
   const totalAllowedSubmissions = packageDetails?.totalSubmissions;
 
   let remainingServings: number | undefined = undefined;
-  if (packageDetails) { // Check if packageDetails object exists
-    const totalAllowed = packageDetails.totalSubmissions; // Use a local const for clarity
+  if (packageDetails) {
+    const totalAllowed = packageDetails.totalSubmissions;
     if (typeof totalAllowed === 'number') {
       remainingServings = totalAllowed - submissionsCount;
     } else if (totalAllowed === null) { 
-      // If totalAllowed is explicitly null (e.g. package not assigned, or error loading package)
-      if (packageDetails.packageName === 'לא משויך לחבילה') {
-        // This case implies the client isn't linked to a specific billable package,
-        // potentially a free tier or special status.
-        remainingServings = Infinity; 
+      if (packageDetails.packageName === 'לא משויך לחבילה' || packageDetails.packageName === 'שגיאה בטעינת חבילה' || packageDetails.packageName === 'פרטי חבילה לא זמינים') {
+        remainingServings = undefined; 
       } else {
-        // For other cases where totalSubmissions is null (e.g., 'שגיאה בטעינת חבילה', or unexpected null)
-        // It's safer to assume 0 servings as the package state is uncertain or erroneous.
-        remainingServings = 0;
+        remainingServings = Infinity; 
       }
     }
-    // If totalAllowed is undefined (i.e., the property doesn't exist on packageDetails),
-    // remainingServings will remain undefined, signaling data fetch incompleteness.
-  } 
-  // If packageDetails itself is null or undefined, remainingServings remains undefined.
+  } else {
+    remainingServings = undefined;
+  }
 
   const refreshSubmissions = () => {
     console.log("[useSubmissions] Refreshing submissions for clientId:", effectiveClientId);
@@ -244,5 +273,6 @@ export function useSubmissions() {
     refreshPackageDetails: () => queryClient.invalidateQueries({ queryKey: ['clientPackageDetails', effectiveClientId] }),
     clientId: effectiveClientId,
     isAuthenticated: unifiedIsAuthenticated,
+    isReady: queryEnabled && !loading && !packageDetailsLoading
   };
 }

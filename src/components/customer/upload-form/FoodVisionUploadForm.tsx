@@ -126,7 +126,7 @@ const FoodVisionUploadForm: React.FC = () => {
     const finalClientId = clientId;
 
     if (!finalClientId) {
-      const errorMessage = "שגיאה: לא זוהה מזהה לקוח. אנא התחברו או השלימו את פרטי המסעדה.";
+      // const errorMessage = "שגיאה: לא זוהה מזהה לקוח. אנא התחברו או השלימו את פרטי המסעדה.";
       if (!formSteps.find(s => s.id === 1)) {
         resetToAllSteps();
       } else if (currentStepId !== 1) {
@@ -159,6 +159,9 @@ const FoodVisionUploadForm: React.FC = () => {
   
   const handleNewSubmission = () => {
     setShowSuccessDialog(false);
+    // Reset form to initial step or relevant step for a new submission
+    const firstStepId = allSteps[0].id;
+    moveToStep(firstStepId);
   };
 
   if (authenticating && !forceRender) {
@@ -181,7 +184,7 @@ const FoodVisionUploadForm: React.FC = () => {
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
           <div className="text-center mb-6">
-            <h1 className="text-2xl font-bold text-[#8B1E3F]">העלאת פריט חדש</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-[#8B1E3F]">העלאת פריט חדש</h1>
             <p className="text-gray-600">אנא מלא את הפרטים הבאים כדי להעלות פריט חדש</p>
           </div>
           
@@ -218,22 +221,11 @@ const FoodVisionUploadForm: React.FC = () => {
             </Alert>
           )}
 
-          {/* General submission errors */}
-          {stepErrors.submit && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <h3 className="text-sm font-semibold text-red-700 mb-1 text-center">שגיאות:</h3>
-              <ul className="list-disc list-inside text-xs text-red-600 space-y-0.5">
-                {Object.entries(stepErrors).map(([key, value]) => (
-                  <li key={key}>{value}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {currentStepId !== 1 && !clientId && !errorState && (
-             <Alert className="mb-6 bg-[#F3752B]/10 border-[#F3752B] text-[#8B1E3F]">
-                <InfoIcon className="h-4 w-4 mr-2" />
-                <AlertDescription className="text-right">
+          {/* Alert for missing restaurant details */}
+          {(currentStepId !== 1 && !clientId && !errorState && clientRecordStatus !== 'error') && (
+             <Alert className="mb-6 bg-orange-50 border-orange-300 text-orange-700">
+                <InfoIcon className="h-4 w-4" />
+                <AlertDescription>
                   נראה שלא השלמת את פרטי המסעדה. 
                   <Button variant="link" className="p-0 h-auto text-[#8B1E3F] hover:underline" onClick={() => {
                       resetToAllSteps();
@@ -242,66 +234,82 @@ const FoodVisionUploadForm: React.FC = () => {
                   </Button>
                   {' '}להשלמת הפרטים או התחבר למערכת.
                 </AlertDescription>
-              </Alert>
+            </Alert>
           )}
-          
+
+          {/* General submission errors */}
+          {stepErrors.submit && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>{stepErrors.submit}</AlertDescription>
+            </Alert>
+          )}
+
           <CurrentStepComponent 
-            setExternalErrors={setStepErrors} 
-            clearExternalErrors={handleClearStepErrors} 
+            setExternalErrors={setStepErrors}
+            clearExternalErrors={handleClearStepErrors}
             errors={stepErrors}
             onFinalSubmit={handleMainSubmit} 
           />
-          
-          <div className="mt-8 flex justify-center gap-4">
-            {(formSteps.length > 1 && !(currentStepId === formSteps[0].id && clientId)) && (
+
+          <div className="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious} 
+              disabled={isSubmitting || isCreatingClient || currentStepId === formSteps[0].id}
+              className={cn("bg-gray-200 hover:bg-gray-300 text-gray-700", { "opacity-50 cursor-not-allowed": currentStepId === formSteps[0].id})}
+            >
+              הקודם
+            </Button>
+            {currentStepId !== formSteps[formSteps.length - 1].id ? (
               <Button 
-                variant="outline"
-                onClick={handlePrevious} 
-                disabled={isSubmitting || isCreatingClient}
-                className="min-w-[120px] border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
+                onClick={handleNext} 
+                disabled={isCreatingClient || isSubmitting}
+                className="bg-[#8B1E3F] hover:bg-[#7a1a35] text-white"
               >
-                הקודם
+                {isCreatingClient ? 'יוצר לקוח...' : (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'}
+              </Button>
+            ) : (
+              <Button 
+                onClick={handleMainSubmit} 
+                disabled={isSubmitting || remainingDishes === 0} 
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                {isSubmitting ? 'שולח...' : 'שלח פריט'}
               </Button>
             )}
-            <Button 
-              onClick={currentStepId === formSteps[formSteps.length -1].id ? handleMainSubmit : handleNext} 
-              disabled={isSubmitting || isCreatingClient}
-              className={cn("min-w-[120px]",
-                currentStepId === formSteps[formSteps.length -1].id 
-                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
-                : "bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
-              )}
-            >
-              {isSubmitting ? 
-                'שולח...' : 
-                currentStepId === formSteps[formSteps.length -1].id ? 
-                  'שלח הגשה' : 
-                  (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
-              }
-            </Button>
           </div>
+          {currentStepId === formSteps[formSteps.length - 1].id && remainingDishes !== null && remainingDishes <= 5 && (
+            <Alert variant={remainingDishes === 0 ? "destructive" : "default"} className="mt-4 text-center">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {remainingDishes === 0 
+                  ? "לא נותרו לך מנות בחבילה הנוכחית."
+                  : `נותרו לך ${remainingDishes} מנות בחבילה. פנה למנהל החשבון לחידוש.`
+                }
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       </main>
-      
-      {/* Success Dialog */}
+
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <DialogContent className="bg-white p-6 rounded-lg max-w-md mx-auto text-center">
+        <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold text-[#8B1E3F]">ההגשה נשלחה בהצלחה!</DialogTitle>
+            <DialogTitle className="text-center text-2xl text-green-600">הצלחה!</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <p className="mb-4">תודה שהעלית פריט חדש. הצוות שלנו יטפל בבקשתך בהקדם.</p>
+          <div className="p-4 text-center">
+            <p className="text-lg">הפריט הועלה בהצלחה למערכת.</p>
+            <p className="text-sm text-gray-600">הוא ממתין כעת לעיבוד על ידי הצוות שלנו.</p>
           </div>
-          <DialogFooter className="flex justify-center">
-            <Button 
-              onClick={handleNewSubmission} 
-              className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-white"
-            >
-              העלאה נוספת
+          <DialogFooter className="sm:justify-center">
+            <Button type="button" onClick={handleNewSubmission} className="bg-[#8B1E3F] hover:bg-[#7a1a35] text-white">
+              העלה פריט נוסף
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 };

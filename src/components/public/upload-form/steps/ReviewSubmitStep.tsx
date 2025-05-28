@@ -38,6 +38,9 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, is
     cocktail: "קוקטייל",
     drink: "משקה"
   };
+  
+  const isButtonDisabled = isSubmitting || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit);
+  const hasSpecificSubmitErrors = errors && (errors.finalCheck || errors.submit);
 
   return (
     <div className="space-y-8" dir="rtl">
@@ -119,14 +122,14 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, is
       {onFinalSubmit && (
         <Button
             onClick={onFinalSubmit}
-            disabled={false || isSubmitting || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit)}
+            disabled={isButtonDisabled}
             className={cn(
                 "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-full shadow-lg transition-all duration-200 ease-in-out",
                 "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
-                (false === false) // Temporarily adjusting canSubmit logic, was: canSubmit 
+                !isButtonDisabled && !hasSpecificSubmitErrors
                 ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
                 : "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed",
-                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 text-white"
+                hasSpecificSubmitErrors && "bg-red-500 hover:bg-red-600 text-white" // This will override gray if specific errors exist
             )}
         >
             <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />

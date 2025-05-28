@@ -42,7 +42,7 @@ export const useClientDataFetcher = (
 
   const {
     data: clientData,
-    isLoading: clientQueryLoading,
+    isLoading: rawClientQueryLoading,
     error: clientQueryError,
     refetch,
     isSuccess,
@@ -105,19 +105,19 @@ export const useClientDataFetcher = (
     maxAttempts,
     shouldEnableQuery: shouldFetch,
     userIdFromUserObject: user?.id,
-    isClientQueryLoading: clientQueryLoading, // Actual loading state from useQuery
+    isClientQueryLoading: rawClientQueryLoading, // Actual loading state from useQuery
     hasClientData: clientData !== undefined,
     emergencyTimeoutTriggered
   });
 
   // EMERGENCY AUTO RESOLVER - במקרה שהשאילתה עדיין לא רצה או נתקעת
   useEffect(() => {
-    if (!emergencyTimeoutTriggered && user?.id && (clientQueryLoading || clientData === undefined)) {
+    if (!emergencyTimeoutTriggered && user?.id && (rawClientQueryLoading || clientData === undefined)) {
       console.log("[CLIENT_DATA_FETCHER] Setting up EMERGENCY AUTO RESOLVER timer");
       const timer = setTimeout(() => {
         console.log("[CLIENT_DATA_FETCHER] EMERGENCY AUTO RESOLVER executing with current state:", {
           hasClientData: clientData !== undefined,
-          isLoading: clientQueryLoading,
+          isLoading: rawClientQueryLoading,
           userId: user.id
         });
         
@@ -136,7 +136,7 @@ export const useClientDataFetcher = (
         clearTimeout(timer);
       };
     }
-  }, [user?.id, clientQueryLoading, clientData, emergencyTimeoutTriggered, updateClientAuthState]);
+  }, [user?.id, rawClientQueryLoading, clientData, emergencyTimeoutTriggered, updateClientAuthState]);
 
   // Reset emergency timeout flag when user changes or refresh toggle changes
   useEffect(() => {
@@ -149,7 +149,7 @@ export const useClientDataFetcher = (
       shouldFetch,
       isSuccess,
       isError,
-      clientQueryLoading,
+      clientQueryLoading: rawClientQueryLoading,
       clientData,
       clientQueryError: clientQueryError?.message
     });
@@ -198,7 +198,9 @@ export const useClientDataFetcher = (
       return;
     }
 
-    if (clientQueryLoading) {
+    // Use the calculated loading state for this effect
+    const isLoadingBasedOnRemoteLogic = rawClientQueryLoading && attemptCounter <= maxAttempts && !emergencyTimeoutTriggered;
+    if (isLoadingBasedOnRemoteLogic) {
       console.log("[CLIENT_DATA_FETCHER] Query is loading");
       updateClientAuthState({
         clientRecordStatus: 'loading',
@@ -206,27 +208,12 @@ export const useClientDataFetcher = (
         errorState: null
       });
     }
-  }, [shouldFetch, isSuccess, isError, clientData, clientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError]);
-
-  // Force completion after 1 second
-  useEffect(() => {
-    if (!shouldFetch || !clientQueryLoading) return;
-
-    const timeout = setTimeout(() => {
-      console.warn("[CLIENT_DATA_FETCHER] Query timeout - forcing completion");
-      
-      updateClientAuthState({
-        clientRecordStatus: 'not-found',
-        authenticating: false,
-        errorState: null
-      });
-    }, 1000); // Force completion after 1 second
-
-    return () => clearTimeout(timeout);
-  }, [clientQueryLoading, shouldFetch, updateClientAuthState]);
+  }, [shouldFetch, isSuccess, isError, clientData, rawClientQueryLoading, clientQueryError, updateClientAuthState, handleClientDataFetchError, attemptCounter, maxAttempts, emergencyTimeoutTriggered]);
 
   const retryFetch = useCallback(() => {
     console.log("[CLIENT_DATA_FETCHER] Manual retry triggered");
+    setAttemptCounter(0);
+    setEmergencyTimeoutTriggered(false);
     updateClientAuthState({
       clientRecordStatus: 'loading',
       authenticating: true,
@@ -234,6 +221,8 @@ export const useClientDataFetcher = (
     });
     refetch();
   }, [refetch, updateClientAuthState]);
+
+  const clientQueryLoading = rawClientQueryLoading && attemptCounter <= maxAttempts && !emergencyTimeoutTriggered;
 
   return {
     clientData,
