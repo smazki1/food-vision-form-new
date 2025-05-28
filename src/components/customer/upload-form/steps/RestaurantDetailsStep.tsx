@@ -1,12 +1,12 @@
 
-import React, { useContext } from 'react';
+import React from 'react';
 import { IconInput } from '@/components/ui/icon-input';
-import { NewItemFormContext } from '@/contexts/NewItemFormContext';
+import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { StepProps } from '../FoodVisionUploadForm';
 import { Store } from 'lucide-react';
 
 const RestaurantDetailsStep: React.FC<StepProps> = ({ errors, clearExternalErrors }) => {
-  const { formData, updateFormData } = useContext(NewItemFormContext);
+  const { formData, updateFormData } = useNewItemForm();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     updateFormData({ [e.target.name]: e.target.value });

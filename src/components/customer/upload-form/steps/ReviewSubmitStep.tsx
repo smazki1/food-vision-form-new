@@ -1,6 +1,7 @@
-import React, { useContext } from 'react';
-import { NewItemFormContext } from '@/contexts/NewItemFormContext';
-import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm'; // Use a distinct name
+
+import React from 'react';
+import { useNewItemForm } from '@/contexts/NewItemFormContext';
+import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InfoIcon, CheckCircle, Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle } from 'lucide-react';
@@ -33,7 +34,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
 };
 
 const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubmit }) => {
-  const { formData } = useContext(NewItemFormContext);
+  const { formData } = useNewItemForm();
   const { clientId } = useClientAuth();
   const { remainingDishes, packageName } = useClientPackage();
 

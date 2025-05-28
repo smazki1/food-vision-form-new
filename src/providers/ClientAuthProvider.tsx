@@ -40,7 +40,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   const { 
     clientData,
     clientQueryLoading,
-    retryFetch
+    refetch
   } = useClientDataFetcher(
     user,
     isAuthenticated,
@@ -61,10 +61,10 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       authenticating: true 
     });
     
-    if (retryFetch) {
-      setTimeout(() => retryFetch(), 100);
+    if (refetch) {
+      setTimeout(() => refetch(), 100);
     }
-  }, [updateClientAuthState, retryFetch]);
+  }, [updateClientAuthState, refetch]);
 
   // Enhanced sync with UnifiedAuth client ID
   useEffect(() => {
