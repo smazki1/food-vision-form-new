@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
@@ -39,11 +38,21 @@ export const usePublicFormHandlers = (
   }, [currentStepId, validateStep, submitForm, formData]);
 
   const handleNewSubmission = useCallback(() => {
+    // Keep restaurant details, reset the rest
+    const restaurantName = formData.restaurantName;
+    const submitterName = formData.submitterName;
     resetFormData();
-    moveToStep(1);
+    // Restore restaurant details for convenience
+    setTimeout(() => {
+      if (restaurantName) {
+        moveToStep(2); // Skip to item details since restaurant info is filled
+      } else {
+        moveToStep(1);
+      }
+    }, 100);
     clearErrors();
     setShowSuccessModal(false);
-  }, [resetFormData, moveToStep, clearErrors]);
+  }, [resetFormData, moveToStep, clearErrors, formData.restaurantName, formData.submitterName]);
 
   const handleCloseSuccessModal = useCallback(() => {
     setShowSuccessModal(false);

@@ -2,142 +2,131 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Separator } from '@/components/ui/separator';
-import { Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
-import { cn } from '@/lib/utils'; 
-import { Button } from '@/components/ui/button';
-
-interface ReviewItemProps {
-  label: string;
-  value?: string | null;
-  isMissing?: boolean;
-}
-
-const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
-  if (!value && !isMissing) return null;
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
-      <dt className="text-sm font-medium text-gray-500 sm:w-1/3">{label}</dt>
-      <dd className={cn("mt-1 text-sm text-gray-800 sm:mt-0 sm:w-2/3", isMissing && !value && "text-red-500 italic")}>
-        {value || (isMissing ? "לא סופק" : "-")}
-      </dd>
-    </div>
-  );
-};
+import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
   const { formData } = useNewItemForm();
 
-  const { 
+  const {
     restaurantName,
     submitterName,
-    itemName, itemType, description, specialNotes, referenceImages 
+    itemName,
+    description,
+    specialNotes,
+    referenceImages
   } = formData;
 
-  const itemTypeDisplay: Record<string, string> = {
-    dish: "מנה",
-    cocktail: "קוקטייל",
-    drink: "משקה"
-  };
-
-  const canSubmit = true; 
-
   return (
-    <div className="space-y-8" dir="rtl">
-      <div>
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">סקירה ואישור</h2>
-        <p className="text-gray-600 text-lg mb-8 text-center">
-          אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית.
+    <div className="space-y-8 animate-fadeIn">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl md:text-5xl font-bold text-[#333333] mb-4">
+          סקירה ואישור
+        </h1>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          בדקו את כל הפרטים לפני השליחה הסופית
         </p>
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <Building2 className="h-6 w-6 text-emerald-500 ml-3" /> 
-          <h3 className="text-xl font-semibold text-gray-700">פרטי מסעדה</h3>
-        </div>
-        <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
-          <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
-          <ReviewItem label="שם המגיש" value={submitterName} isMissing={!submitterName} />
-        </dl>
-        <Separator className="my-6" />
-      </section>
-
-      <section className="space-y-4">
-        <div className="flex items-center mb-3">
-          <ItemIcon className="h-6 w-6 text-emerald-500 ml-3" /> 
-          <h3 className="text-xl font-semibold text-gray-700">פרטי הפריט</h3>
-        </div>
-        <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
-          <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
-          <ReviewItem label="סוג הפריט" value={itemType ? itemTypeDisplay[itemType] : undefined} isMissing={!itemType} />
-          <ReviewItem label="תיאור/מרכיבים" value={description} />
-          <ReviewItem label="הערות מיוחדות" value={specialNotes} />
-        </dl>
-        <Separator className="my-6" />
-      </section>
-
-      <section className="space-y-4">
-         <div className="flex items-center mb-3">
-            <ImageIcon className="h-6 w-6 text-emerald-500 ml-3" /> 
-            <h3 className="text-xl font-semibold text-gray-700">תמונות שהועלו ({referenceImages.length})</h3>
-          </div>
-          {referenceImages.length > 0 ? (
-          <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white">
-              {referenceImages.map((file, index) => (
-              <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video">
-                  <img 
-                    src={URL.createObjectURL(file)} 
-                  alt={`תצוגה מקדימה ${index + 1}`} 
-                  className="w-full h-full object-contain"
-                  onLoad={() => {if (file instanceof File) URL.revokeObjectURL(file.name);}}
-                  />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
-                    {file instanceof File ? file.name : `Image ${index + 1}`}
-                  </div>
-                </div>
-              ))}
+      {/* Summary Box */}
+      <div className="max-w-3xl mx-auto bg-gray-50 rounded-2xl p-8 space-y-6">
+        <h2 className="text-2xl font-bold text-[#333333] mb-6 text-center">סיכום הפרטים</h2>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Restaurant Details */}
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <Building2 className="w-6 h-6 text-[#F3752B]" />
+              <span className="font-semibold text-lg text-[#333333]">שם מסעדה:</span>
             </div>
-          ) : (
-          <div className="p-4 border border-gray-200 rounded-md bg-white">
-            <p className="text-muted-foreground text-center py-4">לא הועלו תמונות.</p>
+            <p className="text-lg text-gray-700 mr-9">{restaurantName}</p>
           </div>
-          )}
-        <Separator className="my-6" />
-      </section>
 
-      {onFinalSubmit && (
-        <Button
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <User className="w-6 h-6 text-[#F3752B]" />
+              <span className="font-semibold text-lg text-[#333333]">איש קשר:</span>
+            </div>
+            <p className="text-lg text-gray-700 mr-9">{submitterName}</p>
+          </div>
+        </div>
+
+        {/* Item Details */}
+        <div className="border-t border-gray-200 pt-6 space-y-4">
+          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <UtensilsCrossed className="w-6 h-6 text-[#F3752B]" />
+            <span className="font-semibold text-lg text-[#333333]">שם המנה:</span>
+          </div>
+          <p className="text-lg text-gray-700 mr-9">{itemName}</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <FileText className="w-6 h-6 text-[#F3752B]" />
+            <span className="font-semibold text-lg text-[#333333]">תיאור המנה:</span>
+          </div>
+          <p className="text-lg text-gray-700 mr-9 leading-relaxed">{description}</p>
+        </div>
+
+        {specialNotes && (
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3 rtl:space-x-reverse">
+              <FileText className="w-6 h-6 text-emerald-500" />
+              <span className="font-semibold text-lg text-[#333333]">הערות מיוחדות:</span>
+            </div>
+            <p className="text-lg text-gray-700 mr-9 leading-relaxed">{specialNotes}</p>
+          </div>
+        )}
+
+        {/* Images Count */}
+        <div className="border-t border-gray-200 pt-6 space-y-4">
+          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <Camera className="w-6 h-6 text-[#F3752B]" />
+            <span className="font-semibold text-lg text-[#333333]">מספר תמונות:</span>
+          </div>
+          <p className="text-lg text-gray-700 mr-9">{referenceImages.length} תמונות</p>
+        </div>
+      </div>
+
+      {/* Info Message */}
+      <div className="max-w-3xl mx-auto text-center">
+        <p className="text-xl text-gray-600 font-medium">
+          הגשה זו תנצל מנה אחת מהחבילה שלך.
+        </p>
+      </div>
+
+      {/* Submit Section */}
+      <div className="max-w-3xl mx-auto space-y-6">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => window.history.back()}
+            className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+          >
+            חזור
+          </button>
+          
+          <button
             onClick={onFinalSubmit}
-            disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
+            disabled={!onFinalSubmit}
             className={cn(
-                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
-                "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
-                "border-2",
-                canSubmit 
-                ? "bg-[#8B1E3F] hover:bg-[#721832] border-[#8B1E3F] hover:border-[#721832] text-white focus-visible:ring-[#8B1E3F]" 
-                : "bg-gray-300 hover:bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed shadow-inner",
-                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 border-red-600 hover:border-red-700 text-white focus-visible:ring-red-500"
+              "px-12 py-4 rounded-xl font-bold text-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl flex items-center space-x-3 rtl:space-x-reverse",
+              "bg-[#8B1E3F] hover:bg-[#721832] text-white focus:ring-4 focus:ring-[#8B1E3F]/20"
             )}
-        >
-            <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-            <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
-            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
-        </Button>
-      )}
-      
-      {errors?.finalCheck && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
-            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
-            <span>{errors.finalCheck}</span>
+          >
+            <CheckCircle className="w-6 h-6" />
+            <span>שלח בקשה</span>
+          </button>
         </div>
-      )}
-       {errors?.submit && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600">
-            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
-            <span>{errors.submit}</span>
-        </div>
-      )}
+
+        {/* Error Display */}
+        {(errors?.finalCheck || errors?.submit) && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-red-600 text-center">
+            {errors.finalCheck || errors.submit}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
