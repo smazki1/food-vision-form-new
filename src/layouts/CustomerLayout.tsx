@@ -33,7 +33,6 @@ export function CustomerLayout() {
     timestamp: Date.now()
   });
 
-  // Check if the current path starts with the given path
   const isActive = (path: string) => {
     return location.pathname.startsWith(path);
   };
@@ -55,8 +54,10 @@ export function CustomerLayout() {
     }
   };
 
-  // Handle the case where user is authenticated but doesn't have a client profile
-  const noClientProfileBanner = unifiedIsAuthenticated && clientRecordStatus === 'not-found' && (
+  // Show client profile warning only if both client systems show no record
+  const noClientProfileBanner = unifiedIsAuthenticated && 
+    clientRecordStatus === 'not-found' && 
+    !unifiedAuthClientId && (
     <Alert className="bg-amber-50 border-amber-200 mb-4">
       <AlertTriangle className="h-4 w-4 text-amber-500" />
       <AlertTitle className="text-amber-800">אין פרופיל לקוח מקושר</AlertTitle>
@@ -67,7 +68,7 @@ export function CustomerLayout() {
     </Alert>
   );
 
-  // Handle error state with specific message from useClientAuth
+  // Show error banner only for actual errors
   const errorBanner = errorState && (
     <Alert className="bg-red-50 border-red-200 mb-4">
       <AlertTriangle className="h-4 w-4 text-red-500" />

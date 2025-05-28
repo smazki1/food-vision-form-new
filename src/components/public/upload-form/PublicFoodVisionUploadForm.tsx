@@ -1,13 +1,16 @@
 
 import React, { useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
-import FormProgress from '@/components/customer/upload-form/FormProgress';
-import { cn } from '@/lib/utils';
-import { publicFormSteps } from './config/formStepsConfig';
-import { useFormNavigation } from '@/hooks/useFormNavigation';
+import { useUnifiedFormNavigation } from '@/hooks/useUnifiedFormNavigation';
+import { useUnifiedFormValidation } from '@/hooks/useUnifiedFormValidation';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
+import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
+import CombinedUploadStep from './steps/CombinedUploadStep';
+import ReviewSubmitStep from './steps/ReviewSubmitStep';
+import PublicFormHeader from './components/PublicFormHeader';
+import PublicFormContent from './components/PublicFormContent';
+import PublicFormErrorDisplay from './components/PublicFormErrorDisplay';
+import PublicFormNavigation from './components/PublicFormNavigation';
 
 export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -16,107 +19,108 @@ export interface PublicStepProps {
   onFinalSubmit?: () => void; 
 }
 
+// Define the public form steps with validation
+const publicFormSteps = [
+  {
+    id: 1,
+    name: 'פרטי המסעדה',
+    component: RestaurantDetailsStep
+  },
+  {
+    id: 2,
+    name: 'פרטי העלאה',
+    component: CombinedUploadStep
+  },
+  {
+    id: 3,
+    name: 'סקירה ואישור',
+    component: ReviewSubmitStep
+  }
+];
+
 const PublicFoodVisionUploadForm: React.FC = () => {
   const { formData, resetFormData } = useNewItemForm();
   const { isSubmitting, submitForm } = usePublicFormSubmission();
   const {
     currentStepId,
     currentStepConfig,
-    currentStepIndex,
-    stepErrors,
-    setStepErrors,
-    handleNext,
-    handlePrevious,
-    clearStepErrors,
-    resetNavigation
-  } = useFormNavigation();
+    formSteps,
+    moveToNextStep,
+    moveToPreviousStep,
+    moveToStep,
+    isFirstStep,
+    isLastStep
+  } = useUnifiedFormNavigation(publicFormSteps, 1);
+
+  const { validateStep, errors, clearErrors, setErrors } = useUnifiedFormValidation();
 
   useEffect(() => {
     resetFormData(); 
   }, []); 
 
-  const typedFormSteps = publicFormSteps.map(step => ({ id: step.id, name: step.name }));
+  const typedFormSteps = formSteps.map(step => ({ id: step.id, name: step.name }));
   const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
 
-  const handleSubmit = async () => {
-    const success = await submitForm(formData);
-    if (success) {
-      resetFormData();
-      resetNavigation();
-    } else {
-      // Set specific errors based on validation
-      if (!formData.restaurantName?.trim()) {
-        setStepErrors({ restaurantName: "שם המסעדה הוא שדה חובה." });
-        return;
-      }
-      if (!formData.itemName?.trim()) {
-        setStepErrors({ itemName: "שם הפריט הוא שדה חובה." });
-        return;
-      }
-      if (!formData.itemType) {
-        setStepErrors({ itemType: "סוג הפריט הוא שדה חובה." });
-        return;
-      }
-      if (formData.referenceImages.length === 0) {
-        setStepErrors({ referenceImages: "יש להעלות לפחות תמונה אחת." });
-        return;
-      }
+  const handleNext = async () => {
+    const isValid = await validateStep(currentStepId);
+    if (isValid && !isLastStep) {
+      moveToNextStep();
     }
   };
 
-  const handleNextStep = () => {
-    handleNext(formData, handleSubmit);
+  const handlePrevious = () => {
+    clearErrors();
+    moveToPreviousStep();
   };
 
-  const showNavigationButtons = currentStepConfig && currentStepConfig.id !== 4; 
-  const isLastNonReviewStep = currentStepConfig && currentStepConfig.id === 3; 
+  const handleSubmit = async () => {
+    const isValid = await validateStep(currentStepId);
+    if (!isValid) return;
+
+    const success = await submitForm(formData);
+    if (success) {
+      resetFormData();
+      moveToStep(1);
+      clearErrors();
+    }
+  };
+
+  const showNavigationButtons = currentStepId !== 3; 
+  const isReviewStep = currentStepId === 3;
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8 bg-white shadow-xl rounded-lg">
-      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8 text-gray-800">
-        העלאת פריט חדש (ציבורי)
-      </h1>
-      
-      <FormProgress formSteps={typedFormSteps} currentStepId={currentStepId} />
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <PublicFormHeader 
+        formSteps={typedFormSteps} 
+        currentStepId={currentStepId} 
+      />
 
-      <div className="mt-8 min-h-[300px]"> 
-        <CurrentStepComponent 
-            key={currentStepId}
-            setExternalErrors={setStepErrors} 
-            clearExternalErrors={clearStepErrors}
-            errors={stepErrors}
-            onFinalSubmit={currentStepId === 4 ? handleSubmit : undefined} 
-        />
-      </div>
+      <PublicFormContent
+        CurrentStepComponent={CurrentStepComponent}
+        currentStepId={currentStepId}
+        setErrors={setErrors}
+        clearErrors={clearErrors}
+        errors={errors}
+        isReviewStep={isReviewStep}
+        onFinalSubmit={handleSubmit}
+      />
 
-      {Object.keys(stepErrors).length > 0 && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-          <h3 className="text-sm font-semibold text-red-700">אנא תקנו את השגיאות הבאות:</h3>
-          <ul className="list-disc list-inside text-sm text-red-600 mt-1">
-            {Object.entries(stepErrors).map(([key, value]) => (
-              <li key={key}>{value}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-      
-      {showNavigationButtons && (
-        <div className={cn(
-            "flex mt-8 pt-6 border-t",
-            currentStepId === publicFormSteps[0].id ? "justify-end" : "justify-between"
-        )}>
-          {currentStepId !== publicFormSteps[0].id && (
-            <Button variant="outline" onClick={handlePrevious} disabled={isSubmitting} className="flex items-center">
-              <ChevronRight className="ml-2 h-4 w-4" /> 
-              הקודם
-            </Button>
+      <div className="max-w-2xl mx-auto w-full px-4 md:px-6">
+        <div className="bg-white px-6 md:px-8 pb-6 md:pb-8 rounded-b-lg shadow-lg">
+          <PublicFormErrorDisplay errors={errors} />
+          
+          {showNavigationButtons && (
+            <PublicFormNavigation
+              isFirstStep={isFirstStep}
+              isLastStep={isLastStep}
+              isSubmitting={isSubmitting}
+              currentStepId={currentStepId}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+            />
           )}
-          <Button onClick={handleNextStep} disabled={isSubmitting} className="flex items-center">
-            {isSubmitting ? 'מעבד...' : (isLastNonReviewStep ? 'לסקירה ואישור' : 'הבא')}
-            <ChevronLeft className="mr-2 h-4 w-4" /> 
-          </Button>
         </div>
-      )}
+      </div>
     </div>
   );
 };

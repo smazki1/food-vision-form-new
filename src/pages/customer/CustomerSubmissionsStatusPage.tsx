@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -76,10 +77,33 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     timestamp: Date.now()
   });
 
+<<<<<<< HEAD
   let content;
 
   if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated && !error)) {
     content = (
+=======
+  // Use useMemo to safely sort submissions and prevent React error #310
+  const sortedSubmissions = useMemo(() => {
+    if (!submissions || !Array.isArray(submissions)) {
+      console.warn("[CustomerSubmissionsStatusPage] Invalid submissions data:", submissions);
+      return [];
+    }
+    try {
+      return [...submissions].sort((a, b) => {
+        const dateA = new Date(a.uploaded_at).getTime();
+        const dateB = new Date(b.uploaded_at).getTime();
+        return dateB - dateA;
+      });
+    } catch (err) {
+      console.error("[CustomerSubmissionsStatusPage] Error sorting submissions:", err);
+      return submissions;
+    }
+  }, [submissions]);
+
+  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated)) {
+    return (
+>>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
       <div dir="rtl" className="text-center p-10">
         <div className="flex items-center justify-center gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -207,7 +231,11 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
             <br />
             משתמש: {unifiedUser?.email || (effectiveAuthenticated ? 'טוען אימייל...' : 'לא מחובר')}
             <br />
+<<<<<<< HEAD
             {effectiveClientId && `סה"כ הגשות נמצאו: ${submissions?.length || 0}`}
+=======
+            סה"כ הגשות נמצאו: {sortedSubmissions?.length || 0}
+>>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
           </AlertDescription>
         </Alert>
       </div>

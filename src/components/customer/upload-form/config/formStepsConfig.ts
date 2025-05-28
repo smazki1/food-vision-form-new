@@ -1,58 +1,83 @@
 
-import { NewItemFormData, ItemType } from '@/contexts/NewItemFormContext';
+import React from 'react';
 import RestaurantDetailsStep from '../steps/RestaurantDetailsStep';
-import ItemDetailsStep from '../steps/ItemDetailsStep';
-import ImageUploadStep from '../steps/ImageUploadStep';
+import CombinedUploadStep from '../steps/CombinedUploadStep';
 import ReviewSubmitStep from '../steps/ReviewSubmitStep';
+import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
-export interface FormStepConfig {
+export interface FormStep {
   id: number;
   name: string;
   component: React.ComponentType<any>;
-  validate: (data: NewItemFormData) => Record<string, string>;
+  validate?: (formData: NewItemFormData) => Record<string, string>;
 }
 
-export const allSteps: FormStepConfig[] = [
+// Export FormStepConfig as an alias for FormStep to maintain compatibility
+export type FormStepConfig = FormStep;
+
+const validateRestaurantDetails = (formData: NewItemFormData): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (!formData.restaurantName?.trim()) {
+    errors.restaurantName = 'שם המסעדה הוא שדה חובה';
+  }
+  return errors;
+};
+
+const validateCombinedUpload = (formData: NewItemFormData): Record<string, string> => {
+  const errors: Record<string, string> = {};
+  if (!formData.itemName?.trim()) {
+    errors.itemName = 'שם הפריט הוא שדה חובה';
+  }
+  if (!formData.itemType) {
+    errors.itemType = 'סוג הפריט הוא שדה חובה';
+  }
+  if (formData.referenceImages.length === 0) {
+    errors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+  }
+  if (formData.referenceImages.length > 10) {
+    errors.referenceImages = 'ניתן להעלות עד 10 תמונות';
+  }
+  return errors;
+};
+
+const validateReview = (formData: NewItemFormData): Record<string, string> => {
+  return {
+    ...validateCombinedUpload(formData)
+  };
+};
+
+export const allSteps: FormStep[] = [
   {
     id: 1,
     name: 'פרטי מסעדה',
     component: RestaurantDetailsStep,
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (!data.restaurantName?.trim()) newErrors.restaurantName = 'שם המסעדה הוא שדה חובה.';
-      return newErrors;
-    }
-  },
-  { 
-    id: 2, 
-    name: 'פרטי פריט', 
-    component: ItemDetailsStep, 
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (!data.itemName.trim()) newErrors.itemName = 'שם הפריט הוא שדה חובה.';
-      if (!data.itemType) newErrors.itemType = 'סוג הפריט הוא שדה חובה.';
-      return newErrors;
-    }
-  },
-  { 
-    id: 3, 
-    name: 'העלאת תמונות', 
-    component: ImageUploadStep, 
-    validate: (data: NewItemFormData) => {
-      const newErrors: Record<string, string> = {};
-      if (data.referenceImages.length < 1) newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת.';
-      if (data.referenceImages.length > 10) newErrors.referenceImages = 'ניתן להעלות עד 10 תמונות.';
-      return newErrors;
-    }
+    validate: validateRestaurantDetails,
   },
   {
-    id: 4,
+    id: 2,
+    name: 'פרטי העלאה',
+    component: CombinedUploadStep,
+    validate: validateCombinedUpload,
+  },
+  {
+    id: 3,
     name: 'סקירה ואישור',
     component: ReviewSubmitStep,
-    validate: (data: NewItemFormData) => {
-        const newErrors: Record<string, string> = {};
-        if (data.referenceImages.length === 0) newErrors.finalCheck = "יש להעלות לפחות תמונה אחת לפני ההגשה.";
-        return newErrors;
-    }
-  }
+    validate: validateReview,
+  },
+];
+
+export const authenticatedSteps: FormStep[] = [
+  {
+    id: 2,
+    name: 'פרטי העלאה',
+    component: CombinedUploadStep,
+    validate: validateCombinedUpload,
+  },
+  {
+    id: 3,
+    name: 'סקירה ואישור',
+    component: ReviewSubmitStep,
+    validate: validateReview,
+  },
 ];

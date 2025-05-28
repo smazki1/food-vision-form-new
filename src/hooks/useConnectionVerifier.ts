@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { clientAuthService } from '@/services/clientAuthService';
 
 /**
- * Hook to verify database connection with timeout
+ * Hook to verify database connection with aggressive timeout
  */
 export const useConnectionVerifier = (
   onConnectionError: (error: string) => void
@@ -16,11 +16,11 @@ export const useConnectionVerifier = (
     onConnectionErrorRef.current = onConnectionError;
   }, [onConnectionError]);
 
-  // Test database connection on mount
+  // Test database connection on mount with aggressive timeout
   useEffect(() => {
-    console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - useEffect for connection test RUNS");
+    console.log("[CONNECTION_VERIFIER] Starting connection test");
     let isMounted = true;
-    let timeoutId: NodeJS.Timeout | undefined = undefined; // Define timeoutId here
+    let timeoutId: NodeJS.Timeout | undefined = undefined;
     const startTime = Date.now();
     
     const performCleanup = () => {
@@ -28,24 +28,24 @@ export const useConnectionVerifier = (
       if (timeoutId) clearTimeout(timeoutId);
     };
 
+    // Aggressive 2 second timeout
     timeoutId = setTimeout(() => {
       if (isMounted && !connectionChecked) {
-        console.warn("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection check timed out after 5s");
-        // If timed out, connection is NOT verified
+        console.warn("[CONNECTION_VERIFIER] Connection check timed out after 2s");
         setConnectionVerified(false);
         onConnectionErrorRef.current("Database connection check timed out. Please check your internet connection.");
         setConnectionChecked(true);
       }
-    }, 5000);
+    }, 2000);
     
     const testConnection = async () => {
       try {
         const { success, error: connError } = await clientAuthService.testDatabaseConnection();
         if (!isMounted) return;
-        clearTimeout(timeoutId); // Clear timeout as soon as test finishes
+        clearTimeout(timeoutId);
         
         const duration = Date.now() - startTime;
-        console.log(`[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection test completed in ${duration}ms`);
+        console.log(`[CONNECTION_VERIFIER] Connection test completed in ${duration}ms`);
         
         if (connError) {
           onConnectionErrorRef.current(`Database connection error: ${connError.message}`);
@@ -62,18 +62,17 @@ export const useConnectionVerifier = (
 
       } catch (err) {
         if (!isMounted) return;
-        clearTimeout(timeoutId); // Clear timeout on error too
-        console.error("[AUTH_DEBUG_FINAL] useConnectionVerifier - Connection test exception:", err);
-        setConnectionVerified(false);
+        clearTimeout(timeoutId);
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.warn(`[CONNECTION_VERIFIER] Connection test failed: ${errorMessage}`);
+        setConnectionVerified(false); 
         setConnectionChecked(true);
-        onConnectionErrorRef.current(`Database connection failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        onConnectionErrorRef.current(`Database connection failed: ${errorMessage}`);
       }
     };
     
-    if (!connectionChecked) { // Only run the test if not already checked in this effect cycle
-    testConnection();
-    } else {
-        console.log("[AUTH_DEBUG_FINAL] useConnectionVerifier - Skipping testConnection, already checked.");
+    if (!connectionChecked) {
+      testConnection();
     }
     
     return performCleanup;

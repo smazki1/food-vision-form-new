@@ -1,3 +1,4 @@
+
 import React, { useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { UnifiedAuthContext } from '@/contexts/UnifiedAuthContext';
@@ -25,7 +26,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
         updateAuthState({ loading: false });
         return { success: false, error };
       }
-      // Auth state will update from onAuthStateChange
       return { success: true };
     } catch (error) {
       console.error('[UNIFIED_AUTH] Login exception:', error);
@@ -42,7 +42,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     try {
       const { success, error } = await unifiedAuthService.signOut();
 
-      // Clear state immediately
       updateAuthState({
         user: null,
         session: null,
@@ -94,10 +93,8 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Alias
   const forgotPassword = useCallback((email: string) => resetPassword(email), [resetPassword]);
 
-  // Client record management
   const createClientRecord = useCallback(async (clientData: {
     restaurant_name: string;
     contact_name: string;
@@ -147,7 +144,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, [authState.user, updateAuthState]);
 
-  // Compose context value
   const contextValue = {
     ...authState,
     signIn,
@@ -157,7 +153,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     createClientRecord
   };
 
-  // For debugging
   console.log("[UNIFIED_AUTH] Provider render state:", {
     userId: authState.user?.id,
     role: authState.role,
@@ -166,40 +161,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     initialized: authState.initialized,
     hasError: authState.hasError
   });
-
-  // Render error screen if there's a "no role" or major auth error
-  if (authState.hasError &&
-      (authState.errorMessage?.includes('Failed to determine user role') ||
-       authState.errorMessage === 'User has no defined role or client record')) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6">
-            <h2 className="text-lg font-semibold text-destructive mb-2">
-              שגיאה בטעינת פרטי המשתמש
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              לא הצלחנו לזהות את התפקיד שלך במערכת. ייתכן שיש בעיה בהרשאות או בחיבור למסד הנתונים.
-            </p>
-            <div className="space-y-2">
-              <button
-                onClick={() => window.location.reload()}
-                className="w-full bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
-              >
-                רענן את הדף
-              </button>
-              <button
-                onClick={signOut}
-                className="w-full bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
-              >
-                התנתק וחזור לדף הבית
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <UnifiedAuthContext.Provider value={contextValue}>

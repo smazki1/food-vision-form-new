@@ -1,3 +1,4 @@
+
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { ClientAuthContext } from '@/contexts/ClientAuthContext';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -11,7 +12,7 @@ interface ClientAuthProviderProps {
 }
 
 export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children }) => {
-  const { user, loading: authLoading, initialized, isAuthenticated } = useUnifiedAuth();
+  const { user, loading: authLoading, initialized, isAuthenticated, clientId: unifiedClientId } = useUnifiedAuth();
   const [refreshToggle, setRefreshToggle] = useState(false);
   
   const {
@@ -29,9 +30,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   // const connectionVerified = useConnectionVerifier(handleConnectionError);
   const connectionVerified = true; // FORCED FOR DEBUGGING
 
+<<<<<<< HEAD
   // Log the value of connectionVerified before passing to useClientDataFetcher
   console.log("[CLIENT_AUTH_PROVIDER] Connection verified status (FORCED DEBUG):", connectionVerified);
 
+=======
+>>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
   const handleClientDataFetchError = useCallback((errorMessage: string) => {
     updateClientAuthState({ 
       errorState: errorMessage, 
@@ -42,7 +46,8 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
 
   const { 
     clientData,
-    clientQueryLoading, 
+    clientQueryLoading,
+    retryFetch
   } = useClientDataFetcher(
     user,
     isAuthenticated,
@@ -62,8 +67,13 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       clientRecordStatus: 'loading',
       authenticating: true 
     });
-  }, [updateClientAuthState]);
+    
+    if (retryFetch) {
+      setTimeout(() => retryFetch(), 100);
+    }
+  }, [updateClientAuthState, retryFetch]);
 
+<<<<<<< HEAD
   // CRITICAL FIX: More aggressive forcing for debugging
   useEffect(() => {
     // DIRECT IMMEDIATE FIX: Force the state to "found" as soon as we have a logged-in user
@@ -106,6 +116,51 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
   // Let's keep it somewhat targeted but ensure it re-evaluates if critical states change.
   }, [isAuthenticated, user, authenticating, clientRecordStatus, updateClientAuthState, clientId]);
 
+=======
+  // Enhanced sync with UnifiedAuth client ID
+  useEffect(() => {
+    console.log("[CLIENT_AUTH_PROVIDER] Sync check:", {
+      clientAuthClientId: clientId,
+      unifiedClientId,
+      clientRecordStatus,
+      authenticating,
+      isAuthenticated,
+      initialized
+    });
+
+    if (isAuthenticated && initialized && !authLoading && 
+        unifiedClientId && !clientId && 
+        clientRecordStatus !== 'loading' && !authenticating) {
+      
+      console.log("[CLIENT_AUTH_PROVIDER] Syncing clientId from UnifiedAuth:", unifiedClientId);
+      updateClientAuthState({
+        clientId: unifiedClientId,
+        clientRecordStatus: 'found',
+        authenticating: false,
+        errorState: null
+      });
+    }
+    
+    // Force completion after shorter timeout
+    if (isAuthenticated && initialized && !authLoading && 
+        clientRecordStatus === 'loading' && authenticating) {
+      
+      const forceTimeout = setTimeout(() => {
+        console.warn("[CLIENT_AUTH_PROVIDER] Forcing completion due to extended loading");
+        updateClientAuthState({
+          clientId: unifiedClientId || null,
+          clientRecordStatus: unifiedClientId ? 'found' : 'not-found',
+          authenticating: false,
+          errorState: null
+        });
+      }, 1000); // Reduced to 1 second
+      
+      return () => clearTimeout(forceTimeout);
+    }
+  }, [clientId, unifiedClientId, clientRecordStatus, authenticating, isAuthenticated, initialized, authLoading, updateClientAuthState]);
+
+  // Simplified initial loading state handler
+>>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
   useEffect(() => {
     console.log('[CLIENT_AUTH_PROVIDER] Auth state update:', {
       initialized, 
@@ -116,11 +171,12 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       clientRecordStatus,
       errorState,
       clientId,
+      unifiedClientId,
       connectionVerified,
       userId: user?.id
     });
 
-    // Stage 1: Handle initial loading from useUnifiedAuth
+    // Handle initial loading
     if (!initialized || authLoading) {
       if (authenticating !== true || clientRecordStatus !== 'loading') {
         updateClientAuthState({ 
@@ -131,7 +187,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       return;
     }
 
-    // Stage 2: Handle user not authenticated
+    // Clear state for unauthenticated users
     if (!isAuthenticated) {
       if (clientId !== null || authenticating !== false || clientRecordStatus !== 'not-found' || errorState !== null) {
         updateClientAuthState({
@@ -143,27 +199,10 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       }
       return;
     }
-
-    // Stage 3: User IS authenticated - handle client data fetching
-    if (clientQueryLoading) {
-      if (authenticating !== true || (clientRecordStatus !== 'loading' && clientRecordStatus !== 'error')) {
-        updateClientAuthState({ 
-          authenticating: true, 
-          clientRecordStatus: 'loading' 
-        });
-      }
-    } else {
-      // Query is not loading - set authenticating to false if needed
-      if (clientRecordStatus !== 'loading' && authenticating !== false) {
-        updateClientAuthState({ authenticating: false });
-      }
-    }
-
   }, [
     initialized, 
     authLoading, 
     isAuthenticated,
-    clientQueryLoading,
     authenticating,
     clientRecordStatus,
     errorState, 
@@ -173,10 +212,11 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     connectionVerified
   ]);
 
-  // Log the clientId received from useClientAuthStateManager before putting it into context
-  console.log("[CLIENT_AUTH_PROVIDER] ClientId from useClientAuthStateManager (before context memo):", clientId);
+  console.log("[CLIENT_AUTH_PROVIDER] Final clientId from state manager:", clientId);
 
   const contextValue: ClientAuthContextType = useMemo(() => {
+    const effectiveClientId = clientId || unifiedClientId;
+    
     const finalIsAuthenticated = isAuthenticated && 
                                initialized &&
                                !authLoading &&
@@ -192,26 +232,26 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
       errorState,
       connectionVerified,
       finalIsAuthenticated,
-      clientId,
+      clientAuthClientId: clientId,
+      unifiedClientId,
+      effectiveClientId,
       userAuthId: user?.id,
-      authenticating,
-      // Also log the specific clientId being put into context here
-      contextClientId: clientId 
+      authenticating
     });
     
     return {
-      clientId,
+      clientId: effectiveClientId,
       userAuthId: user?.id || null,
       authenticating,
       clientRecordStatus,
       errorState,
       isAuthenticated: finalIsAuthenticated,
-      hasLinkedClientRecord: clientRecordStatus === 'found' && !!clientId,
+      hasLinkedClientRecord: clientRecordStatus === 'found' && !!effectiveClientId,
       hasNoClientRecord: clientRecordStatus === 'not-found',
       refreshClientAuth,
     };
   }, [
-    clientId, user?.id, authenticating, clientRecordStatus, errorState, 
+    clientId, unifiedClientId, user?.id, authenticating, clientRecordStatus, errorState, 
     isAuthenticated, initialized, authLoading, connectionVerified, refreshClientAuth
   ]);
 

@@ -48,27 +48,39 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          end_date: string | null
           id: string
+          is_active: boolean | null
+          package_id: string | null
           package_name: string
           remaining_dishes: number
+          start_date: string | null
           total_dishes: number
           updated_at: string
         }
         Insert: {
           client_id: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          is_active?: boolean | null
+          package_id?: string | null
           package_name: string
           remaining_dishes: number
+          start_date?: string | null
           total_dishes: number
           updated_at?: string
         }
         Update: {
           client_id?: string
           created_at?: string
+          end_date?: string | null
           id?: string
+          is_active?: boolean | null
+          package_id?: string | null
           package_name?: string
           remaining_dishes?: number
+          start_date?: string | null
           total_dishes?: number
           updated_at?: string
         }
@@ -79,6 +91,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "fk_client_packages_service_packages"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "service_packages"
+            referencedColumns: ["package_id"]
           },
         ]
       }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import FormProgress from './components/FormProgress';
 import CombinedDetailsStep from './steps/CombinedDetailsStep';
@@ -111,6 +112,14 @@ const PublicMultiStepForm: React.FC = () => {
       </div>
     </div>
   );
+=======
+
+import React from 'react';
+import PublicFoodVisionUploadForm from './PublicFoodVisionUploadForm';
+
+const PublicMultiStepForm: React.FC = () => {
+  return <PublicFoodVisionUploadForm />;
+>>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
 };
 
 export default PublicMultiStepForm;

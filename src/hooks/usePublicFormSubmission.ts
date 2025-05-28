@@ -1,78 +1,84 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
 export const usePublicFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submitForm = async (formData: NewItemFormData): Promise<boolean> => {
-    console.log('[PublicSubmit] Starting submission process...');
-    console.log('[PublicSubmit] Form data:', formData);
+  const submitForm = async (
+    formData: NewItemFormData,
+    setStepErrors?: (errors: Record<string, string>) => void
+  ): Promise<boolean> => {
+    console.log('[PublicFormSubmission] Starting submission process...', formData);
     
+    // Validation
     if (!formData.restaurantName?.trim()) {
-        console.log('[PublicSubmit] Missing restaurant name');
-        toast.error("שם המסעדה הוא שדה חובה.");
-        return false;
+      console.log('[PublicFormSubmission] Missing restaurant name');
+      toast.error("שם המסעדה הוא שדה חובה.");
+      setStepErrors?.({ restaurantName: "שם המסעדה הוא שדה חובה." });
+      return false;
     }
 
     if (!formData.itemName?.trim()) {
-        console.log('[PublicSubmit] Missing item name');
-        toast.error("שם הפריט הוא שדה חובה.");
-        return false;
+      console.log('[PublicFormSubmission] Missing item name');
+      toast.error("שם הפריט הוא שדה חובה.");
+      setStepErrors?.({ itemName: "שם הפריט הוא שדה חובה." });
+      return false;
     }
 
     if (!formData.itemType) {
-        console.log('[PublicSubmit] Missing item type');
-        toast.error("סוג הפריט הוא שדה חובה.");
-        return false;
+      console.log('[PublicFormSubmission] Missing item type');
+      toast.error("סוג הפריט הוא שדה חובה.");
+      setStepErrors?.({ itemType: "סוג הפריט הוא שדה חובה." });
+      return false;
     }
 
     if (formData.referenceImages.length === 0) {
-        console.log('[PublicSubmit] No images uploaded');
-        toast.error("יש להעלות לפחות תמונה אחת.");
-        return false;
+      console.log('[PublicFormSubmission] No images uploaded');
+      toast.error("יש להעלות לפחות תמונה אחת.");
+      setStepErrors?.({ referenceImages: "יש להעלות לפחות תמונה אחת." });
+      return false;
     }
 
     setIsSubmitting(true);
-    toast.info("מעלה פרטי פריט ותמונות...");
+    toast.info("מעלה תמונות ושומר הגשה...");
 
     try {
-      console.log('[PublicSubmit] Starting image upload process...');
+      console.log('[PublicFormSubmission] Uploading images...');
+      
+      // Upload images
       const uploadedImageUrls: string[] = [];
-
       for (let i = 0; i < formData.referenceImages.length; i++) {
         const file = formData.referenceImages[i];
         if (file instanceof File) {
-            const fileExt = file.name.split('.').pop() || 'jpg';
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `public-submissions/${fileName}`;
-            
-            console.log(`[PublicSubmit] Uploading file ${i + 1}/${formData.referenceImages.length} to: ${filePath}`);
+          const fileExt = file.name.split('.').pop() || 'jpg';
+          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+          const filePath = `public-submissions/${fileName}`;
+          
+          console.log(`[PublicFormSubmission] Uploading file ${i + 1}/${formData.referenceImages.length} to: ${filePath}`);
 
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('food-vision-images')
-                .upload(filePath, file);
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('food-vision-images')
+            .upload(filePath, file);
 
-            if (uploadError) {
-                console.error(`[PublicSubmit] Upload error for file ${i + 1}:`, uploadError);
-                throw new Error(`שגיאה בהעלאת תמונה ${i + 1}: ${uploadError.message}`);
-            }
-            
-            console.log(`[PublicSubmit] Upload successful for file ${i + 1}:`, uploadData);
-
-            const { data: publicUrlData } = supabase.storage
-                .from('food-vision-images')
-                .getPublicUrl(filePath);
-            
-            uploadedImageUrls.push(publicUrlData.publicUrl);
-            console.log(`[PublicSubmit] Generated public URL ${i + 1}:`, publicUrlData.publicUrl);
+          if (uploadError) {
+            console.error(`[PublicFormSubmission] Upload error for file ${i + 1}:`, uploadError);
+            throw new Error(`שגיאה בהעלאת תמונה ${i + 1}: ${uploadError.message}`);
+          }
+          
+          const { data: publicUrlData } = supabase.storage
+            .from('food-vision-images')
+            .getPublicUrl(filePath);
+          
+          uploadedImageUrls.push(publicUrlData.publicUrl);
         }
       }
       
-      console.log('[PublicSubmit] All images uploaded successfully. URLs:', uploadedImageUrls);
+      console.log('[PublicFormSubmission] All images uploaded successfully');
       
+      // Prepare parameters for RPC
       let category = null;
       let ingredients = null;
       
@@ -93,7 +99,7 @@ export const usePublicFormSubmission = () => {
         p_reference_image_urls: uploadedImageUrls,
       };
 
-      console.log('[PublicSubmit] Calling RPC with params:', rpcParams);
+      console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
 
       const { data: submissionData, error: submissionError } = await supabase.rpc(
         'public_submit_item_by_restaurant_name',
@@ -101,28 +107,27 @@ export const usePublicFormSubmission = () => {
       );
 
       if (submissionError) {
-        console.error('[PublicSubmit] RPC error:', submissionError);
+        console.error('[PublicFormSubmission] RPC error:', submissionError);
         throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
       }
 
-      console.log('[PublicSubmit] RPC response:', submissionData);
-      
+      console.log('[PublicFormSubmission] RPC response:', submissionData);
+
       if (submissionData && typeof submissionData === 'object' && submissionData.success) {
         if (submissionData.client_found) {
           toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
         } else {
           toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
         }
-        console.log('[PublicSubmit] Submission completed successfully');
         return true;
       } else {
-        console.error('[PublicSubmit] RPC returned success=false:', submissionData);
         throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
       }
-
     } catch (error: any) {
-      console.error("[PublicSubmit] Error in submission process:", error);
-      toast.error(`שגיאה בהגשה: ${error.message || 'אירעה שגיאה לא צפויה.'}`);
+      console.error("[PublicFormSubmission] Error in submission process:", error);
+      const errorMessage = error.message || "אירעה שגיאה במהלך ההגשה. נסו שוב.";
+      setStepErrors?.({ submit: errorMessage });
+      toast.error(errorMessage);
       return false;
     } finally {
       setIsSubmitting(false);

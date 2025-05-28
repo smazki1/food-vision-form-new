@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { NewItemFormData, useNewItemForm } from '@/contexts/NewItemFormContext';
 import { useClientAuth } from '@/hooks/useClientAuth';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, AlertTriangle } from 'lucide-react';
 import { useClientPackage } from '@/hooks/useClientPackage';
 import FormProgress from './FormProgress';
 import { cn } from '@/lib/utils';
@@ -23,12 +23,11 @@ export interface StepProps {
 const LOADING_TIMEOUT = 5000; // 5 seconds timeout for loading state
 
 const FoodVisionUploadForm: React.FC = () => {
-  const { clientId, authenticating, refreshClientAuth } = useClientAuth();
+  const { clientId, authenticating, refreshClientAuth, clientRecordStatus, errorState } = useClientAuth();
   const { formData, resetFormData } = useNewItemForm();
   const [stepErrors, setStepErrors] = useState<Record<string, string>>({});
   const { remainingDishes } = useClientPackage();
-  const [forceRender, setForceRender] = useState(false);
-  const loadingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [loadingStartTime] = useState(Date.now());
 
   const {
     formSteps,
@@ -43,32 +42,12 @@ const FoodVisionUploadForm: React.FC = () => {
   const { handleRestaurantDetailsSubmit, isCreatingClient } = useRestaurantDetailsSubmission(refreshClientAuth);
   const { handleSubmit: submitForm, isSubmitting } = useFormSubmission();
 
-  // Set up loading timeout
-  useEffect(() => {
-    if (authenticating) {
-      loadingTimerRef.current = setTimeout(() => {
-        console.log('[FoodVisionUploadForm] Auth loading timeout exceeded. Forcing render.');
-        setForceRender(true);
-      }, LOADING_TIMEOUT);
-    } else if (loadingTimerRef.current) {
-      clearTimeout(loadingTimerRef.current);
-      loadingTimerRef.current = null;
-    }
-
-    return () => {
-      if (loadingTimerRef.current) {
-        clearTimeout(loadingTimerRef.current);
-        loadingTimerRef.current = null;
-      }
-    };
-  }, [authenticating]);
-
   // Update steps when auth changes
   useEffect(() => {
-    if (!authenticating || forceRender) {
+    if (!authenticating) {
       updateStepsForAuthenticatedUser();
     }
-  }, [clientId, authenticating, forceRender, updateStepsForAuthenticatedUser]);
+  }, [clientId, authenticating, updateStepsForAuthenticatedUser]);
 
   const typedFormSteps = formSteps.map(step => ({ id: step.id, name: step.name }));
   const CurrentStepComponent = formSteps.find(step => step.id === currentStepId)?.component || (() => <div>שלב לא תקין</div>);
@@ -154,11 +133,22 @@ const FoodVisionUploadForm: React.FC = () => {
     }
   };
 
-  if (authenticating && !forceRender) {
+  // Simplified loading check with shorter timeouts
+  const currentLoadingTime = Math.round((Date.now() - loadingStartTime) / 1000);
+  const isStuckLoading = authenticating && currentLoadingTime > 5; // Reduced from 10 to 5
+
+  if (authenticating && !isStuckLoading) {
     return (
-      <div className="flex justify-center items-center h-screen" dir="rtl">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8B1E3F]"></div>
-        <p className="mr-4 text-lg">טוען פרטי משתמש...</p>
+      <div className="flex justify-center items-center h-screen">
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="ml-4 text-lg mt-4">טוען פרטי משתמש... ({currentLoadingTime}s)</p>
+          {currentLoadingTime > 3 && (
+            <p className="text-sm text-muted-foreground mt-2">
+              הטעינה לוקחת יותר זמן מהצפוי...
+            </p>
+          )}
+        </div>
       </div>
     );
   }
@@ -173,17 +163,43 @@ const FoodVisionUploadForm: React.FC = () => {
 
       <main className="flex-grow overflow-y-auto p-4 md:p-6">
         <div className="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          {(currentStepId !== 1 && !clientId) && (
-             <Alert className="mb-6 bg-[#F3752B]/10 border-[#F3752B]">
-                <InfoIcon className="h-4 w-4 text-[#F3752B]" />
-                <AlertDescription className="text-[#333]">
+          {(errorState || isStuckLoading) && (
+            <Alert className="mb-6 bg-red-50 border-red-200">
+              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <AlertDescription className="text-red-700">
+                {errorState || "הטעינה תקועה - העמוד יטען ללא חיבור לנתוני הלקוח"}
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-red-700 hover:underline mr-2"
+                  onClick={() => {
+                    if (isStuckLoading) {
+                      // Force stop loading and continue
+                      updateStepsForAuthenticatedUser();
+                    } else {
+                      refreshClientAuth();
+                    }
+                  }}
+                  disabled={isCreatingClient || isSubmitting}
+                >
+                  <RefreshCw className="h-3 w-3 ml-1" />
+                  {isStuckLoading ? 'המשך בלי חיבור' : 'נסו שוב'}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {currentStepId !== 1 && !clientId && !errorState && (
+             <Alert className="mb-6">
+                <InfoIcon className="h-4 w-4" />
+                <AlertDescription>
                   נראה שלא השלמת את פרטי המסעדה. 
                   <Button variant="link" className="p-0 h-auto text-[#8B1E3F] hover:underline" onClick={() => {
                       resetToAllSteps();
                   }}>
                     לחץ כאן
                   </Button>
-                  {' '}להשלמת הפרטים או התחבר למערכת.
+                  {' '}
+                  להשלמת הפרטים או התחבר למערכת.
                 </AlertDescription>
               </Alert>
           )}

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
 import { useUnifiedAuth } from "./useUnifiedAuth";
-import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi"; // Renaming import for clarity
+import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi";
 
 export interface ClientPackageInfo {
   packageName: string | null;
@@ -56,7 +56,6 @@ export function useSubmissions() {
       try {
         console.log(`[useSubmissions] queryFn: Fetching submissions for effectiveClientId: ${effectiveClientId}`);
         
-        // The comprehensive select statement from the remote version
         const { data, error: queryError } = await supabase
           .from("customer_submissions")
           .select(`
@@ -99,7 +98,6 @@ export function useSubmissions() {
     enabled: queryEnabled
   });
 
-  // Logic for totalAllowedSubmissions and remainingServings from remote version
   const { data: packageDetails, isLoading: packageDetailsLoading } = useQuery<ClientPackageInfo | null, Error>({
     queryKey: ['clientPackageDetails', effectiveClientId],
     queryFn: async () => {
@@ -107,13 +105,11 @@ export function useSubmissions() {
 
       console.log("[useSubmissions] Fetching package details for client:", effectiveClientId);
 
-      // Attempt to get package_id from the most recent submission
       let packageIdToQuery: string | null = null;
       if (processedItems && processedItems.length > 0 && processedItems[0].assigned_package_id_at_submission) {
         packageIdToQuery = processedItems[0].assigned_package_id_at_submission;
         console.log("[useSubmissions] Using package ID from most recent submission:", packageIdToQuery);
       } else {
-        // Fallback: Try to get active_package_id from the clients table
         console.log("[useSubmissions] No package ID on submission, trying to fetch current_package_id from clients table for client:", effectiveClientId);
         try {
           const { data: clientPackageData, error: clientPackageError } = await supabase
@@ -138,7 +134,7 @@ export function useSubmissions() {
         console.warn("[useSubmissions] No package ID found to query package details for client:", effectiveClientId);
         return {
           packageName: 'לא משויך לחבילה',
-          totalSubmissions: null, // Or some other default like Infinity or a very large number
+          totalSubmissions: null,
           startDate: null,
           endDate: null,
           isActive: false,
@@ -215,36 +211,16 @@ export function useSubmissions() {
           isActive: clientPackageData.is_active,
         };
       }
-      console.warn("[useSubmissions] No client-specific package data found for package_id:", packageIdToQuery, " client:", effectiveClientId);
       return null;
     },
-    enabled: queryEnabled && !!effectiveClientId, // Depends on submissions query being enabled and having a client ID
+    enabled: queryEnabled && !!effectiveClientId,
   });
   
-  const submissionsCount = processedItems?.length || 0;
   const totalAllowedSubmissions = packageDetails?.totalSubmissions;
-
-  let remainingServings: number | undefined = undefined;
-  if (packageDetails) { // Check if packageDetails object exists
-    const totalAllowed = packageDetails.totalSubmissions; // Use a local const for clarity
-    if (typeof totalAllowed === 'number') {
-      remainingServings = totalAllowed - submissionsCount;
-    } else if (totalAllowed === null) { 
-      // If totalAllowed is explicitly null (e.g. package not assigned, or error loading package)
-      if (packageDetails.packageName === 'לא משויך לחבילה') {
-        // This case implies the client isn't linked to a specific billable package,
-        // potentially a free tier or special status.
-        remainingServings = Infinity; 
-      } else {
-        // For other cases where totalSubmissions is null (e.g., 'שגיאה בטעינת חבילה', or unexpected null)
-        // It's safer to assume 0 servings as the package state is uncertain or erroneous.
-        remainingServings = 0;
-      }
-    }
-    // If totalAllowed is undefined (i.e., the property doesn't exist on packageDetails),
-    // remainingServings will remain undefined, signaling data fetch incompleteness.
-  } 
-  // If packageDetails itself is null or undefined, remainingServings remains undefined.
+  const submissionsLength = processedItems?.length || 0;
+  const remainingServings = (totalAllowedSubmissions !== null && totalAllowedSubmissions !== undefined) 
+    ? Math.max(0, totalAllowedSubmissions - submissionsLength)
+    : undefined;
 
   const refreshSubmissions = () => {
     console.log("[useSubmissions] Refreshing submissions for clientId:", effectiveClientId);
@@ -253,30 +229,28 @@ export function useSubmissions() {
   };
 
   console.log("[useSubmissions] Hook returning:", {
-    submissions: processedItems,
-    submissionsLength: submissionsCount,
+    submissions: processedItems || [],
+    submissionsLength,
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
-    loading: loading || (queryEnabled && packageDetailsLoading), // Consider both loading states if queryEnabled
-    clientLoading: unifiedLoading, // Expose the auth loading state
+    loading: loading || (queryEnabled && packageDetailsLoading),
+    clientLoading: unifiedLoading,
     error,
     refreshSubmissions,
-    clientId: effectiveClientId, // Expose effectiveClientId
-    isAuthenticated: unifiedIsAuthenticated, // Expose final auth state
-    isClientAuthAuthenticated: clientAuthIsAuthenticated, // Expose specific client auth state for debugging or specific use cases
-    clientRecordStatus,
+    clientId: effectiveClientId,
+    isAuthenticated: unifiedIsAuthenticated,
     timestamp: Date.now()
   });
 
   return {
-    submissions: processedItems,
-    submissionsLength: submissionsCount,
+    submissions: processedItems || [],
+    submissionsLength,
     remainingServings,
     totalAllowedSubmissions,
     packageDetails,
-    loading: loading || (queryEnabled && packageDetailsLoading), // consider packageDetailsLoading only if the main query is enabled
-    clientLoading: unifiedLoading, // for consumers to know if auth is still settling
+    loading: loading || (queryEnabled && packageDetailsLoading),
+    clientLoading: unifiedLoading,
     error,
     refreshSubmissions,
     refreshPackageDetails: () => queryClient.invalidateQueries({ queryKey: ['clientPackageDetails', effectiveClientId] }),
