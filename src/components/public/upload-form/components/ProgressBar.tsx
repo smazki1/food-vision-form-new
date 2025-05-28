@@ -34,7 +34,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps, step
                 className={cn(
                   "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 border-4",
                   isCompleted && "bg-emerald-500 border-emerald-500 text-white shadow-lg",
-                  isCurrent && "bg-[#F3752B] border-[#F3752B] text-white shadow-lg animate-pulse",
+                  isCurrent && "bg-[#F3752B] border-[#F3752B] text-white shadow-lg",
                   isPending && "bg-white border-gray-300 text-gray-400"
                 )}
               >
