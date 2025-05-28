@@ -8,17 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { UploadCloud, Trash2, AlertTriangle, Sparkles, FileImage } from 'lucide-react';
+import { UploadCloud, Trash2, AlertTriangle, UtensilsCrossed, FileImage, Lightbulb, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
   const errors = externalErrors || {};
-  const [checklist, setChecklist] = useState({
-    imageQuality: false,
-    composition: false,
-    colors: false
-  });
+  const [qualityChecked, setQualityChecked] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
     const newFiles = [...formData.referenceImages];
@@ -70,11 +66,11 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
     <div className="space-y-8" dir="rtl">
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
-          <Sparkles className="w-8 h-8 text-orange-500 ml-2" />
-          <FileImage className="w-8 h-8 text-orange-500" />
+          <UtensilsCrossed className="w-8 h-8 text-emerald-500 ml-2" />
+          <FileImage className="w-8 h-8 text-emerald-500" />
         </div>
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          פרטי העלאה
+          העלאת מנות ומוצרים
         </h2>
         <p className="text-gray-600 mb-8">
           הזינו את פרטי הפריט והעלו תמונות איכותיות
@@ -82,9 +78,9 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
       </div>
 
       {/* Item Details Section */}
-      <div className="bg-orange-50 p-6 rounded-xl border border-orange-200">
+      <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200">
         <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-          <Sparkles className="w-6 h-6 text-orange-500 ml-2" />
+          <UtensilsCrossed className="w-6 h-6 text-emerald-500 ml-2" />
           פרטי הפריט
         </h3>
         
@@ -99,6 +95,7 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
             error={errors?.itemName}
             iconPosition="right"
             required
+            icon={<UtensilsCrossed className="w-5 h-5 text-emerald-500" />}
           />
 
           <div className="space-y-3">
@@ -116,7 +113,7 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
                     id={option.value}
                     checked={formData.itemType === option.value}
                     onCheckedChange={() => handleItemTypeChange(option.value as 'dish' | 'cocktail' | 'drink')}
-                    className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                    className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                   />
                   <label
                     htmlFor={option.value}
@@ -136,10 +133,10 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
           <IconTextarea
             id="description"
             name="description"
-            label="מרכיבים עיקריים (אופציונלי)"
+            label="תיאור קצר של המנה / המוצר"
             value={formData.description}
             onChange={handleChange}
-            placeholder="פרטו את המרכיבים העיקריים של הפריט"
+            placeholder="ספר לנו על המנה ואת המרכיבים העיקריים שחשוב שיראו בתמונה (לדוג' סלט קיסר עם אגוזי מלך ורוטב בלסמי. חשוב להראות את הרוטב בסלט)."
             rows={3}
             error={errors?.description}
           />
@@ -147,10 +144,10 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
           <IconTextarea
             id="specialNotes"
             name="specialNotes"
-            label="הערות מיוחדות (אופציונלי)"
+            label="הערות מיוחדות"
             value={formData.specialNotes}
             onChange={handleChange}
-            placeholder="כל מידע נוסף שחשוב שנדע"
+            placeholder="לדוג': להציג את הסלט עם קרוטונים, בלי בצל, להבליט את הרוטב, עדיף צלחת לבנה"
             rows={2}
             error={errors?.specialNotes}
           />
@@ -160,7 +157,7 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
       {/* Image Upload Section */}
       <div className="space-y-6">
         <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-          <FileImage className="w-6 h-6 text-orange-500 ml-2" />
+          <FileImage className="w-6 h-6 text-emerald-500 ml-2" />
           העלאת תמונות
         </h3>
         
@@ -169,11 +166,11 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
           className={cn(
             "border-2 border-dashed rounded-xl p-8 md:p-12 text-center cursor-pointer transition-all duration-200 ease-in-out",
             "flex flex-col items-center justify-center min-h-[200px] md:min-h-[250px]",
-            isDragActive ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-500/50' : 'border-gray-300 hover:border-orange-400 hover:bg-orange-50/50'
+            isDragActive ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/50' : 'border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/50'
           )}
         >
           <input {...getInputProps()} />
-          <UploadCloud className={cn("h-12 w-12 md:h-16 md:w-16 mb-4", isDragActive ? "text-orange-500" : "text-gray-400")} />
+          <UploadCloud className={cn("h-12 w-12 md:h-16 md:w-16 mb-4", isDragActive ? "text-emerald-500" : "text-gray-400")} />
           <p className="text-base md:text-lg font-medium text-gray-700 mb-1">
             {isDragActive ? 'שחררו כאן את הקבצים' : 'גררו לכאן תמונות או לחצו לבחירה'}
           </p>
@@ -216,35 +213,57 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {formData.referenceImages.length > 0 && (
-          <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
-            <h4 className="text-lg font-medium text-gray-700 mb-4">בדיקת איכות מהירה:</h4>
-            <div className="space-y-3">
-              {[
-                { id: "imageQuality", label: "התמונה ברורה ומוארת היטב" },
-                { id: "composition", label: "המנה ממורכזת ובפוקוס" },
-                { id: "colors", label: "הצבעים חיים ומושכים" }
-              ].map(item => (
-                <div key={item.id} className="flex items-center space-x-2 rtl:space-x-reverse">
+            {/* Quality Check Section */}
+            <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-lg font-medium text-gray-700 mb-4">לפני שממשיכים – ודאו שהתמונה ברורה ונכונה:</h4>
+              
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3 rtl:space-x-reverse">
                   <Checkbox
-                    id={item.id}
-                    checked={checklist[item.id as keyof typeof checklist]}
-                    onCheckedChange={(checked) => 
-                      setChecklist(prev => ({ ...prev, [item.id]: checked as boolean }))
-                    }
-                    className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                    id="qualityCheck"
+                    checked={qualityChecked}
+                    onCheckedChange={(checked) => setQualityChecked(checked as boolean)}
+                    className="h-5 w-5 mt-1 rounded border-gray-400 data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500"
                   />
-                  <label
-                    htmlFor={item.id}
-                    className="text-sm md:text-base text-gray-700 leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {item.label}
-                  </label>
+                  <div className="flex-1">
+                    <label
+                      htmlFor="qualityCheck"
+                      className="text-sm md:text-base text-gray-700 leading-relaxed cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      <strong>אני מאשר שהתמונה עומדת בדרישות:</strong>
+                      <ul className="mt-2 space-y-1 text-sm">
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-emerald-500 ml-2 shrink-0" />
+                          המנה נראית בבירור – בלי טשטוש או צל
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-emerald-500 ml-2 shrink-0" />
+                          הזווית נכונה – לא חתוכה, לא מוסתרת
+                        </li>
+                        <li className="flex items-center">
+                          <CheckCircle className="w-4 h-4 text-emerald-500 ml-2 shrink-0" />
+                          כל מה שחשוב שיראו – מופיע (מרכיבים עיקריים, תוספות, מרקם וכו')
+                        </li>
+                      </ul>
+                    </label>
+                  </div>
                 </div>
-              ))}
+
+                <div className="flex items-center text-sm text-gray-500 mt-3">
+                  <Lightbulb className="w-4 h-4 ml-2 shrink-0" />
+                  <span>ככל שהתמונה ברורה ומדויקת – כך התוצאה הסופית תהיה מקצועית ומגרה יותר</span>
+                </div>
+
+                {qualityChecked && (
+                  <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="flex items-center text-emerald-700">
+                      <CheckCircle className="w-5 h-5 ml-2 shrink-0" />
+                      <span className="font-medium">בדקתי את כל הפרטים ואני מאשר את ההגשה.</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

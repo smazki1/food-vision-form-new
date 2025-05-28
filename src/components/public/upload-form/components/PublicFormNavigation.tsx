@@ -31,20 +31,23 @@ const PublicFormNavigation: React.FC<PublicFormNavigationProps> = ({
           variant="outline" 
           onClick={onPrevious} 
           disabled={isSubmitting}
-          className="flex items-center bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900"
+          className="flex items-center bg-white hover:bg-gray-50 border-gray-300 text-gray-700 hover:text-gray-900 px-6 py-3 rounded-full"
         >
           <ChevronRight className="ml-2 h-4 w-4" /> 
           הקודם
         </Button>
       )}
-      <Button 
-        onClick={onNext} 
-        disabled={isSubmitting}
-        className="flex items-center bg-orange-500 hover:bg-orange-600 text-white border-orange-500 hover:border-orange-600"
-      >
-        {isSubmitting ? 'מעבד...' : (currentStepId === 3 ? 'לסקירה ואישור' : 'הבא')}
-        <ChevronLeft className="mr-2 h-4 w-4" /> 
-      </Button>
+      
+      {!isLastStep && (
+        <Button 
+          onClick={onNext} 
+          disabled={isSubmitting}
+          className="flex items-center bg-emerald-500 hover:bg-emerald-600 text-white border-emerald-500 hover:border-emerald-600 px-6 py-3 rounded-full"
+        >
+          {isSubmitting ? 'מעבד...' : 'הבא'}
+          <ChevronLeft className="mr-2 h-4 w-4" /> 
+        </Button>
+      )}
     </div>
   );
 };

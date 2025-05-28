@@ -1,57 +1,66 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-
-export type ItemType = 'dish' | 'cocktail' | 'drink' | '';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface NewItemFormData {
+  restaurantName: string;
+  submitterName?: string;
   itemName: string;
-  itemType: ItemType;
-  description?: string;
-  specialNotes?: string;
-  referenceImages: File[]; 
-  // Restaurant details - only restaurant name needed for public form
-  restaurantName?: string;
+  itemType: 'dish' | 'cocktail' | 'drink';
+  description: string;
+  specialNotes: string;
+  referenceImages: File[];
 }
 
 interface NewItemFormContextType {
   formData: NewItemFormData;
-  updateFormData: (data: Partial<NewItemFormData>) => void;
+  updateFormData: (updates: Partial<NewItemFormData>) => void;
   resetFormData: () => void;
 }
 
-const defaultFormData: NewItemFormData = {
-  itemName: '',
-  itemType: '',
-  description: '',
-  specialNotes: '',
-  referenceImages: [],
-  restaurantName: '',
-};
+const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
 
-export const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
-
-export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [formData, setFormData] = useState<NewItemFormData>(defaultFormData);
-
-  const updateFormData = (data: Partial<NewItemFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
-  };
-
-  const resetFormData = () => {
-    setFormData(defaultFormData);
-  };
-
-  return (
-    <NewItemFormContext.Provider value={{ formData, updateFormData, resetFormData }}>
-      {children}
-    </NewItemFormContext.Provider>
-  );
-};
-
-export const useNewItemForm = () => {
+export const useNewItemForm = (): NewItemFormContextType => {
   const context = useContext(NewItemFormContext);
   if (context === undefined) {
     throw new Error('useNewItemForm must be used within a NewItemFormProvider');
   }
   return context;
+};
+
+interface NewItemFormProviderProps {
+  children: ReactNode;
+}
+
+const initialFormData: NewItemFormData = {
+  restaurantName: '',
+  submitterName: '',
+  itemName: '',
+  itemType: 'dish',
+  description: '',
+  specialNotes: '',
+  referenceImages: []
+};
+
+export const NewItemFormProvider: React.FC<NewItemFormProviderProps> = ({ children }) => {
+  const [formData, setFormData] = useState<NewItemFormData>(initialFormData);
+
+  const updateFormData = (updates: Partial<NewItemFormData>) => {
+    setFormData(prevData => ({ ...prevData, ...updates }));
+  };
+
+  const resetFormData = () => {
+    setFormData(initialFormData);
+  };
+
+  const value: NewItemFormContextType = {
+    formData,
+    updateFormData,
+    resetFormData
+  };
+
+  return (
+    <NewItemFormContext.Provider value={value}>
+      {children}
+    </NewItemFormContext.Provider>
+  );
 };

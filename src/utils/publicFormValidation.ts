@@ -6,6 +6,9 @@ export const validateRestaurantNameStep = (formData: NewItemFormData): Record<st
   if (!formData.restaurantName?.trim()) {
     errors.restaurantName = 'שם המסעדה הוא שדה חובה';
   }
+  if (!formData.submitterName?.trim()) {
+    errors.submitterName = 'שם המגיש הוא שדה חובה';
+  }
   return errors;
 };
 

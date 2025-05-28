@@ -21,6 +21,13 @@ export const usePublicFormSubmission = () => {
       return false;
     }
 
+    if (!formData.submitterName?.trim()) {
+      console.log('[PublicFormSubmission] Missing submitter name');
+      toast.error("שם המגיש הוא שדה חובה.");
+      setStepErrors?.({ submitterName: "שם המגיש הוא שדה חובה." });
+      return false;
+    }
+
     if (!formData.itemName?.trim()) {
       console.log('[PublicFormSubmission] Missing item name');
       toast.error("שם הפריט הוא שדה חובה.");
@@ -97,6 +104,8 @@ export const usePublicFormSubmission = () => {
         p_category: category,
         p_ingredients: ingredients,
         p_reference_image_urls: uploadedImageUrls,
+        p_submitter_name: formData.submitterName?.trim() || null,
+        p_special_notes: formData.specialNotes?.trim() || null,
       };
 
       console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
