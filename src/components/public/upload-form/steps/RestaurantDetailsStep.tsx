@@ -20,20 +20,16 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
   return (
     <div className="space-y-8" dir="rtl">
       <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <Building2 className="w-8 h-8 text-emerald-500 ml-2" />
-          <User className="w-8 h-8 text-emerald-500" />
-        </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           פרטי מסעדה
         </h2>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 text-lg mb-8">
           מלאו את הפרטים הנדרשים להעלאת הפריט
         </p>
       </div>
 
-      <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200">
-        <div className="space-y-6">
+      <div className="bg-emerald-50 p-8 rounded-xl border border-emerald-200">
+        <div className="space-y-8">
           <IconInput
             id="restaurantName"
             name="restaurantName"

@@ -25,12 +25,11 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
   );
 };
 
-const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
+const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
   const { formData } = useNewItemForm();
 
   const { 
-    restaurantName,
-    submitterName,
+    restaurantName, submitterName,
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
 
@@ -44,9 +43,9 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
 
   return (
     <div className="space-y-8" dir="rtl">
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-gray-800 text-center">סקירה ואישור</h2>
-        <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
+      <div className="text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">סקירה ואישור</h2>
+        <p className="text-lg text-muted-foreground mb-8">
           אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית.
         </p>
       </div>
@@ -54,7 +53,7 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
       <section className="space-y-4">
         <div className="flex items-center mb-3">
           <Building2 className="h-6 w-6 text-emerald-500 ml-3" /> 
-          <h3 className="text-lg font-semibold text-gray-700">פרטי המסעדה</h3>
+          <h3 className="text-lg font-semibold text-gray-700">פרטי מסעדה</h3>
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
@@ -111,17 +110,17 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
             onClick={onFinalSubmit}
             disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
             className={cn(
-                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
+                "w-full text-lg md:text-xl font-bold py-6 px-8 rounded-xl shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-1 hover:shadow-xl",
                 "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
                 "border-2",
                 canSubmit 
-                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 border-[#8B1E3F] hover:border-[#8B1E3F]/90 text-white focus-visible:ring-[#8B1E3F]" 
+                ? "bg-[#8B1E3F] hover:bg-[#721832] border-[#8B1E3F] hover:border-[#721832] text-white focus-visible:ring-[#8B1E3F]" 
                 : "bg-gray-300 hover:bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed shadow-inner",
                 (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 border-red-600 hover:border-red-700 text-white focus-visible:ring-red-500"
             )}
         >
             <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-            <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
+            <span className="leading-tight">שלח בקשה</span>
             <ChevronLeft className="h-5 w-5 md:h-6 md:w-6" /> 
         </Button>
       )}
@@ -142,4 +141,4 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
   );
 };
 
-export default PublicReviewSubmitStep;
+export default ReviewSubmitStep;

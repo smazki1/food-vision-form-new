@@ -65,20 +65,16 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
   return (
     <div className="space-y-8" dir="rtl">
       <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <UtensilsCrossed className="w-8 h-8 text-emerald-500 ml-2" />
-          <FileImage className="w-8 h-8 text-emerald-500" />
-        </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
           העלאת מנות ומוצרים
         </h2>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 text-lg mb-8">
           הזינו את פרטי הפריט והעלו תמונות איכותיות
         </p>
       </div>
 
       {/* Item Details Section */}
-      <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-200">
+      <div className="bg-emerald-50 p-8 rounded-xl border border-emerald-200">
         <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <UtensilsCrossed className="w-6 h-6 text-emerald-500 ml-2" />
           פרטי הפריט
@@ -252,7 +248,7 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
 
                 <div className="flex items-center text-sm text-gray-500 mt-3">
                   <Lightbulb className="w-4 h-4 ml-2 shrink-0" />
-                  <span>ככל שהתמונה ברורה ומדויקת – כך התוצאה הסופית תהיה מקצועית ומגרה יותר</span>
+                  <span>💡 ככל שהתמונה ברורה ומדויקת – כך התוצאה הסופית תהיה מקצועית ומגרה יותר</span>
                 </div>
 
                 {qualityChecked && (

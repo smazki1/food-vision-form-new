@@ -21,12 +21,12 @@ export interface PublicStepProps {
 const publicFormSteps = [
   {
     id: 1,
-    name: 'פרטי המסעדה',
+    name: 'פרטי מסעדה',
     component: RestaurantDetailsStep
   },
   {
     id: 2,
-    name: 'פרטי העלאה',
+    name: 'העלאת פריט חדש',
     component: CombinedUploadStep
   },
   {
@@ -55,7 +55,10 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     handleNext,
     handlePrevious,
     handleSubmit,
-    isSubmitting
+    handleNewSubmission,
+    handleCloseSuccessModal,
+    isSubmitting,
+    showSuccessModal
   } = usePublicFormHandlers(
     currentStepId,
     isLastStep,
@@ -96,6 +99,9 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         isSubmitting={isSubmitting}
         onNext={handleNext}
         onPrevious={handlePrevious}
+        showSuccessModal={showSuccessModal}
+        onNewSubmission={handleNewSubmission}
+        onCloseSuccessModal={handleCloseSuccessModal}
       />
     </div>
   );

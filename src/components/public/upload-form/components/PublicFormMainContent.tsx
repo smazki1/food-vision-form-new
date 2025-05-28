@@ -4,6 +4,7 @@ import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import PublicFormContent from './PublicFormContent';
 import PublicFormErrorDisplay from './PublicFormErrorDisplay';
 import PublicFormNavigation from './PublicFormNavigation';
+import SuccessModal from './SuccessModal';
 
 interface PublicFormMainContentProps {
   CurrentStepComponent: React.ComponentType<PublicStepProps>;
@@ -19,6 +20,9 @@ interface PublicFormMainContentProps {
   isSubmitting: boolean;
   onNext: () => void;
   onPrevious: () => void;
+  showSuccessModal: boolean;
+  onNewSubmission: () => void;
+  onCloseSuccessModal: () => void;
 }
 
 const PublicFormMainContent: React.FC<PublicFormMainContentProps> = ({
@@ -34,7 +38,10 @@ const PublicFormMainContent: React.FC<PublicFormMainContentProps> = ({
   isLastStep,
   isSubmitting,
   onNext,
-  onPrevious
+  onPrevious,
+  showSuccessModal,
+  onNewSubmission,
+  onCloseSuccessModal
 }) => {
   return (
     <>
@@ -64,6 +71,12 @@ const PublicFormMainContent: React.FC<PublicFormMainContentProps> = ({
           )}
         </div>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={onCloseSuccessModal}
+        onNewSubmission={onNewSubmission}
+      />
     </>
   );
 };

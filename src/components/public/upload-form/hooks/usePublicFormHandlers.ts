@@ -1,8 +1,7 @@
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
-import { useUnifiedFormValidation } from '@/hooks/useUnifiedFormValidation';
 
 export const usePublicFormHandlers = (
   currentStepId: number,
@@ -15,6 +14,7 @@ export const usePublicFormHandlers = (
 ) => {
   const { formData, resetFormData } = useNewItemForm();
   const { isSubmitting, submitForm } = usePublicFormSubmission();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleNext = useCallback(async () => {
     const isValid = await validateStep(currentStepId);
@@ -34,16 +34,28 @@ export const usePublicFormHandlers = (
 
     const success = await submitForm(formData);
     if (success) {
-      resetFormData();
-      moveToStep(1);
-      clearErrors();
+      setShowSuccessModal(true);
     }
-  }, [currentStepId, validateStep, submitForm, formData, resetFormData, moveToStep, clearErrors]);
+  }, [currentStepId, validateStep, submitForm, formData]);
+
+  const handleNewSubmission = useCallback(() => {
+    resetFormData();
+    moveToStep(1);
+    clearErrors();
+    setShowSuccessModal(false);
+  }, [resetFormData, moveToStep, clearErrors]);
+
+  const handleCloseSuccessModal = useCallback(() => {
+    setShowSuccessModal(false);
+  }, []);
 
   return {
     handleNext,
     handlePrevious,
     handleSubmit,
-    isSubmitting
+    handleNewSubmission,
+    handleCloseSuccessModal,
+    isSubmitting,
+    showSuccessModal
   };
 };
