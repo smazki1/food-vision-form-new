@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -198,9 +197,9 @@ const UnifiedUploadForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div dir="rtl" className="flex flex-col items-center min-h-screen bg-gray-100 py-8">
       {/* Progress Header */}
-      <div className="p-4 bg-white shadow-md sticky top-0 z-10">
+      <div className="w-full p-4 bg-[#8B1E3F] shadow-md sticky top-0 z-10">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             {STEPS.map((step, index) => (
@@ -235,20 +234,23 @@ const UnifiedUploadForm: React.FC = () => {
           )}
 
           {/* Navigation */}
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 flex justify-center gap-4 w-full">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 1 || isSubmitting}
+              className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
             >
-              <ChevronRight className="ml-2 h-4 w-4" />
               הקודם
             </Button>
 
             {currentStep < 4 ? (
-              <Button onClick={handleNext} disabled={isSubmitting}>
+              <Button 
+                onClick={handleNext} 
+                disabled={isSubmitting}
+                className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full bg-[#F3752B] text-white hover:bg-[#F3752B]/90"
+              >
                 הבא
-                <ChevronLeft className="mr-2 h-4 w-4" />
               </Button>
             ) : (
               <Button
