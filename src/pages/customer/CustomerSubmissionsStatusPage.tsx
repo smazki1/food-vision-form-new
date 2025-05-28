@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useSubmissions } from '@/hooks/useSubmissions';
@@ -60,30 +59,6 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
   
   const { user: unifiedUser } = useUnifiedAuth();
 
-  const sortedSubmissions = React.useMemo(() => {
-    // Ensure submissions is always an array for the sort function
-    const submissionsArray = submissions || []; 
-    return [...submissionsArray].sort((a, b) => new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime());
-  }, [submissions]);
-
-  console.log("[CustomerSubmissionsStatusPage] Component state:", {
-    effectiveClientId,
-    effectiveAuthenticated,
-    authLoading,
-    submissionsLoading,
-    unifiedUser: unifiedUser?.id,
-    submissionsCount: submissions?.length,
-    error: error?.message,
-    timestamp: Date.now()
-  });
-
-<<<<<<< HEAD
-  let content;
-
-  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated && !error)) {
-    content = (
-=======
-  // Use useMemo to safely sort submissions and prevent React error #310
   const sortedSubmissions = useMemo(() => {
     if (!submissions || !Array.isArray(submissions)) {
       console.warn("[CustomerSubmissionsStatusPage] Invalid submissions data:", submissions);
@@ -101,9 +76,21 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
     }
   }, [submissions]);
 
-  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated)) {
-    return (
->>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
+  console.log("[CustomerSubmissionsStatusPage] Component state:", {
+    effectiveClientId,
+    effectiveAuthenticated,
+    authLoading,
+    submissionsLoading,
+    unifiedUser: unifiedUser?.id,
+    submissionsCount: submissions?.length,
+    error: error?.message,
+    timestamp: Date.now()
+  });
+
+  let content;
+
+  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated && !error)) {
+    content = (
       <div dir="rtl" className="text-center p-10">
         <div className="flex items-center justify-center gap-2">
           <RefreshCw className="h-4 w-4 animate-spin" />
@@ -231,11 +218,7 @@ const CustomerSubmissionsStatusPage: React.FC = () => {
             <br />
             משתמש: {unifiedUser?.email || (effectiveAuthenticated ? 'טוען אימייל...' : 'לא מחובר')}
             <br />
-<<<<<<< HEAD
-            {effectiveClientId && `סה"כ הגשות נמצאו: ${submissions?.length || 0}`}
-=======
             סה"כ הגשות נמצאו: {sortedSubmissions?.length || 0}
->>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
           </AlertDescription>
         </Alert>
       </div>
