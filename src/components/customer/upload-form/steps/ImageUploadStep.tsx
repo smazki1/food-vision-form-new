@@ -51,11 +51,6 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
   return (
     <div className="space-y-8" dir="rtl">
       <div className="text-center">
-<<<<<<< HEAD
-        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-[#8B1E3F]">העלאת תמונות</h2>
-        <p className="text-sm md:text-base text-gray-600 mb-8">
-          העלו תמונות ברורות ואיכותיות של הפריט. מומלץ להעלות בין 1 ל-10 תמונות מזוויות שונות.
-=======
         <div className="flex items-center justify-center mb-4">
           <FileImage className="w-8 h-8 text-primary" />
         </div>
@@ -64,7 +59,6 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
         </h2>
         <p className="text-gray-600 mb-8">
           העלו תמונות איכותיות של הפריט
->>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
         </p>
       </div>
 
@@ -104,34 +98,6 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
           </div>
         )}
 
-<<<<<<< HEAD
-      {formData.referenceImages.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium text-[#8B1E3F] text-center">תמונות שהועלו ({formData.referenceImages.length}/10)</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {formData.referenceImages.map((file, index) => (
-              <div key={index}
-                className="relative group aspect-square bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200">
-                <img
-                  src={URL.createObjectURL(file)}
-                  alt={`תצוגה מקדימה ${index + 1}`}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onLoad={() => URL.revokeObjectURL(file.name)}
-                />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={(e) => { e.preventDefault(); removeImage(index); }}
-                    aria-label="הסרת תמונה"
-                    className="rounded-full h-9 w-9 md:h-10 md:w-10"
-                  >
-                    <Trash2 className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-=======
         {formData.referenceImages.length > 0 && (
           <div className="space-y-4">
             <h4 className="text-lg font-medium text-gray-700">תמונות שהועלו ({formData.referenceImages.length}/10)</h4>
@@ -159,39 +125,9 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
                 </div>
               ))}
             </div>
->>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
           </div>
-        </div>
-      )}
+        )}
 
-<<<<<<< HEAD
-      {formData.referenceImages.length > 0 && (
-        <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-medium text-[#8B1E3F] text-center mb-4">בדיקת איכות מהירה:</h3>
-          <div className="space-y-3 max-w-md mx-auto">
-            {[
-              { id: "imageQuality", label: "התמונה ברורה ומוארת היטב" },
-              { id: "composition", label: "המנה ממורכזת ובפוקוס" },
-              { id: "colors", label: "הצבעים חיים ומושכים" }
-            ].map(item => (
-              <div key={item.id} className="flex items-center space-x-2 rtl:space-x-reverse">
-                <Checkbox
-                  id={item.id}
-                  checked={checklist[item.id as keyof typeof checklist]}
-                  onCheckedChange={(checked) => 
-                    setChecklist(prev => ({ ...prev, [item.id]: checked as boolean }))
-                  }
-                  className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-[#F3752B] data-[state=checked]:border-[#F3752B]"
-                />
-                <label
-                  htmlFor={item.id}
-                  className="text-sm md:text-base text-gray-700 leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {item.label}
-                </label>
-              </div>
-            ))}
-=======
         {formData.referenceImages.length > 0 && (
           <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
             <h4 className="text-lg font-medium text-gray-700 mb-4">בדיקת איכות מהירה:</h4>
@@ -219,7 +155,6 @@ const ImageUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
                 </div>
               ))}
             </div>
->>>>>>> 1a9d824335a165497776a783b488ce316e369a3f
           </div>
         )}
       </div>
