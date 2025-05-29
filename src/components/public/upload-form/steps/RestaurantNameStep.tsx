@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
@@ -34,6 +33,9 @@ const RestaurantNameStep: React.FC<PublicStepProps> = ({ errors, clearExternalEr
           iconPosition="right"
           required
         />
+        <p className="text-xs text-gray-500 mt-1">
+          אם העסק כבר קיים במערכת, כתבו את השם שלו
+        </p>
       </div>
     </div>
   );

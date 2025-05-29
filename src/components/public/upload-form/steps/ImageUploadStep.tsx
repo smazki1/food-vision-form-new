@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
@@ -13,7 +12,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = [...formData.referenceImages];
     acceptedFiles.forEach(file => {
-      if (!newFiles.find(f => f.name === file.name) && newFiles.length < 5) {
+      if (!newFiles.find(f => f.name === file.name) && newFiles.length < 10) {
         newFiles.push(file);
       }
     });
@@ -28,7 +27,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
       'image/webp': ['.webp']
     },
     maxSize: 20 * 1024 * 1024,
-    maxFiles: 5,
+    maxFiles: 10,
   });
 
   const removeImage = (index: number) => {
@@ -49,7 +48,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-[#333333] mb-4">
-          העלאת תמונות איכותיות (2-5 תמונות)
+          העלאת תמונות איכותיות (2-10 תמונות)
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
           ככל שהתמונות ברורות יותר, כך התוצאות יהיו מדויקות יותר
@@ -101,6 +100,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
         {/* Upload Area */}
         <div
           {...getRootProps()}
+          data-testid="dropzone-area"
           className={cn(
             "border-3 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300",
             "flex flex-col items-center justify-center min-h-[250px]",
@@ -118,21 +118,22 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
             או גררו תמונות לכאן
           </p>
           <p className="text-sm text-gray-400 mt-4">
-            תומך ב-JPG, PNG, WEBP (מקסימום 20MB לתמונה, עד 5 תמונות)
+            תומך ב-JPG, PNG, WEBP (מקסימום 20MB לתמונה, עד 10 תמונות)
           </p>
         </div>
 
         {errors?.referenceImages && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-red-600 text-center">
-            {errors.referenceImages}
-          </div>
+          <p className="text-red-500 text-sm mt-2 flex items-center">
+            <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>
+            {errors.referenceImages.includes('maxFiles') ? 'ניתן להעלות עד 10 תמונות בלבד.' : errors.referenceImages}
+          </p>
         )}
 
         {/* Uploaded Images */}
         {formData.referenceImages.length > 0 && (
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-[#333333] text-center">
-              תמונות שהועלו ({formData.referenceImages.length}/5)
+              תמונות שהועלו ({formData.referenceImages.length}/10)
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {formData.referenceImages.map((file, index) => (
