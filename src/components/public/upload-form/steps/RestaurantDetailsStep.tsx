@@ -10,43 +10,71 @@ import { supabase } from '@/integrations/supabase/client';
 
 const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
-  const { clientId, isAuthenticated } = useClientAuth();
+  const { clientId, isAuthenticated, userAuthId } = useClientAuth();
   const errors = externalErrors || {};
 
+  console.log('[RestaurantDetailsStep] Auth state:', { 
+    isAuthenticated, 
+    clientId, 
+    userAuthId,
+    currentFormData: formData 
+  });
+
   // Query to fetch client details if user is authenticated
-  const { data: clientData, isLoading: isLoadingClientData } = useQuery({
-    queryKey: ['client-details', clientId],
+  const { data: clientData, isLoading: isLoadingClientData, error: clientError } = useQuery({
+    queryKey: ['client-details', userAuthId],
     queryFn: async () => {
-      if (!clientId) return null;
+      if (!userAuthId) {
+        console.log('[RestaurantDetailsStep] No userAuthId, skipping query');
+        return null;
+      }
+      
+      console.log('[RestaurantDetailsStep] Fetching client data for userAuthId:', userAuthId);
       
       const { data, error } = await supabase
         .from('clients')
-        .select('restaurant_name, contact_name')
-        .eq('client_id', clientId)
+        .select('restaurant_name, contact_name, email, phone')
+        .eq('user_auth_id', userAuthId)
         .single();
 
       if (error) {
-        console.error('Error fetching client data:', error);
+        console.error('[RestaurantDetailsStep] Error fetching client data:', error);
         return null;
       }
 
+      console.log('[RestaurantDetailsStep] Client data fetched successfully:', data);
       return data;
     },
-    enabled: !!clientId && isAuthenticated,
+    enabled: !!userAuthId && isAuthenticated,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 2,
   });
 
   // Auto-fill form data when client data is loaded
   useEffect(() => {
-    if (clientData && isAuthenticated) {
+    console.log('[RestaurantDetailsStep] useEffect triggered:', {
+      clientData,
+      isAuthenticated,
+      isLoadingClientData,
+      clientError
+    });
+
+    if (clientData && isAuthenticated && !isLoadingClientData) {
+      console.log('[RestaurantDetailsStep] Auto-filling form with client data:', {
+        restaurant_name: clientData.restaurant_name,
+        contact_name: clientData.contact_name
+      });
+
       updateFormData({
         restaurantName: clientData.restaurant_name || '',
         submitterName: clientData.contact_name || ''
       });
     }
-  }, [clientData, isAuthenticated, updateFormData]);
+  }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    console.log('[RestaurantDetailsStep] Manual input change:', { name, value });
     updateFormData({ [name]: value });
     if (errors && errors[name] && clearExternalErrors) {
       clearExternalErrors();
@@ -70,12 +98,40 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
         </p>
       </div>
 
+      {/* Debug info for development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 p-4 rounded-lg text-sm">
+          <strong>Debug Info:</strong>
+          <br />
+          isAuthenticated: {String(isAuthenticated)}
+          <br />
+          clientId: {clientId || 'null'}
+          <br />
+          userAuthId: {userAuthId || 'null'}
+          <br />
+          isLoadingClientData: {String(isLoadingClientData)}
+          <br />
+          clientData: {clientData ? JSON.stringify(clientData) : 'null'}
+          <br />
+          formData: {JSON.stringify({ restaurantName: formData.restaurantName, submitterName: formData.submitterName })}
+        </div>
+      )}
+
       {/* Loading indicator for authenticated users */}
       {isAuthenticated && isLoadingClientData && (
         <div className="text-center py-4">
           <div className="inline-flex items-center text-[#F3752B]">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#F3752B] ml-3"></div>
             טוען פרטי לקוח...
+          </div>
+        </div>
+      )}
+
+      {/* Error indicator */}
+      {isAuthenticated && clientError && (
+        <div className="text-center py-4">
+          <div className="text-red-500 text-sm">
+            שגיאה בטעינת פרטי הלקוח. אנא נסה לרענן את הדף.
           </div>
         </div>
       )}
@@ -96,7 +152,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
             id="restaurantName"
             name="restaurantName"
             type="text"
-            value={formData.restaurantName}
+            value={formData.restaurantName || ''}
             onChange={handleChange}
             disabled={isFieldDisabled}
             placeholder={isAuthenticated ? "טוען..." : "הזינו את שם המסעדה או העסק"}
