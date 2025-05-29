@@ -110,24 +110,13 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
           )}
         </div>
 
-        {/* Description with improved guidance */}
+        {/* Description - simplified without visual examples */}
         <div className="space-y-3">
           <label htmlFor="description" className="block text-lg font-semibold text-[#333333] flex items-center">
             <FileText className="w-6 h-6 text-[#F3752B] ml-3" />
             ספרו בקצרה מה מרכיבי המנה העיקריים
             <span className="text-red-500 mr-1">*</span>
           </label>
-          <p className="text-sm text-gray-600 mb-3">
-            לדוגמה: סלט קיסר עם חזה עוף, קרוטונים ורוטב קיסר ביתי
-          </p>
-          
-          {/* Visual example */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
-            <h4 className="font-semibold text-emerald-800 mb-2">דוגמה לתיאור טוב:</h4>
-            <p className="text-emerald-700 text-sm italic">
-              "פסטה קרבונרה עם בייקון פריך, פרמז'ן מגורר, ביצה טרייה וצ'ילי גרוס. מוגש עם פרוסת לחם שום"
-            </p>
-          </div>
           
           <textarea
             id="description"
