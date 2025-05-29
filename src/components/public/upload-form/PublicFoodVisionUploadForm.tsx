@@ -81,6 +81,14 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
   const isReviewStep = currentStepId === 4;
 
+  console.log('[PublicFoodVisionUploadForm] Current navigation state:', {
+    currentStepId,
+    isFirstStep,
+    isLastStep,
+    isReviewStep,
+    totalSteps: publicFormSteps.length
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
       <div className="max-w-4xl mx-auto px-4 py-8">
