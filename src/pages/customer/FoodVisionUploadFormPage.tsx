@@ -2,12 +2,15 @@
 import React from 'react';
 import PublicFoodVisionUploadForm from '@/components/public/upload-form/PublicFoodVisionUploadForm';
 import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
+import { ClientAuthProvider } from '@/providers/ClientAuthProvider';
 
 const FoodVisionUploadFormPage: React.FC = () => {
   return (
-    <NewItemFormProvider>
-      <PublicFoodVisionUploadForm />
-    </NewItemFormProvider>
+    <ClientAuthProvider>
+      <NewItemFormProvider>
+        <PublicFoodVisionUploadForm />
+      </NewItemFormProvider>
+    </ClientAuthProvider>
   );
 };
 

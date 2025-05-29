@@ -4,19 +4,36 @@ import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import { Building2, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useClientAuth } from '@/hooks/useClientAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
-  const { clientId, isAuthenticated, userAuthId } = useClientAuth();
   const errors = externalErrors || {};
+
+  // Get current user session directly from Supabase
+  const { data: session, isLoading: sessionLoading } = useQuery({
+    queryKey: ['current-session'],
+    queryFn: async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('[RestaurantDetailsStep] Session error:', error);
+        return null;
+      }
+      console.log('[RestaurantDetailsStep] Current session:', session);
+      return session;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1,
+  });
+
+  const isAuthenticated = !!session?.user;
+  const userAuthId = session?.user?.id || null;
 
   console.log('[RestaurantDetailsStep] Auth state:', { 
     isAuthenticated, 
-    clientId, 
     userAuthId,
+    sessionLoading,
     currentFormData: formData 
   });
 
@@ -45,7 +62,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
       console.log('[RestaurantDetailsStep] Client data fetched successfully:', data);
       return data;
     },
-    enabled: !!userAuthId && isAuthenticated,
+    enabled: !!userAuthId && isAuthenticated && !sessionLoading,
     staleTime: 1000 * 60 * 5, // 5 minutes
     retry: 2,
   });
@@ -56,10 +73,11 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
       clientData,
       isAuthenticated,
       isLoadingClientData,
-      clientError
+      clientError,
+      sessionLoading
     });
 
-    if (clientData && isAuthenticated && !isLoadingClientData) {
+    if (clientData && isAuthenticated && !isLoadingClientData && !sessionLoading) {
       console.log('[RestaurantDetailsStep] Auto-filling form with client data:', {
         restaurant_name: clientData.restaurant_name,
         contact_name: clientData.contact_name
@@ -70,7 +88,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
         submitterName: clientData.contact_name || ''
       });
     }
-  }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError]);
+  }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError, sessionLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -81,7 +99,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
     }
   };
 
-  const isFieldDisabled = isAuthenticated && isLoadingClientData;
+  const isFieldDisabled = isAuthenticated && (isLoadingClientData || sessionLoading);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -105,9 +123,9 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
           <br />
           isAuthenticated: {String(isAuthenticated)}
           <br />
-          clientId: {clientId || 'null'}
-          <br />
           userAuthId: {userAuthId || 'null'}
+          <br />
+          sessionLoading: {String(sessionLoading)}
           <br />
           isLoadingClientData: {String(isLoadingClientData)}
           <br />
@@ -118,7 +136,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
       )}
 
       {/* Loading indicator for authenticated users */}
-      {isAuthenticated && isLoadingClientData && (
+      {isAuthenticated && (isLoadingClientData || sessionLoading) && (
         <div className="text-center py-4">
           <div className="inline-flex items-center text-[#F3752B]">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#F3752B] ml-3"></div>
