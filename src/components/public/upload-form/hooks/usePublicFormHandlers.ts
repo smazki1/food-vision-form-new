@@ -1,4 +1,3 @@
-
 import { useCallback, useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { usePublicFormSubmission } from '@/hooks/usePublicFormSubmission';
@@ -24,15 +23,9 @@ export const usePublicFormHandlers = (
   }, [currentStepId, isLastStep, moveToNextStep, validateStep]);
 
   const handlePrevious = useCallback(() => {
-    console.log('[PublicFormHandlers] handlePrevious called - currentStepId:', currentStepId);
     clearErrors();
-    
-    // Prevent navigation issues by ensuring we only go back if we're not on the first step
     if (currentStepId > 1) {
-      console.log('[PublicFormHandlers] Moving to previous step');
       moveToPreviousStep();
-    } else {
-      console.log('[PublicFormHandlers] Already on first step, not moving back');
     }
   }, [clearErrors, moveToPreviousStep, currentStepId]);
 
@@ -40,21 +33,23 @@ export const usePublicFormHandlers = (
     const isValid = await validateStep(currentStepId);
     if (!isValid) return;
 
-    const success = await submitForm(formData);
-    if (success) {
-      setShowSuccessModal(true);
+    try {
+      const success = await submitForm(formData);
+      if (success) {
+        setShowSuccessModal(true);
+      }
+    } catch (e) {
+      // Handle or log error appropriately in a real app
+      console.error('Error during form submission:', e);
     }
   }, [currentStepId, validateStep, submitForm, formData]);
 
   const handleNewSubmission = useCallback(() => {
-    // Keep restaurant details, reset the rest
     const restaurantName = formData.restaurantName;
-    const submitterName = formData.submitterName;
     resetFormData();
-    // Restore restaurant details for convenience
     setTimeout(() => {
       if (restaurantName) {
-        moveToStep(2); // Skip to item details since restaurant info is filled
+        moveToStep(2);
       } else {
         moveToStep(1);
       }
