@@ -675,7 +675,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      public_submit_item_by_restaurant_name: {
+      public_submit_item_by_restaurant_name_with_type: {
         Args: {
           p_restaurant_name: string
           p_item_type: string

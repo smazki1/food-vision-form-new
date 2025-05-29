@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -33,8 +32,8 @@ export const handlePublicSubmission = async (
     p_restaurant_name: formData.restaurantName.trim(),
     p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
     p_item_name: formData.itemName.trim(),
-    p_description: formData.description?.trim() || null,
-    p_category: category,
+    p_description: formData.description?.trim() || undefined,
+    p_category: category || undefined,
     p_ingredients: ingredients,
     p_reference_image_urls: uploadedImageUrls,
   };
