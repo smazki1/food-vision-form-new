@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { UploadCloud, Trash2, Camera, CheckCircle, Lightbulb, Sun, Focus, Zap, Eye } from 'lucide-react';
+import { UploadCloud, Trash2, Camera, CheckCircle, Sun, Focus, Eye, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
@@ -167,10 +167,6 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
               <p className="text-emerald-800 font-semibold text-lg">
                 בדקו שהתמונות ברורות לפני המשך
               </p>
-              <div className="text-xs text-blue-600 mt-2 flex items-center justify-center">
-                <Lightbulb className="w-4 h-4 ml-1" />
-                💡 טיפ: צילום בתאורה טבעית משפר משמעותית את התוצאה
-              </div>
             </div>
           </div>
         )}
