@@ -579,6 +579,42 @@ export type Database = {
         }
         Relationships: []
       }
+      submissions: {
+        Row: {
+          business_name: string
+          created_at: string
+          description: string
+          id: string
+          image_urls: Json | null
+          item_name: string
+          item_type: string
+          special_notes: string | null
+          status: string
+        }
+        Insert: {
+          business_name: string
+          created_at?: string
+          description: string
+          id?: string
+          image_urls?: Json | null
+          item_name: string
+          item_type: string
+          special_notes?: string | null
+          status?: string
+        }
+        Update: {
+          business_name?: string
+          created_at?: string
+          description?: string
+          id?: string
+          image_urls?: Json | null
+          item_name?: string
+          item_type?: string
+          special_notes?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -675,7 +711,7 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      public_submit_item_by_restaurant_name_with_type: {
+      public_submit_item_by_restaurant_name: {
         Args: {
           p_restaurant_name: string
           p_item_type: string

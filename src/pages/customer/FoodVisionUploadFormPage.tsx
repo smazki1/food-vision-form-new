@@ -1,12 +1,12 @@
 
 import React from 'react';
-import FoodVisionUploadForm from '@/components/customer/upload-form/FoodVisionUploadForm';
+import PublicFoodVisionUploadForm from '@/components/public/upload-form/PublicFoodVisionUploadForm';
 import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
 
 const FoodVisionUploadFormPage: React.FC = () => {
   return (
     <NewItemFormProvider>
-      <FoodVisionUploadForm />
+      <PublicFoodVisionUploadForm />
     </NewItemFormProvider>
   );
 };
