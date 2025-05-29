@@ -86,20 +86,45 @@ const CustomerLogin: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#fafafa] flex items-center justify-center relative overflow-hidden" dir="rtl">
       {/* Background decorations */}
-      <div className="absolute w-[500px] h-[500px] rounded-full opacity-5 bg-[#8b1e3f] blur-[100px] -top-[200px] -left-[200px] animate-pulse"></div>
-      <div className="absolute w-[500px] h-[500px] rounded-full opacity-5 bg-[#f5752b] blur-[100px] -bottom-[200px] -right-[200px] animate-pulse"></div>
+      <div 
+        className="absolute w-[500px] h-[500px] rounded-full opacity-5 bg-[#8b1e3f] blur-[100px] -top-[200px] -left-[200px]"
+        style={{
+          animation: 'float 20s infinite ease-in-out'
+        }}
+      ></div>
+      <div 
+        className="absolute w-[500px] h-[500px] rounded-full opacity-5 bg-[#f5752b] blur-[100px] -bottom-[200px] -right-[200px]"
+        style={{
+          animation: 'float 20s infinite ease-in-out reverse'
+        }}
+      ></div>
       
       {/* Floating shapes */}
-      <div className="absolute w-20 h-20 bg-[#f5752b] opacity-8 top-[15%] right-[10%] animate-bounce" 
-           style={{ borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%' }}></div>
-      <div className="absolute w-15 h-15 bg-[#8b1e3f] opacity-8 bottom-[25%] left-[8%] rounded-full animate-bounce" 
-           style={{ animationDelay: '2s' }}></div>
-      <div className="absolute w-25 h-25 bg-gray-100 opacity-5 top-[50%] left-[15%] rounded-full animate-bounce"
-           style={{ animationDelay: '4s' }}></div>
+      <div 
+        className="absolute w-20 h-20 bg-[#f5752b] opacity-8 top-[15%] right-[10%]" 
+        style={{ 
+          borderRadius: '30% 70% 70% 30% / 30% 30% 70% 70%',
+          animation: 'float 25s infinite ease-in-out'
+        }}
+      ></div>
+      <div 
+        className="absolute w-15 h-15 bg-[#8b1e3f] opacity-8 bottom-[25%] left-[8%] rounded-full" 
+        style={{ 
+          animation: 'float 25s infinite ease-in-out',
+          animationDelay: '5s'
+        }}
+      ></div>
+      <div 
+        className="absolute w-25 h-25 bg-gray-100 opacity-5 top-[50%] left-[15%] rounded-full"
+        style={{ 
+          animation: 'float 25s infinite ease-in-out',
+          animationDelay: '10s'
+        }}
+      ></div>
 
       <div className="w-full max-w-6xl px-5 relative z-10">
         {/* Logo */}
-        <div className="text-center mb-10 animate-fadeIn">
+        <div className="text-center mb-10" style={{ animation: 'fadeIn 0.8s ease' }}>
           <h1 className="text-5xl md:text-6xl font-bold text-[#8b1e3f] mb-2" style={{ textShadow: '0 2px 10px rgba(139, 30, 63, 0.1)' }}>
             Food Vision{' '}
             <span className="bg-gradient-to-br from-[#8b1e3f] to-[#a02850] text-white px-3 py-1 rounded text-lg ml-2 shadow-lg">
@@ -109,7 +134,7 @@ const CustomerLogin: React.FC = () => {
         </div>
 
         {/* Auth Container */}
-        <div className="bg-white rounded-[20px] shadow-2xl overflow-hidden max-w-lg mx-auto relative animate-fadeIn">
+        <div className="bg-white rounded-[20px] shadow-2xl overflow-hidden max-w-lg mx-auto relative" style={{ animation: 'fadeIn 0.8s ease' }}>
           {/* Gradient top border */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8b1e3f] to-[#f5752b]"></div>
           
@@ -147,9 +172,9 @@ const CustomerLogin: React.FC = () => {
           <div className="p-10 bg-white">
             {/* Start Tab */}
             {activeTab === 'start' && (
-              <div className="animate-fadeIn">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-3 text-center">התחילו את המסע שלכם</h2>
-                <p className="text-gray-600 mb-8 text-center">גלו איך Food Vision יכול לשדרג את המנות שלכם</p>
+              <div style={{ animation: 'fadeIn 0.8s ease' }}>
+                <h2 className="text-2xl font-semibold text-gray-800 mb-3 text-center">גלו את הפוטנציאל של המנות שלכם</h2>
+                <p className="text-gray-600 mb-8 text-center">התחילו עם 3 צילומי מנות מקצועיים - בחינם</p>
                 
                 <div className="space-y-4">
                   <div 
@@ -158,12 +183,15 @@ const CustomerLogin: React.FC = () => {
                   >
                     <div className="absolute top-0 left-[-100%] w-full h-full bg-gradient-to-r from-transparent via-[rgba(139,30,63,0.05)] to-transparent transition-all duration-500 group-hover:left-full"></div>
                     <div className="relative">
-                      <span className="bg-[#f5752b] text-white px-3 py-1 rounded-full text-sm inline-block mb-3 animate-pulse">
+                      <span 
+                        className="bg-[#f5752b] text-white px-3 py-1 rounded-full text-sm inline-block mb-3"
+                        style={{ animation: 'pulse 2s infinite' }}
+                      >
                         🎁 חבילת ניסיון חינמית
                       </span>
                       <h4 className="text-lg font-semibold text-gray-800 mb-2">🍽️ קבלו 3 תמונות בחינם</h4>
                       <p className="text-gray-600 text-sm">
-                        גלו איך Food Vision יכול לשדרג את המנות שלכם עם 3 צילומי מנות חינם
+                        גלו איך Food Vision יכול לשדרג את המנות שלכם עם 3 צילומי מנות מקצועיים לחלוטין בחינם
                       </p>
                     </div>
                   </div>
@@ -184,7 +212,7 @@ const CustomerLogin: React.FC = () => {
 
             {/* Login Tab */}
             {activeTab === 'login' && (
-              <div className="animate-fadeIn">
+              <div style={{ animation: 'fadeIn 0.8s ease' }}>
                 <h2 className="text-2xl font-semibold text-gray-800 mb-6 text-center">ברוך הבא חזרה!</h2>
                 
                 <form onSubmit={handleLogin} className="space-y-6">
@@ -259,7 +287,8 @@ const CustomerLogin: React.FC = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      {/* CSS animations using style tag without jsx attribute */}
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -271,8 +300,31 @@ const CustomerLogin: React.FC = () => {
           }
         }
         
-        .animate-fadeIn {
-          animation: fadeIn 0.8s ease-out;
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg) scale(1);
+          }
+          33% {
+            transform: translateY(-30px) rotate(120deg) scale(1.1);
+          }
+          66% {
+            transform: translateY(30px) rotate(240deg) scale(0.9);
+          }
+        }
+        
+        @keyframes pulse {
+          0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 117, 43, 0.4);
+          }
+          50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 0 10px rgba(245, 117, 43, 0);
+          }
+          100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(245, 117, 43, 0);
+          }
         }
       `}</style>
     </div>
