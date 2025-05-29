@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import { Separator } from '@/components/ui/separator';
-import { Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Image as ImageIcon, Building2, Sparkles as ItemIcon, AlertTriangle, CheckCircle, ChevronLeft, X, ZoomIn } from 'lucide-react';
 import { cn } from '@/lib/utils'; 
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 
 interface ReviewItemProps {
   label: string;
@@ -27,6 +28,7 @@ const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
 
 const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
   const { formData } = useNewItemForm();
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
 
   const { 
     restaurantName,
@@ -82,19 +84,41 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
           </div>
           {referenceImages.length > 0 ? (
           <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white">
-              {referenceImages.map((file, index) => (
-              <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video">
-                  <img 
-                    src={URL.createObjectURL(file)} 
-                  alt={`תצוגה מקדימה ${index + 1}`} 
-                  className="w-full h-full object-contain"
-                  onLoad={() => {if (file instanceof File) URL.revokeObjectURL(file.name);}}
-                  />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
-                    {file instanceof File ? file.name : `Image ${index + 1}`}
-                  </div>
-                </div>
-              ))}
+              {/* Image Grid for Review */}
+              <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                {referenceImages.map((file, index) => (
+                  <Dialog key={index}>
+                    <DialogTrigger asChild>
+                      <div className="relative group cursor-pointer bg-gray-100 rounded-lg overflow-hidden border border-gray-200 aspect-square hover:shadow-md transition-shadow">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`תצוגה מקדימה ${index + 1}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                          <ZoomIn className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="absolute top-1 right-1 bg-white/90 text-xs px-1.5 py-0.5 rounded text-gray-700">
+                          {index + 1}
+                        </div>
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl w-full">
+                      <div className="relative">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`תמונה ${index + 1}`} 
+                          className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+                        />
+                        <div className="mt-4 text-center">
+                          <p className="text-sm text-gray-600">תמונה {index + 1} מתוך {referenceImages.length}</p>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500 text-center">לחצו על תמונה להגדלה ובדיקה אחרונה</p>
             </div>
           ) : (
           <div className="p-4 border border-gray-200 rounded-md bg-white">
@@ -103,6 +127,13 @@ const PublicReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubm
           )}
         <Separator className="my-6" />
       </section>
+
+      {/* Summary Message */}
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+        <p className="text-orange-800 font-semibold">
+          הגשה זו תנצל מנה אחת מהחבילה שלך.
+        </p>
+      </div>
 
       {onFinalSubmit && (
         <Button

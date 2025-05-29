@@ -25,9 +25,9 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
   };
 
   const itemTypes = [
-    { value: 'dish', label: 'מנה/מוצר', icon: Utensils, emoji: '🍽️' },
-    { value: 'drink', label: 'שתיה', icon: Coffee, emoji: '🥤' },
-    { value: 'cocktail', label: 'קוקטייל', icon: Wine, emoji: '🍸' }
+    { value: 'dish', label: 'מנה/מוצר', icon: Utensils },
+    { value: 'drink', label: 'שתיה', icon: Coffee },
+    { value: 'cocktail', label: 'קוקטייל', icon: Wine }
   ];
 
   return (
@@ -73,14 +73,14 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
           )}
         </div>
 
-        {/* Item Type Selection */}
+        {/* Item Type Selection - Compact horizontal layout */}
         <div className="space-y-4">
           <label className="block text-lg font-semibold text-[#333333] flex items-center">
             <UtensilsCrossed className="w-6 h-6 text-[#F3752B] ml-3" />
             סוג הפריט
             <span className="text-red-500 mr-1">*</span>
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="flex flex-wrap gap-3 justify-center">
             {itemTypes.map((type) => {
               const IconComponent = type.icon;
               const isSelected = formData.itemType === type.value;
@@ -90,41 +90,52 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
                   type="button"
                   onClick={() => handleItemTypeChange(type.value as 'dish' | 'cocktail' | 'drink')}
                   className={cn(
-                    "p-6 rounded-xl border-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg flex flex-col items-center gap-3 min-h-[120px] justify-center",
+                    "px-6 py-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md flex items-center gap-2 min-w-[120px] justify-center",
                     isSelected
-                      ? "border-[#F3752B] bg-orange-50 text-[#F3752B] shadow-md"
+                      ? "border-[#F3752B] bg-orange-50 text-[#F3752B] shadow-sm"
                       : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                   )}
                 >
-                  <div className="text-3xl">{type.emoji}</div>
-                  <IconComponent className={cn("w-6 h-6", isSelected ? "text-[#F3752B]" : "text-gray-400")} />
-                  <span className="font-semibold text-lg">{type.label}</span>
+                  <IconComponent className={cn("w-4 h-4", isSelected ? "text-[#F3752B]" : "text-gray-400")} />
+                  <span className="font-medium">{type.label}</span>
                 </button>
               );
             })}
           </div>
           {errors?.itemType && (
-            <p className="text-red-500 text-sm mt-2 flex items-center">
+            <p className="text-red-500 text-sm mt-2 flex items-center justify-center">
               <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>
               {errors.itemType}
             </p>
           )}
         </div>
 
-        {/* Description */}
+        {/* Description with improved guidance */}
         <div className="space-y-3">
           <label htmlFor="description" className="block text-lg font-semibold text-[#333333] flex items-center">
             <FileText className="w-6 h-6 text-[#F3752B] ml-3" />
-            תיאור קצר של המנה / המוצר
+            ספרו בקצרה מה מרכיבי המנה העיקריים
             <span className="text-red-500 mr-1">*</span>
           </label>
+          <p className="text-sm text-gray-600 mb-3">
+            לדוגמה: סלט קיסר עם חזה עוף, קרוטונים ורוטב קיסר ביתי
+          </p>
+          
+          {/* Visual example */}
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
+            <h4 className="font-semibold text-emerald-800 mb-2">דוגמה לתיאור טוב:</h4>
+            <p className="text-emerald-700 text-sm italic">
+              "פסטה קרבונרה עם בייקון פריך, פרמז'ן מגורר, ביצה טרייה וצ'ילי גרוס. מוגש עם פרוסת לחם שום"
+            </p>
+          </div>
+          
           <textarea
             id="description"
             name="description"
             value={formData.description || ''}
             onChange={handleChange}
-            placeholder="ספר לנו על המנה ואת המרכיבים העיקריים שחשוב שיראו בתמונה (לדוג' סלט קיסר עם אגוזי מלך ורוטב בלסמי. חשוב להראות את הרוטב בסלט)."
-            rows={5}
+            placeholder="תארו את המרכיבים העיקריים שחשוב שיראו בתמונה..."
+            rows={4}
             className={cn(
               "w-full px-6 py-4 text-lg border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20 resize-none",
               errors?.description 
@@ -153,7 +164,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
             value={formData.specialNotes || ''}
             onChange={handleChange}
             placeholder="לדוג': להציג את הסלט עם קרוטונים, בלי בצל, להבליט את הרוטב, עדיף צלחת לבנה"
-            rows={4}
+            rows={3}
             className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20 focus:border-[#F3752B] bg-white hover:border-gray-300 resize-none"
           />
         </div>
