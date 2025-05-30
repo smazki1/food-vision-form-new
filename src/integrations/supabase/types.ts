@@ -222,6 +222,7 @@ export type Database = {
           assigned_package_id_at_submission: string | null
           client_id: string | null
           created_at: string
+          created_lead_id: string | null
           edit_count: number | null
           edit_history: Json | null
           final_approval_timestamp: string | null
@@ -238,6 +239,9 @@ export type Database = {
           status_הערות_התקבלו_at: string | null
           status_מוכנה_להצגה_at: string | null
           status_ממתינה_לעיבוד_at: string | null
+          submission_contact_email: string | null
+          submission_contact_name: string | null
+          submission_contact_phone: string | null
           submission_id: string
           submission_status: string
           target_completion_date: string | null
@@ -248,6 +252,7 @@ export type Database = {
           assigned_package_id_at_submission?: string | null
           client_id?: string | null
           created_at?: string
+          created_lead_id?: string | null
           edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
@@ -264,6 +269,9 @@ export type Database = {
           status_הערות_התקבלו_at?: string | null
           status_מוכנה_להצגה_at?: string | null
           status_ממתינה_לעיבוד_at?: string | null
+          submission_contact_email?: string | null
+          submission_contact_name?: string | null
+          submission_contact_phone?: string | null
           submission_id?: string
           submission_status?: string
           target_completion_date?: string | null
@@ -274,6 +282,7 @@ export type Database = {
           assigned_package_id_at_submission?: string | null
           client_id?: string | null
           created_at?: string
+          created_lead_id?: string | null
           edit_count?: number | null
           edit_history?: Json | null
           final_approval_timestamp?: string | null
@@ -290,6 +299,9 @@ export type Database = {
           status_הערות_התקבלו_at?: string | null
           status_מוכנה_להצגה_at?: string | null
           status_ממתינה_לעיבוד_at?: string | null
+          submission_contact_email?: string | null
+          submission_contact_name?: string | null
+          submission_contact_phone?: string | null
           submission_id?: string
           submission_status?: string
           target_completion_date?: string | null
@@ -309,6 +321,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "customer_submissions_created_lead_id_fkey"
+            columns: ["created_lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -712,15 +731,28 @@ export type Database = {
         Returns: boolean
       }
       public_submit_item_by_restaurant_name: {
-        Args: {
-          p_restaurant_name: string
-          p_item_type: string
-          p_item_name: string
-          p_description?: string
-          p_category?: string
-          p_ingredients?: string[]
-          p_reference_image_urls?: string[]
-        }
+        Args:
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+            }
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+              p_contact_email?: string
+              p_contact_phone?: string
+              p_contact_name?: string
+            }
         Returns: Json
       }
     }

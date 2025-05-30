@@ -1,5 +1,6 @@
 
-import React, { useState } from "react";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -8,123 +9,140 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/utils/formatDate";
-import { Submission } from "@/api/submissionApi";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Building2, User } from "lucide-react";
+import { Submission } from "@/api/submissionApi";
 
 interface SubmissionsTableProps {
   submissions: Submission[];
-  loading?: boolean;
-  onViewDetails?: (submission: Submission) => void;
+  loading: boolean;
+  onViewDetails: (submission: Submission) => void;
 }
 
-const getStatusBadgeVariant = (status: string) => {
-  switch (status) {
-    case "ממתינה לעיבוד":
-      return "warning";
-    case "בעיבוד":
-      return "blue";
-    case "מוכנה להצגה":
-      return "success";
-    case "הערות התקבלו":
-      return "purple";
-    case "הושלמה ואושרה":
-      return "secondary";
-    default:
-      return "default";
-  }
-};
-
-export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({ 
-  submissions, 
-  loading = false,
-  onViewDetails 
+export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({
+  submissions,
+  loading,
+  onViewDetails,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  
+  const navigate = useNavigate();
+
+  const handleViewSubmission = (submissionId: string) => {
+    navigate(`/admin/submissions/${submissionId}`);
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "הושלמה ואושרה":
+        return "default";
+      case "בעיבוד":
+        return "secondary";
+      case "ממתינה לעיבוד":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    switch (priority) {
+      case "High":
+      case "Urgent":
+        return "destructive";
+      case "Medium":
+        return "secondary";
+      case "Low":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
   if (loading) {
-    return <p>טוען הגשות...</p>;
+    return (
+      <div className="flex justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
-
-  const filteredSubmissions = submissions.filter((submission) => {
-    const matchesSearch = submission.item_name_at_submission?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      submission.clients?.restaurant_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter ? submission.submission_status === statusFilter : true;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const uniqueStatuses = [...new Set(submissions.map(sub => sub.submission_status))];
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between">
-        <Input
-          placeholder="חיפוש לפי שם פריט/מסעדה..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant={!statusFilter ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter(null)}
-          >
-            הכל
-          </Button>
-          {uniqueStatuses.map((status) => (
-            <Button
-              key={status}
-              variant={statusFilter === status ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(status)}
-            >
-              {status}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {filteredSubmissions.length === 0 ? (
-        <div className="text-center py-10 text-muted-foreground">
-          לא נמצאו הגשות מתאימות לחיפוש שלך
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>פריט</TableHead>
-                <TableHead>סוג</TableHead>
-                <TableHead>מסעדה</TableHead>
-                <TableHead>תאריך העלאה</TableHead>
-                <TableHead>סטטוס</TableHead>
+    <div className="border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>פריט</TableHead>
+            <TableHead>מסעדה</TableHead>
+            <TableHead>סטטוס</TableHead>
+            <TableHead>עדיפות</TableHead>
+            <TableHead>תאריך העלאה</TableHead>
+            <TableHead>פעולות</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {submissions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-8">
+                לא נמצאו הגשות
+              </TableCell>
+            </TableRow>
+          ) : (
+            submissions.map((submission) => (
+              <TableRow key={submission.submission_id}>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{submission.item_name_at_submission}</div>
+                    <div className="text-sm text-muted-foreground">{submission.item_type}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2 space-x-reverse">
+                    {submission.clients ? (
+                      <>
+                        <Building2 className="h-4 w-4 text-green-600" />
+                        <span>{submission.clients.restaurant_name}</span>
+                      </>
+                    ) : submission.created_lead_id ? (
+                      <>
+                        <User className="h-4 w-4 text-blue-600" />
+                        <span>ליד חדש</span>
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-4 w-4 text-gray-400" />
+                        <span>לא מקושר</span>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getStatusBadgeVariant(submission.submission_status)}>
+                    {submission.submission_status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getPriorityBadgeVariant(submission.priority || "Medium")}>
+                    {submission.priority || "Medium"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleViewSubmission(submission.submission_id)}
+                  >
+                    <Eye className="h-4 w-4 ml-2" />
+                    צפה
+                  </Button>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubmissions.map((submission) => (
-                <TableRow key={submission.submission_id}>
-                  <TableCell className="font-medium">{submission.item_name_at_submission}</TableCell>
-                  <TableCell>{submission.item_type === "dish" ? "מנה" : 
-                            submission.item_type === "cocktail" ? "קוקטייל" : "משקה"}</TableCell>
-                  <TableCell>{submission.clients?.restaurant_name}</TableCell>
-                  <TableCell dir="ltr" className="text-right">{formatDate(submission.uploaded_at)}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(submission.submission_status)}>
-                      {submission.submission_status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };

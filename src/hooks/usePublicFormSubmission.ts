@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
@@ -85,7 +86,7 @@ export const usePublicFormSubmission = () => {
       
       console.log('[PublicFormSubmission] All images uploaded successfully');
       
-      // Prepare parameters for RPC
+      // Prepare parameters for RPC including contact information
       let category = null;
       let ingredients = null;
       
@@ -104,6 +105,10 @@ export const usePublicFormSubmission = () => {
         p_category: category || undefined,
         p_ingredients: ingredients || undefined,
         p_reference_image_urls: uploadedImageUrls,
+        // Add contact information for automatic lead creation
+        p_contact_name: formData.submitterName?.trim() || undefined,
+        p_contact_email: formData.contactEmail?.trim() || undefined,
+        p_contact_phone: formData.contactPhone?.trim() || undefined,
       };
 
       console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
@@ -123,11 +128,12 @@ export const usePublicFormSubmission = () => {
       if (submissionData && typeof submissionData === 'object' && submissionData.success) {
         if (submissionData.client_found) {
           toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
+        } else if (submissionData.lead_created) {
+          toast.success('הפריט הוגש בהצלחה! נוצר ליד חדש למסעדה במערכת.');
         } else {
           toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
         }
         
-        // Set success modal to show
         console.log('[PublicFormSubmission] Setting showSuccessModal to true');
         setShowSuccessModal(true);
         

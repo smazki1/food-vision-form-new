@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -10,6 +11,7 @@ interface FormData {
   description: string;
   specialNotes: string;
   referenceImages: File[];
+  submitterName?: string; // Add submitter name
 }
 
 export const handlePublicSubmission = async (
@@ -36,6 +38,10 @@ export const handlePublicSubmission = async (
     p_category: category || undefined,
     p_ingredients: ingredients,
     p_reference_image_urls: uploadedImageUrls,
+    // Add contact information for automatic lead creation
+    p_contact_name: formData.submitterName?.trim() || undefined,
+    p_contact_email: formData.contactEmail?.trim() || undefined,
+    p_contact_phone: formData.contactPhone?.trim() || undefined,
   };
 
   console.log('[PublicSubmission] Calling RPC with params:', rpcParams);
@@ -55,6 +61,8 @@ export const handlePublicSubmission = async (
   if (submissionData && typeof submissionData === 'object' && submissionData.success) {
     if (submissionData.client_found) {
       toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
+    } else if (submissionData.lead_created) {
+      toast.success('הפריט הוגש בהצלחה! נוצר ליד חדש למסעדה במערכת.');
     } else {
       toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
     }
