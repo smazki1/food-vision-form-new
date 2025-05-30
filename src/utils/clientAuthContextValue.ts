@@ -14,6 +14,7 @@ interface CreateContextValueProps {
   authLoading: boolean;
   connectionVerified: boolean;
   refreshClientAuth: () => void;
+  clientData?: any; // Add client data parameter
 }
 
 /**
@@ -31,6 +32,7 @@ export const useClientAuthContextValue = ({
   authLoading,
   connectionVerified,
   refreshClientAuth,
+  clientData,
 }: CreateContextValueProps): ClientAuthContextType => {
   
   return useMemo(() => {
@@ -55,7 +57,9 @@ export const useClientAuthContextValue = ({
       unifiedClientId,
       effectiveClientId,
       userAuthId: user?.id,
-      authenticating
+      authenticating,
+      restaurantName: clientData?.restaurant_name,
+      contactName: clientData?.contact_name
     });
     
     return {
@@ -68,9 +72,11 @@ export const useClientAuthContextValue = ({
       hasLinkedClientRecord: clientRecordStatus === 'found' && !!effectiveClientId,
       hasNoClientRecord: clientRecordStatus === 'not-found',
       refreshClientAuth,
+      restaurantName: clientData?.restaurant_name || null,
+      contactName: clientData?.contact_name || null,
     };
   }, [
     clientId, unifiedClientId, user?.id, authenticating, clientRecordStatus, errorState, 
-    isAuthenticated, initialized, authLoading, connectionVerified, refreshClientAuth
+    isAuthenticated, initialized, authLoading, connectionVerified, refreshClientAuth, clientData
   ]);
 };

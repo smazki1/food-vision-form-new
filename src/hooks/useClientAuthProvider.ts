@@ -78,5 +78,6 @@ export const useClientAuthProvider = () => {
     connectionVerified,
     updateClientAuthState,
     refreshClientAuth,
+    clientData, // Return client data
   };
 };

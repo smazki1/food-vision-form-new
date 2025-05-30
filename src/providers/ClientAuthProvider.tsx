@@ -23,6 +23,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     connectionVerified,
     updateClientAuthState,
     refreshClientAuth,
+    clientData,
   } = useClientAuthProvider();
 
   // Handle syncing between different auth states
@@ -54,6 +55,7 @@ export const ClientAuthProvider: React.FC<ClientAuthProviderProps> = ({ children
     authLoading,
     connectionVerified,
     refreshClientAuth,
+    clientData,
   });
 
   return (

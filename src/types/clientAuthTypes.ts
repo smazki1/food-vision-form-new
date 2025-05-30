@@ -1,3 +1,4 @@
+
 // Define types for client authentication
 export type ClientRecordStatus = 'loading' | 'found' | 'not-found' | 'error';
 
@@ -17,4 +18,6 @@ export interface ClientAuthContextType extends ClientAuthState {
   refreshClientAuth?: () => void; // Add refresh function
   clientId: string | null;
   userAuthId: string | null;
+  restaurantName?: string | null; // Add restaurant name
+  contactName?: string | null; // Add contact name
 }

@@ -1,5 +1,7 @@
+
 /// <reference types="vitest/globals" />
 import { renderHook, act } from '@testing-library/react';
+import { vi } from 'vitest';
 import { useUnifiedFormValidation } from './useUnifiedFormValidation';
 import { useNewItemForm, NewItemFormData } from '../contexts/NewItemFormContext';
 import * as formValidationUtils from '../utils/publicFormValidation';
@@ -171,4 +173,4 @@ describe('useUnifiedFormValidation', () => {
     });
     expect(result.current.errors).toEqual(newErrors);
   });
-}); 
+});
