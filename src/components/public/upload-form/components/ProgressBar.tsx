@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -14,8 +13,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps, step
     <div className="w-full mb-8">
       <div className="flex items-center justify-between relative">
         {/* Progress Line */}
-        <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0">
+        <div data-testid="progress-line-background" className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0">
           <div 
+            data-testid="progress-line-indicator"
             className="h-full bg-emerald-500 transition-all duration-500 ease-out"
             style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
           />
@@ -28,9 +28,10 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ currentStep, totalSteps, step
           const isPending = step.id > currentStep;
           
           return (
-            <div key={step.id} className="flex flex-col items-center relative z-10">
+            <div key={step.id} data-testid={`step-node-${step.id}`} className="flex flex-col items-center relative z-10">
               {/* Circle */}
               <div
+                data-testid={`step-circle-${step.id}`}
                 className={cn(
                   "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 border-4",
                   isCompleted && "bg-emerald-500 border-emerald-500 text-white shadow-lg",

@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
 import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) => {
+const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, onBack }) => {
   const { formData } = useNewItemForm();
 
   const {
@@ -101,7 +100,7 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit }) 
         {/* Navigation Buttons */}
         <div className="flex justify-between items-center">
           <button
-            onClick={() => window.history.back()}
+            onClick={onBack}
             className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
           >
             חזור

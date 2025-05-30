@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
-interface MobileLoadingProps {
+interface MobileLoadingProps extends React.HTMLAttributes<HTMLDivElement> {
   message?: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -12,7 +11,8 @@ interface MobileLoadingProps {
 export const MobileLoading: React.FC<MobileLoadingProps> = ({ 
   message = "טוען...", 
   size = 'md',
-  className 
+  className,
+  ...props
 }) => {
   const sizeClasses = {
     sm: 'h-6 w-6',
@@ -27,11 +27,14 @@ export const MobileLoading: React.FC<MobileLoadingProps> = ({
   };
 
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center p-6 space-y-3",
-      "min-h-[200px] w-full",
-      className
-    )}>
+    <div 
+      className={cn(
+        "flex flex-col items-center justify-center p-6 space-y-3",
+        "min-h-[200px] w-full",
+        className
+      )}
+      {...props}
+    >
       <Loader2 className={cn(
         "animate-spin text-primary",
         sizeClasses[size]

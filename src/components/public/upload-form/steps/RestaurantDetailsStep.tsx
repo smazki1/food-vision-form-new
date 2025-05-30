@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
@@ -182,6 +181,9 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
                 : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
             )}
           />
+          <p className="text-xs text-gray-500 mt-1">
+            אם העסק כבר קיים במערכת, כתבו את השם שלו
+          </p>
           {errors?.restaurantName && (
             <p className="text-red-500 text-sm mt-2 flex items-center">
               <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>

@@ -1,9 +1,8 @@
-
 /// <reference types="vitest/globals" />
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { MockedFunction } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import ClientsList from '@/pages/admin/ClientsList';
 import * as useClientsHookModule from '@/hooks/useClients';
 import { Client } from '@/types/client';
@@ -20,6 +19,41 @@ vi.mock('sonner', () => ({
     dismiss: vi.fn(),
   },
 }));
+
+// Mock react-i18next
+vi.mock('react-i18next', () => {
+  const actualTranslations: Record<string, string> = {
+    'common.loadingData': 'טוען נתונים...',
+    'clientsList.noClientsFound': 'לא נמצאו לקוחות',
+    'clientsList.clientsFoundCount': 'לקוחות שנמצאו',
+    'clientsList.errorLoading': 'שגיאה בטעינת הלקוחות',
+    'clientsList.pageTitle': 'רשימת לקוחות',
+    'clientsList.searchPlaceholder': 'חפש לקוחות...',
+    'common.refresh': 'רענן',
+    'common.refreshing': 'מרענן...',
+    'clientsList.noClientsDescription': 'נסה לשנות את החיפוש או ליצור לקוח חדש.',
+    'common.retry': 'נסה שוב',
+  };
+
+  return {
+    useTranslation: () => ({
+      t: (key: string, options?: { defaultValue?: string; count?: number }) => {
+        if (options?.count !== undefined && actualTranslations[key]?.includes('{{count}}')) {
+          return (actualTranslations[key] || options?.defaultValue || key).replace('{{count}}', String(options.count));
+        }
+        return actualTranslations[key] || options?.defaultValue || key;
+      },
+      i18n: {
+        changeLanguage: () => new Promise(() => {}),
+        language: 'he',
+      },
+    }),
+    Trans: ({ i18nKey, children }: { i18nKey: string, children?: React.ReactNode }) => {
+      if (children) return children;
+      return actualTranslations[i18nKey] || i18nKey;
+    }
+  };
+});
 
 // Mock useCurrentUserRole hook
 vi.mock('@/hooks/useCurrentUserRole', async () => {
@@ -100,7 +134,7 @@ const getDefaultMockClientsReturnValue = (): ReturnType<typeof useClientsHookMod
 describe('ClientsList', () => {
   let queryClient: QueryClient;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     queryClient = createTestQueryClient();
     vi.resetAllMocks(); 
 
@@ -118,22 +152,24 @@ describe('ClientsList', () => {
     mockedUseClients.mockReturnValue(getDefaultMockClientsReturnValue());
   });
 
-  const renderComponent = () => {
-    render(
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <currentUserRoleHookModule.CurrentUserRoleProvider>
-            <ClientsList />
-          </currentUserRoleHookModule.CurrentUserRoleProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    );
+  const renderComponent = async () => {
+    await act(async () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <currentUserRoleHookModule.CurrentUserRoleProvider>
+              <ClientsList />
+            </currentUserRoleHookModule.CurrentUserRoleProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      );
+    });
   };
 
   it('should render loading state initially', async () => {
-    renderComponent();
+    await renderComponent();
     expect(screen.getByTestId('clients-list-loader')).toBeInTheDocument();
-    expect(screen.getByText(/טוען נתונים.../i)).toBeInTheDocument();
+    expect(screen.getByText('טוען נתונים...')).toBeInTheDocument();
   });
 
   it('should display "No clients found" message when no clients are fetched', async () => {
@@ -144,9 +180,9 @@ describe('ClientsList', () => {
       queryStatus: 'success',
       isFetching: false,
     });
-    renderComponent();
+    await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText(/לא נמצאו לקוחות/i)).toBeInTheDocument(); 
+      expect(screen.getByText('לא נמצאו לקוחות')).toBeInTheDocument(); 
     });
   });
 
@@ -158,12 +194,14 @@ describe('ClientsList', () => {
       queryStatus: 'success',
       isFetching: false,
     });
-    renderComponent();
+    await renderComponent();
     await waitFor(() => {
       expect(screen.getByText(mockClients[0].restaurant_name)).toBeInTheDocument();
       expect(screen.getByText(mockClients[1].restaurant_name)).toBeInTheDocument();
     });
-    expect(screen.getByText(`לקוחות שנמצאו: ${mockClients.length}`)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(`לקוחות שנמצאו: ${mockClients.length}`)).toBeInTheDocument();
+    });
   });
 
   it('should display error message if fetching clients fails', async () => {
@@ -177,9 +215,9 @@ describe('ClientsList', () => {
       queryStatus: 'error',
       isFetching: false,
     });
-    renderComponent();
+    await renderComponent();
     await waitFor(() => {
-      expect(screen.getByText(/שגיאה בטעינת הלקוחות/i)).toBeInTheDocument();
+      expect(screen.getByText('שגיאה בטעינת הלקוחות')).toBeInTheDocument();
       expect(screen.getByText(errorMessage)).toBeInTheDocument();
     });
   });

@@ -78,6 +78,11 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     resetFormData(); 
   }, []); 
 
+  // Log whenever showSuccessModal changes
+  useEffect(() => {
+    console.log('[PublicFoodVisionUploadForm] showSuccessModal changed:', showSuccessModal);
+  }, [showSuccessModal]);
+
   const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
   const isReviewStep = currentStepId === 4;
 
@@ -86,8 +91,17 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     isFirstStep,
     isLastStep,
     isReviewStep,
-    totalSteps: publicFormSteps.length
+    totalSteps: publicFormSteps.length,
+    showSuccessModal
   });
+
+  // Handle final submit in review step
+  const handleFinalSubmit = () => {
+    console.log('[PublicFoodVisionUploadForm] handleFinalSubmit called');
+    if (handleSubmit) {
+      handleSubmit();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
@@ -106,7 +120,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
               setExternalErrors={setErrors}
               clearExternalErrors={clearErrors}
               errors={errors}
-              onFinalSubmit={isReviewStep ? handleSubmit : undefined}
+              onFinalSubmit={isReviewStep ? handleFinalSubmit : undefined}
               onBack={handlePrevious}
             />
 
@@ -136,7 +150,9 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         </div>
       </div>
 
+      {/* Success Modal - Added key to force re-render when isOpen changes */}
       <SuccessModal
+        key={`success-modal-${showSuccessModal}`}
         isOpen={showSuccessModal}
         onClose={handleCloseSuccessModal}
         onNewSubmission={handleNewSubmission}

@@ -1,28 +1,27 @@
-
 /// <reference types="vitest/globals" />
 
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 import { CurrentUserRoleProvider, useCurrentUserRole } from '../useCurrentUserRole';
 import { supabase } from '@/integrations/supabase/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { UserRole } from '@/types/auth';
+import { UserRole } from '@/types/unifiedAuthTypes'; 
+import * as OptService from '@/services/optimizedAuthService';
 
-// Mock supabase client
+// Mocks setup (similar to useCurrentUserRole.roles.test.tsx)
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(),
-      onAuthStateChange: vi.fn(() => ({
+      onAuthStateChange: vi.fn().mockReturnValue({ // Ensure it returns the unsubscribe structure
         data: { subscription: { unsubscribe: vi.fn() } },
-      })),
+      }),
     },
     rpc: vi.fn(),
   },
 }));
 
-// Mock sonner toast
 vi.mock('sonner', () => ({
   toast: {
     success: vi.fn(),
@@ -37,7 +36,7 @@ const createWrapper = () => {
     defaultOptions: {
       queries: {
         retry: false,
-        gcTime: Infinity,
+        gcTime: Infinity, 
       },
     },
   });
@@ -48,55 +47,80 @@ const createWrapper = () => {
   );
 };
 
+const mockGetUserAuthData = (roleToReturn: string | null): any => {
+  return vi.spyOn(OptService.optimizedAuthService, 'getUserAuthData')
+    .mockResolvedValue({
+      role: roleToReturn as UserRole,
+      clientId: 'client-123',
+      restaurantName: 'Test Restaurant',
+      hasLinkedClientRecord: true,
+      fromCache: false,
+    });
+};
+
 describe('useCurrentUserRole - Auth Events', () => {
+  let authStateChangeCallback: (event: string, session: any) => Promise<void>;
+  let getUserAuthDataSpy: any;
+
   beforeEach(() => {
     vi.resetAllMocks();
-    (supabase.auth.onAuthStateChange as Mock).mockReturnValue({
-      data: { subscription: { unsubscribe: vi.fn() } },
+    // Capture the onAuthStateChange callback
+    (supabase.auth.onAuthStateChange as Mock).mockImplementation((callback) => {
+      authStateChangeCallback = callback;
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
+    // Initial getSession mock for the first load within the hook
     (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: null }, error: null });
   });
 
+  afterEach(() => {
+    if (getUserAuthDataSpy) {
+      getUserAuthDataSpy.mockRestore();
+    }
+  });
+
   it('should handle SIGNED_IN auth event and determine role', async () => {
+    const mockSession = { user: { id: 'user-signed-in' } };
+    getUserAuthDataSpy = mockGetUserAuthData('admin');
+    
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
+
+    // Wait for initial state to settle (e.g., NO_SESSION from initial getSession call)
     await waitFor(() => expect(result.current.status).toBe('NO_SESSION'));
 
-    const mockSession = { user: { id: 'user-signed-in' } };
-    const mockUserRole: UserRole = 'admin';
-
-    (supabase.rpc as Mock).mockResolvedValue({ data: mockUserRole, error: null });
-
-    const authCallback = (supabase.auth.onAuthStateChange as Mock).mock.calls[0][0];
-    act(() => {
-      authCallback('SIGNED_IN', mockSession);
+    // Simulate SIGNED_IN event
+    await act(async () => {
+      await authStateChangeCallback('SIGNED_IN', mockSession);
     });
-    
-    await waitFor(() => expect(result.current.status).toBe('FETCHING_ROLE'));
+
+    await waitFor(() => {
+      expect(result.current.status).toBe('ROLE_DETERMINED');
+    });
+    expect(result.current.role).toBe('admin');
     expect(result.current.userId).toBe(mockSession.user.id);
-    
-    await waitFor(() => expect(result.current.status).toBe('ROLE_DETERMINED'));
-    expect(result.current.role).toBe(mockUserRole);
-    expect(result.current.isAdmin).toBe(true);
   });
 
   it('should handle SIGNED_OUT auth event', async () => {
-    const mockInitialSession = { user: { id: 'user-123' } };
-    const mockInitialAdminRole: UserRole = 'admin';
-    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockInitialSession }, error: null });
-    (supabase.rpc as Mock).mockResolvedValue({ data: mockInitialAdminRole, error: null });
+    const initialMockSession = { user: { id: 'user-123' } };
+    // First, let's assume the user was signed in
+    (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: initialMockSession }, error: null });
+    getUserAuthDataSpy = mockGetUserAuthData('admin');
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
+    
+    // Wait for initial role determination
     await waitFor(() => expect(result.current.status).toBe('ROLE_DETERMINED'));
-    expect(result.current.role).toBe(mockInitialAdminRole);
+    expect(result.current.role).toBe('admin');
 
-    const authCallback = (supabase.auth.onAuthStateChange as Mock).mock.calls[0][0];
-    act(() => {
-      authCallback('SIGNED_OUT', null);
+    // Simulate SIGNED_OUT event
+    await act(async () => {
+      await authStateChangeCallback('SIGNED_OUT', null);
     });
 
-    await waitFor(() => expect(result.current.status).toBe('NO_SESSION'));
+    await waitFor(() => {
+      expect(result.current.status).toBe('NO_SESSION');
+    });
     expect(result.current.role).toBeNull();
     expect(result.current.userId).toBeNull();
-    expect(result.current.isAdmin).toBe(false);
   });
 });

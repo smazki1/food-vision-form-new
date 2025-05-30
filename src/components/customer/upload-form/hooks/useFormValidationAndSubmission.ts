@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 import { allSteps } from '../config/formStepsConfig';
@@ -33,7 +32,12 @@ export const useFormValidationAndSubmission = ({
   resetFormData
 }: UseFormValidationAndSubmissionProps) => {
   const { handleRestaurantDetailsSubmit, isCreatingClient } = useRestaurantDetailsSubmission(refreshClientAuth);
-  const { handleSubmit: submitForm, isSubmitting } = useFormSubmission();
+  const { 
+    handleSubmit: submitForm, 
+    isSubmitting, 
+    showSuccessModal, 
+    handleCloseSuccessModal 
+  } = useFormSubmission();
 
   const handleRestaurantDetailsFlow = useCallback(async () => {
     const currentStepConfig = formSteps.find(step => step.id === currentStepId);
@@ -78,18 +82,18 @@ export const useFormValidationAndSubmission = ({
 
     const success = await submitForm(formData, finalClientId, remainingDishes, setStepErrors);
     if (success) {
-      resetFormData();
-      updateStepsForAuthenticatedUser();
       setStepErrors({});
     } else {
       if (currentStepId !== 4) moveToStep(4);
     }
-  }, [clientId, formSteps, currentStepId, formData, remainingDishes, setStepErrors, resetToAllSteps, moveToStep, submitForm, resetFormData, updateStepsForAuthenticatedUser]);
+  }, [clientId, formSteps, currentStepId, formData, remainingDishes, setStepErrors, resetToAllSteps, moveToStep, submitForm, updateStepsForAuthenticatedUser]);
 
   return {
     handleRestaurantDetailsFlow,
     handleMainSubmit,
     isCreatingClient,
-    isSubmitting
+    isSubmitting,
+    showSuccessModal,
+    handleCloseSuccessModal
   };
 };

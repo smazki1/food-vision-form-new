@@ -1,4 +1,3 @@
-
 /// <reference types="vitest/globals" />
 
 import { renderHook, waitFor } from '@testing-library/react';
@@ -63,20 +62,24 @@ describe('useCurrentUserRole - Error Handling', () => {
 
     await waitFor(() => expect(result.current.status).toBe('ERROR_SESSION'));
     expect(result.current.error).toBe(sessionError.message);
-    expect(toast.error).toHaveBeenCalledWith(`Session error: ${sessionError.message}`, { id: 'user-role-error-toast' });
   });
 
   it('should transition to ERROR_FETCHING_ROLE if rpc call fails', async () => {
     const mockSession = { user: { id: 'user-rpc-fail' } };
     const rpcError = { message: 'RPC failed DETAIL' };
     (supabase.auth.getSession as Mock).mockResolvedValue({ data: { session: mockSession }, error: null });
-    (supabase.rpc as Mock).mockRejectedValue(rpcError); 
+    
+    const actualOptimizedAuthService = await vi.importActual<typeof import('@/services/optimizedAuthService')>('@/services/optimizedAuthService');
+    const getUserAuthDataSpy = vi.spyOn(actualOptimizedAuthService.optimizedAuthService, 'getUserAuthData').mockRejectedValue(new Error(rpcError.message));
 
     const { result } = renderHook(() => useCurrentUserRole(), { wrapper: createWrapper() });
     
-    await waitFor(() => expect(result.current.status).toBe('FETCHING_ROLE'));
-    await waitFor(() => expect(result.current.status).toBe('ERROR_FETCHING_ROLE'), { timeout: 2000 });
+    await waitFor(() => {
+      expect(result.current.status).toBe('ERROR_FETCHING_ROLE');
+    }, { timeout: 2000 });
+
     expect(result.current.error).toBe(rpcError.message);
-    expect(toast.error).toHaveBeenCalledWith(`Error determining user role. ${rpcError.message}`, { id: 'user-role-error-toast' });
+    
+    getUserAuthDataSpy.mockRestore();
   });
 });

@@ -110,6 +110,7 @@ const ClientsList = () => {
 
       {(isClientsLoading || isClientsFetching) && clientsQueryStatus !== 'success' && (
         <MobileLoading 
+          data-testid="clients-list-loader"
           message={t("common.loadingData", "טוען נתונים...")} 
           size="lg"
           className="min-h-[300px]"

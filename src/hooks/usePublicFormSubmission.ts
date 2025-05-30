@@ -5,6 +5,7 @@ import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
 export const usePublicFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const submitForm = async (
     formData: NewItemFormData,
@@ -125,6 +126,11 @@ export const usePublicFormSubmission = () => {
         } else {
           toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
         }
+        
+        // Set success modal to show
+        console.log('[PublicFormSubmission] Setting showSuccessModal to true');
+        setShowSuccessModal(true);
+        
         return true;
       } else {
         throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
@@ -140,8 +146,15 @@ export const usePublicFormSubmission = () => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    console.log('[PublicFormSubmission] Closing success modal');
+    setShowSuccessModal(false);
+  };
+
   return {
     isSubmitting,
-    submitForm
+    submitForm,
+    showSuccessModal,
+    handleCloseSuccessModal
   };
 };

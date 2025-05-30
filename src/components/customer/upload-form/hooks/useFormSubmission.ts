@@ -1,13 +1,11 @@
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleSubmit = async (
     formData: any,
@@ -132,7 +130,11 @@ export const useFormSubmission = () => {
 
       console.log('[FormSubmission] Submission successful');
       toast.success("הפריט הוגש בהצלחה!");
-      navigate('/customer/home');
+      
+      // Show success modal instead of navigating
+      console.log('[FormSubmission] Setting showSuccessModal to true');
+      setShowSuccessModal(true);
+      
       return true;
     } catch (error: any) {
       console.error("[FormSubmission] Error in submission process:", error);
@@ -145,8 +147,15 @@ export const useFormSubmission = () => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    console.log('[FormSubmission] Closing success modal');
+    setShowSuccessModal(false);
+  };
+
   return {
     handleSubmit,
-    isSubmitting
+    isSubmitting,
+    showSuccessModal,
+    handleCloseSuccessModal
   };
 };

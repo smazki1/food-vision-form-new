@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { useClientAuth } from '@/hooks/useClientAuth';
@@ -12,6 +11,8 @@ import FormErrorAlert from './components/FormErrorAlert';
 import FormClientAlert from './components/FormClientAlert';
 import FormNavigationButtons from './components/FormNavigationButtons';
 import FormErrorDisplay from './components/FormErrorDisplay';
+import SuccessModal from '../../public/upload-form/components/SuccessModal';
+import { useNavigate } from 'react-router-dom';
 
 export interface StepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -21,6 +22,7 @@ export interface StepProps {
 }
 
 const FoodVisionUploadForm: React.FC = () => {
+  const navigate = useNavigate();
   const { clientId, authenticating, refreshClientAuth, clientRecordStatus, errorState } = useClientAuth();
   const { formData, resetFormData } = useNewItemForm();
   const { remainingDishes } = useClientPackage();
@@ -47,7 +49,9 @@ const FoodVisionUploadForm: React.FC = () => {
     handleRestaurantDetailsFlow,
     handleMainSubmit,
     isCreatingClient,
-    isSubmitting
+    isSubmitting,
+    showSuccessModal,
+    handleCloseSuccessModal
   } = useFormValidationAndSubmission({
     clientId,
     formData,
@@ -105,6 +109,17 @@ const FoodVisionUploadForm: React.FC = () => {
     } else {
       refreshClientAuth();
     }
+  };
+
+  const handleNewSubmission = () => {
+    resetFormData();
+    moveToStep(2); // Skip the restaurant details step for existing clients
+    handleCloseSuccessModal();
+  };
+
+  const handleGoToDashboard = () => {
+    navigate('/customer/dashboard');
+    handleCloseSuccessModal();
   };
 
   if (authenticating && !isStuckLoading(authenticating)) {
@@ -166,6 +181,14 @@ const FoodVisionUploadForm: React.FC = () => {
           />
         </div>
       </main>
+
+      {/* Success Modal */}
+      <SuccessModal
+        key={`success-modal-${showSuccessModal}`}
+        isOpen={showSuccessModal}
+        onClose={handleGoToDashboard}
+        onNewSubmission={handleNewSubmission}
+      />
     </div>
   );
 };
