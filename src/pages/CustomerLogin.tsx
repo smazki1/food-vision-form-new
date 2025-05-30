@@ -158,15 +158,12 @@ const CustomerLogin = () => {
                     
                     <div className="space-y-4 mb-8">
                       <div className="flex items-center group/item">
-                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
                         <p className="text-gray-700 font-inter text-lg leading-relaxed"> 3 תמונות מקצועיות בחינם  </p>
                       </div>
                       <div className="flex items-center group/item">
-                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
                         <p className="text-gray-700 font-inter text-lg leading-relaxed">עיבוד מהיר ברמה גבוהה  </p>
                       </div>
                       <div className="flex items-center group/item">
-                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
                         <p className="text-gray-700 font-inter text-lg leading-relaxed">תוצאות מרהיבות למנות שלך  </p>
                       </div>
                     </div>
