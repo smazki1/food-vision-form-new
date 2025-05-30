@@ -44,17 +44,17 @@ describe('useUnifiedFormValidation', () => {
     mockResetFormData = vi.fn();
     // Simulate the formData that would be available in the hook via useNewItemForm
     currentFormData = { ...initialMockFormData }; 
-    (useNewItemForm as vi.Mock).mockReturnValue({
+    (useNewItemForm as ReturnType<typeof vi.fn>).mockReturnValue({
       formData: currentFormData, 
       updateFormData: mockUpdateFormData,
       resetFormData: mockResetFormData,
     });
 
     // Reset and mock default return values for validation functions
-    (formValidationUtils.validateRestaurantDetailsStep as vi.Mock).mockReturnValue({});
-    (formValidationUtils.validateItemDetailsStep as vi.Mock).mockReturnValue({});
-    (formValidationUtils.validateImageUploadStep as vi.Mock).mockReturnValue({});
-    (formValidationUtils.validateReviewStep as vi.Mock).mockReturnValue({});
+    (formValidationUtils.validateRestaurantDetailsStep as ReturnType<typeof vi.fn>).mockReturnValue({});
+    (formValidationUtils.validateItemDetailsStep as ReturnType<typeof vi.fn>).mockReturnValue({});
+    (formValidationUtils.validateImageUploadStep as ReturnType<typeof vi.fn>).mockReturnValue({});
+    (formValidationUtils.validateReviewStep as ReturnType<typeof vi.fn>).mockReturnValue({});
   });
 
   it('should initialize with no errors', () => {
@@ -76,7 +76,7 @@ describe('useUnifiedFormValidation', () => {
 
   it('validateStep(1) should return false and set errors if validation fails', async () => {
     const mockError = { restaurantName: 'Required' };
-    (formValidationUtils.validateRestaurantDetailsStep as vi.Mock).mockReturnValueOnce(mockError);
+    (formValidationUtils.validateRestaurantDetailsStep as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockError);
     const { result } = renderHook(() => useUnifiedFormValidation());
     let isValid = true;
     await act(async () => {
@@ -101,7 +101,7 @@ describe('useUnifiedFormValidation', () => {
 
   it('validateStep(2) should return false and set errors if validation fails', async () => {
     const mockError = { itemName: 'Required' };
-    (formValidationUtils.validateItemDetailsStep as vi.Mock).mockReturnValueOnce(mockError);
+    (formValidationUtils.validateItemDetailsStep as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockError);
     const { result } = renderHook(() => useUnifiedFormValidation());
     let isValid = true;
     await act(async () => {
@@ -154,7 +154,7 @@ describe('useUnifiedFormValidation', () => {
   it('clearErrors should reset the errors state', async () => {
     const { result } = renderHook(() => useUnifiedFormValidation());
     const mockError = { submitterName: 'Cannot be empty' };
-    (formValidationUtils.validateRestaurantDetailsStep as vi.Mock).mockReturnValueOnce(mockError);
+    (formValidationUtils.validateRestaurantDetailsStep as ReturnType<typeof vi.fn>).mockReturnValueOnce(mockError);
     await act(async () => {
       await result.current.validateStep(1);
     });
