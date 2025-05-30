@@ -1,14 +1,63 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, FC, useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Building2, User } from 'lucide-react';
+import { Building2, User, Mail, Phone, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
-const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
+const restaurantDetailsSchema = z.object({
+  restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
+  submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
+  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).optional().or(z.literal('')),
+  contactPhone: z.string().optional().or(z.literal('')),
+});
+
+// סכמה נוספת עבור מצב "עסק חדש" - בו המייל והטלפון הם שדות חובה
+const newBusinessSchema = z.object({
+  restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
+  submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
+  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).min(1, "אימייל הוא שדה חובה לעסק חדש"),
+  contactPhone: z.string().min(1, "מספר טלפון הוא שדה חובה לעסק חדש"),
+});
+
+type RestaurantDetailsFormData = z.infer<typeof restaurantDetailsSchema>;
+
+export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
-  const errors = externalErrors || {};
+  const [isNewBusiness, setIsNewBusiness] = useState<boolean | null>(null);
+  
+  const form = useForm<RestaurantDetailsFormData>({
+    resolver: zodResolver(isNewBusiness ? newBusinessSchema : restaurantDetailsSchema),
+    defaultValues: {
+      restaurantName: formData.restaurantName || '',
+      submitterName: formData.submitterName || '',
+      contactEmail: formData.contactEmail || '',
+      contactPhone: formData.contactPhone || '',
+    },
+    mode: 'onChange'
+  });
+  
+  // עדכון הסכמה כאשר משתנה סטטוס העסק (חדש/קיים)
+  useEffect(() => {
+    form.clearErrors();
+    // ברגע שמשתנה סטטוס העסק, מעדכנים את ה-resolver של הטופס
+    form.setError = form.setError;
+  }, [isNewBusiness, form]);
 
   // Get current user session directly from Supabase
   const { data: session, isLoading: sessionLoading } = useQuery({
@@ -89,12 +138,21 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
     }
   }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError, sessionLoading]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    console.log('[RestaurantDetailsStep] Manual input change:', { name, value });
-    updateFormData({ [name]: value });
-    if (errors && errors[name] && clearExternalErrors) {
-      clearExternalErrors();
+  // Update global form data context on local form change
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      updateFormData(value as Partial<RestaurantDetailsFormData>);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, updateFormData]);
+
+  // Handle blur for individual field validation and context update
+  const handleBlur = (fieldName: keyof RestaurantDetailsFormData) => {
+    form.trigger(fieldName);
+    const fieldValue = form.getValues(fieldName);
+    // Ensure that we only update if the value is a string, as per the context expectations
+    if (typeof fieldValue === 'string') {
+      updateFormData({ [fieldName]: fieldValue });
     }
   };
 
@@ -114,6 +172,41 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
           }
         </p>
       </div>
+
+      {/* בחירת סטטוס העסק - חדש במערכת או קיים */}
+      {!isAuthenticated && (
+        <div className="mb-6 p-5 bg-blue-50 rounded-lg shadow-sm">
+          <p className="font-medium mb-3 text-lg text-center">האם העסק שלכם כבר רשום במערכת?</p>
+          <div className="flex justify-center gap-4 mt-2">
+            <button 
+              onClick={() => setIsNewBusiness(false)}
+              type="button"
+              className={cn(
+                "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
+                isNewBusiness === false 
+                  ? "bg-[#F3752B] text-white border-2 border-[#F3752B]" 
+                  : "bg-white text-gray-700 border-2 border-gray-300 hover:border-[#F3752B]/50"
+              )}
+            >
+              כן, העסק שלנו רשום
+              {isNewBusiness === false && <CheckCircle className="inline-block mr-2 h-4 w-4" />}
+            </button>
+            <button 
+              onClick={() => setIsNewBusiness(true)}
+              type="button"
+              className={cn(
+                "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
+                isNewBusiness === true 
+                  ? "bg-[#F3752B] text-white border-2 border-[#F3752B]" 
+                  : "bg-white text-gray-700 border-2 border-gray-300 hover:border-[#F3752B]/50"
+              )}
+            >
+              לא, זו פעם ראשונה שלנו
+              {isNewBusiness === true && <CheckCircle className="inline-block mr-2 h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Debug info for development */}
       {process.env.NODE_ENV === 'development' && (
@@ -154,78 +247,133 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErro
       )}
 
       {/* Form Fields */}
-      <div className="space-y-8 max-w-2xl mx-auto">
-        {/* Restaurant Name */}
-        <div className="space-y-3">
-          <label htmlFor="restaurantName" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <Building2 className="w-6 h-6 text-[#F3752B] ml-3" />
-            שם המסעדה / שם העסק
-            <span className="text-red-500 mr-1">*</span>
-            {isAuthenticated && (
-              <span className="text-sm font-normal text-gray-500 mr-2">(נטען אוטומטית)</span>
-            )}
-          </label>
-          <input
-            id="restaurantName"
+      <Form {...form}>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+          <FormField
+            control={form.control}
             name="restaurantName"
-            type="text"
-            value={formData.restaurantName || ''}
-            onChange={handleChange}
-            disabled={isFieldDisabled}
-            placeholder={isAuthenticated ? "טוען..." : "הזינו את שם המסעדה או העסק"}
-            className={cn(
-              "w-full px-6 py-4 text-lg border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20",
-              isFieldDisabled && "bg-gray-50 cursor-not-allowed",
-              errors?.restaurantName 
-                ? "border-red-500 bg-red-50" 
-                : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                  <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                    <Building2 className="w-5 h-5 text-[#F3752B]" />
+                  </div>
+                  שם המסעדה / שם העסק
+                  <span className="text-red-500 mr-1">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    onBlur={() => handleBlur("restaurantName")}
+                    placeholder="הזינו את שם המסעדה או העסק"
+                    className={cn(
+                      "w-full px-6 py-4 text-lg border-2 rounded-xl",
+                      form.formState.errors.restaurantName ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                    )}
+                  />
+                </FormControl>
+                <FormDescription>
+                  אם העסק כבר קיים במערכת, כתבו את השם שלו כפי שהוא מופיע.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
             )}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            אם העסק כבר קיים במערכת, כתבו את השם שלו
-          </p>
-          {errors?.restaurantName && (
-            <p className="text-red-500 text-sm mt-2 flex items-center">
-              <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>
-              {errors.restaurantName}
-            </p>
-          )}
-        </div>
 
-        {/* Submitter Name */}
-        <div className="space-y-3">
-          <label htmlFor="submitterName" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <User className="w-6 h-6 text-[#F3752B] ml-3" />
-            שם המגיש
-            <span className="text-red-500 mr-1">*</span>
-            {isAuthenticated && (
-              <span className="text-sm font-normal text-gray-500 mr-2">(נטען אוטומטית)</span>
-            )}
-          </label>
-          <input
-            id="submitterName"
+          <FormField
+            control={form.control}
             name="submitterName"
-            type="text"
-            value={formData.submitterName || ''}
-            onChange={handleChange}
-            disabled={isFieldDisabled}
-            placeholder={isAuthenticated ? "טוען..." : "הזינו את שם איש הקשר"}
-            className={cn(
-              "w-full px-6 py-4 text-lg border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20",
-              isFieldDisabled && "bg-gray-50 cursor-not-allowed",
-              errors?.submitterName 
-                ? "border-red-500 bg-red-50" 
-                : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                  <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                    <User className="w-5 h-5 text-[#F3752B]" />
+                  </div>
+                  שם מלא של המגיש
+                  <span className="text-red-500 mr-1">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    onBlur={() => handleBlur("submitterName")}
+                    placeholder="הזינו את שם איש הקשר"
+                    className={cn(
+                      "w-full px-6 py-4 text-lg border-2 rounded-xl",
+                      form.formState.errors.submitterName ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                    )}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
           />
-          {errors?.submitterName && (
-            <p className="text-red-500 text-sm mt-2 flex items-center">
-              <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>
-              {errors.submitterName}
-            </p>
+
+          {(isNewBusiness === true || isAuthenticated) && (
+            <FormField
+              control={form.control}
+              name="contactEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                    <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                      <Mail className="w-5 h-5 text-[#F3752B]" />
+                    </div>
+                    אימייל לקבל תוצאות
+                    {isNewBusiness && <span className="text-red-500 mr-1">*</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="email"
+                      onBlur={() => handleBlur("contactEmail")}
+                      placeholder="לדוגמה: email@example.com"
+                      className={cn(
+                        "w-full px-6 py-4 text-lg border-2 rounded-xl",
+                        form.formState.errors.contactEmail ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                      )}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    {isNewBusiness ? "אנו נשלח את תוצאות הפניה שלך לכתובת זו" : "מומלץ להשאיר פרטים כדי שנוכל ליצור איתך קשר"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
-        </div>
-      </div>
+
+          {(isNewBusiness === true || isAuthenticated) && (
+            <FormField
+              control={form.control}
+              name="contactPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                    <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                      <Phone className="w-5 h-5 text-[#F3752B]" />
+                    </div>
+                    טלפון ליצירת קשר
+                    {isNewBusiness && <span className="text-red-500 mr-1">*</span>}
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="tel"
+                      onBlur={() => handleBlur("contactPhone")}
+                      placeholder="לדוגמה: 050-1234567"
+                      className={cn(
+                        "w-full px-6 py-4 text-lg border-2 rounded-xl",
+                        form.formState.errors.contactPhone ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                      )}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+        </form>
+      </Form>
     </div>
   );
 };

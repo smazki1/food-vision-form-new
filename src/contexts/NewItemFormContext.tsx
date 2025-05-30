@@ -1,9 +1,10 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface NewItemFormData {
   restaurantName: string;
   submitterName: string;
+  contactEmail?: string;
+  contactPhone?: string;
   itemName: string;
   itemType: 'dish' | 'cocktail' | 'drink';
   description: string;
@@ -34,6 +35,8 @@ interface NewItemFormProviderProps {
 const initialFormData: NewItemFormData = {
   restaurantName: '',
   submitterName: '',
+  contactEmail: '',
+  contactPhone: '',
   itemName: '',
   itemType: 'dish',
   description: '',

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
@@ -101,14 +100,14 @@ export const usePublicFormSubmission = () => {
         p_restaurant_name: formData.restaurantName.trim(),
         p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
         p_item_name: formData.itemName.trim(),
-        p_description: formData.description?.trim() || undefined,
-        p_category: category || undefined,
-        p_ingredients: ingredients || undefined,
+        p_description: formData.description?.trim() || null,
+        p_category: category || null,
+        p_ingredients: ingredients || null,
         p_reference_image_urls: uploadedImageUrls,
         // Add contact information for automatic lead creation
-        p_contact_name: formData.submitterName?.trim() || undefined,
-        p_contact_email: formData.contactEmail?.trim() || undefined,
-        p_contact_phone: formData.contactPhone?.trim() || undefined,
+        p_contact_name: formData.submitterName?.trim() || null,
+        p_contact_email: formData.contactEmail?.trim() || null,
+        p_contact_phone: formData.contactPhone?.trim() || null,
       };
 
       console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
