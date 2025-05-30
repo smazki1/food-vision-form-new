@@ -11,7 +11,7 @@ interface UnifiedAuthProviderProps {
 }
 
 export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ children }) => {
-  const { authState, updateAuthState } = useUnifiedAuthState();
+  const { updateAuthState, ...authState } = useUnifiedAuthState();
 
   // Initialize authentication and role logic
   useAuthInitialization(updateAuthState);

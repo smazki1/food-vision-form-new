@@ -24,18 +24,8 @@ interface ClientProfileWithPackage extends Client {
 export function CustomerProfile() {
   const { userAuthId } = useClientAuth();
   const { user, signOut: unifiedSignOut } = useUnifiedAuth();
-  const userId = userAuthId || user?.id;
-  
   console.log("[CustomerProfile] userAuthId from useClientAuth:", userAuthId);
-  console.log("[CustomerProfile] user from useUnifiedAuth:", user?.id);
-  console.log("[CustomerProfile] Using userId:", userId);
-  
-  const { clientProfile, loading: profileLoading, error: profileError, updateNotificationPreferences } = useClientProfile(userId) as { 
-    clientProfile: ClientProfileWithPackage | null; 
-    loading: boolean; 
-    error: string | null; 
-    updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; 
-  };
+  const { clientProfile, loading: profileLoading, error: profileError, updateNotificationPreferences } = useClientProfile(userAuthId || user?.id || undefined) as { clientProfile: ClientProfileWithPackage | null; loading: boolean; error: string | null; updateNotificationPreferences: (emailEnabled: boolean, appEnabled: boolean) => Promise<boolean>; };
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -55,31 +45,10 @@ export function CustomerProfile() {
         variant: "destructive",
       });
     } else {
-      console.log("[CustomerProfile] Sign out successful from context, navigating to /customer-login");
-      navigate('/customer-login');
+      console.log("[CustomerProfile] Sign out successful from context, navigating to /login");
+      navigate('/login');
     }
   };
-
-  // Show error immediately if no user ID is available
-  if (!userId) {
-    return (
-      <div className="p-4">
-        <Card>
-          <CardHeader className="items-center text-center">
-            <CardTitle className="text-xl text-destructive">שגיאה בזיהוי משתמש</CardTitle>
-            <CardDescription className="text-base">
-              לא ניתן לזהות את המשתמש הנוכחי. אנא התחברו שוב.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate('/customer-login')} className="w-full">
-              חזרה להתחברות
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (profileLoading) {
     return (
@@ -113,11 +82,6 @@ export function CustomerProfile() {
               {profileError || "אירעה שגיאה בעת טעינת פרופיל המשתמש/ת. אנא נסו שוב מאוחר יותר."}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => window.location.reload()} className="w-full">
-              נסה שוב
-            </Button>
-          </CardContent>
         </Card>
       </div>
     );
@@ -127,9 +91,6 @@ export function CustomerProfile() {
     return (
       <div dir="rtl" className="p-4 text-center">
          <p>לא נטענו נתוני פרופיל.</p>
-         <Button onClick={() => window.location.reload()} className="mt-4">
-           נסה שוב
-         </Button>
       </div>
     ); 
   }
