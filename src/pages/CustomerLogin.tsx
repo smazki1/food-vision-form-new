@@ -1,13 +1,16 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 const CustomerLogin = () => {
-  // Tabs state management
   const [activeTab, setActiveTab] = useState<'start' | 'login'>('start');
-  
-  // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -15,11 +18,10 @@ const CustomerLogin = () => {
   const navigate = useNavigate();
   const { signIn, resetPassword } = useUnifiedAuth();
 
-  // Functions
   const switchTab = (tab: 'start' | 'login') => setActiveTab(tab);
   
   const redirectToUpload = () => {
-    navigate('/customer/upload');
+    navigate('/public-upload');
   };
   
   const selectUserType = () => {
@@ -72,95 +74,100 @@ const CustomerLogin = () => {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Decorative elements */}
-      <div className="absolute top-10 right-10 w-24 h-24 rounded-full bg-red-900 opacity-10 animate-pulse"></div>
-      <div className="absolute bottom-10 left-10 w-36 h-36 rounded-full bg-orange-500 opacity-10 animate-pulse"></div>
-      <div className="absolute top-1/3 left-1/4 w-12 h-12 rounded-full bg-orange-500 opacity-5"></div>
-      <div className="absolute bottom-1/3 right-1/4 w-16 h-16 rounded-full bg-red-900 opacity-5"></div>
-      
-      <div className="w-full max-w-lg">
-        {/* Logo header */}
+    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold">
-            Food Vision <span className="inline-block bg-gradient-to-r from-red-900 to-orange-500 text-white text-sm px-2 py-1 rounded-md mr-1 ml-1">FV</span>
-          </h1>
+          <div className="flex items-center justify-center mb-4">
+            <img 
+              src="/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png" 
+              alt="Food Vision Logo" 
+              className="w-16 h-16 mr-3"
+            />
+            <h1 className="text-3xl font-display font-bold text-gray-900">
+              Food Vision
+            </h1>
+          </div>
+          <p className="text-gray-600 font-inter">פלטפורמה מתקדמת לעיבוד תמונות מנות</p>
         </div>
         
-        {/* Main container */}
-        <div className="bg-white shadow-2xl rounded-3xl overflow-hidden">
-          {/* Gradient top border */}
-          <div className="h-2 bg-gradient-to-l from-red-900 to-orange-500"></div>
-          
+        {/* Main Card */}
+        <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
           {/* Tabs */}
-          <div className="flex border-b">
+          <div className="flex border-b border-gray-200/50">
             <button
               onClick={() => switchTab('login')}
-              className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-300 ${
+              className={`flex-1 py-4 px-6 text-center font-inter font-medium transition-all duration-300 ${
                 activeTab === 'login'
-                  ? 'text-red-900 border-b-2 border-red-900'
-                  : 'text-gray-500 hover:bg-gray-50'
+                  ? 'text-primary-FV border-b-2 border-primary-FV bg-primary-FV/5'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
               }`}
             >
               התחברות
             </button>
             <button
               onClick={() => switchTab('start')}
-              className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-300 ${
+              className={`flex-1 py-4 px-6 text-center font-inter font-medium transition-all duration-300 ${
                 activeTab === 'start'
-                  ? 'text-red-900 border-b-2 border-red-900'
-                  : 'text-gray-500 hover:bg-gray-50'
+                  ? 'text-primary-FV border-b-2 border-primary-FV bg-primary-FV/5'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
               }`}
             >
               התחל עכשיו
             </button>
           </div>
           
-          {/* Tab content */}
-          <div className="p-8">
+          {/* Tab Content */}
+          <CardContent className="p-8">
             {activeTab === 'start' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-center text-gray-800">
-                  שדרג את תמונות המנות שלך עכשיו
-                </h2>
+                <CardHeader className="text-center p-0">
+                  <CardTitle className="text-2xl font-display text-gray-900 mb-2">
+                    שדרג את תמונות המנות שלך
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 font-inter">
+                    קבל תמונות מקצועיות ומרהיבות למנות שלך בקלות ובמהירות
+                  </CardDescription>
+                </CardHeader>
                 
-                {/* Trial package card */}
+                {/* Trial Package Card */}
                 <div 
                   onClick={redirectToUpload}
-                  className="bg-white border-2 border-gray-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer group"
+                  className="bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 border-2 border-primary-FV/20 rounded-xl p-6 hover:shadow-lg hover:border-primary-FV/40 transition-all duration-300 cursor-pointer group"
                 >
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-800">חבילת ניסיון</h3>
-                    <span className="bg-orange-500 text-white text-xs px-3 py-1 rounded-full animate-pulse">
+                    <h3 className="text-xl font-display font-semibold text-gray-900">חבילת ניסיון</h3>
+                    <span className="bg-secondary-FV text-white text-xs px-3 py-1 rounded-full font-inter font-medium">
                       חינם לחלוטין
                     </span>
                   </div>
                   
-                  <div className="space-y-3">
+                  <div className="space-y-3 mb-6">
                     <div className="flex items-center">
-                      <p className="text-gray-700">קבל 3 תמונות מקצועיות בחינם</p>
+                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
+                      <p className="text-gray-700 font-inter">3 תמונות מקצועיות בחינם</p>
                     </div>
                     <div className="flex items-center">
-                      <p className="text-gray-700">עיבוד מהיר ברמה גבוהה</p>
+                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
+                      <p className="text-gray-700 font-inter">עיבוד מהיר ברמה גבוהה</p>
                     </div>
                     <div className="flex items-center">
-                      <p className="text-gray-700">תוצאות מרהיבות למנות שלך</p>
+                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
+                      <p className="text-gray-700 font-inter">תוצאות מרהיבות למנות שלך</p>
                     </div>
                   </div>
                   
-                  <div className="mt-6 text-center">
-                    <button className="bg-gradient-to-r from-red-900 to-orange-500 text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all duration-300 group-hover:shadow-md w-full">
-                      התחל עכשיו
-                    </button>
-                  </div>
+                  <Button className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-medium py-3 rounded-lg transition-all duration-300 group-hover:shadow-md">
+                    התחל עכשיו
+                  </Button>
                 </div>
                 
-                {/* Promo box */}
-                <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center">
-                  <div className="ml-2 w-8 h-8 flex-shrink-0 bg-gradient-to-br from-red-900 to-orange-500 rounded-full"></div>
+                {/* Promo Box */}
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center">
+                  <div className="w-3 h-3 bg-gradient-to-br from-primary-FV to-secondary-FV rounded-full mr-3 flex-shrink-0"></div>
                   <div>
-                    <h4 className="font-medium text-orange-800">מבצע מיוחד</h4>
-                    <p className="text-sm text-orange-700">הצטרפו כלקוחות וקבלו 15% הנחה על החבילה הראשונה</p>
+                    <h4 className="font-inter font-medium text-orange-800 mb-1">מבצע מיוחד</h4>
+                    <p className="text-sm text-orange-700 font-inter">הצטרפו כלקוחות וקבלו 15% הנחה על החבילה הראשונה</p>
                   </div>
                 </div>
               </div>
@@ -168,79 +175,90 @@ const CustomerLogin = () => {
             
             {activeTab === 'login' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-                  ברוכים הבאים
-                </h2>
+                <CardHeader className="text-center p-0">
+                  <CardTitle className="text-2xl font-display text-gray-900 mb-2">
+                    ברוכים הבאים
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 font-inter">
+                    התחברו לחשבונכם כדי לנהל את המנות שלכם
+                  </CardDescription>
+                </CardHeader>
                 
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-5">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    <Label htmlFor="email" className="text-gray-700 font-inter font-medium">
                       אימייל
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 text-right"
+                      className="font-inter border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-lg"
                       placeholder="your@email.com"
                       required
+                      dir="ltr"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    <Label htmlFor="password" className="text-gray-700 font-inter font-medium">
                       סיסמה
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="password"
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-red-900 focus:border-red-900 text-right"
+                      className="font-inter border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-lg"
                       placeholder="••••••••"
                       required
+                      dir="ltr"
                     />
                   </div>
                   
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={isLoading}
-                      className="w-full bg-gradient-to-r from-red-900 to-orange-500 text-white py-3 px-6 rounded-lg font-medium hover:opacity-90 transition-all duration-300"
-                    >
-                      {isLoading ? 'מתחבר...' : 'התחברות'}
-                    </button>
-                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-medium py-3 rounded-lg transition-all duration-300"
+                  >
+                    {isLoading ? 'מתחבר...' : 'התחברות'}
+                  </Button>
                   
                   <div className="text-center">
                     <button 
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-sm text-red-900 hover:underline"
+                      className="text-sm text-primary-FV hover:text-primary-FV-dark font-inter transition-colors"
                     >
                       שכחת סיסמה?
                     </button>
                   </div>
                 </form>
                 
-                <div className="relative flex items-center mt-6">
-                  <div className="flex-grow border-t border-gray-300"></div>
-                  <span className="flex-shrink mx-4 text-gray-500 text-sm">או</span>
-                  <div className="flex-grow border-t border-gray-300"></div>
+                <div className="relative">
+                  <Separator className="my-6" />
+                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-gray-500 font-inter">או</span>
                 </div>
                 
-                {/* Team/Admin card */}
+                {/* Admin/Team Access */}
                 <div 
                   onClick={selectUserType}
-                  className="bg-gray-50 border-2 border-gray-200 rounded-xl p-5 hover:border-red-900 transition-all duration-300 cursor-pointer text-center"
+                  className="bg-gray-50/50 border-2 border-gray-200 rounded-xl p-5 hover:border-primary-FV/30 hover:bg-primary-FV/5 transition-all duration-300 cursor-pointer text-center"
                 >
-                  <h4 className="font-bold text-gray-800">צוות / אדמין</h4>
-                  <p className="text-sm text-gray-600 mt-1">כניסה למערכת הניהול המקצועית</p>
+                  <h4 className="font-inter font-semibold text-gray-800 mb-1">צוות / אדמין</h4>
+                  <p className="text-sm text-gray-600 font-inter">כניסה למערכת הניהול המקצועית</p>
                 </div>
               </div>
             )}
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-8">
+          <p className="text-sm text-gray-500 font-inter">
+            © 2024 Food Vision. כל הזכויות שמורות.
+          </p>
         </div>
       </div>
     </div>
