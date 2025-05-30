@@ -91,7 +91,7 @@ const CustomerLogin = () => {
               Food Vision
             </h1>
           </div>
-          <p className="text-lg text-gray-600 font-inter font-medium leading-relaxed">פלטפורמה מתקדמת לעיבוד תמונות מנות 🍽️</p>
+          <p className="text-lg text-gray-600 font-inter font-medium leading-relaxed">פלטפורמה מתקדמת לעיבוד תמונות מנות</p>
         </div>
         
         {/* Enhanced Main Card */}
@@ -137,7 +137,7 @@ const CustomerLogin = () => {
                     שדרג את תמונות המנות שלך ✨
                   </CardTitle>
                   <CardDescription className="text-lg text-gray-600 font-inter leading-relaxed">
-                    קבל תמונות מקצועיות ומרהיבות למנות שלך בקלות ובמהירות
+                    קבלו תמונות מקצועיות ומרהיבות למנות שלכם בקלות ובמהירות
                   </CardDescription>
                 </CardHeader>
                 
@@ -150,7 +150,7 @@ const CustomerLogin = () => {
                   
                   <div className="relative z-10">
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-2xl font-heebo font-bold text-gray-900">חבילת ניסיון 🎁</h3>
+                      <h3 className="text-2xl font-heebo font-bold text-gray-900">טעימה מהשירות</h3>
                       <span className="bg-gradient-to-r from-secondary-FV to-orange-400 text-white text-sm px-4 py-2 rounded-full font-inter font-semibold shadow-medium">
                         חינם לחלוטין
                       </span>
@@ -159,20 +159,20 @@ const CustomerLogin = () => {
                     <div className="space-y-4 mb-8">
                       <div className="flex items-center group/item">
                         <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
-                        <p className="text-gray-700 font-inter text-lg leading-relaxed">3 תמונות מקצועיות בחינם</p>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed"> 3 תמונות מקצועיות בחינם  </p>
                       </div>
                       <div className="flex items-center group/item">
                         <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
-                        <p className="text-gray-700 font-inter text-lg leading-relaxed">עיבוד מהיר ברמה גבוהה</p>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed">עיבוד מהיר ברמה גבוהה  </p>
                       </div>
                       <div className="flex items-center group/item">
                         <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
-                        <p className="text-gray-700 font-inter text-lg leading-relaxed">תוצאות מרהיבות למנות שלך</p>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed">תוצאות מרהיבות למנות שלך  </p>
                       </div>
                     </div>
                     
                     <Button className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-semibold py-4 text-lg rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-glow relative overflow-hidden group/btn">
-                      <span className="relative z-10">התחל עכשיו 🚀</span>
+                      <span className="relative z-10">התחל/י עכשיו </span>
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
                     </Button>
                   </div>
@@ -182,7 +182,7 @@ const CustomerLogin = () => {
                 <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-2xl p-6 flex items-center transition-all duration-300 hover:shadow-medium hover:border-orange-300">
                   <div className="w-4 h-4 bg-gradient-to-br from-primary-FV to-secondary-FV rounded-full mr-4 flex-shrink-0 animate-float"></div>
                   <div>
-                    <h4 className="font-inter font-bold text-orange-800 mb-2 text-lg">מבצע מיוחד 🎉</h4>
+                    <h4 className="font-inter font-bold text-orange-800 mb-2 text-lg">מבצע מיוחד </h4>
                     <p className="text-orange-700 font-inter leading-relaxed">הצטרפו כלקוחות וקבלו 15% הנחה על החבילה הראשונה</p>
                   </div>
                 </div>
@@ -276,7 +276,7 @@ const CustomerLogin = () => {
         {/* Enhanced Footer */}
         <div className="text-center mt-12 animate-fade-in">
           <p className="text-gray-500 font-inter text-lg leading-relaxed">
-            © 2024 Food Vision. כל הזכויות שמורות. 💖
+            © 2025 Food Vision. כל הזכויות שמורות. 💖
           </p>
         </div>
       </div>
