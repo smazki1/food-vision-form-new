@@ -74,143 +74,159 @@ const CustomerLogin = () => {
   };
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <img 
-              src="/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png" 
-              alt="Food Vision Logo" 
-              className="w-16 h-16 mr-3"
-            />
-            <h1 className="text-3xl font-display font-bold text-gray-900">
+    <div dir="rtl" className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-lg animate-fade-in">
+        {/* Brand Header with Enhanced Styling */}
+        <div className="text-center mb-12 animate-slide-up">
+          <div className="flex items-center justify-center mb-6 group">
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png" 
+                alt="Food Vision Logo" 
+                className="w-20 h-20 mr-4 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 drop-shadow-lg"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary-FV/20 to-secondary-FV/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
+            <h1 className="text-4xl font-heebo font-bold bg-gradient-to-r from-primary-FV via-primary-FV-dark to-secondary-FV bg-clip-text text-transparent">
               Food Vision
             </h1>
           </div>
-          <p className="text-gray-600 font-inter">פלטפורמה מתקדמת לעיבוד תמונות מנות</p>
+          <p className="text-lg text-gray-600 font-inter font-medium leading-relaxed">פלטפורמה מתקדמת לעיבוד תמונות מנות 🍽️</p>
         </div>
         
-        {/* Main Card */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-xl border-0">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200/50">
+        {/* Enhanced Main Card */}
+        <Card className="bg-white/90 backdrop-blur-xl shadow-strong border-0 rounded-3xl overflow-hidden transform transition-all duration-500 hover:shadow-glow animate-scale-in">
+          {/* Modern Tabs */}
+          <div className="flex border-b border-gray-100 bg-gray-50/50">
             <button
               onClick={() => switchTab('login')}
-              className={`flex-1 py-4 px-6 text-center font-inter font-medium transition-all duration-300 ${
+              className={`flex-1 py-6 px-8 text-center font-inter font-semibold text-lg transition-all duration-300 relative group ${
                 activeTab === 'login'
-                  ? 'text-primary-FV border-b-2 border-primary-FV bg-primary-FV/5'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
+                  ? 'text-primary-FV bg-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               }`}
             >
-              התחברות
+              <span className="relative z-10">התחברות</span>
+              {activeTab === 'login' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
             <button
               onClick={() => switchTab('start')}
-              className={`flex-1 py-4 px-6 text-center font-inter font-medium transition-all duration-300 ${
+              className={`flex-1 py-6 px-8 text-center font-inter font-semibold text-lg transition-all duration-300 relative group ${
                 activeTab === 'start'
-                  ? 'text-primary-FV border-b-2 border-primary-FV bg-primary-FV/5'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/50'
+                  ? 'text-primary-FV bg-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               }`}
             >
-              התחל עכשיו
+              <span className="relative z-10">התחל עכשיו</span>
+              {activeTab === 'start' && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
           </div>
           
-          {/* Tab Content */}
-          <CardContent className="p-8">
+          {/* Enhanced Content */}
+          <CardContent className="p-10">
             {activeTab === 'start' && (
-              <div className="space-y-6">
+              <div className="space-y-8 animate-fade-in">
                 <CardHeader className="text-center p-0">
-                  <CardTitle className="text-2xl font-display text-gray-900 mb-2">
-                    שדרג את תמונות המנות שלך
+                  <CardTitle className="text-3xl font-heebo font-bold text-gray-900 mb-4 leading-tight">
+                    שדרג את תמונות המנות שלך ✨
                   </CardTitle>
-                  <CardDescription className="text-gray-600 font-inter">
+                  <CardDescription className="text-lg text-gray-600 font-inter leading-relaxed">
                     קבל תמונות מקצועיות ומרהיבות למנות שלך בקלות ובמהירות
                   </CardDescription>
                 </CardHeader>
                 
-                {/* Trial Package Card */}
+                {/* Enhanced Trial Package Card */}
                 <div 
                   onClick={redirectToUpload}
-                  className="bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 border-2 border-primary-FV/20 rounded-xl p-6 hover:shadow-lg hover:border-primary-FV/40 transition-all duration-300 cursor-pointer group"
+                  className="relative bg-gradient-to-br from-primary-FV/8 via-white to-secondary-FV/8 border-2 border-primary-FV/20 rounded-2xl p-8 cursor-pointer group transition-all duration-500 hover:border-primary-FV/40 hover:shadow-strong hover:-translate-y-2 overflow-hidden"
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-display font-semibold text-gray-900">חבילת ניסיון</h3>
-                    <span className="bg-secondary-FV text-white text-xs px-3 py-1 rounded-full font-inter font-medium">
-                      חינם לחלוטין
-                    </span>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-FV/5 to-secondary-FV/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
-                      <p className="text-gray-700 font-inter">3 תמונות מקצועיות בחינם</p>
+                  <div className="relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-2xl font-heebo font-bold text-gray-900">חבילת ניסיון 🎁</h3>
+                      <span className="bg-gradient-to-r from-secondary-FV to-orange-400 text-white text-sm px-4 py-2 rounded-full font-inter font-semibold shadow-medium">
+                        חינם לחלוטין
+                      </span>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
-                      <p className="text-gray-700 font-inter">עיבוד מהיר ברמה גבוהה</p>
+                    
+                    <div className="space-y-4 mb-8">
+                      <div className="flex items-center group/item">
+                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed">3 תמונות מקצועיות בחינם</p>
+                      </div>
+                      <div className="flex items-center group/item">
+                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed">עיבוד מהיר ברמה גבוהה</p>
+                      </div>
+                      <div className="flex items-center group/item">
+                        <div className="w-3 h-3 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-full mr-4 group-hover/item:scale-125 transition-transform duration-300"></div>
+                        <p className="text-gray-700 font-inter text-lg leading-relaxed">תוצאות מרהיבות למנות שלך</p>
+                      </div>
                     </div>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-primary-FV rounded-full mr-3"></div>
-                      <p className="text-gray-700 font-inter">תוצאות מרהיבות למנות שלך</p>
-                    </div>
+                    
+                    <Button className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-semibold py-4 text-lg rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-glow relative overflow-hidden group/btn">
+                      <span className="relative z-10">התחל עכשיו 🚀</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                    </Button>
                   </div>
-                  
-                  <Button className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-medium py-3 rounded-lg transition-all duration-300 group-hover:shadow-md">
-                    התחל עכשיו
-                  </Button>
                 </div>
                 
-                {/* Promo Box */}
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 flex items-center">
-                  <div className="w-3 h-3 bg-gradient-to-br from-primary-FV to-secondary-FV rounded-full mr-3 flex-shrink-0"></div>
+                {/* Enhanced Promo Box */}
+                <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-2xl p-6 flex items-center transition-all duration-300 hover:shadow-medium hover:border-orange-300">
+                  <div className="w-4 h-4 bg-gradient-to-br from-primary-FV to-secondary-FV rounded-full mr-4 flex-shrink-0 animate-float"></div>
                   <div>
-                    <h4 className="font-inter font-medium text-orange-800 mb-1">מבצע מיוחד</h4>
-                    <p className="text-sm text-orange-700 font-inter">הצטרפו כלקוחות וקבלו 15% הנחה על החבילה הראשונה</p>
+                    <h4 className="font-inter font-bold text-orange-800 mb-2 text-lg">מבצע מיוחד 🎉</h4>
+                    <p className="text-orange-700 font-inter leading-relaxed">הצטרפו כלקוחות וקבלו 15% הנחה על החבילה הראשונה</p>
                   </div>
                 </div>
               </div>
             )}
             
             {activeTab === 'login' && (
-              <div className="space-y-6">
+              <div className="space-y-8 animate-fade-in">
                 <CardHeader className="text-center p-0">
-                  <CardTitle className="text-2xl font-display text-gray-900 mb-2">
-                    ברוכים הבאים
+                  <CardTitle className="text-3xl font-heebo font-bold text-gray-900 mb-4">
+                    ברוכים הבאים! 👋
                   </CardTitle>
-                  <CardDescription className="text-gray-600 font-inter">
+                  <CardDescription className="text-lg text-gray-600 font-inter leading-relaxed">
                     התחברו לחשבונכם כדי לנהל את המנות שלכם
                   </CardDescription>
                 </CardHeader>
                 
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-gray-700 font-inter font-medium">
-                      אימייל
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="email" className="text-gray-700 font-inter font-semibold text-lg">
+                      אימייל 📧
                     </Label>
                     <Input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="font-inter border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-lg"
+                      className="font-inter border-2 border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-xl py-4 text-lg transition-all duration-300 hover:border-gray-300"
                       placeholder="your@email.com"
                       required
                       dir="ltr"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-gray-700 font-inter font-medium">
-                      סיסמה
+                  <div className="space-y-3">
+                    <Label htmlFor="password" className="text-gray-700 font-inter font-semibold text-lg">
+                      סיסמה 🔒
                     </Label>
                     <Input
                       type="password"
                       id="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="font-inter border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-lg"
+                      className="font-inter border-2 border-gray-200 focus:border-primary-FV focus:ring-primary-FV/20 rounded-xl py-4 text-lg transition-all duration-300 hover:border-gray-300"
                       placeholder="••••••••"
                       required
                       dir="ltr"
@@ -220,44 +236,47 @@ const CustomerLogin = () => {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-medium py-3 rounded-lg transition-all duration-300"
+                    className="w-full bg-gradient-to-r from-primary-FV to-primary-FV-dark hover:from-primary-FV-dark hover:to-primary-FV text-white font-inter font-semibold py-4 text-lg rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-glow relative overflow-hidden group"
                   >
-                    {isLoading ? 'מתחבר...' : 'התחברות'}
+                    <span className="relative z-10">
+                      {isLoading ? 'מתחבר... ⏳' : 'התחברות ✨'}
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </Button>
                   
                   <div className="text-center">
                     <button 
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-sm text-primary-FV hover:text-primary-FV-dark font-inter transition-colors"
+                      className="text-primary-FV hover:text-primary-FV-dark font-inter font-medium transition-all duration-300 hover:underline text-lg"
                     >
-                      שכחת סיסמה?
+                      שכחת סיסמה? 🔑
                     </button>
                   </div>
                 </form>
                 
                 <div className="relative">
-                  <Separator className="my-6" />
-                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-sm text-gray-500 font-inter">או</span>
+                  <Separator className="my-8" />
+                  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-4 text-gray-500 font-inter text-lg">או</span>
                 </div>
                 
-                {/* Admin/Team Access */}
+                {/* Enhanced Admin/Team Access */}
                 <div 
                   onClick={selectUserType}
-                  className="bg-gray-50/50 border-2 border-gray-200 rounded-xl p-5 hover:border-primary-FV/30 hover:bg-primary-FV/5 transition-all duration-300 cursor-pointer text-center"
+                  className="bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200 rounded-2xl p-6 hover:border-primary-FV/30 hover:bg-gradient-to-br hover:from-primary-FV/5 hover:to-secondary-FV/5 transition-all duration-300 cursor-pointer text-center group transform hover:scale-105 hover:shadow-medium"
                 >
-                  <h4 className="font-inter font-semibold text-gray-800 mb-1">צוות / אדמין</h4>
-                  <p className="text-sm text-gray-600 font-inter">כניסה למערכת הניהול המקצועית</p>
+                  <h4 className="font-inter font-bold text-gray-800 mb-2 text-xl group-hover:text-primary-FV transition-colors duration-300">👥 צוות / אדמין</h4>
+                  <p className="text-gray-600 font-inter text-lg leading-relaxed">כניסה למערכת הניהול המקצועית</p>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="text-center mt-8">
-          <p className="text-sm text-gray-500 font-inter">
-            © 2024 Food Vision. כל הזכויות שמורות.
+        {/* Enhanced Footer */}
+        <div className="text-center mt-12 animate-fade-in">
+          <p className="text-gray-500 font-inter text-lg leading-relaxed">
+            © 2024 Food Vision. כל הזכויות שמורות. 💖
           </p>
         </div>
       </div>
