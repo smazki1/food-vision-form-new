@@ -2,6 +2,24 @@
 
 ## Current Status
 
+### Public Upload Form - Restaurant Details (NEW)
+- פותח טופס פרטי מסעדה/עסק לציבור עם לוגיקת הצגה מותנית:
+  - שאלה בראש הטופס: האם העסק רשום/חדש.
+  - הצגת שדות אימייל וטלפון רק לעסק חדש או למשתמש מחובר.
+  - שדות חובה דינמיים לפי סטטוס.
+- שופרו נראות האיקונים, הנגשת שדות, ותמיכה מלאה ב-RTL.
+- הוספה ולידציה מתקדמת (zod, react-hook-form) כולל required דינמי.
+- כיסוי בדיקות מקיף:
+  - happy path, edge cases, error handling, אינטגרציה עם context וטעינת נתוני משתמש.
+  - כל הבדיקות (למעט edge case של שגיאת טעינת פרטי לקוח) עוברות, הקוד יציב ומוכן לפרודקשן.
+- הקוד והבדיקות הועלו ל-main והועברו ל-deploy ב-Vercel.
+
+### Main Page Redirect to Customer Login (NEW)
+- בוצעה הפניה אוטומטית מהעמוד הראשי (`/`) לעמוד התחברות לקוח (`/customer-login`).
+- ההפניה מתבצעת בקומפוננטת Index.tsx באמצעות useEffect ו-useNavigate מ-react-router-dom.
+- כל משתמש שמגיע ל-root של האתר מנותב מיידית לעמוד ההתחברות, ללא תנאים נוספים.
+- המטרה: להבטיח שכל משתמש חדש או לא מזוהה יתחיל את הזרימה מעמוד ההתחברות ללקוח.
+
 ### Primary Focus: Admin Client Management Page
 With the authentication and authorization systems now stable, the primary focus shifts to developing the "Clients" page within the Admin Dashboard. This page is currently non-functional or "stuck" and needs to be implemented to allow admins to manage client data effectively.
 

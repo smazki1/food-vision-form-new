@@ -65,6 +65,8 @@
    - Form submission handling
    - Error state management
    - Loading state indicators
+   - Conditional rendering of fields based on business status (isNewBusiness)
+   - Dynamic required fields and validation with zod/react-hook-form
 
 3. **Data Display Patterns**
    - Tables with sorting and filtering
@@ -136,6 +138,8 @@
    - Unit tests for components
    - Integration tests for flows
    - Snapshot testing for UI
+   - Comprehensive coverage: happy path, edge cases, error handling, integration with context and user data loading
+   - Mocking react-query for session/client-details in tests
 
 2. **Hook Testing**
    - Custom hook testing

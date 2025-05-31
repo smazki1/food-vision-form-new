@@ -2,6 +2,12 @@
 
 ## Recently Completed
 
+### Main Page Redirect to Customer Login (NEW)
+- בוצעה הפניה אוטומטית מהעמוד הראשי (`/`) לעמוד התחברות לקוח (`/customer-login`).
+- ההפניה בוצעה בקומפוננטת Index.tsx באמצעות useEffect ו-useNavigate מ-react-router-dom.
+- כל משתמש שמגיע ל-root של האתר מנותב מיידית לעמוד ההתחברות, ללא תנאים נוספים.
+- המטרה: להבטיח שכל משתמש חדש או לא מזוהה יתחיל את הזרימה מעמוד ההתחברות ללקוח.
+
 ### Authentication & Admin Access Control (NEWLY RESOLVED)
 - [x] **Resolved Login Loop & "Access Denied" Errors:** Successfully fixed critical issue preventing admin access. The root cause was missing `EXECUTE` permission on the `public.get_my_role()` RPC function for the `authenticated` role. A migration file was created to version this fix.
 - [x] **Stabilized Admin Layout Rendering:** Refactored `src/layouts/AdminLayout.tsx` to prevent rendering/routing loops during auth state changes, ensuring smoother navigation and loading of admin pages.
@@ -28,6 +34,14 @@
 - [x] Basic dashboard layout and navigation.
 - [x] React Query integration for data fetching.
 - [x] Error handling and loading states.
+
+### Public Upload Form - Restaurant Details (NEW)
+- פותח טופס פרטי מסעדה/עסק לציבור עם לוגיקת הצגה מותנית (עסק חדש/קיים, אימייל/טלפון חובה).
+- שופרו נראות האיקונים, הנגשת שדות, ותמיכה מלאה ב-RTL.
+- הוספה ולידציה מתקדמת (zod, react-hook-form) כולל required דינמי.
+- כיסוי בדיקות מקיף: happy path, edge cases, error handling, אינטגרציה עם context וטעינת נתוני משתמש.
+- כל הבדיקות (למעט edge case של שגיאת טעינת פרטי לקוח) עוברות, הקוד יציב ומוכן לפרודקשן.
+- הקוד והבדיקות הועלו ל-main והועברו ל-deploy ב-Vercel.
 
 ## Current Issues
 

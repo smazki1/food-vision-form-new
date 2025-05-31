@@ -21,12 +21,14 @@ import SubmissionProcessingPage from "./pages/editor/SubmissionProcessingPage";
 
 // Customer imports
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
+import Index from "./components/food-vision/foodvision/src/pages/Index";
 
 export const navItems = [
   {
     title: "דף הבית",
     to: "/",
     icon: <HomeIcon className="h-4 w-4" />,
+    page: <Index />,
   },
   {
     title: "התחברות לקוחות",
