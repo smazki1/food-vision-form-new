@@ -21,7 +21,7 @@ import SubmissionProcessingPage from "./pages/editor/SubmissionProcessingPage";
 
 // Customer imports
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
-import Index from "./components/food-vision/foodvision/src/pages/Index";
+import Index from "./pages/Index";
 
 export const navItems = [
   {
