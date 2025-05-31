@@ -5,12 +5,14 @@ import PackagesTable from "@/components/admin/packages/components/PackagesTable"
 import PackagesLoadingState from "@/components/admin/packages/components/PackagesLoadingState";
 import PackageFormDialog from "@/components/admin/packages/PackageFormDialog";
 import { usePackages } from "@/hooks/usePackages";
+import { AlertTriangle, Info } from "lucide-react";
 
 const PackagesManagementPage: React.FC = () => {
+  console.log("**************** HELLO FROM PackagesManagementPage COMPONENT TOP ****************");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   
-  const { packages, isLoading } = usePackages();
+  const { packages, isLoading, isError, error } = usePackages();
   
   const handleAddClick = () => {
     setIsAddDialogOpen(true);
@@ -27,6 +29,48 @@ const PackagesManagementPage: React.FC = () => {
 
   if (isLoading) {
     return <PackagesLoadingState />;
+  }
+
+  if (isError) {
+    console.error("Error loading packages:", error);
+    return (
+      <div className="container max-w-7xl mx-auto py-8 px-4 text-center">
+        <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-xl font-semibold text-red-700">Failed to Load Packages</h2>
+        <p className="mt-2 text-gray-600">
+          There was an issue fetching the package data. Please try again later or contact support.
+        </p>
+        {error && (
+          <p className="mt-1 text-sm text-gray-500">
+            Error details: {error instanceof Error ? error.message : String(error)}
+          </p>
+        )}
+      </div>
+    );
+  }
+  
+  if (!packages || packages.length === 0) {
+    return (
+      <div className="container max-w-7xl mx-auto py-8 px-4">
+        <div className="space-y-6">
+          <PackagesHeader onAddPackage={handleAddClick} />
+          <div className="text-center py-10">
+            <Info className="mx-auto h-12 w-12 text-blue-500" />
+            <h2 className="mt-4 text-xl font-semibold text-gray-700">No Packages Found</h2>
+            <p className="mt-2 text-gray-600">
+              There are currently no packages configured in the system. You can add a new package using the button above.
+            </p>
+          </div>
+          {(isAddDialogOpen || editPackage) && (
+            <PackageFormDialog
+              open={isAddDialogOpen || !!editPackage}
+              onClose={handleCloseDialog}
+              packageToEdit={editPackage}
+            />
+          )}
+        </div>
+      </div>
+    );
   }
   
   return (

@@ -359,6 +359,8 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
                     <Input
                       {...field}
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
                       onBlur={() => handleBlur("contactPhone")}
                       placeholder="לדוגמה: 050-1234567"
                       className={cn(

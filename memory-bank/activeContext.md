@@ -105,4 +105,8 @@ With the authentication and authorization systems now stable, the primary focus 
 7.  `409 Conflict` on `additional_details` table (fixed with `upsert`).
 8.  Initial `VITE_SUPABASE_URL` identification.
 9.  Previous customer submissions display issue.
-10. Potential TypeScript type inference issue with `supabase.rpc('get_my_role')` (implicitly resolved by ensuring correct arguments and successful calls). 
+10. Potential TypeScript type inference issue with `supabase.rpc('get_my_role')` (implicitly resolved by ensuring correct arguments and successful calls).
+
+## עדכון 2024-07-23
+- ✔️ בעיית עמוד "חבילות" נפתרה (אי-התאמה בין route ל-nav, הנתיב תוקן ל-/admin/packages).
+- כל עמודי האדמין המרכזיים עובדים ונטענים כראוי. 

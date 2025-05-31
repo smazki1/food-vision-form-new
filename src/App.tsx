@@ -62,7 +62,7 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="clients" element={<ClientsList />} />
-                <Route path="services" element={<PackagesManagementPage />} />
+                <Route path="packages" element={<PackagesManagementPage />} />
                 <Route path="leads" element={<LeadsManagement />} />
                 <Route path="submissions" element={<SubmissionsPage />} />
                 <Route path="submissions-queue" element={<SubmissionsQueuePage />} />

@@ -219,4 +219,8 @@
 1. AI enhancements
 2. Workflow automation
 3. Custom integrations
-4. Enterprise features 
+4. Enterprise features
+
+## 2024-07-23
+- [x] עמוד ניהול חבילות (PackagesManagementPage) עובד לאחר תיקון הנתיב ב-Router.
+- [x] ניווט פנימי בין עמודי אדמין תקין. 
