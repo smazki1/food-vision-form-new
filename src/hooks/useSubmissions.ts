@@ -76,7 +76,6 @@ export function useSubmissions() {
             assigned_editor_id,
             target_completion_date,
             priority,
-            created_lead_id,
             created_at
           `)
           .eq("client_id", effectiveClientId)

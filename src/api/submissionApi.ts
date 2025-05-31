@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem } from "@/types/food-vision";
 import { Client } from "@/types/client";
@@ -13,7 +12,7 @@ export type SubmissionStatus =
 
 export type Submission = {
   submission_id: string;
-  client_id: string | null;
+  client_id: string;
   original_item_id: string;
   item_type: "dish" | "cocktail" | "drink";
   item_name_at_submission: string;
@@ -27,10 +26,9 @@ export type Submission = {
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
-  target_completion_date: string | null;
-  priority: string | null;
-  created_lead_id: string | null; // Added this missing property
-  clients?: { restaurant_name: string };
+  target_completion_date: string | null;  // Adding this field
+  priority: string | null;  // Adding this field
+  clients?: { restaurant_name: string }; // Adding this property to match the actual data structure
 };
 
 // Get all submissions for a client
