@@ -1,3 +1,4 @@
+
 import { HomeIcon, Users, Package, FileText, Settings, LogIn, Upload, UserPlus, Calendar, ClipboardList, Eye } from "lucide-react";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
 import CustomerLogin from "./pages/CustomerLogin";
@@ -5,6 +6,7 @@ import AdminLogin from "./pages/AdminLogin";
 import PublicUploadPage from "./pages/PublicUploadPage";
 import FoodVisionForm from "./pages/FoodVisionForm";
 import SmartUploadPage from "./pages/SmartUploadPage";
+import IndexPage from "./pages/IndexPage";
 
 // Admin imports
 import Dashboard from "./pages/admin/Dashboard";
@@ -27,6 +29,7 @@ export const navItems = [
     title: "דף הבית",
     to: "/",
     icon: <HomeIcon className="h-4 w-4" />,
+    page: <IndexPage />,
   },
   {
     title: "התחברות לקוחות",
