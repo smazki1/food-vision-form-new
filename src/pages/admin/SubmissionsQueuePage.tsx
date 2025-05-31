@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useUnassignedSubmissions } from "@/hooks/useUnassignedSubmissions";
 import { useAllEditors } from "@/hooks/useAllEditors";
@@ -44,7 +43,7 @@ const SubmissionsQueuePage: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto py-8" dir="rtl">
+    <div className="container max-w-7xl mx-auto py-8" dir="rtl">
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">תור הגשות לטיפול</h1>

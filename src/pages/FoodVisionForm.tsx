@@ -137,24 +137,24 @@ const FoodVisionForm: React.FC = () => {
           <FormErrorMessage error={submitError} />
 
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full grid grid-cols-6 mb-8">
-              <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+            <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 mb-8 gap-1 p-1">
+              <TabsTrigger value="client" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                 פרטי המסעדה
               </TabsTrigger>
-              <TabsTrigger value="dishes" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+              <TabsTrigger value="dishes" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                 מנות
               </TabsTrigger>
-              <TabsTrigger value="cocktails" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+              <TabsTrigger value="cocktails" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                 קוקטיילים
               </TabsTrigger>
-              <TabsTrigger value="drinks" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+              <TabsTrigger value="drinks" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                 שתייה
               </TabsTrigger>
-              <TabsTrigger value="additional" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+              <TabsTrigger value="additional" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                 פרטים נוספים
               </TabsTrigger>
               {clientId && (
-                <TabsTrigger value="submissions" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base">
+                <TabsTrigger value="submissions" className="data-[state=active]:bg-[#8B1E3F] data-[state=active]:text-white text-xs sm:text-base whitespace-nowrap">
                   הגשות
                 </TabsTrigger>
               )}

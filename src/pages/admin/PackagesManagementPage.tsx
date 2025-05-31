@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Package } from "@/types/package";
 import PackagesHeader from "@/components/admin/packages/components/PackagesHeader";
@@ -31,21 +30,23 @@ const PackagesManagementPage: React.FC = () => {
   }
   
   return (
-    <div className="space-y-6">
-      <PackagesHeader onAddPackage={handleAddClick} />
-      
-      <PackagesTable 
-        packages={packages}
-        onEditPackage={handleEditClick}
-      />
-      
-      {(isAddDialogOpen || editPackage) && (
-        <PackageFormDialog
-          open={isAddDialogOpen || !!editPackage}
-          onClose={handleCloseDialog}
-          packageToEdit={editPackage}
+    <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="space-y-6">
+        <PackagesHeader onAddPackage={handleAddClick} />
+        
+        <PackagesTable 
+          packages={packages}
+          onEditPackage={handleEditClick}
         />
-      )}
+        
+        {(isAddDialogOpen || editPackage) && (
+          <PackageFormDialog
+            open={isAddDialogOpen || !!editPackage}
+            onClose={handleCloseDialog}
+            packageToEdit={editPackage}
+          />
+        )}
+      </div>
     </div>
   );
 };

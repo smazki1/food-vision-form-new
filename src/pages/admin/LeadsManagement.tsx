@@ -148,81 +148,72 @@ const LeadsManagement: React.FC = () => {
   ].filter(Boolean).length;
 
   return (
-    <div className="space-y-6">
-      <LeadsHeader onCreateLead={handleCreateLead} />
-
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <LeadSearchBar 
-          value={searchTerm}
-          onChange={setSearchTerm}
-        />
-
-        <LeadsFilterPopover
-          open={filtersVisible}
-          onOpenChange={setFiltersVisible}
-          activeFiltersCount={activeFiltersCount}
+    <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="space-y-6">
+        <LeadsHeader onCreateLead={handleCreateLead} />
+        <div className="flex flex-col md:flex-row gap-3">
+          <LeadSearchBar 
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+          <LeadsFilterPopover
+            open={filtersVisible}
+            onOpenChange={setFiltersVisible}
+            activeFiltersCount={activeFiltersCount}
+            leadStatus={leadStatus}
+            leadSource={leadSource}
+            dateFilter={dateFilter}
+            onlyReminders={onlyReminders}
+            remindersToday={remindersToday}
+            onLeadStatusChange={setLeadStatus}
+            onLeadSourceChange={setLeadSource}
+            onDateFilterChange={setDateFilter}
+            onOnlyRemindersChange={setOnlyReminders}
+            onRemindersTodayChange={setRemindersToday}
+            onClearAllFilters={clearAllFilters}
+          />
+        </div>
+        <ActiveFiltersBadges
           leadStatus={leadStatus}
           leadSource={leadSource}
           dateFilter={dateFilter}
           onlyReminders={onlyReminders}
           remindersToday={remindersToday}
-          onLeadStatusChange={setLeadStatus}
-          onLeadSourceChange={setLeadSource}
-          onDateFilterChange={setDateFilter}
-          onOnlyRemindersChange={setOnlyReminders}
-          onRemindersTodayChange={setRemindersToday}
-          onClearAllFilters={clearAllFilters}
+          onClearLeadStatus={() => setLeadStatus("all")}
+          onClearLeadSource={() => setLeadSource("all")}
+          onClearDateFilter={() => setDateFilter("all")}
+          onClearOnlyReminders={() => setOnlyReminders(false)}
+          onClearRemindersToday={() => setRemindersToday(false)}
+          onClearAll={clearAllFilters}
+        />
+        <LeadsContent
+          leads={leads}
+          loading={loading}
+          searchTerm={searchTerm}
+          activeFiltersCount={activeFiltersCount}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          onEdit={handleEditLead}
+          onDelete={handleDeleteLead}
+          onConvertToClient={handleConvertToClient}
+        />
+        <LeadFormSheet
+          isOpen={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          lead={currentLead}
+          onSubmit={handleFormSubmit}
+          onCancel={handleCloseForm}
+          isLoading={formLoading}
+        />
+        <LeadDetailsSheet
+          isOpen={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+          lead={selectedLead}
+          onUpdate={handleUpdateLead}
+          onDeleteLeadConfirm={handleDeleteLead}
         />
       </div>
-
-      {/* Active Filters Display */}
-      <ActiveFiltersBadges
-        leadStatus={leadStatus}
-        leadSource={leadSource}
-        dateFilter={dateFilter}
-        onlyReminders={onlyReminders}
-        remindersToday={remindersToday}
-        onClearLeadStatus={() => setLeadStatus("all")}
-        onClearLeadSource={() => setLeadSource("all")}
-        onClearDateFilter={() => setDateFilter("all")}
-        onClearOnlyReminders={() => setOnlyReminders(false)}
-        onClearRemindersToday={() => setRemindersToday(false)}
-        onClearAll={clearAllFilters}
-      />
-
-      {/* Leads Content (Table or Loading State) */}
-      <LeadsContent
-        leads={leads}
-        loading={loading}
-        searchTerm={searchTerm}
-        activeFiltersCount={activeFiltersCount}
-        sortBy={sortBy}
-        sortDirection={sortDirection}
-        onSort={handleSort}
-        onEdit={handleEditLead}
-        onDelete={handleDeleteLead}
-        onConvertToClient={handleConvertToClient}
-      />
-
-      {/* Lead Form Sheet */}
-      <LeadFormSheet
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSubmit={handleFormSubmit}
-        lead={currentLead}
-        isLoading={formLoading}
-        onCancel={handleCloseForm}
-      />
-      
-      {/* Lead Details Sheet */}
-      <LeadDetailsSheet
-        isOpen={isDetailsOpen}
-        onOpenChange={setIsDetailsOpen}
-        lead={selectedLead}
-        onUpdate={handleUpdateLead}
-        onDeleteLeadConfirm={handleDeleteLead}
-      />
     </div>
   );
 };

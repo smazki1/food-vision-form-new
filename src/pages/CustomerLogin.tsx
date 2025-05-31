@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
@@ -97,39 +96,41 @@ const CustomerLogin = () => {
         {/* Enhanced Main Card */}
         <Card className="bg-white/90 backdrop-blur-xl shadow-strong border-0 rounded-3xl overflow-hidden transform transition-all duration-500 hover:shadow-glow animate-scale-in">
           {/* Modern Tabs */}
-          <div className="flex border-b border-gray-100 bg-gray-50/50">
+          <div className="flex w-full border-b border-gray-100 bg-gray-50/50">
             <button
               onClick={() => switchTab('login')}
-              className={`flex-1 py-6 px-8 text-center font-inter font-semibold text-lg transition-all duration-300 relative group ${
+              className={`flex-1 py-5 sm:py-6 px-4 sm:px-8 text-center font-heebo font-bold text-sm sm:text-base md:text-lg transition-all duration-300 relative ${
                 activeTab === 'login'
                   ? 'text-primary-FV bg-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               }`}
+              style={{ minWidth: '160px' }}
             >
-              <span className="relative z-10">התחברות</span>
+              <span className="relative z-10 whitespace-nowrap">התחברות</span>
               {activeTab === 'login' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
             </button>
             <button
               onClick={() => switchTab('start')}
-              className={`flex-1 py-6 px-8 text-center font-inter font-semibold text-lg transition-all duration-300 relative group ${
+              className={`flex-1 py-5 sm:py-6 px-4 sm:px-8 text-center font-heebo font-bold text-sm sm:text-base md:text-lg transition-all duration-300 relative ${
                 activeTab === 'start'
                   ? 'text-primary-FV bg-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
               }`}
+              style={{ minWidth: '160px' }}
             >
-              <span className="relative z-10">התחל עכשיו</span>
+              <span className="relative z-10 whitespace-nowrap">התחל עכשיו</span>
               {activeTab === 'start' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-2 bg-gradient-to-r from-primary-FV to-secondary-FV rounded-t-full"></div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-FV/5 to-secondary-FV/5 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
             </button>
           </div>
           
           {/* Enhanced Content */}
-          <CardContent className="p-10">
+          <CardContent className="p-5 md:p-10">
             {activeTab === 'start' && (
               <div className="space-y-8 animate-fade-in">
                 <CardHeader className="text-center p-0">

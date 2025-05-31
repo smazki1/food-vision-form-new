@@ -38,12 +38,12 @@ const ContentTabs: React.FC<ContentTabsProps> = ({
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-      <TabsList className="mb-4 grid w-full grid-cols-5">
-        <TabsTrigger value="images">תמונות מעובדות</TabsTrigger>
-        <TabsTrigger value="originals">תמונות מקוריות</TabsTrigger>
-        <TabsTrigger value="feedback">משוב לקוח</TabsTrigger>
-        <TabsTrigger value="notes">הערות פנימיות</TabsTrigger>
-        <TabsTrigger value="info">מידע למעבד</TabsTrigger>
+      <TabsList className="mb-4 grid w-full grid-cols-3 sm:grid-cols-5 gap-1 p-1">
+        <TabsTrigger value="images" className="whitespace-nowrap">תמונות מעובדות</TabsTrigger>
+        <TabsTrigger value="originals" className="whitespace-nowrap">תמונות מקוריות</TabsTrigger>
+        <TabsTrigger value="feedback" className="whitespace-nowrap">משוב לקוח</TabsTrigger>
+        <TabsTrigger value="notes" className="whitespace-nowrap">הערות פנימיות</TabsTrigger>
+        <TabsTrigger value="info" className="whitespace-nowrap">מידע למעבד</TabsTrigger>
       </TabsList>
       
       <TabsContent value="images">

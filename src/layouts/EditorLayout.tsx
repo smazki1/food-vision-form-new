@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import EditorSidebar from "@/components/editor/EditorSidebar";
@@ -36,7 +35,7 @@ const EditorLayout: React.FC = () => {
       
       {/* Main content */}
       <div className="flex flex-1 flex-col w-full">
-        <div className="flex justify-end items-center border-b px-6 py-2">
+        <div className="flex justify-end items-center border-b px-3 sm:px-6 py-2">
           <NotificationCenter />
         </div>
         <main className="flex-1">

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAllSubmissions } from "@/hooks/useAllSubmissions";
 import { SubmissionsTable } from "@/components/admin/submissions/SubmissionsTable";
@@ -33,7 +32,7 @@ const SubmissionsPage: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto py-8" dir="rtl">
+    <div className="container max-w-7xl mx-auto py-8" dir="rtl">
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">הגשות</h1>

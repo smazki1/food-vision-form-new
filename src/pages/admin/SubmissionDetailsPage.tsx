@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -112,7 +111,7 @@ const SubmissionDetailsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto py-8" dir="rtl">
+      <div className="container max-w-7xl mx-auto py-8" dir="rtl">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
@@ -122,7 +121,7 @@ const SubmissionDetailsPage: React.FC = () => {
 
   if (!submission) {
     return (
-      <div className="container mx-auto py-8" dir="rtl">
+      <div className="container max-w-7xl mx-auto py-8" dir="rtl">
         <Card>
           <CardContent className="p-8 text-center">
             <h2 className="text-xl font-semibold mb-4">הגשה לא נמצאה</h2>
@@ -147,7 +146,7 @@ const SubmissionDetailsPage: React.FC = () => {
   const priorityOptions = ["Low", "Medium", "High", "Urgent"];
 
   return (
-    <div className="container mx-auto py-8" dir="rtl">
+    <div className="container max-w-7xl mx-auto py-8" dir="rtl">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center space-x-4 space-x-reverse">

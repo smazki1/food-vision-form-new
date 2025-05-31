@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useDashboardSettings } from "@/components/admin/dashboard/DashboardSettings";
@@ -147,27 +146,27 @@ const Dashboard: React.FC = () => {
   );
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">דאשבורד</h1>
-          <p className="text-muted-foreground">סקירה כללית של המערכת</p>
-        </div>
-        <div className="flex items-center gap-4 w-full md:w-auto">
-          <DashboardSearch />
-          <DashboardSettings />
-        </div>
-      </div>
-      
+    <div className="container max-w-7xl mx-auto py-8 px-4">
       <div className="space-y-6">
-        {visibleSections.map(section => (
-          <div key={section.id}>
-            {renderSection(section.id)}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">דאשבורד</h1>
+            <p className="text-muted-foreground">סקירה כללית של המערכת</p>
           </div>
-        ))}
-        
-        {/* Add extra KPIs in a secondary row if main KPI section is hidden */}
-        {!visibleSections.some(s => s.id === "kpi") && extraKPIs}
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <DashboardSearch />
+            <DashboardSettings />
+          </div>
+        </div>
+        <div className="space-y-6">
+          {visibleSections.map(section => (
+            <div key={section.id}>
+              {renderSection(section.id)}
+            </div>
+          ))}
+          {/* Add extra KPIs in a secondary row if main KPI section is hidden */}
+          {!visibleSections.some(s => s.id === "kpi") && extraKPIs}
+        </div>
       </div>
     </div>
   );
