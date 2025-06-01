@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -102,10 +101,15 @@ export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({
                         <Building2 className="h-4 w-4 text-green-600" />
                         <span>{submission.clients.restaurant_name}</span>
                       </>
-                    ) : submission.created_lead_id ? (
+                    ) : submission.leads ? (
                       <>
                         <User className="h-4 w-4 text-blue-600" />
-                        <span>ליד חדש</span>
+                        <span>{submission.leads.restaurant_name} (ליד)</span>
+                      </>
+                    ) : submission.submission_contact_name ? (
+                      <>
+                        <User className="h-4 w-4 text-orange-600" />
+                        <span>{submission.submission_contact_name} (לא מקושר)</span>
                       </>
                     ) : (
                       <>

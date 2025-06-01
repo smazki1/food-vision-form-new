@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +18,8 @@ export function useAllSubmissions() {
         .from("customer_submissions")
         .select(`
           *,
-          clients(restaurant_name)
+          clients(restaurant_name, contact_name, email, phone),
+          leads(restaurant_name, contact_name, email, phone)
         `)
         .order("uploaded_at", { ascending: false });
 
