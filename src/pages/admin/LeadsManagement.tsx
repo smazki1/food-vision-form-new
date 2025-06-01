@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead, LeadStatus, LeadSource } from "@/types/lead";
@@ -36,7 +37,7 @@ const LeadsManagement: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   // Get leads with filters and sorting
-  const { leads, loading, addLead, updateLead, deleteLead } = useLeads({
+  const { leads = [], loading, addLead, updateLead, deleteLead } = useLeads({
     searchTerm,
     leadStatus,
     leadSource,
@@ -64,13 +65,16 @@ const LeadsManagement: React.FC = () => {
 
   const handleDeleteLead = async (id: string) => {
     try {
-      await deleteLead(id);
+      if (deleteLead) {
+        await deleteLead(id);
+      }
       if (selectedLead && selectedLead.id === id) {
         setIsDetailsOpen(false);
         setSelectedLead(null);
       }
     } catch (error) {
       console.error("Error deleting lead from LeadsManagementPage:", error);
+      toast.error("שגיאה במחיקת הליד");
     }
   };
 
@@ -89,9 +93,9 @@ const LeadsManagement: React.FC = () => {
     try {
       setFormLoading(true);
       
-      if (currentLead) {
+      if (currentLead && updateLead) {
         await updateLead(currentLead.id, data);
-      } else {
+      } else if (addLead) {
         await addLead(data);
       }
       
@@ -99,6 +103,7 @@ const LeadsManagement: React.FC = () => {
       setCurrentLead(undefined);
     } catch (error) {
       console.error("Form submission error:", error);
+      toast.error("שגיאה בשמירת הליד");
     } finally {
       setFormLoading(false);
     }
@@ -106,7 +111,9 @@ const LeadsManagement: React.FC = () => {
   
   const handleUpdateLead = async (id: string, updates: Partial<Lead>) => {
     try {
-      await updateLead(id, updates);
+      if (updateLead) {
+        await updateLead(id, updates);
+      }
       if (selectedLead && selectedLead.id === id) {
         setSelectedLead({
           ...selectedLead,
@@ -116,6 +123,7 @@ const LeadsManagement: React.FC = () => {
       }
     } catch (error) {
       console.error("Error updating lead:", error);
+      toast.error("שגיאה בעדכון הליד");
       throw error;
     }
   };
@@ -138,7 +146,7 @@ const LeadsManagement: React.FC = () => {
     }
   };
 
-  // Count active filters
+  // Count active filters with null safety
   const activeFiltersCount = [
     leadStatus !== "all", 
     leadSource !== "all", 
@@ -146,6 +154,9 @@ const LeadsManagement: React.FC = () => {
     onlyReminders, 
     remindersToday
   ].filter(Boolean).length;
+
+  // Safe leads array
+  const safeLeads = Array.isArray(leads) ? leads : [];
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
@@ -187,7 +198,7 @@ const LeadsManagement: React.FC = () => {
           onClearAll={clearAllFilters}
         />
         <LeadsContent
-          leads={leads}
+          leads={safeLeads}
           loading={loading}
           searchTerm={searchTerm}
           activeFiltersCount={activeFiltersCount}
