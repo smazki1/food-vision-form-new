@@ -1,9 +1,8 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Package } from "@/types/package";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { 
@@ -45,6 +44,9 @@ const PackageFormDialog: React.FC<PackageFormDialogProps> = ({ open, onClose, pa
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "עריכת חבילה" : "יצירת חבילה חדשה"}</DialogTitle>
+          <DialogDescription>
+            {isEditMode ? "ערוך את פרטי החבילה וההגדרות שלה" : "צור חבילה חדשה עם כל הפרטים והמגבלות הרלוונטיות"}
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>

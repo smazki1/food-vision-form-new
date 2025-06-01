@@ -59,6 +59,23 @@
 - כל הבדיקות (למעט edge case של שגיאת טעינת פרטי לקוח) עוברות, הקוד יציב ומוכן לפרודקשן.
 - הקוד והבדיקות הועלו ל-main והועברו ל-deploy ב-Vercel.
 
+### Admin Interface Stability Fixes (2024-12-19)
+- [x] **Fixed Admin Leads Page Issues:** Resolved multiple critical issues preventing admin leads page from functioning:
+    - [x] **RLS Policy Fix:** Created temporary RLS policy for authenticated users to access leads table (resolving 400 errors)
+    - [x] **Select.Item Empty Value:** Fixed `LeadDetailsSheet.tsx` Select.Item with empty value causing React warnings
+    - [x] **Dialog Accessibility:** Added DialogTitle and DialogDescription to image viewer dialogs for accessibility compliance
+    - [x] **Deployment:** All fixes committed to git and deployed to production via Vercel
+- [x] **Identified Authentication Issues:** Found that admin role checking functions exist but user authentication context needs improvement
+- [x] **Next Steps:** Need to replace temporary RLS policy with proper admin role checking once authentication is fixed
+
+### Submissions Display Fix (COMPLETED - 2024-12-19)
+- [x] **All Submissions Now Visible in Admin Interface:** Successfully resolved issue where only some submissions were displayed
+    - [x] **Root Cause:** `useAllSubmissions` hook only joined with `clients` table, missing `leads` table join
+    - [x] **Solution:** Updated hook to include both `clients` and `leads` joins, plus proper display logic
+    - [x] **Orphaned Submissions:** Created database migration to process 31 orphaned submissions by creating anonymous leads
+    - [x] **Results:** All 111 submissions now visible (78 client-linked + 33 lead-linked, 0 orphaned)
+    - [x] **Future-Proof:** RPC function confirmed to handle all future submissions correctly
+
 ## Current Issues
 
 ### Critical

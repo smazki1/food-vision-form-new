@@ -1,10 +1,10 @@
-
 import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const LightboxDialog: React.FC<LightboxDialogProps> = ({ imageUrl, onClose, open
       <DialogContent className="max-w-4xl h-auto">
         <DialogHeader>
           <DialogTitle>תצוגה מקדימה</DialogTitle>
+          <DialogDescription>תצוגה מוגדלת של התמונה שנבחרה</DialogDescription>
         </DialogHeader>
         {imageUrl && (
           <img 
