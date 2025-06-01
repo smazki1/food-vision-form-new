@@ -153,6 +153,11 @@ src/
    - CSS modules when needed
    - RTL considerations
 
+4. **Database & Migrations (Supabase/PostgreSQL)**
+   - When working with Supabase ENUM types, ensure that the exact string values (case-sensitive, language-specific, e.g., Hebrew) used in the ENUM definition are used when inserting or querying data. Discrepancies will lead to 'invalid input value for enum' errors (e.g., PostgreSQL error code 22P02).
+   - Supabase migrations must be idempotent or written to handle re-application if `supabase db reset` is used. Debugging migration errors often involves checking `supabase migration up` logs for the specific SQL statement causing failure and ensuring all precedent schema (tables, types, functions) exists or is correctly handled (e.g., `DROP FUNCTION IF EXISTS` before `CREATE FUNCTION`).
+   - RPC function definitions in Supabase are sensitive to the number, names (if called with named parameters from client), and types of parameters. Mismatches between client call and DB function signature result in an HTTP 404 (Not Found) with PostgREST error code `PGRST202`.
+
 ### Testing Strategy
 1. **Unit Testing**
    - Component testing

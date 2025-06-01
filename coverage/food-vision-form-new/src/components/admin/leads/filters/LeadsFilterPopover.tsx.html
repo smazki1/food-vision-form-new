@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/95</span>
+                <span class='fraction'>0/97</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/95</span>
+                <span class='fraction'>0/97</span>
             </div>
         
             
@@ -242,7 +242,15 @@
 <a name='L177'></a><a href='#L177'>177</a>
 <a name='L178'></a><a href='#L178'>178</a>
 <a name='L179'></a><a href='#L179'>179</a>
-<a name='L180'></a><a href='#L180'>180</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,6 +287,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -341,6 +353,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -360,6 +374,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -421,8 +437,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-import React from "react";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import React from "react";<span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -439,19 +454,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LEAD_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS, LeadStatus, LeadSource } from "@/types/lead";
+import { 
+  LeadStatusEnum, 
+  LeadSourceEnum, 
+  LEAD_STATUS_DISPLAY, 
+  LEAD_SOURCE_DISPLAY 
+} from "@/types/lead";
 &nbsp;
 interface LeadsFilterPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) =&gt; void;
   activeFiltersCount: number;
-  leadStatus: LeadStatus | "all";
-  leadSource: LeadSource | "all";
+  leadStatus: LeadStatusEnum | "all";
+  leadSource: LeadSourceEnum | "all";
   dateFilter: "today" | "this-week" | "this-month" | "all";
   onlyReminders: boolean;
   remindersToday: boolean;
-  onLeadStatusChange: (value: LeadStatus | "all") =&gt; void;
-  onLeadSourceChange: (value: LeadSource | "all") =&gt; void;
+  onLeadStatusChange: (value: LeadStatusEnum | "all") =&gt; void;
+  onLeadSourceChange: (value: LeadSourceEnum | "all") =&gt; void;
   onDateFilterChange: (value: "today" | "this-week" | "this-month" | "all") =&gt; void;
   onOnlyRemindersChange: (value: boolean) =&gt; void;
   onRemindersTodayChange: (value: boolean) =&gt; void;
@@ -511,15 +531,17 @@ interface LeadsFilterPopoverProps {
 <span class="cstat-no" title="statement not covered" >            &lt;label className="text-sm font-medium"&gt;סטטוס ליד&lt;/label&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Select</span>
 <span class="cstat-no" title="statement not covered" >              value={leadStatus}</span>
-<span class="cstat-no" title="statement not covered" >              onValueChange={(val) =&gt; onLeadStatusChange(val as LeadStatus | "all")}</span>
+<span class="cstat-no" title="statement not covered" >              onValueChange={(val) =&gt; onLeadStatusChange(val as LeadStatusEnum | "all")}</span>
             &gt;
 <span class="cstat-no" title="statement not covered" >              &lt;SelectTrigger&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;SelectValue placeholder="כל הסטטוסים" /&gt;</span>
               &lt;/SelectTrigger&gt;
 <span class="cstat-no" title="statement not covered" >              &lt;SelectContent&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;SelectItem value="all"&gt;כל הסטטוסים&lt;/SelectItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >                {LEAD_STATUS_OPTIONS.map((status) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;SelectItem key={status} value={status}&gt;{status}&lt;/SelectItem&gt;</span>
+<span class="cstat-no" title="statement not covered" >                {Object.entries(LEAD_STATUS_DISPLAY).map(([enumKey, displayText]) =&gt; (</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;SelectItem key={enumKey} value={enumKey as LeadStatusEnum}&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    {displayText}</span>
+                  &lt;/SelectItem&gt;
                 ))}
               &lt;/SelectContent&gt;
             &lt;/Select&gt;
@@ -530,15 +552,17 @@ interface LeadsFilterPopoverProps {
 <span class="cstat-no" title="statement not covered" >            &lt;label className="text-sm font-medium"&gt;מקור ליד&lt;/label&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;Select</span>
 <span class="cstat-no" title="statement not covered" >              value={leadSource}</span>
-<span class="cstat-no" title="statement not covered" >              onValueChange={(val) =&gt; onLeadSourceChange(val as LeadSource | "all")}</span>
+<span class="cstat-no" title="statement not covered" >              onValueChange={(val) =&gt; onLeadSourceChange(val as LeadSourceEnum | "all")}</span>
             &gt;
 <span class="cstat-no" title="statement not covered" >              &lt;SelectTrigger&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;SelectValue placeholder="כל המקורות" /&gt;</span>
               &lt;/SelectTrigger&gt;
 <span class="cstat-no" title="statement not covered" >              &lt;SelectContent&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;SelectItem value="all"&gt;כל המקורות&lt;/SelectItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >                {LEAD_SOURCE_OPTIONS.map((source) =&gt; (</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;SelectItem key={source} value={source}&gt;{source}&lt;/SelectItem&gt;</span>
+<span class="cstat-no" title="statement not covered" >                {Object.entries(LEAD_SOURCE_DISPLAY).map(([enumKey, displayText]) =&gt; (</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;SelectItem key={enumKey} value={enumKey as LeadSourceEnum}&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    {displayText}</span>
+                  &lt;/SelectItem&gt;
                 ))}
               &lt;/SelectContent&gt;
             &lt;/Select&gt;
@@ -607,7 +631,7 @@ interface LeadsFilterPopoverProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-31T11:57:05.097Z
+                at 2025-06-01T12:35:34.021Z
             </div>
         <script src="../../../../../../prettify.js"></script>
         <script>

@@ -1,4 +1,3 @@
-
 -- Update the public submission RPC function to match frontend expectations
 DROP FUNCTION IF EXISTS public.public_submit_item_by_restaurant_name(TEXT, TEXT, TEXT, TEXT, TEXT, TEXT[], NUMERIC, TEXT[]);
 
@@ -21,6 +20,8 @@ DECLARE
     v_item_id uuid;
     v_result json;
 BEGIN
+    RAISE LOG 'Entering public_submit_item_by_restaurant_name (7 params version) for restaurant: %', p_restaurant_name;
+
     -- Validate item type
     IF p_item_type NOT IN ('dish', 'cocktail', 'drink') THEN
         RAISE EXCEPTION 'Invalid item type. Must be dish, cocktail, or drink';
@@ -124,18 +125,24 @@ VALUES ('food-vision-images', 'food-vision-images', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create storage policies to allow public uploads
-CREATE POLICY IF NOT EXISTS "Public read access for food-vision-images"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'food-vision-images');
+CREATE POLICY "Public read access for food-vision-images"
+  ON storage.objects FOR SELECT
+  TO public
+  USING (bucket_id = 'food-vision-images');
 
-CREATE POLICY IF NOT EXISTS "Public upload access for food-vision-images"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'food-vision-images');
+CREATE POLICY "Public upload access for food-vision-images"
+  ON storage.objects FOR INSERT
+  TO public
+  WITH CHECK (bucket_id = 'food-vision-images');
 
-CREATE POLICY IF NOT EXISTS "Public update access for food-vision-images"
-ON storage.objects FOR UPDATE
-USING (bucket_id = 'food-vision-images');
+CREATE POLICY "Public update access for food-vision-images"
+  ON storage.objects FOR UPDATE
+  TO public
+  USING (bucket_id = 'food-vision-images');
 
-CREATE POLICY IF NOT EXISTS "Public delete access for food-vision-images"
-ON storage.objects FOR DELETE
-USING (bucket_id = 'food-vision-images');
+CREATE POLICY "Public delete access for food-vision-images"
+  ON storage.objects FOR DELETE
+  TO public
+  USING (bucket_id = 'food-vision-images');
+
+COMMIT;

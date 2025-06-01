@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,19 +15,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LEAD_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS, LeadStatus, LeadSource } from "@/types/lead";
+import { 
+  LeadStatusEnum, 
+  LeadSourceEnum, 
+  LEAD_STATUS_DISPLAY, 
+  LEAD_SOURCE_DISPLAY 
+} from "@/types/lead";
 
 interface LeadsFilterPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   activeFiltersCount: number;
-  leadStatus: LeadStatus | "all";
-  leadSource: LeadSource | "all";
+  leadStatus: LeadStatusEnum | "all";
+  leadSource: LeadSourceEnum | "all";
   dateFilter: "today" | "this-week" | "this-month" | "all";
   onlyReminders: boolean;
   remindersToday: boolean;
-  onLeadStatusChange: (value: LeadStatus | "all") => void;
-  onLeadSourceChange: (value: LeadSource | "all") => void;
+  onLeadStatusChange: (value: LeadStatusEnum | "all") => void;
+  onLeadSourceChange: (value: LeadSourceEnum | "all") => void;
   onDateFilterChange: (value: "today" | "this-week" | "this-month" | "all") => void;
   onOnlyRemindersChange: (value: boolean) => void;
   onRemindersTodayChange: (value: boolean) => void;
@@ -88,15 +92,17 @@ export const LeadsFilterPopover: React.FC<LeadsFilterPopoverProps> = ({
             <label className="text-sm font-medium">סטטוס ליד</label>
             <Select
               value={leadStatus}
-              onValueChange={(val) => onLeadStatusChange(val as LeadStatus | "all")}
+              onValueChange={(val) => onLeadStatusChange(val as LeadStatusEnum | "all")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="כל הסטטוסים" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הסטטוסים</SelectItem>
-                {LEAD_STATUS_OPTIONS.map((status) => (
-                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                {Object.entries(LEAD_STATUS_DISPLAY).map(([enumKey, displayText]) => (
+                  <SelectItem key={enumKey} value={enumKey as LeadStatusEnum}>
+                    {displayText}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -107,15 +113,17 @@ export const LeadsFilterPopover: React.FC<LeadsFilterPopoverProps> = ({
             <label className="text-sm font-medium">מקור ליד</label>
             <Select
               value={leadSource}
-              onValueChange={(val) => onLeadSourceChange(val as LeadSource | "all")}
+              onValueChange={(val) => onLeadSourceChange(val as LeadSourceEnum | "all")}
             >
               <SelectTrigger>
                 <SelectValue placeholder="כל המקורות" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל המקורות</SelectItem>
-                {LEAD_SOURCE_OPTIONS.map((source) => (
-                  <SelectItem key={source} value={source}>{source}</SelectItem>
+                {Object.entries(LEAD_SOURCE_DISPLAY).map(([enumKey, displayText]) => (
+                  <SelectItem key={enumKey} value={enumKey as LeadSourceEnum}>
+                    {displayText}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>

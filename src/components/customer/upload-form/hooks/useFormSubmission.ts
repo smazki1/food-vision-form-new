@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
+import { triggerMakeWebhook, MakeWebhookPayload } from '@/lib/triggerMakeWebhook';
 
 export const useFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,7 +12,9 @@ export const useFormSubmission = () => {
     formData: any,
     clientId: string | null,
     remainingDishes: number | undefined,
-    setStepErrors: (errors: Record<string, string>) => void
+    setStepErrors: (errors: Record<string, string>) => void,
+    restaurantName?: string,
+    submitterName?: string
   ) => {
     console.log('[FormSubmission] Starting submission for customer with clientId:', clientId);
     
@@ -54,6 +57,9 @@ export const useFormSubmission = () => {
     setIsSubmitting(true);
     toast.info("מעלה תמונות ושומר הגשה...");
 
+    let submissionSuccessful = false;
+    let resolvedUploadedImageUrls: string[] = [];
+
     try {
       console.log('[FormSubmission] Uploading images...');
       
@@ -81,7 +87,7 @@ export const useFormSubmission = () => {
         return publicUrlData.publicUrl;
       });
       
-      const resolvedUploadedImageUrls = await Promise.all(uploadPromises);
+      resolvedUploadedImageUrls = await Promise.all(uploadPromises);
       console.log('[FormSubmission] All images uploaded successfully');
 
       // Insert item into appropriate table
@@ -134,16 +140,45 @@ export const useFormSubmission = () => {
       // Show success modal instead of navigating
       console.log('[FormSubmission] Setting showSuccessModal to true');
       setShowSuccessModal(true);
-      
+      submissionSuccessful = true;
       return true;
     } catch (error: any) {
       console.error("[FormSubmission] Error in submission process:", error);
       const errorMessage = error.message || "אירעה שגיאה במהלך ההגשה. נסו שוב.";
       setStepErrors({ submit: errorMessage });
       toast.error(errorMessage);
+      submissionSuccessful = false;
       return false;
     } finally {
       setIsSubmitting(false);
+      if (submissionSuccessful && clientId) {
+        let categoryWebhook: string | null = null;
+        let ingredientsWebhook: string[] | null = null;
+        if (formData.itemType === 'cocktail') {
+          ingredientsWebhook = formData.description?.trim()
+            ? formData.description.split(',').map((i: string) => i.trim()).filter((i: string) => i.length > 0)
+            : null;
+        } else {
+          categoryWebhook = formData.description?.trim() || null;
+        }
+
+        const webhookPayload: MakeWebhookPayload = {
+          submissionTimestamp: new Date().toISOString(),
+          isAuthenticated: true,
+          clientId: clientId,
+          restaurantName: restaurantName || 'N/A (Legacy Customer Form)',
+          submitterName: submitterName,
+          itemName: formData.itemName,
+          itemType: formData.itemType,
+          description: formData.description,
+          specialNotes: formData.specialNotes,
+          uploadedImageUrls: resolvedUploadedImageUrls,
+          category: categoryWebhook,
+          ingredients: ingredientsWebhook,
+          sourceForm: 'legacy-customer-form',
+        };
+        triggerMakeWebhook(webhookPayload);
+      }
     }
   };
 

@@ -113,7 +113,7 @@ export const useFoodVisionSubmit = ({
           email: clientDetails.email,
           restaurant_name: clientDetails.restaurantName,
           contact_name: clientDetails.contactName,
-          phone_number: clientDetails.phoneNumber,
+          phone: clientDetails.phoneNumber,
           status: 'new_form_submission', // Or a more descriptive status
           submission_data: leadSubmissionData, // Storing all items and details
           branding_material_url: uploadedBrandingMaterialUrlLead, // Store the URL directly if available

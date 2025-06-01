@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,39 +133,49 @@ const SubmissionsAnalytics: React.FC = () => {
               <CardTitle>ניצול חבילות</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-80 mt-4">
-                <ChartContainer 
-                  className="h-80 w-full"
-                  config={{
-                    basic: { theme: { light: "#3b82f6", dark: "#3b82f6" } },
-                    standard: { theme: { light: "#10b981", dark: "#10b981" } },
-                    premium: { theme: { light: "#8b5cf6", dark: "#8b5cf6" } },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={stats?.packageUtilization || []}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="package_name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar 
-                        dataKey="client_count" 
-                        name="מספר לקוחות" 
-                        fill="var(--color-basic)"
-                      />
-                      <Bar 
-                        dataKey="avg_remaining" 
-                        name="מנות נותרו (ממוצע)" 
-                        fill="var(--color-standard)" 
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </div>
+              {isLoading ? (
+                <div className="h-80 mt-4 flex items-center justify-center">
+                  <p>טוען נתוני ניצול חבילות...</p>
+                </div>
+              ) : stats?.packageUtilization && stats.packageUtilization.length > 0 ? (
+                <div className="h-80 mt-4">
+                  <ChartContainer 
+                    className="h-80 w-full"
+                    config={{
+                      basic: { theme: { light: "#3b82f6", dark: "#3b82f6" } },
+                      standard: { theme: { light: "#10b981", dark: "#10b981" } },
+                      premium: { theme: { light: "#8b5cf6", dark: "#8b5cf6" } },
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={stats.packageUtilization}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="package_name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar 
+                          dataKey="client_count" 
+                          name="מספר לקוחות" 
+                          fill="var(--color-basic)"
+                        />
+                        <Bar 
+                          dataKey="avg_remaining" 
+                          name="מנות נותרו (ממוצע)" 
+                          fill="var(--color-standard)" 
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              ) : (
+                <div className="h-80 mt-4 flex items-center justify-center">
+                  <p>אין נתונים להצגת ניצול חבילות.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

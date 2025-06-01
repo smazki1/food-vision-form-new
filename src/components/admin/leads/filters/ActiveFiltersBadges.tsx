@@ -1,13 +1,17 @@
-
 import React from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LeadStatus, LeadSource } from "@/types/lead";
+import { 
+  LeadStatusEnum, 
+  LeadSourceEnum, 
+  LEAD_STATUS_DISPLAY, 
+  LEAD_SOURCE_DISPLAY 
+} from "@/types/lead";
 
 interface ActiveFiltersBadgesProps {
-  leadStatus: LeadStatus | "all";
-  leadSource: LeadSource | "all";
+  leadStatus: LeadStatusEnum | "all";
+  leadSource: LeadSourceEnum | "all";
   dateFilter: "today" | "this-week" | "this-month" | "all";
   onlyReminders: boolean;
   remindersToday: boolean;
@@ -49,7 +53,7 @@ export const ActiveFiltersBadges: React.FC<ActiveFiltersBadgesProps> = ({
       <span className="text-sm text-muted-foreground">סינון לפי:</span>
       {leadStatus !== "all" && (
         <Badge variant="outline" className="flex gap-1 items-center">
-          סטטוס: {leadStatus}
+          סטטוס: {LEAD_STATUS_DISPLAY[leadStatus]}
           <X 
             className="h-3 w-3 cursor-pointer" 
             onClick={onClearLeadStatus} 
@@ -58,7 +62,7 @@ export const ActiveFiltersBadges: React.FC<ActiveFiltersBadgesProps> = ({
       )}
       {leadSource !== "all" && (
         <Badge variant="outline" className="flex gap-1 items-center">
-          מקור: {leadSource}
+          מקור: {LEAD_SOURCE_DISPLAY[leadSource as LeadSourceEnum]}
           <X 
             className="h-3 w-3 cursor-pointer" 
             onClick={onClearLeadSource} 

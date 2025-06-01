@@ -54,7 +54,42 @@ export const usePublicFormHandlers = (
             setShowSuccessModal(true);
           }
         }, 300);
-        fetch('https://hook.eu2.make.com/h15kqbjphouh5wvmsnvxopkl7tff8o7u', { method: 'POST' }).catch(() => {});
+
+        // Debug logs for Make.com webhook call
+        console.log('Sending to Make.com Webhook:');
+        console.log('URL:', 'https://hook.eu2.make.com/h15kqbjphouh5wvmsnvxopkl7tff8o7u');
+        console.log('Method:', 'POST');
+        const webhookHeaders = { 'Content-Type': 'application/json' };
+        console.log('Headers:', webhookHeaders);
+        // Deep log formData to inspect its structure carefully
+        console.log('Body (raw formData before stringify):', JSON.parse(JSON.stringify(formData))); 
+        let stringifiedBody = '';
+        try {
+          stringifiedBody = JSON.stringify(formData);
+          console.log('Body (stringified formData):', stringifiedBody);
+        } catch (e) {
+          console.error('Error stringifying formData:', e);
+          console.log('Problematic formData:', formData); 
+        }
+
+        if (stringifiedBody) { // Only fetch if stringification was successful
+          fetch('https://hook.eu2.make.com/h15kqbjphouh5wvmsnvxopkl7tff8o7u', {
+            method: 'POST',
+            headers: webhookHeaders,
+            body: stringifiedBody
+          }).then(response => {
+            console.log('Make.com Webhook response status:', response.status);
+            if (!response.ok) {
+              response.text().then(text => console.error('Make.com Webhook error response body:', text));
+            }
+            return response.json(); // Or response.text() if not expecting JSON back
+          }).then(data => {
+            console.log('Make.com Webhook success response data:', data);
+          }).catch((err) => {
+              console.error('Error sending to Make.com Webhook or parsing response:', err);
+              console.log('Original formData that caused fetch error (if any):', formData);
+          });
+        }
       } else {
         console.log('5. Submission failed');
       }

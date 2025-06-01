@@ -292,7 +292,6 @@ export const useCreateLead = () => {
   });
 };
 
-/* // Commenting out the rest of the hooks
 export const useUpdateLead = () => {
   const queryClient = useQueryClient();
   return useMutation<Lead, Error, Partial<Lead> & { lead_id: string }>({
@@ -514,4 +513,3 @@ export const useLeadActivities = (leadId: string | null) => {
         enabled: !!leadId,
     });
 }; 
-*/ // End of commented out section 

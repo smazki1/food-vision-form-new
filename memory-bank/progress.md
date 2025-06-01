@@ -2,7 +2,23 @@
 
 ## Recently Completed
 
-### Main Page Redirect to Customer Login (NEW)
+### Make.com Webhook Integration (2024-07-24)
+- [x] **הושלמה אינטגרציה מלאה של webhook ל-Make.com בכל שלושת מסלולי ההגשה (unified, public, legacy):**
+    - כל נתוני הטופס, טיימסטמפ, סטטוס התחברות, וזיהוי מקור נשלחים ל-webhook.
+    - נכתבו בדיקות יחידה ואינטגרציה מקיפות (עברו בהצלחה), כולל תיעוד בעברית.
+    - כל הבדיקות עברו, אין שגיאות פעילות.
+- השלב הבא: העלאה ל-git ו-deploy.
+
+### Public Form Submission & Lead Creation (NEWLY RESOLVED)
+- [x] **Resolved Critical Public Form Submission Failures:** Addressed a series of cascading issues preventing successful public form submissions and lead creation.
+    - [x] **RPC `phone_number` vs. `phone`:** Corrected the `public_submit_item_by_restaurant_name` RPC to use `phone` instead of the legacy `phone_number` when interacting with the `leads` table.
+    - [x] **RPC Signature Mismatch (PGRST202):** Unified the `public_submit_item_by_restaurant_name` RPC to a single 10-parameter version and ensured the frontend client call matched this signature, resolving "function not found" errors.
+    - [x] **Incorrect Column `status`:** Updated the RPC to use the correct `lead_status` column name when inserting into the `leads` table, fixing 'column "status" does not exist' errors.
+    - [x] **Invalid ENUM Value (22P02):** Ensured the RPC uses correct Hebrew ENUM values (e.g., 'ליד חדש' for `lead_status_type`, 'אתר' for `lead_source_type`) during lead insertion, resolving 'invalid input value for enum' errors.
+    - [x] **Database Migration Failures:** Iteratively debugged and fixed multiple issues in older migration files (e.g., `20240530000000_advanced_leads_management.sql` for incorrect column names during data migration, `20240731000002_update_public_submit_item_rpc.sql` for `CREATE POLICY IF NOT EXISTS` syntax, and issues related to missing/duplicate `get_my_role()` function definitions). This allowed all migrations to apply successfully.
+- [x] The public form submission workflow is now stable and correctly creates new leads in the database with appropriate default values.
+
+### Main Page Redirect to Customer Login (PREVIOUS)
 - בוצעה הפניה אוטומטית מהעמוד הראשי (`/`) לעמוד התחברות לקוח (`/customer-login`).
 - ההפניה בוצעה בקומפוננטת Index.tsx באמצעות useEffect ו-useNavigate מ-react-router-dom.
 - כל משתמש שמגיע ל-root של האתר מנותב מיידית לעמוד ההתחברות, ללא תנאים נוספים.
@@ -35,7 +51,7 @@
 - [x] React Query integration for data fetching.
 - [x] Error handling and loading states.
 
-### Public Upload Form - Restaurant Details (NEW)
+### Public Upload Form - Restaurant Details (PREVIOUS)
 - פותח טופס פרטי מסעדה/עסק לציבור עם לוגיקת הצגה מותנית (עסק חדש/קיים, אימייל/טלפון חובה).
 - שופרו נראות האיקונים, הנגשת שדות, ותמיכה מלאה ב-RTL.
 - הוספה ולידציה מתקדמת (zod, react-hook-form) כולל required דינמי.
@@ -46,7 +62,7 @@
 ## Current Issues
 
 ### Critical
-1.  **Admin Clients Page Implementation (NEW FOCUS)**
+1.  **Admin Clients Page Implementation (NEW FOCUS - Pending Confirmation)**
     *   The Admin Clients page is currently non-functional or "stuck".
     *   Needs complete implementation including: client listing, search/filter, view details, create, edit, status management, and package assignment.
     *   Requires verification of RLS policies for `public.clients` and related tables for admin operations.
@@ -64,6 +80,13 @@
 4.  Performance optimization (general).
 5.  Code documentation (general).
 6.  Test coverage (general).
+
+### Public Form Submission & Lead Creation
+- [x] **RPC `phone_number` vs. `phone` usage in `public_submit_item_by_restaurant_name`** (RESOLVED)
+- [x] **RPC Signature Mismatch for `public_submit_item_by_restaurant_name` (7 vs 10 params)** (RESOLVED)
+- [x] **Database Error: `column "status" of relation "leads" does not exist` in RPC** (RESOLVED)
+- [x] **Database Error: `invalid input value for enum lead_status_type: "new"` in RPC** (RESOLVED)
+- [x] **Multiple cascading database migration failures** (RESOLVED)
 
 ## Next Steps
 
