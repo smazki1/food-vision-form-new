@@ -381,8 +381,8 @@ const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
                 <FormItem>
                   <FormLabel>מקור הליד</FormLabel>
                    <Select 
-                    onValueChange={(value) => field.onChange(value as LeadSourceEnum)} 
-                    defaultValue={field.value || ""}
+                    onValueChange={(value) => field.onChange(value === "none" ? null : value as LeadSourceEnum)} 
+                    defaultValue={field.value || "none"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -390,7 +390,7 @@ const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">ללא</SelectItem>
+                      <SelectItem value="none">ללא</SelectItem>
                       {Object.values(LeadSourceEnum).map((source) => (
                         <SelectItem key={source} value={source}>
                           {LEAD_SOURCE_DISPLAY[source]}
