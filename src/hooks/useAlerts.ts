@@ -1,10 +1,9 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLeads } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertType } from "@/types/alert";
-import { Client } from "@/types/client";
+import { Client } from "@/types/models";
 import { generateAlertsFromData } from "@/utils/alertsGenerator";
 
 interface UseAlertsOptions {
@@ -33,10 +32,18 @@ export function useAlerts({ typeFilter = "all" }: UseAlertsOptions = {}) {
   });
   
   // Generate alerts from leads and clients data
-  const allAlerts = useMemo(() => 
-    generateAlertsFromData(leads, clients),
-    [leads, clients]
-  );
+  const allAlerts = useMemo(() => {
+    // Convert leads to compatible format for alerts generator
+    const compatibleLeads = leads.map(lead => ({
+      ...lead,
+      id: lead.lead_id,
+      phone_number: lead.phone,
+      last_updated_at: lead.updated_at,
+      reminder_at: lead.next_follow_up_date,
+      reminder_details: lead.next_follow_up_notes
+    }));
+    return generateAlertsFromData(compatibleLeads, clients);
+  }, [leads, clients]);
   
   // Apply filters and status
   const filteredAlerts = useMemo(() => {
@@ -64,7 +71,7 @@ export function useAlerts({ typeFilter = "all" }: UseAlertsOptions = {}) {
   // Get upcoming reminders (today and future)
   const upcomingReminders = useMemo(() => {
     return leads.filter(lead => {
-      if (!lead.next_follow_up_date) return false; // Use next_follow_up_date from models
+      if (!lead.next_follow_up_date) return false;
       
       const reminderDate = new Date(lead.next_follow_up_date);
       const today = new Date();

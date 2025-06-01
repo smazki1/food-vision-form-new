@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Lead } from "@/types/lead";
+import { Lead } from "@/types/models";
 import { 
   Table, 
   TableBody, 
@@ -75,30 +75,30 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
             <TableRow>
               <TableHead>{renderSortableHeader("restaurant_name", "שם מסעדה")}</TableHead>
               <TableHead>{renderSortableHeader("contact_name", "איש קשר")}</TableHead>
-              <TableHead>{renderSortableHeader("phone_number", "טלפון")}</TableHead>
+              <TableHead>{renderSortableHeader("phone", "טלפון")}</TableHead>
               <TableHead>{renderSortableHeader("lead_status", "סטטוס")}</TableHead>
               <TableHead>{renderSortableHeader("created_at", "תאריך יצירה")}</TableHead>
-              <TableHead>{renderSortableHeader("last_updated_at", "תאריך עדכון")}</TableHead>
-              <TableHead>{renderSortableHeader("reminder_at", "תזכורת")}</TableHead>
+              <TableHead>{renderSortableHeader("updated_at", "תאריך עדכון")}</TableHead>
+              <TableHead>{renderSortableHeader("next_follow_up_date", "תזכורת")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {leads.map((lead) => (
               <TableRow 
-                key={lead.id} 
+                key={lead.lead_id} 
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => onEdit(lead)}
               >
                 <TableCell className="font-medium">{lead.restaurant_name}</TableCell>
                 <TableCell>{lead.contact_name}</TableCell>
-                <TableCell>{lead.phone_number}</TableCell>
+                <TableCell>{lead.phone}</TableCell>
                 <TableCell>
                   <StatusBadge status={lead.lead_status} />
                 </TableCell>
                 <TableCell>{formatDate(lead.created_at)}</TableCell>
-                <TableCell>{formatDate(lead.last_updated_at)}</TableCell>
+                <TableCell>{formatDate(lead.updated_at)}</TableCell>
                 <TableCell>
-                  <ReminderCell reminderDate={lead.reminder_at} />
+                  <ReminderCell reminderDate={lead.next_follow_up_date} />
                 </TableCell>
               </TableRow>
             ))}

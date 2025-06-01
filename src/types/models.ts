@@ -1,29 +1,35 @@
+
 // src/types/models.ts
 import type { LeadStatus, LeadSource, ClientStatus, SubmissionStatus } from '@/constants/statusTypes';
 
 export interface Lead {
   lead_id: string;
+  id?: string; // For backward compatibility
   restaurant_name: string;
   contact_name: string;
-  phone: string; // סטנדרטיזציה של שם השדה
+  phone: string;
+  phone_number?: string; // For backward compatibility
   email: string;
   lead_status: LeadStatus;
   lead_source: LeadSource | null;
   created_at: string;
   updated_at: string;
+  last_updated_at?: string; // For backward compatibility
   next_follow_up_date?: string;
   next_follow_up_notes?: string;
+  reminder_at?: string | null; // For backward compatibility
+  reminder_details?: string | null; // For backward compatibility
   notes?: string;
   ai_trainings_count: number;
   ai_training_cost_per_unit: number;
   ai_prompts_count: number;
   ai_prompt_cost_per_unit: number;
-  total_ai_costs?: number; // שדה מחושב
+  total_ai_costs?: number;
   revenue_from_lead_local?: number;
   exchange_rate_at_conversion?: number;
-  revenue_from_lead_usd?: number; // שדה מחושב
-  roi?: number; // שדה מחושב
-  client_id?: string; // קישור ללקוח אם הומר
+  revenue_from_lead_usd?: number;
+  roi?: number;
+  client_id?: string;
   free_sample_package_active: boolean;
 }
 
@@ -34,13 +40,12 @@ export interface Client {
   phone: string;
   email: string;
   client_status: ClientStatus;
-  original_lead_id?: string; // קישור לליד המקורי
+  original_lead_id?: string;
   user_auth_id?: string;
   current_package_id?: string;
   remaining_servings: number;
   created_at: string;
   last_activity_at: string;
-  // שאר השדות הרלוונטיים
 }
 
 export interface Submission {
@@ -56,8 +61,7 @@ export interface Submission {
   image_urls: string[];
   status: SubmissionStatus;
   created_at: string;
-  created_lead_id?: string; // קישור לליד שנוצר אם יש
+  created_lead_id?: string;
 }
 
-// וכן הלאה עבור מודלים נוספים
-export type { LeadStatus, ClientStatus }; 
+export type { LeadStatus, LeadSource, ClientStatus };

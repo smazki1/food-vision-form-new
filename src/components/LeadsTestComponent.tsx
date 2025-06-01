@@ -2,12 +2,12 @@
 // src/pages/admin/LeadsTestPage.tsx
 import React from 'react';
 import { useLeads, useCreateLead, useUpdateLead, useConvertLeadToClient, useArchiveLead, useRestoreLeadFromArchive } from '@/hooks/useLeads';
-import { Lead as ModelsLead } from '@/types/models';
+import { Lead } from '@/types/models';
 import { LEAD_STATUSES, LeadStatus, LEAD_SOURCE_TYPES, LeadSource } from '@/constants/statusTypes';
-import { Button } from '@/components/ui/button'; // Assuming you have a Button component
+import { Button } from '@/components/ui/button';
 
 const LeadsTestComponent: React.FC = () => {
-  const { leads, loading, error } = useLeads({}); // Use correct destructuring
+  const { leads, loading, error } = useLeads({});
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
   const convertLeadToClientMutation = useConvertLeadToClient();
@@ -15,21 +15,19 @@ const LeadsTestComponent: React.FC = () => {
   const restoreLeadMutation = useRestoreLeadFromArchive();
 
   const handleCreateTestLead = () => {
-    const newLeadData: Partial<ModelsLead> = { 
-      restaurant_name: 'Test Restaurant ' + Date.now(), // Using restaurant_name as per ModelsLead
-      contact_name: 'Test Contact ' + Date.now(), // Also providing contact_name
+    const newLeadData: Partial<Lead> = { 
+      restaurant_name: 'Test Restaurant ' + Date.now(),
+      contact_name: 'Test Contact ' + Date.now(),
       email: `test${Date.now()}@example.com`,
       lead_status: LEAD_STATUSES.NEW,
       lead_source: LEAD_SOURCE_TYPES.WEBSITE,
-      phone: '1234567890', // Corrected from phone_number to phone as per ModelsLead
+      phone: '1234567890',
       notes: 'Created by LeadsTestComponent',
-      // Fill in other required fields from ModelsLead based on its definition in src/types/models.ts
       ai_trainings_count: 0,
       ai_training_cost_per_unit: 0,
       ai_prompts_count: 0,
       ai_prompt_cost_per_unit: 0,
       free_sample_package_active: false,
-      // Optional fields like next_follow_up_date can be added if needed for testing
     };
     createLeadMutation.mutate(newLeadData);
   };

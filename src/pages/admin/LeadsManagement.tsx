@@ -1,7 +1,8 @@
 
 import React, { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
-import { Lead, LeadStatus, LeadSource } from "@/types/models"; // Use models types
+import { Lead } from "@/types/models";
+import { LeadStatus, LeadSource } from "@/constants/statusTypes";
 import { toast } from "sonner";
 
 // Import our components
