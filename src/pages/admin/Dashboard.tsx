@@ -1,14 +1,15 @@
+
 import React from "react";
 import { useAlerts } from "@/hooks/useAlerts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bell, ChevronLeft } from "lucide-react";
 import { useLeads } from "@/hooks/useLeads";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
   const { alerts, upcomingReminders } = useAlerts();
   const { leads } = useLeads({});
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -20,7 +21,7 @@ export default function Dashboard() {
   });
 
   const handleReminderClick = (leadId: string) => {
-    router.push(`/admin/leads?leadId=${leadId}`);
+    navigate(`/admin/leads?leadId=${leadId}`);
   };
 
   return (

@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { Lead } from "@/types/models";
-import { LeadStatus, LeadSource } from "@/constants/statusTypes";
+import { LeadStatus, LeadSource } from "@/types/models";
 import { toast } from "sonner";
 
 // Import our components
@@ -67,7 +66,7 @@ const LeadsManagement: React.FC = () => {
   const handleDeleteLead = async (id: string) => {
     try {
       if (deleteLead) {
-        await deleteLead({ leadId: id, updates: {} });
+        await deleteLead(id);
       }
       if (selectedLead && selectedLead.lead_id === id) {
         setIsDetailsOpen(false);

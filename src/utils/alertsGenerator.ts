@@ -1,7 +1,7 @@
 
 import { format, isToday, isPast, differenceInHours } from "date-fns";
-import { Lead } from "@/types/lead";
-import { Client } from "@/types/client";
+import { Lead } from "@/types/models";
+import { Client } from "@/types/models";
 import { 
   Alert, 
   NewLeadAlert, 

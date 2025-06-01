@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { LEAD_STATUS_OPTIONS, LEAD_SOURCE_OPTIONS, LeadStatus, LeadSource } from "@/types/lead";
+import { LeadStatus, LeadSource } from "@/types/models";
+
+// Lead status and source options
+const LEAD_STATUS_OPTIONS: LeadStatus[] = [
+  "ליד חדש",
+  "פנייה ראשונית בוצעה",
+  "מעוניין",
+  "לא מעוניין",
+  "הפך ללקוח"
+];
+
+const LEAD_SOURCE_OPTIONS: LeadSource[] = [
+  "אתר",
+  "פייסבוק", 
+  "גוגל",
+  "המלצה",
+  "אחר"
+];
 
 interface LeadsFilterPopoverProps {
   open: boolean;

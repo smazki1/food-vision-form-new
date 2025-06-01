@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +30,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { Lead, LEAD_SOURCE_OPTIONS } from "@/types/lead";
+import { Lead, LeadSource } from "@/types/models";
+
+// Lead source options
+const LEAD_SOURCE_OPTIONS: LeadSource[] = [
+  "אתר",
+  "פייסבוק",
+  "גוגל",
+  "המלצה",
+  "אחר"
+];
 
 // Define the schema for the form
 const leadFormSchema = z.object({

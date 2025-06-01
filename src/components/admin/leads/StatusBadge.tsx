@@ -1,6 +1,6 @@
 
 import React from "react";
-import { LeadStatus } from "@/types/lead";
+import { LeadStatus } from "@/types/models";
 import { Badge } from "@/components/ui/badge";
 
 interface StatusBadgeProps {
