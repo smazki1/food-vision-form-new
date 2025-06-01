@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAllEditors } from "@/hooks/useAllEditors";
 import { useAssignSubmission } from "@/hooks/useAssignSubmission";
@@ -28,7 +27,8 @@ export const EditorAssignmentCell: React.FC<EditorAssignmentCellProps> = ({
   submissionId,
   currentEditorId,
 }) => {
-  const { editors, isLoading: isLoadingEditors } = useAllEditors();
+  const { editors: rawEditors, isLoading: isLoadingEditors } = useAllEditors();
+  const editors = rawEditors || [];
   const [selectedEditorId, setSelectedEditorId] = useState<string | null>(currentEditorId);
   
   const { assignEditor, isAssigning } = useAssignSubmission();
