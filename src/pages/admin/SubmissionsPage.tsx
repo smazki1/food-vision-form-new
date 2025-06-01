@@ -1,7 +1,8 @@
+
 import React, { useState } from "react";
 import { useAllSubmissions } from "@/hooks/useAllSubmissions";
 import { SubmissionsTable } from "@/components/admin/submissions/SubmissionsTable";
-import { Submission } from "@/api/submissionApi";
+import { Submission } from "@/types/models";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import {
@@ -16,10 +17,27 @@ const SubmissionsPage: React.FC = () => {
   const { submissions, loading, refreshSubmissions } = useAllSubmissions();
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Transform API submissions to match our models type
+  const transformedSubmissions: Submission[] = submissions.map(submission => ({
+    submission_id: submission.submission_id,
+    restaurant_name: submission.business_name || '',
+    contact_name: '',
+    phone: '',
+    email: '',
+    item_type: submission.item_type as 'dish' | 'cocktail' | 'drink',
+    item_name: submission.item_name,
+    description: submission.description,
+    special_notes: submission.special_notes,
+    image_urls: Array.isArray(submission.image_urls) ? submission.image_urls : [],
+    status: submission.status as any,
+    created_at: submission.created_at,
+    created_lead_id: undefined
+  }));
+
   // Filter submissions based on selected status
   const filteredSubmissions = statusFilter === "all"
-    ? submissions
-    : submissions.filter(submission => submission.submission_status === statusFilter);
+    ? transformedSubmissions
+    : transformedSubmissions.filter(submission => submission.status === statusFilter);
 
   const handleViewDetails = (submission: Submission) => {
     // In a real application, this would open a details modal or navigate to a details page
@@ -28,7 +46,7 @@ const SubmissionsPage: React.FC = () => {
 
   // Get unique statuses from submissions for the filter
   const uniqueStatuses = Array.from(
-    new Set(submissions.map(submission => submission.submission_status))
+    new Set(transformedSubmissions.map(submission => submission.status))
   );
 
   return (

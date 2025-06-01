@@ -100,5 +100,3 @@ export interface Submission {
   created_at: string;
   created_lead_id?: string;
 }
-
-export type { LeadStatus, LeadSource, ClientStatus };

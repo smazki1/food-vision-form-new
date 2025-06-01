@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useLeads } from "@/hooks/useLeads";
 import { useClients } from "@/hooks/useClients";
@@ -44,5 +45,15 @@ export function useAlerts() {
 
   const upcomingReminders = leads.filter(lead => lead.reminder_at);
 
-  return { alerts, upcomingReminders };
+  const markAsViewed = (alertId: string) => {
+    setAlerts(prevAlerts => 
+      prevAlerts.map(alert => 
+        alert.id === alertId 
+          ? { ...alert, status: 'viewed' as const }
+          : alert
+      )
+    );
+  };
+
+  return { alerts, upcomingReminders, markAsViewed };
 }
