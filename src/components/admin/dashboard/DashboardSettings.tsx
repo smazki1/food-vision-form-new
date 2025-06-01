@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Card,
@@ -34,7 +33,7 @@ export type DashboardSettings = {
   sections: DashboardSection[];
 };
 
-const defaultSections: DashboardSection[] = [
+export const defaultSections: DashboardSection[] = [
   { id: "kpi", title: "מדדים עיקריים", visible: true, defaultOrder: 0, order: 0 },
   { id: "alerts", title: "התראות דחופות", visible: true, defaultOrder: 1, order: 1 },
   { id: "leadFunnel", title: "משפך לידים", visible: true, defaultOrder: 2, order: 2 },
@@ -55,19 +54,35 @@ export function useDashboardSettings() {
     const savedSettings = localStorage.getItem(DASHBOARD_SETTINGS_KEY);
     if (savedSettings) {
       try {
-        const parsedSettings = JSON.parse(savedSettings);
-        // Ensure all default sections exist
-        const mergedSections = defaultSections.map(defaultSection => {
-          const savedSection = parsedSettings.sections.find(
-            (s: DashboardSection) => s.id === defaultSection.id
-          );
-          return savedSection || defaultSection;
+        const parsedSettings = JSON.parse(savedSettings) as Partial<DashboardSettings>; // Type assertion
+        const savedSectionsArray = Array.isArray(parsedSettings.sections) ? parsedSettings.sections : [];
+
+        const sectionIdToSavedSectionMap = new Map<string, Partial<DashboardSection>>(
+          savedSectionsArray.map((s: Partial<DashboardSection>) => [s.id || '', s])
+        );
+
+        const mergedSections: DashboardSection[] = defaultSections.map(defaultSection => {
+          const savedSection = sectionIdToSavedSectionMap.get(defaultSection.id);
+          return {
+            id: defaultSection.id,
+            title: defaultSection.title,
+            visible: defaultSection.visible, // Prioritize default visibility from code
+            defaultOrder: defaultSection.defaultOrder,
+            order: (savedSection && typeof savedSection.order === 'number') ? savedSection.order : defaultSection.order,
+          };
         });
+
+        mergedSections.sort((a, b) => a.order - b.order);
         setSettings({ sections: mergedSections });
+
       } catch (e) {
-        console.error("Error parsing dashboard settings", e);
-        setSettings({ sections: [...defaultSections] });
+        console.error("Error parsing dashboard settings or invalid structure", e);
+        const sortedDefaultSections = [...defaultSections].sort((a,b) => a.order - b.order);
+        setSettings({ sections: sortedDefaultSections });
       }
+    } else {
+      const sortedDefaultSections = [...defaultSections].sort((a,b) => a.order - b.order);
+      setSettings({ sections: sortedDefaultSections });
     }
   }, []);
 
