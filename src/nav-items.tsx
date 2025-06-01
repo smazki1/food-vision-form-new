@@ -1,5 +1,4 @@
-
-import { HomeIcon, Users, Package, FileText, Settings, LogIn, Upload, UserPlus, Calendar, ClipboardList, Eye, BarChart3, AlertTriangle, UserCog, Database } from "lucide-react";
+import { HomeIcon, Users, Package, FileText, Settings, LogIn, Upload, UserPlus, Calendar, ClipboardList, Eye } from "lucide-react";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
 import CustomerLogin from "./pages/CustomerLogin";
 import AdminLogin from "./pages/AdminLogin";
@@ -15,10 +14,6 @@ import LeadsManagement from "./pages/admin/LeadsManagement";
 import SubmissionsPage from "./pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "./pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "./pages/admin/SubmissionDetailsPage";
-import SubmissionsAnalytics from "./pages/admin/SubmissionsAnalytics";
-import AlertsDashboard from "./pages/admin/AlertsDashboard";
-import UserManagementPage from "./pages/admin/UserManagementPage";
-import DataConsolidationPage from "./pages/admin/DataConsolidationPage";
 
 // Editor imports
 import EditorDashboardPage from "./pages/editor/EditorDashboardPage";
@@ -26,14 +21,14 @@ import SubmissionProcessingPage from "./pages/editor/SubmissionProcessingPage";
 
 // Customer imports
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
-import IndexPage from "./pages/IndexPage";
+import Index from "./pages/Index";
 
 export const navItems = [
   {
     title: "דף הבית",
     to: "/",
     icon: <HomeIcon className="h-4 w-4" />,
-    page: <IndexPage />,
+    page: <Index />,
   },
   {
     title: "התחברות לקוחות",
@@ -95,7 +90,7 @@ export const navItems = [
   },
   {
     title: "ניהול שירותים",
-    to: "/admin/packages",
+    to: "/admin/services",
     icon: <Package className="h-4 w-4" />,
     page: <PackagesManagementPage />,
   },
@@ -122,30 +117,6 @@ export const navItems = [
     to: "/admin/submissions/:submissionId",
     icon: <Eye className="h-4 w-4" />,
     page: <SubmissionDetailsPage />,
-  },
-  {
-    title: "ניתוח הגשות",
-    to: "/admin/analytics",
-    icon: <BarChart3 className="h-4 w-4" />,
-    page: <SubmissionsAnalytics />,
-  },
-  {
-    title: "התראות",
-    to: "/admin/alerts",
-    icon: <AlertTriangle className="h-4 w-4" />,
-    page: <AlertsDashboard />,
-  },
-  {
-    title: "ניהול משתמשים",
-    to: "/admin/users",
-    icon: <UserCog className="h-4 w-4" />,
-    page: <UserManagementPage />,
-  },
-  {
-    title: "איחוד נתונים",
-    to: "/admin/data-consolidation",
-    icon: <Database className="h-4 w-4" />,
-    page: <DataConsolidationPage />,
   },
 
   // Editor routes

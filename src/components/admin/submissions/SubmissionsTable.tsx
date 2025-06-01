@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -11,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Building2, User } from "lucide-react";
-import { Submission } from "@/types/models";
+import { Submission } from "@/api/submissionApi";
 
 interface SubmissionsTableProps {
   submissions: Submission[];
@@ -90,13 +91,18 @@ export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({
               <TableRow key={submission.submission_id}>
                 <TableCell>
                   <div>
-                    <div className="font-medium">{submission.item_name}</div>
+                    <div className="font-medium">{submission.item_name_at_submission}</div>
                     <div className="text-sm text-muted-foreground">{submission.item_type}</div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2 space-x-reverse">
-                    {submission.created_lead_id ? (
+                    {submission.clients ? (
+                      <>
+                        <Building2 className="h-4 w-4 text-green-600" />
+                        <span>{submission.clients.restaurant_name}</span>
+                      </>
+                    ) : submission.created_lead_id ? (
                       <>
                         <User className="h-4 w-4 text-blue-600" />
                         <span>ליד חדש</span>
@@ -110,17 +116,17 @@ export const SubmissionsTable: React.FC<SubmissionsTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
-                    {submission.status}
+                  <Badge variant={getStatusBadgeVariant(submission.submission_status)}>
+                    {submission.submission_status}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
-                    Medium
+                  <Badge variant={getPriorityBadgeVariant(submission.priority || "Medium")}>
+                    {submission.priority || "Medium"}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {new Date(submission.created_at).toLocaleDateString('he-IL')}
+                  {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}
                 </TableCell>
                 <TableCell>
                   <Button

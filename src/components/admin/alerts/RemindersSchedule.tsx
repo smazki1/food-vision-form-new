@@ -1,5 +1,6 @@
+
 import React, { useState } from "react";
-import { Lead } from "@/types/models";
+import { Lead } from "@/types/lead";
 import { format, isSameDay, startOfWeek, addDays, isToday } from "date-fns";
 import { he } from "date-fns/locale";
 import { 

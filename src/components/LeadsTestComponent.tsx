@@ -1,13 +1,12 @@
-
 // src/pages/admin/LeadsTestPage.tsx
 import React from 'react';
 import { useLeads, useCreateLead, useUpdateLead, useConvertLeadToClient, useArchiveLead, useRestoreLeadFromArchive } from '@/hooks/useLeads';
-import { Lead } from '@/types/models';
+import { Lead as ModelsLead } from '@/types/models';
 import { LEAD_STATUSES, LeadStatus, LEAD_SOURCE_TYPES, LeadSource } from '@/constants/statusTypes';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
 
 const LeadsTestComponent: React.FC = () => {
-  const { leads, loading, error } = useLeads({});
+  const { data: leadsDataResponse, isLoading, error, refetch } = useLeads({});
   const createLeadMutation = useCreateLead();
   const updateLeadMutation = useUpdateLead();
   const convertLeadToClientMutation = useConvertLeadToClient();
@@ -15,48 +14,65 @@ const LeadsTestComponent: React.FC = () => {
   const restoreLeadMutation = useRestoreLeadFromArchive();
 
   const handleCreateTestLead = () => {
-    const newLeadData: Partial<Lead> = { 
-      restaurant_name: 'Test Restaurant ' + Date.now(),
-      contact_name: 'Test Contact ' + Date.now(),
+    const newLeadData: Partial<ModelsLead> = { 
+      restaurant_name: 'Test Restaurant ' + Date.now(), // Using restaurant_name as per ModelsLead
+      contact_name: 'Test Contact ' + Date.now(), // Also providing contact_name
       email: `test${Date.now()}@example.com`,
       lead_status: LEAD_STATUSES.NEW,
       lead_source: LEAD_SOURCE_TYPES.WEBSITE,
-      phone: '1234567890',
+      phone: '1234567890', // Corrected from phone_number to phone as per ModelsLead
       notes: 'Created by LeadsTestComponent',
+      // Fill in other required fields from ModelsLead based on its definition in src/types/models.ts
       ai_trainings_count: 0,
       ai_training_cost_per_unit: 0,
       ai_prompts_count: 0,
       ai_prompt_cost_per_unit: 0,
       free_sample_package_active: false,
+      // Optional fields like next_follow_up_date can be added if needed for testing
     };
-    createLeadMutation.mutate(newLeadData);
+    createLeadMutation.mutate(newLeadData, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const handleUpdateTestLead = (leadId: string) => {
-    updateLeadMutation.mutate({ leadId: leadId, updates: { restaurant_name: 'Updated Restaurant Name ' + Date.now() } });
+    updateLeadMutation.mutate({ leadId: leadId, updates: { restaurant_name: 'Updated Restaurant Name ' + Date.now() } }, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const handleConvertToClient = (leadId: string) => {
     const placeholderUserId = 'test-user-id'; 
-    convertLeadToClientMutation.mutate({ leadId, userId: placeholderUserId });
+    convertLeadToClientMutation.mutate({ leadId, userId: placeholderUserId }, {
+      onSuccess: () => refetch(),
+    });
   };
 
   const handleArchiveLead = (leadId: string) => {
-    archiveLeadMutation.mutate(leadId);
+    archiveLeadMutation.mutate(leadId, { 
+      onSuccess: () => refetch(),
+    });
   };
   
   const handleRestoreLead = (leadId: string) => {
-    restoreLeadMutation.mutate({ leadId, newStatus: LEAD_STATUSES.NEW as LeadStatus });
+    restoreLeadMutation.mutate({ leadId, newStatus: LEAD_STATUSES.NEW as LeadStatus }, { 
+      onSuccess: () => refetch(),
+    });
   };
 
-  if (loading) return <p>Loading leads...</p>;
+  if (isLoading) return <p>Loading leads...</p>;
   if (error) return <p>Error loading leads: {error.message}</p>;
+
+  const leads = leadsDataResponse || [];
 
   return (
     <div className="space-y-4 p-4 border rounded-lg shadow-sm bg-white">
       <h2 className="text-2xl font-semibold mb-4">Leads Test Area</h2>
       <Button onClick={handleCreateTestLead} disabled={createLeadMutation.isPending} className="mb-4">
         {createLeadMutation.isPending ? 'Creating...' : 'Create Test Lead'}
+      </Button>
+      <Button onClick={() => refetch()} className="mb-4 ml-2">
+        Refresh Leads
       </Button>
       {leads.length === 0 ? (
         <p>No leads found.</p>

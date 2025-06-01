@@ -1,8 +1,9 @@
+
 import React from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LeadStatus, LeadSource } from "@/types/models";
+import { LeadStatus, LeadSource } from "@/types/lead";
 
 interface ActiveFiltersBadgesProps {
   leadStatus: LeadStatus | "all";

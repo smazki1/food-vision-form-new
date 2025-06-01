@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Lead } from "@/types/models";
+import { Lead } from "@/types/lead";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +35,7 @@ export const ActionsCell: React.FC<ActionsCellProps> = ({
           <Edit className="mr-2 h-4 w-4" />
           עריכה
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onDelete(lead.lead_id)}>
+        <DropdownMenuItem onClick={() => onDelete(lead.id)}>
           <Trash2 className="mr-2 h-4 w-4" />
           מחיקה
         </DropdownMenuItem>

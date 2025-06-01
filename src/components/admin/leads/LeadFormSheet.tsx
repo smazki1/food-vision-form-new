@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Sheet,
@@ -6,7 +7,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import LeadForm from "@/components/admin/leads/LeadForm";
-import { Lead } from "@/types/models";
+import { Lead } from "@/types/lead";
 
 interface LeadFormSheetProps {
   isOpen: boolean;

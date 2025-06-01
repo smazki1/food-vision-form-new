@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Lead } from "@/types/models";
+import { Lead } from "@/types/lead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LeadsTable from "@/components/admin/leads/LeadsTable";

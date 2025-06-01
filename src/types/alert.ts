@@ -1,5 +1,6 @@
-import { Lead } from "./models";
-import { Client } from "./models";
+
+import { Lead } from "./lead";
+import { Client } from "./client";
 
 export type AlertType = 
   | "new-lead" 

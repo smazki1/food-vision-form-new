@@ -44,33 +44,6 @@ export type Database = {
           },
         ]
       }
-      ai_pricing_settings: {
-        Row: {
-          description: string | null
-          last_updated_by: string | null
-          setting_id: string
-          setting_name: string
-          setting_value: number
-          updated_at: string
-        }
-        Insert: {
-          description?: string | null
-          last_updated_by?: string | null
-          setting_id?: string
-          setting_name: string
-          setting_value: number
-          updated_at?: string
-        }
-        Update: {
-          description?: string | null
-          last_updated_by?: string | null
-          setting_id?: string
-          setting_name?: string
-          setting_value?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       client_packages: {
         Row: {
           client_id: string
@@ -354,7 +327,7 @@ export type Database = {
             columns: ["created_lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -464,161 +437,53 @@ export type Database = {
           },
         ]
       }
-      lead_activity_log: {
-        Row: {
-          activity_description: string
-          activity_id: string
-          activity_timestamp: string
-          lead_id: string
-          user_id: string | null
-        }
-        Insert: {
-          activity_description: string
-          activity_id?: string
-          activity_timestamp?: string
-          lead_id: string
-          user_id?: string | null
-        }
-        Update: {
-          activity_description?: string
-          activity_id?: string
-          activity_timestamp?: string
-          lead_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_activity_log_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
-          },
-        ]
-      }
-      lead_comments: {
-        Row: {
-          comment_id: string
-          comment_text: string
-          comment_timestamp: string
-          lead_id: string
-          user_id: string | null
-        }
-        Insert: {
-          comment_id?: string
-          comment_text: string
-          comment_timestamp?: string
-          lead_id: string
-          user_id?: string | null
-        }
-        Update: {
-          comment_id?: string
-          comment_text?: string
-          comment_timestamp?: string
-          lead_id?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_comments_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
-          },
-        ]
-      }
       leads: {
         Row: {
-          address: string | null
-          ai_prompt_cost_per_unit: number | null
-          ai_prompts_count: number
-          ai_training_cost_per_unit: number | null
-          ai_trainings_count: number
-          client_id: string | null
           contact_name: string
           created_at: string
           email: string
-          exchange_rate_at_conversion: number | null
           free_sample_package_active: boolean
-          lead_id: string
+          id: string
+          last_updated_at: string
           lead_source: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status: Database["public"]["Enums"]["lead_status_type"]
-          next_follow_up_date: string | null
-          next_follow_up_notes: string | null
           notes: string | null
-          phone: string
+          phone_number: string
+          reminder_at: string | null
+          reminder_details: string | null
           restaurant_name: string
-          revenue_from_lead_local: number | null
-          revenue_from_lead_usd: number | null
-          roi: number | null
-          total_ai_costs: number | null
-          updated_at: string
-          website_url: string | null
         }
         Insert: {
-          address?: string | null
-          ai_prompt_cost_per_unit?: number | null
-          ai_prompts_count?: number
-          ai_training_cost_per_unit?: number | null
-          ai_trainings_count?: number
-          client_id?: string | null
           contact_name: string
           created_at?: string
           email: string
-          exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean
-          lead_id?: string
+          id?: string
+          last_updated_at?: string
           lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status?: Database["public"]["Enums"]["lead_status_type"]
-          next_follow_up_date?: string | null
-          next_follow_up_notes?: string | null
           notes?: string | null
-          phone: string
+          phone_number: string
+          reminder_at?: string | null
+          reminder_details?: string | null
           restaurant_name: string
-          revenue_from_lead_local?: number | null
-          revenue_from_lead_usd?: number | null
-          roi?: number | null
-          total_ai_costs?: number | null
-          updated_at?: string
-          website_url?: string | null
         }
         Update: {
-          address?: string | null
-          ai_prompt_cost_per_unit?: number | null
-          ai_prompts_count?: number
-          ai_training_cost_per_unit?: number | null
-          ai_trainings_count?: number
-          client_id?: string | null
           contact_name?: string
           created_at?: string
           email?: string
-          exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean
-          lead_id?: string
+          id?: string
+          last_updated_at?: string
           lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status?: Database["public"]["Enums"]["lead_status_type"]
-          next_follow_up_date?: string | null
-          next_follow_up_notes?: string | null
           notes?: string | null
-          phone?: string
+          phone_number?: string
+          reminder_at?: string | null
+          reminder_details?: string | null
           restaurant_name?: string
-          revenue_from_lead_local?: number | null
-          revenue_from_lead_usd?: number | null
-          roi?: number | null
-          total_ai_costs?: number | null
-          updated_at?: string
-          website_url?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_client"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-        ]
+        Relationships: []
       }
       messages: {
         Row: {
@@ -866,18 +731,28 @@ export type Database = {
         Returns: boolean
       }
       public_submit_item_by_restaurant_name: {
-        Args: {
-          p_restaurant_name: string
-          p_item_type: string
-          p_item_name: string
-          p_contact_name: string
-          p_contact_phone: string
-          p_contact_email: string
-          p_description?: string
-          p_category?: string
-          p_ingredients?: string[]
-          p_reference_image_urls?: string[]
-        }
+        Args:
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+            }
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+              p_contact_email?: string
+              p_contact_phone?: string
+              p_contact_name?: string
+            }
         Returns: Json
       }
     }
@@ -894,7 +769,6 @@ export type Database = {
         | "הצעת מחיר נשלחה"
         | "ממתין לתשובה"
         | "הפך ללקוח"
-        | "ארכיון"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1022,7 +896,6 @@ export const Constants = {
         "הצעת מחיר נשלחה",
         "ממתין לתשובה",
         "הפך ללקוח",
-        "ארכיון",
       ],
     },
   },

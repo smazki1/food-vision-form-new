@@ -1,4 +1,5 @@
-import { LeadSource, LeadStatus } from "./models";
+
+import { LeadSource, LeadStatus } from "./lead";
 
 export interface LeadsFilter {
   searchTerm?: string;
