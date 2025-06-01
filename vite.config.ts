@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@testing-library/react-hooks": "@testing-library/react",
     },
   },
   optimizeDeps: {

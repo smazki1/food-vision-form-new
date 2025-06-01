@@ -1,5 +1,5 @@
-
 import { LeadSource, LeadStatus } from "./lead";
+import { LeadStatusEnum, LeadSourceEnum } from './lead';
 
 export interface LeadsFilter {
   searchTerm?: string;
@@ -19,4 +19,20 @@ export interface DashboardSettings {
     visible: boolean;
     order: number;
   }[];
+}
+
+// Enhanced leads filters for the new advanced lead management system
+export interface EnhancedLeadsFilter {
+  searchTerm?: string;
+  status?: LeadStatusEnum | 'all';
+  leadSource?: LeadSourceEnum | 'all';
+  dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
+  onlyReminders?: boolean;
+  remindersToday?: boolean;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  excludeArchived?: boolean;
+  onlyArchived?: boolean;
+  page?: number;
+  pageSize?: number;
 }
