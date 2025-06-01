@@ -3,9 +3,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { LeadDetailsSheet } from './LeadDetailsSheet';
+import { Lead } from '@/types/models';
 import { MOCK_PACKAGES } from '@/types/package';
-import { Lead } from '@/types/lead';
 import { toast } from 'sonner';
 
 // Mock API calls directly in the factory
@@ -541,4 +542,4 @@ describe('LeadDetailsSheet', () => {
       expect(convertToClientButton).toBeDisabled();
     });
   });
-}); 
+});

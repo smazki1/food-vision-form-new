@@ -1,3 +1,4 @@
+
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -7,9 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Client, CLIENT_STATUS_OPTIONS } from "@/types/client";
+import { Client, ClientStatus } from "@/types/models";
 import { Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+
+const CLIENT_STATUS_OPTIONS: ClientStatus[] = [
+  "פעיל",
+  "לא פעיל", 
+  "בהמתנה"
+];
 
 const clientFormSchema = z.object({
   restaurant_name: z.string().min(1, "שם המסעדה הוא שדה חובה"),
@@ -39,7 +46,7 @@ export function ClientEditForm({ client, onSubmit, onCancel, isSubmitting }: Cli
       contact_name: client.contact_name,
       phone: client.phone,
       email: client.email,
-      client_status: client.client_status,
+      client_status: client.client_status as ClientStatus,
       internal_notes: client.internal_notes || "",
       email_notifications: client.email_notifications || false,
       app_notifications: client.app_notifications || false,

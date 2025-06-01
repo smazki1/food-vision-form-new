@@ -32,10 +32,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Lead, LeadSource } from "@/types/models";
 
-// Lead source options
+// Lead source options - using Hebrew values that match LeadSource type
 const LEAD_SOURCE_OPTIONS: LeadSource[] = [
   "אתר",
-  "פייסבוק",
+  "פייסבוק", 
   "גוגל",
   "המלצה",
   "אחר"

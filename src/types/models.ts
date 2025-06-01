@@ -1,6 +1,36 @@
 
 // src/types/models.ts
-import type { LeadStatus, LeadSource, ClientStatus, SubmissionStatus } from '@/constants/statusTypes';
+import type { Database } from '@/integrations/supabase/types';
+
+export type LeadStatus = 
+  | "ליד חדש"
+  | "פנייה ראשונית בוצעה"
+  | "מעוניין"
+  | "לא מעוניין"
+  | "נקבעה פגישה/שיחה"
+  | "הדגמה בוצעה"
+  | "הצעת מחיר נשלחה"
+  | "ממתין לתשובה"
+  | "הפך ללקוח";
+
+export type LeadSource = 
+  | "אתר"
+  | "פייסבוק"
+  | "גוגל"
+  | "המלצה"
+  | "אחר";
+
+export type ClientStatus = 
+  | "פעיל"
+  | "לא פעיל"
+  | "בהמתנה";
+
+export type SubmissionStatus = 
+  | "ממתינה לעיבוד"
+  | "בעיבוד"
+  | "מוכנה להצגה"
+  | "הערות התקבלו"
+  | "הושלמה ואושרה";
 
 export interface Lead {
   lead_id: string;
@@ -46,6 +76,13 @@ export interface Client {
   remaining_servings: number;
   created_at: string;
   last_activity_at: string;
+  internal_notes?: string;
+  email_notifications?: boolean;
+  app_notifications?: boolean;
+  service_packages?: {
+    package_name: string;
+    total_servings: number;
+  };
 }
 
 export interface Submission {
@@ -61,7 +98,7 @@ export interface Submission {
   image_urls: string[];
   status: SubmissionStatus;
   created_at: string;
-  created_lead_id?: string; // Added this missing property
+  created_lead_id?: string;
 }
 
 export type { LeadStatus, LeadSource, ClientStatus };
