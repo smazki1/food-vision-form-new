@@ -61,7 +61,7 @@ export interface Submission {
   image_urls: string[];
   status: SubmissionStatus;
   created_at: string;
-  created_lead_id?: string;
+  created_lead_id?: string; // Added this missing property
 }
 
 export type { LeadStatus, LeadSource, ClientStatus };

@@ -1,9 +1,10 @@
+
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLeads } from "@/hooks/useLeads";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertType } from "@/types/alert";
-import { Client } from "@/types/models";
+import { Client, Lead } from "@/types/models";
 import { generateAlertsFromData } from "@/utils/alertsGenerator";
 
 interface UseAlertsOptions {
@@ -35,12 +36,19 @@ export function useAlerts({ typeFilter = "all" }: UseAlertsOptions = {}) {
   const allAlerts = useMemo(() => {
     // Convert leads to compatible format for alerts generator
     const compatibleLeads = leads.map(lead => ({
-      ...lead,
       id: lead.lead_id,
+      restaurant_name: lead.restaurant_name,
+      contact_name: lead.contact_name,
       phone_number: lead.phone,
+      email: lead.email,
+      lead_status: lead.lead_status,
+      lead_source: lead.lead_source,
+      created_at: lead.created_at,
       last_updated_at: lead.updated_at,
-      reminder_at: lead.next_follow_up_date,
-      reminder_details: lead.next_follow_up_notes
+      notes: lead.notes || '',
+      reminder_at: lead.next_follow_up_date || null,
+      reminder_details: lead.next_follow_up_notes || null,
+      free_sample_package_active: lead.free_sample_package_active
     }));
     return generateAlertsFromData(compatibleLeads, clients);
   }, [leads, clients]);

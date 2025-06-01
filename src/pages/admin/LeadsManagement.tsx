@@ -67,7 +67,7 @@ const LeadsManagement: React.FC = () => {
   const handleDeleteLead = async (id: string) => {
     try {
       if (deleteLead) {
-        await deleteLead(id);
+        await deleteLead({ leadId: id, updates: {} });
       }
       if (selectedLead && selectedLead.lead_id === id) {
         setIsDetailsOpen(false);
