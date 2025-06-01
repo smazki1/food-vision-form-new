@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import LeadsTestComponent from '@/components/admin/leads/LeadsTestComponent';
+import LeadsTestComponent from '@/components/LeadsTestComponent';
 
 const queryClient = new QueryClient();
 
