@@ -1,7 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Lead, LeadStatus, /* LeadInsert, LeadUpdate */ } from '@/types/models';
+import { Lead, LeadStatus } from '@/types/models'; // Use models types consistently
 import { LEAD_STATUSES, LEAD_STATUS_DISPLAY } from '@/constants/statusTypes';
-import { LegacyLead, LeadStatus as LegacyLeadStatus } from '@/types/lead';
 
 // Temporary types until LeadInsert/LeadUpdate are fixed in models.ts
 type LeadInsert = Partial<Lead>;

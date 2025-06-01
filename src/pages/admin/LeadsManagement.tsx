@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { useLeads } from "@/hooks/useLeads";
-import { Lead, LeadStatus, LeadSource } from "@/types/lead";
+import { Lead, LeadStatus, LeadSource } from "@/types/models"; // Use models types
 import { toast } from "sonner";
 
 // Import our components
@@ -68,7 +68,7 @@ const LeadsManagement: React.FC = () => {
       if (deleteLead) {
         await deleteLead(id);
       }
-      if (selectedLead && selectedLead.id === id) {
+      if (selectedLead && selectedLead.lead_id === id) {
         setIsDetailsOpen(false);
         setSelectedLead(null);
       }
@@ -94,7 +94,7 @@ const LeadsManagement: React.FC = () => {
       setFormLoading(true);
       
       if (currentLead && updateLead) {
-        await updateLead(currentLead.id, data);
+        await updateLead({ leadId: currentLead.lead_id, updates: data });
       } else if (addLead) {
         await addLead(data);
       }
@@ -112,13 +112,13 @@ const LeadsManagement: React.FC = () => {
   const handleUpdateLead = async (id: string, updates: Partial<Lead>) => {
     try {
       if (updateLead) {
-        await updateLead(id, updates);
+        await updateLead({ leadId: id, updates });
       }
-      if (selectedLead && selectedLead.id === id) {
+      if (selectedLead && selectedLead.lead_id === id) {
         setSelectedLead({
           ...selectedLead,
           ...updates,
-          last_updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString()
         });
       }
     } catch (error) {

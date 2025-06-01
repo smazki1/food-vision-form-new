@@ -64,9 +64,9 @@ export function useAlerts({ typeFilter = "all" }: UseAlertsOptions = {}) {
   // Get upcoming reminders (today and future)
   const upcomingReminders = useMemo(() => {
     return leads.filter(lead => {
-      if (!lead.reminder_at) return false;
+      if (!lead.next_follow_up_date) return false; // Use next_follow_up_date from models
       
-      const reminderDate = new Date(lead.reminder_at);
+      const reminderDate = new Date(lead.next_follow_up_date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       

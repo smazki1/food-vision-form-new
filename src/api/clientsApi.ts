@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Lead } from "@/types/lead";
+import { Lead } from "@/types/models"; // Use models Lead type
 import { Client } from '@/types/models';
 import { ClientStatus } from '@/constants/statusTypes';
 import { CLIENT_STATUSES } from '@/constants/statusTypes';
@@ -27,9 +27,9 @@ export const createClientFromLead = async (
     .insert({
       restaurant_name: lead.restaurant_name,
       contact_name: lead.contact_name,
-      phone: lead.phone,
+      phone: lead.phone, // Use 'phone' from models Lead type
       email: lead.email,
-      original_lead_id: lead.lead_id,
+      original_lead_id: lead.lead_id, // Use 'lead_id' from models Lead type
       client_status: "פעיל", // CLIENT_STATUSES.ACTIVE
       remaining_servings: servingsCount,
       current_package_id: packageId
@@ -109,4 +109,4 @@ export const clientsAPI = {
       throw error;
     }
   },
-}; 
+};
