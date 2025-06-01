@@ -1,143 +1,226 @@
+import { supabase } from '@/integrations/supabase/client';
+import { Lead, LeadStatus, /* LeadInsert, LeadUpdate */ } from '@/types/models';
+import { LEAD_STATUSES, LEAD_STATUS_DISPLAY } from '@/constants/statusTypes';
+import { LegacyLead, LeadStatus as LegacyLeadStatus } from '@/types/lead';
 
-import { supabase } from "@/integrations/supabase/client";
-import { Lead, LeadStatus, LeadSource } from "@/types/lead";
-import { LeadsFilter } from "@/types/filters";
+// Temporary types until LeadInsert/LeadUpdate are fixed in models.ts
+type LeadInsert = Partial<Lead>;
+type LeadUpdate = Partial<Lead>;
 
-export const fetchLeads = async (filters?: LeadsFilter) => {
-  let query = supabase
-    .from("leads")
-    .select("*");
-  
-  // Apply filters if provided
-  if (filters) {
-    // Apply status filter
-    if (filters.leadStatus && filters.leadStatus !== "all") {
-      query = query.eq("lead_status", filters.leadStatus);
-    }
-    
-    // Apply source filter
-    if (filters.leadSource && filters.leadSource !== "all") {
-      query = query.eq("lead_source", filters.leadSource);
-    }
-    
-    // Apply date filter
-    if (filters.dateFilter) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (filters.dateFilter === "today") {
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        query = query
-          .gte("created_at", today.toISOString())
-          .lt("created_at", tomorrow.toISOString());
-      } else if (filters.dateFilter === "this-week") {
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-        
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 7); // End of week (Saturday)
-        
-        query = query
-          .gte("created_at", startOfWeek.toISOString())
-          .lt("created_at", endOfWeek.toISOString());
-      } else if (filters.dateFilter === "this-month") {
-        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        
-        query = query
-          .gte("created_at", startOfMonth.toISOString())
-          .lte("created_at", endOfMonth.toISOString());
+export const leadsAPI = {
+  async fetchLeads(options: {
+    statuses?: LeadStatus[];
+    searchTerm?: string;
+    sortBy?: string;
+    sortDirection?: 'asc' | 'desc';
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<Lead[]> {
+    try {
+      const {
+        statuses,
+        searchTerm,
+        sortBy = 'created_at',
+        sortDirection = 'desc',
+        page = 0,
+        pageSize = 20
+      } = options;
+
+      let query = supabase
+        .from('leads')
+        .select('*');
+
+      if (statuses && statuses.length > 0) {
+        query = query.in('lead_status', statuses);
+      } else {
+        const activeStatuses = Object.values(LEAD_STATUSES).filter(
+          (status: LeadStatus) => status !== (LEAD_STATUSES.ARCHIVED as LeadStatus)
+        );
+        query = query.in('lead_status', activeStatuses);
       }
-    }
-    
-    // Apply reminders filter
-    if (filters.onlyReminders) {
-      query = query.not("reminder_at", "is", null);
-    }
-    
-    // Apply reminders for today filter
-    if (filters.remindersToday) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      
+
+      if (searchTerm) {
+        query = query.or(
+          `restaurant_name.ilike.%${searchTerm}%,contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
+        );
+      }
+
       query = query
-        .gte("reminder_at", today.toISOString())
-        .lt("reminder_at", tomorrow.toISOString());
+        .order(sortBy, { ascending: sortDirection === 'asc' })
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      const { data, error } = await query;
+
+      if (error) throw new Error(`Error fetching leads: ${error.message}`);
+      return data || [];
+    } catch (error: any) {
+      console.error('Error in fetchLeads:', error);
+      throw new Error(error.message || 'Unknown error fetching leads');
     }
-    
-    // Apply sorting
-    if (filters.sortBy) {
-      query = query.order(filters.sortBy, { 
-        ascending: filters.sortDirection === "asc"
-      });
-    } else {
-      // Default sort by created_at descending
-      query = query.order("created_at", { ascending: false });
+  },
+
+  async fetchLeadById(leadId: string): Promise<Lead> {
+    try {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('lead_id', leadId)
+        .single();
+
+      if (error) throw new Error(`Error fetching lead: ${error.message}`);
+      if (!data) throw new Error(`Lead with ID ${leadId} not found.`);
+      return data;
+    } catch (error: any) {
+      console.error(`Error fetching lead ${leadId}:`, error);
+      throw new Error(error.message || `Unknown error fetching lead ${leadId}`);
     }
-  } else {
-    // Default sort by created_at descending if no filters provided
-    query = query.order("created_at", { ascending: false });
+  },
+
+  async addLeadActivityLog(leadId: string, activityType: string, activityDescription: string, _activityExtraData?: object | null): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('lead_activity_log')
+        .insert({
+          lead_id: leadId,
+          activity_type: activityType,
+          activity_description: activityDescription,
+          activity_timestamp: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error(`Error adding activity for lead ${leadId}:`, error);
+      }
+    } catch (error: any) {
+      console.error(`Unexpected error in addLeadActivityLog for lead ${leadId}:`, error);
+    }
+  },
+
+  async createLead(leadData: LeadInsert): Promise<Lead> {
+    try {
+      const now = new Date().toISOString();
+
+      const newLeadData: LeadInsert = {
+        ...leadData,
+        lead_status: leadData.lead_status || LEAD_STATUSES.NEW,
+        created_at: now,
+        updated_at: now,
+        ai_trainings_count: leadData.ai_trainings_count || 0,
+        ai_training_cost_per_unit: leadData.ai_training_cost_per_unit || 1.5,
+        ai_prompts_count: leadData.ai_prompts_count || 0,
+        ai_prompt_cost_per_unit: leadData.ai_prompt_cost_per_unit || 0.16,
+        free_sample_package_active: leadData.free_sample_package_active || false
+      };
+
+      const { data, error } = await supabase
+        .from('leads')
+        .insert(newLeadData)
+        .select('*')
+        .single();
+
+      if (error) throw new Error(`Error creating lead: ${error.message}`);
+      if (!data) throw new Error('Failed to create lead or retrieve created data.');
+
+      if (data?.lead_id) {
+        await this.addLeadActivityLog(data.lead_id, 'ליד חדש נוצר', 'ליד חדש נוצר');
+      }
+      return data as Lead;
+    } catch (error: any) {
+      console.error('Error in createLead:', error);
+      throw new Error(error.message || 'Unknown error creating lead');
+    }
+  },
+
+  async _updateLeadInternal(leadId: string, updates: LeadUpdate): Promise<Lead> {
+    const dataToUpdate: LeadUpdate = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+    const { data, error } = await supabase
+      .from('leads')
+      .update(dataToUpdate)
+      .eq('lead_id', leadId)
+      .select('*')
+      .single();
+
+    if (error) throw new Error(`Error updating lead internal: ${error.message}`);
+    if (!data) throw new Error(`Failed to update lead or lead ${leadId} not found.`);
+    return data as Lead;
+  },
+
+  async updateLead(leadId: string, updates: LeadUpdate): Promise<Lead> {
+    try {
+      const updatedLead = await this._updateLeadInternal(leadId, updates);
+
+      const activityType = updates.lead_status ? 'סטטוס ליד עודכן' : 'פרטי ליד עודכנו';
+      const activityDescription = updates.lead_status
+        ? `סטטוס ליד שונה ל: ${LEAD_STATUS_DISPLAY[updates.lead_status as LeadStatus] || updates.lead_status}`
+        : 'פרטי ליד עודכנו';
+      
+      await this.addLeadActivityLog(leadId, activityType, activityDescription);
+      
+      return updatedLead;
+    } catch (error: any) {
+      console.error(`Error updating lead ${leadId}:`, error);
+      throw new Error(error.message || `Unknown error updating lead ${leadId}`);
+    }
+  },
+
+  async convertToClient(leadId: string, userId: string): Promise<{ client_id: string, user_id: string, updatedLead: Lead }> {
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'create_client_from_lead',
+        { p_lead_id: leadId, p_user_id: userId }
+      );
+
+      if (rpcError) throw new Error(`Error in RPC create_client_from_lead: ${rpcError.message}`);
+      
+      const returnedClientId = (rpcData as any)?.client_id || (typeof rpcData === 'string' ? rpcData : null);
+      const returnedUserId = (rpcData as any)?.user_id || userId;
+
+      if (!returnedClientId) {
+        throw new Error('RPC create_client_from_lead did not return client_id.');
+      }
+
+      const statusConverted = (LEAD_STATUSES as any).CONVERTED_TO_CLIENT || 'הפך ללקוח';
+      const updatedLeadData = await this._updateLeadInternal(leadId, { lead_status: statusConverted as LeadStatus });
+      
+      const activityDescription = `הליד הומר ללקוח. Client ID: ${returnedClientId}, User ID: ${returnedUserId}`;
+      await this.addLeadActivityLog(leadId, 'המרת ליד ללקוח', activityDescription);
+
+      return {
+        client_id: returnedClientId,
+        user_id: returnedUserId,
+        updatedLead: updatedLeadData,
+      };
+    } catch (error: any) {
+      console.error(`Error converting lead ${leadId} to client:`, error);
+      throw new Error(error.message || `Unknown error converting lead ${leadId}`);
+    }
+  },
+
+  async archiveLead(leadId: string): Promise<Lead> {
+    try {
+      const statusArchived = LEAD_STATUSES.ARCHIVED || 'ארכיון';
+      const updatedLead = await this._updateLeadInternal(leadId, { lead_status: statusArchived as LeadStatus });
+      await this.addLeadActivityLog(leadId, 'העברה לארכיון', 'הליד הועבר לארכיון');
+      return updatedLead;
+    } catch (error: any) {
+      console.error(`Error archiving lead ${leadId}:`, error);
+      throw new Error(error.message || `Unknown error archiving lead ${leadId}`);
+    }
+  },
+
+  async restoreFromArchive(leadId: string, newStatus?: LeadStatus): Promise<Lead> {
+    try {
+      const statusToRestore = newStatus || (LEAD_STATUSES.NEW as LeadStatus) || ('ליד חדש' as LeadStatus);
+      const updatedLead = await this._updateLeadInternal(leadId, { lead_status: statusToRestore });
+      
+      const activityDescription = `ליד שוחזר מהארכיון עם סטטוס: ${LEAD_STATUS_DISPLAY[statusToRestore as LeadStatus] || statusToRestore}`;
+      await this.addLeadActivityLog(leadId, 'שחזור מארכיון', activityDescription);
+      return updatedLead;
+    } catch (error: any) {
+      console.error(`Error restoring lead ${leadId} from archive:`, error);
+      throw new Error(error.message || `Unknown error restoring lead ${leadId}`);
+    }
   }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  
-  // Apply search term filter client-side (more flexible than DB query)
-  let filteredData = data;
-  if (filters?.searchTerm) {
-    const searchTerm = filters.searchTerm.toLowerCase();
-    filteredData = data.filter((lead: Lead) => 
-      lead.restaurant_name.toLowerCase().includes(searchTerm) ||
-      lead.contact_name.toLowerCase().includes(searchTerm) ||
-      lead.email.toLowerCase().includes(searchTerm) ||
-      lead.phone_number.includes(searchTerm)
-    );
-  }
-  
-  return filteredData as Lead[];
-};
-
-export const addLead = async (newLead: Omit<Lead, "id" | "created_at" | "last_updated_at" | "lead_status" | "free_sample_package_active">) => {
-  const leadToInsert = {
-    ...newLead,
-    lead_status: "ליד חדש" as LeadStatus,
-    free_sample_package_active: false
-  };
-
-  const { data, error } = await supabase
-    .from("leads")
-    .insert(leadToInsert)
-    .select("*")
-    .single();
-
-  if (error) throw error;
-  return data as Lead;
-};
-
-export const updateLead = async (id: string, updates: Partial<Omit<Lead, "id" | "created_at" | "last_updated_at" | "free_sample_package_active">>) => {
-  const { data, error } = await supabase
-    .from("leads")
-    .update(updates)
-    .eq("id", id)
-    .select("*")
-    .single();
-
-  if (error) throw error;
-  return data as Lead;
-};
-
-export const deleteLead = async (id: string) => {
-  const { error } = await supabase
-    .from("leads")
-    .delete()
-    .eq("id", id);
-
-  if (error) throw error;
-  return id;
 };

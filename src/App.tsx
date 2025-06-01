@@ -27,6 +27,7 @@ import LeadsManagement from "@/pages/admin/LeadsManagement";
 import SubmissionsPage from "@/pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "@/pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "@/pages/admin/SubmissionDetailsPage";
+import LeadsTestPage from "@/pages/admin/LeadsTestPage";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
                 <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
                 <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
                 {/* Add more admin routes as needed */}
+                <Route path="leads-test-page" element={<LeadsTestPage />} />
               </Route>
             </Routes>
           </BrowserRouter>
