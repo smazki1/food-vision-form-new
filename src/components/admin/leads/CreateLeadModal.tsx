@@ -1,342 +1,266 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { 
-  LeadStatusEnum, 
-  LEAD_STATUS_DISPLAY
-} from '@/types/lead';
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalCloseButton,
+} from "@/components/ui/modal"
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useCreateLead } from '@/hooks/useEnhancedLeads';
 import { toast } from 'sonner';
-import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
-import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
-
-const createLeadSchema = z.object({
-  restaurant_name: z.string().min(1, 'שם מסעדה נדרש'),
-  contact_name: z.string().min(1, 'שם איש קשר נדרש'),
-  phone: z.string().min(1, 'מספר טלפון נדרש'),
-  email: z.string().email('כתובת אימייל לא תקינה'),
-  website_url: z.string().url('כתובת אתר לא תקינה').optional().or(z.literal('')),
-  address: z.string().optional(),
-  business_type: z.string().optional(),
-  lead_status: z.nativeEnum(LeadStatusEnum).default(LeadStatusEnum.NEW),
-  lead_source: z.string().optional(),
-  notes: z.string().optional(),
-  free_sample_package_active: z.boolean().default(false),
-});
-
-type CreateLeadFormData = z.infer<typeof createLeadSchema>;
+import { 
+  LeadStatusEnum,
+  LeadSourceEnum,
+  LEAD_SOURCE_OPTIONS
+} from '@/types/lead';
 
 interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
-  isOpen,
-  onClose,
-}) => {
-  const createLead = useCreateLead();
+export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClose }) => {
+  const [formData, setFormData] = useState({
+    restaurant_name: '',
+    contact_name: '',
+    phone: '',
+    email: '',
+    lead_status: LeadStatusEnum.NEW,
+    lead_source: LeadSourceEnum.WEBSITE,
+    website_url: '',
+    address: '',
+    business_type: '',
+    notes: '',
+    free_sample_package_active: false,
+  });
 
-  const form = useForm<CreateLeadFormData>({
-    resolver: zodResolver(createLeadSchema),
-    defaultValues: {
+  const createLeadMutation = useCreateLead();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: checked,
+    }));
+  };
+
+  const resetForm = () => {
+    setFormData({
       restaurant_name: '',
       contact_name: '',
       phone: '',
       email: '',
+      lead_status: LeadStatusEnum.NEW,
+      lead_source: LeadSourceEnum.WEBSITE,
       website_url: '',
       address: '',
       business_type: '',
-      lead_status: LeadStatusEnum.NEW,
-      lead_source: '',
       notes: '',
       free_sample_package_active: false,
-    },
-  });
-
-  const onSubmit = (data: CreateLeadFormData) => {
-    // Clean up empty strings to undefined for optional fields
-    const cleanedData = {
-      ...data,
-      website_url: data.website_url || undefined,
-      address: data.address || undefined,
-      business_type: data.business_type || undefined,
-      notes: data.notes || undefined,
-    };
-
-    createLead.mutate(cleanedData, {
-      onSuccess: () => {
-        toast.success('ליד חדש נוצר בהצלחה!');
-        form.reset();
-        onClose();
-      },
-      onError: (error) => {
-        toast.error(`שגיאה ביצירת ליד: ${error.message}`);
-      },
     });
   };
 
-  const handleClose = () => {
-    form.reset();
-    onClose();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const leadData = {
+        restaurant_name: formData.restaurant_name,
+        contact_name: formData.contact_name,
+        phone: formData.phone,
+        email: formData.email,
+        lead_status: formData.lead_status || LeadStatusEnum.NEW,
+        lead_source: formData.lead_source as LeadSourceEnum,
+        website_url: formData.website_url || '',
+        address: formData.address || '',
+        business_type: formData.business_type || '',
+        notes: formData.notes || '',
+        free_sample_package_active: formData.free_sample_package_active || false,
+      };
+
+      await createLeadMutation.mutateAsync(leadData);
+      toast.success('הליד נוצר בהצלחה');
+      onClose();
+      resetForm();
+    } catch (error) {
+      toast.error('שגיאה ביצירת הליד');
+    }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>יצירת ליד חדש</DialogTitle>
-          <DialogDescription>
-            הזן את פרטי הליד החדש. שדות המסומנים בכוכבית (*) הם שדות חובה.
-          </DialogDescription>
-        </DialogHeader>
+    <Modal open={isOpen} onOpenChange={onClose}>
+      <ModalContent>
+        <ModalHeader>
+          <h2>ליד חדש</h2>
+        </ModalHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">פרטים בסיסיים</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="restaurant_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>שם מסעדה *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="שם המסעדה או העסק" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="restaurant_name">שם המסעדה</Label>
+              <Input
+                type="text"
+                id="restaurant_name"
+                name="restaurant_name"
+                value={formData.restaurant_name}
+                onChange={handleChange}
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="contact_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>איש קשר *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="שם איש הקשר" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <Label htmlFor="contact_name">שם איש קשר</Label>
+              <Input
+                type="text"
+                id="contact_name"
+                name="contact_name"
+                value={formData.contact_name}
+                onChange={handleChange}
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>טלפון *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="050-123-4567" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <Label htmlFor="phone">טלפון</Label>
+              <Input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>אימייל *</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="email@example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div>
+              <Label htmlFor="email">אימייל</Label>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name="business_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>סוג עסק</FormLabel>
-                      <FormControl>
-                        <SmartBusinessTypeSelect
-                          value={field.value}
-                          onValueChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="website_url">אתר אינטרנט</Label>
+              <Input
+                type="url"
+                id="website_url"
+                name="website_url"
+                value={formData.website_url}
+                onChange={handleChange}
+              />
+            </div>
 
-                <FormField
-                  control={form.control}
-                  name="website_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>אתר אינטרנט</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://example.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
+            <div>
+              <Label htmlFor="address">כתובת</Label>
+              <Input
+                type="text"
+                id="address"
                 name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>כתובת</FormLabel>
-                    <FormControl>
-                      <Input placeholder="כתובת המסעדה או העסק" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                value={formData.address}
+                onChange={handleChange}
               />
             </div>
+          </div>
 
-            {/* Lead Management */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">ניהול ליד</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="lead_status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>סטטוס</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר סטטוס" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(LEAD_STATUS_DISPLAY).map(([key, display]) => (
-                            <SelectItem key={key} value={key}>
-                              {display}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="lead_source"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>מקור</FormLabel>
-                      <FormControl>
-                        <SmartLeadSourceSelect
-                          value={field.value || ''}
-                          onValueChange={field.onChange}
-                          placeholder="בחר מקור ליד"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="free_sample_package_active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        חבילת דמו פעילה
-                      </FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        האם ללקוח יש חבילת דמו פעילה כרגע
-                      </p>
-                    </div>
-                  </FormItem>
-                )}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="lead_status">סטטוס ליד</Label>
+              <Select
+                onValueChange={(value) => handleSelectChange('lead_status', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר סטטוס" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={LeadStatusEnum.NEW}>{LeadStatusEnum.NEW}</SelectItem>
+                  <SelectItem value={LeadStatusEnum.IN_TREATMENT}>{LeadStatusEnum.IN_TREATMENT}</SelectItem>
+                  <SelectItem value={LeadStatusEnum.INTERESTED}>{LeadStatusEnum.INTERESTED}</SelectItem>
+                  <SelectItem value={LeadStatusEnum.NOT_INTERESTED}>{LeadStatusEnum.NOT_INTERESTED}</SelectItem>
+                  <SelectItem value={LeadStatusEnum.CONVERTED_TO_CLIENT}>{LeadStatusEnum.CONVERTED_TO_CLIENT}</SelectItem>
+                  <SelectItem value={LeadStatusEnum.ARCHIVED}>{LeadStatusEnum.ARCHIVED}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Notes */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-2">הערות</h3>
-              
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>הערות נוספות</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="הערות, דרישות מיוחדות, או מידע נוסף על הליד..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div>
+              <Label htmlFor="lead_source">מקור ליד</Label>
+              <Select
+                onValueChange={(value) => handleSelectChange('lead_source', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר מקור" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEAD_SOURCE_OPTIONS.map((source) => (
+                    <SelectItem key={source.value} value={source.value}>
+                      {source.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-6">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                ביטול
-              </Button>
-              <Button type="submit" disabled={createLead.isPending}>
-                {createLead.isPending ? 'יוצר ליד...' : 'צור ליד'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          <div>
+            <Label htmlFor="business_type">סוג עסק</Label>
+            <Input
+              type="text"
+              id="business_type"
+              name="business_type"
+              value={formData.business_type}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="notes">הערות</Label>
+            <Input
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="free_sample_package_active"
+              name="free_sample_package_active"
+              checked={formData.free_sample_package_active}
+              onCheckedChange={(checked) => handleSwitchChange('free_sample_package_active', checked)}
+            />
+            <Label htmlFor="free_sample_package_active">חבילת התנסות פעילה</Label>
+          </div>
+
+          <ModalFooter>
+            <Button type="submit">צור ליד</Button>
+          </ModalFooter>
+        </form>
+
+        <ModalCloseButton />
+      </ModalContent>
+    </Modal>
   );
-}; 
+};

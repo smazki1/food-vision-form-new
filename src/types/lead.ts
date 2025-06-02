@@ -1,4 +1,3 @@
-
 // Database types
 export type LeadStatus = 'ליד חדש' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
 export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינסטגרם' | 'גוגל' | 'אחר';
@@ -87,7 +86,59 @@ export interface Lead {
   client_id?: string;
   free_sample_package_active: boolean;
   id: string; // Alias for lead_id for compatibility
+  revenue_from_lead_usd?: number;
+  business_type?: string;
+  lora_page_url?: string;
+  style_description?: string;
+  custom_prompt?: string;
+  reminder_notes?: string;
+  conversion_reason?: string;
+  rejection_reason?: string;
+  archived_at?: string;
+  total_ai_costs?: number;
+  roi?: number;
+  ai_training_5_count?: number;
+  ai_training_15_count?: number;
+  ai_training_25_count?: number;
+  is_archived?: boolean;
 }
+
+// Legacy Lead interface for backward compatibility
+export interface LegacyLead {
+  lead_id: string;
+  restaurant_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  lead_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Lead source options for forms
+export const LEAD_SOURCE_OPTIONS = [
+  { value: LeadSourceEnum.WEBSITE, label: 'אתר' },
+  { value: LeadSourceEnum.FRIENDS, label: 'חברים' },
+  { value: LeadSourceEnum.FACEBOOK, label: 'פייסבוק' },
+  { value: LeadSourceEnum.INSTAGRAM, label: 'אינסטגרם' },
+  { value: LeadSourceEnum.GOOGLE, label: 'גוגל' },
+  { value: LeadSourceEnum.OTHER, label: 'אחר' },
+];
+
+// Utility functions
+export const calculateTotalAICosts = (lead: Lead): number => {
+  const trainingCosts = (lead.ai_trainings_count || 0) * (lead.ai_training_cost_per_unit || 0);
+  const promptCosts = (lead.ai_prompts_count || 0) * (lead.ai_prompt_cost_per_unit || 0);
+  const training5Costs = (lead.ai_training_5_count || 0) * 5;
+  const training15Costs = (lead.ai_training_15_count || 0) * 15;
+  const training25Costs = (lead.ai_training_25_count || 0) * 25;
+  
+  return trainingCosts + promptCosts + training5Costs + training15Costs + training25Costs;
+};
+
+export const convertUSDToILS = (usdAmount: number, exchangeRate: number = 3.6): number => {
+  return usdAmount * exchangeRate;
+};
 
 // AI Pricing Settings interface
 export interface AIPricingSetting {
