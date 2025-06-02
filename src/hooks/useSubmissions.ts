@@ -1,8 +1,15 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
 import { useUnifiedAuth } from "./useUnifiedAuth";
 import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi";
+import { toast } from 'sonner';
+import { 
+  EnhancedSubmission, 
+  SubmissionComment, 
+  SubmissionCommentType,
+  SubmissionStatusKey 
+} from '@/types/submission';
 
 export interface ClientPackageInfo {
   packageName: string | null;
@@ -258,3 +265,270 @@ export function useSubmissions() {
     isAuthenticated: unifiedIsAuthenticated,
   };
 }
+
+// Fetch single submission with enhanced details
+export const useSubmission = (submissionId: string) => {
+  return useQuery<EnhancedSubmission>({
+    queryKey: ['submission', submissionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select(`
+          *,
+          clients(restaurant_name, contact_name, email, phone),
+          leads(restaurant_name, contact_name, email, phone)
+        `)
+        .eq('submission_id', submissionId)
+        .single();
+
+      if (error) throw error;
+      return data as EnhancedSubmission;
+    },
+    enabled: !!submissionId,
+  });
+};
+
+// Fetch submission comments
+export const useSubmissionComments = (submissionId: string) => {
+  return useQuery<SubmissionComment[]>({
+    queryKey: ['submission-comments', submissionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('submission_comments')
+        .select(`
+          *,
+          created_by_user:created_by(email)
+        `)
+        .eq('submission_id', submissionId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as SubmissionComment[];
+    },
+    enabled: !!submissionId,
+  });
+};
+
+// Update submission status
+export const useUpdateSubmissionStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ submissionId, status }: { submissionId: string; status: SubmissionStatusKey }) => {
+      const { error } = await supabase
+        .from('customer_submissions')
+        .update({ submission_status: status })
+        .eq('submission_id', submissionId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { submissionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      queryClient.invalidateQueries({ queryKey: ['submissions'] });
+      toast.success('סטטוס עודכן בהצלחה');
+    },
+    onError: (error: any) => {
+      toast.error(`שגיאה בעדכון סטטוס: ${error.message}`);
+    }
+  });
+};
+
+// Update LoRA fields
+export const useUpdateSubmissionLora = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      submissionId, 
+      loraData 
+    }: { 
+      submissionId: string; 
+      loraData: { 
+        lora_link?: string; 
+        lora_name?: string; 
+        fixed_prompt?: string; 
+      } 
+    }) => {
+      const { error } = await supabase
+        .from('customer_submissions')
+        .update(loraData)
+        .eq('submission_id', submissionId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { submissionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      toast.success('נתוני LoRA עודכנו בהצלחה');
+    },
+    onError: (error: any) => {
+      toast.error(`שגיאה בעדכון נתוני LoRA: ${error.message}`);
+    }
+  });
+};
+
+// Add submission comment
+export const useAddSubmissionComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      submissionId,
+      commentType,
+      commentText,
+      visibility
+    }: {
+      submissionId: string;
+      commentType: SubmissionCommentType;
+      commentText: string;
+      visibility: string;
+    }) => {
+      const { error } = await supabase
+        .from('submission_comments')
+        .insert({
+          submission_id: submissionId,
+          comment_type: commentType,
+          comment_text: commentText,
+          visibility
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { submissionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submission-comments', submissionId] });
+      toast.success('הערה נוספה בהצלחה');
+    },
+    onError: (error: any) => {
+      toast.error(`שגיאה בהוספת הערה: ${error.message}`);
+    }
+  });
+};
+
+// Update submission images
+export const useUpdateSubmissionImages = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      submissionId,
+      processedImageUrls,
+      mainImageUrl
+    }: {
+      submissionId: string;
+      processedImageUrls?: string[];
+      mainImageUrl?: string;
+    }) => {
+      const updateData: any = {};
+      if (processedImageUrls) updateData.processed_image_urls = processedImageUrls;
+      if (mainImageUrl) updateData.main_processed_image_url = mainImageUrl;
+
+      const { error } = await supabase
+        .from('customer_submissions')
+        .update(updateData)
+        .eq('submission_id', submissionId);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, { submissionId }) => {
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      toast.success('תמונות עודכנו בהצלחה');
+    },
+    onError: (error: any) => {
+      toast.error(`שגיאה בעדכון תמונות: ${error.message}`);
+    }
+  });
+};
+
+// Delete submission comment
+export const useDeleteSubmissionComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ commentId, submissionId }: { commentId: string; submissionId: string }) => {
+      const { error } = await supabase
+        .from('submission_comments')
+        .delete()
+        .eq('comment_id', commentId);
+
+      if (error) throw error;
+      return submissionId;
+    },
+    onSuccess: (submissionId) => {
+      queryClient.invalidateQueries({ queryKey: ['submission-comments', submissionId] });
+      toast.success('הערה נמחקה בהצלחה');
+    },
+    onError: (error: any) => {
+      toast.error(`שגיאה במחיקת הערה: ${error.message}`);
+    }
+  });
+};
+
+// Get submissions for a specific lead (for lead panel integration)
+export const useLeadSubmissions = (leadId: string) => {
+  return useQuery<EnhancedSubmission[]>({
+    queryKey: ['lead-submissions', leadId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select(`
+          *,
+          clients(restaurant_name, contact_name, email, phone),
+          leads(restaurant_name, contact_name, email, phone)
+        `)
+        .eq('created_lead_id', leadId)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      return data as EnhancedSubmission[];
+    },
+    enabled: !!leadId,
+  });
+};
+
+// Advanced submission search and filtering
+export const useSubmissionsWithFilters = (filters: {
+  status?: SubmissionStatusKey;
+  clientId?: string;
+  editorId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  itemType?: 'dish' | 'cocktail' | 'drink';
+}) => {
+  return useQuery<EnhancedSubmission[]>({
+    queryKey: ['submissions-filtered', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('customer_submissions')
+        .select(`
+          *,
+          clients(restaurant_name, contact_name, email, phone),
+          leads(restaurant_name, contact_name, email, phone)
+        `);
+
+      // Apply filters
+      if (filters.status) {
+        query = query.eq('submission_status', filters.status);
+      }
+      if (filters.clientId) {
+        query = query.eq('client_id', filters.clientId);
+      }
+      if (filters.editorId) {
+        query = query.eq('assigned_editor_id', filters.editorId);
+      }
+      if (filters.itemType) {
+        query = query.eq('item_type', filters.itemType);
+      }
+      if (filters.dateFrom) {
+        query = query.gte('uploaded_at', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        query = query.lte('uploaded_at', filters.dateTo);
+      }
+
+      query = query.order('uploaded_at', { ascending: false });
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as EnhancedSubmission[];
+    },
+  });
+};

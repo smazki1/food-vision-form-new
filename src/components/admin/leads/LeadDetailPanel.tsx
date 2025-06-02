@@ -61,6 +61,7 @@ import { toast } from 'sonner';
 import { FollowUpScheduler } from './FollowUpScheduler';
 import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
 import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
+import { SubmissionsSection } from './SubmissionsSection';
 
 interface LeadDetailPanelProps {
   leadId: string;
@@ -452,11 +453,12 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
         <div className="mt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="details">פרטים</TabsTrigger>
               <TabsTrigger value="costs">עלויות</TabsTrigger>
               <TabsTrigger value="activity">פעילות</TabsTrigger>
               <TabsTrigger value="follow-up">מעקב</TabsTrigger>
+              <TabsTrigger value="submissions">הגשות</TabsTrigger>
             </TabsList>
 
             {/* Details Tab */}
@@ -940,6 +942,11 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Submissions Tab */}
+            <TabsContent value="submissions" className="space-y-6 mt-6">
+              <SubmissionsSection leadId={leadId} />
             </TabsContent>
           </Tabs>
         </div>

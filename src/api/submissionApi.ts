@@ -26,14 +26,19 @@ export type Submission = {
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
-  target_completion_date: string | null;  // Adding this field
-  priority: string | null;  // Adding this field
-  clients?: { restaurant_name: string; contact_name: string; email: string; phone: string }; // Adding this property to match the actual data structure
-  leads?: { restaurant_name: string; contact_name: string; email: string; phone: string }; // Adding leads support
-  submission_contact_name?: string | null; // For unlinked submissions
-  submission_contact_email?: string | null; // For unlinked submissions
-  submission_contact_phone?: string | null; // For unlinked submissions
-  created_lead_id?: string | null; // Reference to created lead
+  target_completion_date: string | null;
+  priority: string | null;
+  // Enhanced fields for comprehensive submission management
+  lora_link?: string | null;
+  lora_name?: string | null;
+  fixed_prompt?: string | null;
+  created_lead_id?: string | null;
+  // Related data
+  clients?: { restaurant_name: string; contact_name: string; email: string; phone: string };
+  leads?: { restaurant_name: string; contact_name: string; email: string; phone: string };
+  submission_contact_name?: string | null;
+  submission_contact_email?: string | null;
+  submission_contact_phone?: string | null;
 };
 
 // Get all submissions for a client
