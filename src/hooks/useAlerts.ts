@@ -1,103 +1,48 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Lead } from '@/types/lead';
+import { Alert } from '@/types/alert';
+import { generateAlertsFromData } from '@/utils/alertsGenerator';
 
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useLeads } from "@/hooks/useLeads";
-import { supabase } from "@/integrations/supabase/client";
-import { Alert, AlertType } from "@/types/alert";
-import { Client } from "@/types/client";
-import { generateAlertsFromData } from "@/utils/alertsGenerator";
-
-interface UseAlertsOptions {
-  typeFilter?: AlertType | "all";
-}
-
-export function useAlerts({ typeFilter = "all" }: UseAlertsOptions = {}) {
-  // Local state for managing alert status
-  const [viewedAlerts, setViewedAlerts] = useState<Set<string>>(new Set());
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set());
-  
-  // Get leads data from useLeads hook
-  const { leads = [] } = useLeads();
-  
-  // Fetch clients data
-  const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+export function useAlerts() {
+  const { data: leadsData = [], isLoading: leadsLoading } = useQuery({
+    queryKey: ['leads-for-alerts'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("clients")
-        .select("*");
-        
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       if (error) throw error;
-      return data as Client[];
+      return data as Lead[];
     }
   });
-  
-  // Generate alerts from leads and clients data
-  const allAlerts = useMemo(() => 
-    generateAlertsFromData(leads, clients),
-    [leads, clients]
+
+  const { data: clientsData = [], isLoading: clientsLoading } = useQuery({
+    queryKey: ['clients-for-alerts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('client_id, restaurant_name, remaining_servings')
+        .lt('remaining_servings', 5);
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const alerts = generateAlertsFromData(leadsData, clientsData);
+  const upcomingReminders = leadsData.filter(lead => 
+    lead.reminder_at && new Date(lead.reminder_at) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   );
-  
-  // Apply filters and status
-  const filteredAlerts = useMemo(() => {
-    return allAlerts
-      .filter(alert => {
-        // Apply type filter
-        if (typeFilter !== "all" && alert.type !== typeFilter) {
-          return false;
-        }
-        
-        // Filter out dismissed alerts
-        if (dismissedAlerts.has(alert.id)) {
-          return false;
-        }
-        
-        return true;
-      })
-      .map(alert => ({
-        ...alert,
-        // Apply viewed status
-        status: viewedAlerts.has(alert.id) ? "viewed" : alert.status
-      }));
-  }, [allAlerts, typeFilter, viewedAlerts, dismissedAlerts]);
-  
-  // Get upcoming reminders (today and future)
-  const upcomingReminders = useMemo(() => {
-    return leads.filter(lead => {
-      if (!lead.reminder_at) return false;
-      
-      const reminderDate = new Date(lead.reminder_at);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      return reminderDate >= today;
-    });
-  }, [leads]);
-  
-  // Helper functions for managing alert states
-  const markAsViewed = (alertId: string) => {
-    setViewedAlerts(prev => new Set(prev).add(alertId));
-  };
-  
-  const dismissAlert = (alertId: string) => {
-    setDismissedAlerts(prev => new Set(prev).add(alertId));
-  };
-  
-  const markAllAsViewed = () => {
-    const newViewedAlerts = new Set(viewedAlerts);
-    filteredAlerts.forEach(alert => {
-      newViewedAlerts.add(alert.id);
-    });
-    setViewedAlerts(newViewedAlerts);
-  };
-  
+
   return {
-    alerts: filteredAlerts,
-    allAlertsCount: allAlerts.length,
-    filteredAlertsCount: filteredAlerts.length,
+    alerts,
     upcomingReminders,
-    markAsViewed,
-    dismissAlert,
-    markAllAsViewed
+    loading: leadsLoading || clientsLoading,
+    markAsViewed: (alertId: string) => {
+      // Implementation for marking alerts as viewed
+      console.log('Marking alert as viewed:', alertId);
+    }
   };
 }

@@ -1,3 +1,4 @@
+
 import { Database } from "@/integrations/supabase/types";
 
 // Legacy Lead type - kept for backward compatibility during migration
@@ -24,6 +25,7 @@ export type LeadSource = Database["public"]["Enums"]["lead_source_type"];
 // Enhanced Lead type with comprehensive CRM fields
 export type Lead = {
   lead_id: string;
+  id?: string; // Legacy compatibility
   restaurant_name: string;
   contact_name: string;
   phone: string;
@@ -58,6 +60,8 @@ export type Lead = {
   notes?: string;
   next_follow_up_notes?: string;
   reminder_notes?: string;
+  reminder_at?: string | null; // Added for compatibility
+  reminder_details?: string | null; // Added for compatibility
   
   // Conversion tracking
   client_id?: string;
@@ -156,6 +160,17 @@ export enum LeadStatusEnum {
   ARCHIVED = 'archived'
 }
 
+// Add LeadSourceEnum
+export enum LeadSourceEnum {
+  WEBSITE = 'website',
+  REFERRAL = 'referral',
+  FACEBOOK = 'facebook',
+  INSTAGRAM = 'instagram',
+  CAMPAIGN = 'campaign',
+  TELEMARKETING = 'telemarketing',
+  OTHER = 'other'
+}
+
 export const AI_TRAINING_TIERS = {
   TIER_25: { cost: 2.5, label: 'אימון $2.5' },
   TIER_15: { cost: 1.5, label: 'אימון $1.5' },
@@ -222,6 +237,27 @@ export const LEAD_STATUS_DISPLAY: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.ARCHIVED]: 'ארכיון'
 };
 
+// Lead source mapping
+export const LEAD_SOURCE_DB_MAP: Record<LeadSourceEnum, string> = {
+  [LeadSourceEnum.WEBSITE]: 'אתר',
+  [LeadSourceEnum.REFERRAL]: 'הפניה',
+  [LeadSourceEnum.FACEBOOK]: 'פייסבוק',
+  [LeadSourceEnum.INSTAGRAM]: 'אינסטגרם',
+  [LeadSourceEnum.CAMPAIGN]: 'קמפיין',
+  [LeadSourceEnum.TELEMARKETING]: 'טלמרקטינג',
+  [LeadSourceEnum.OTHER]: 'אחר'
+};
+
+export const LEAD_SOURCE_DISPLAY: Record<LeadSourceEnum, string> = {
+  [LeadSourceEnum.WEBSITE]: 'אתר',
+  [LeadSourceEnum.REFERRAL]: 'הפניה',
+  [LeadSourceEnum.FACEBOOK]: 'פייסבוק',
+  [LeadSourceEnum.INSTAGRAM]: 'אינסטגרם',
+  [LeadSourceEnum.CAMPAIGN]: 'קמפיין',
+  [LeadSourceEnum.TELEMARKETING]: 'טלמרקטינג',
+  [LeadSourceEnum.OTHER]: 'אחר'
+};
+
 // Function to map English Enum value (used in code) to Hebrew string (used in DB)
 export const mapLeadStatusToHebrew = (statusEnum?: LeadStatusEnum): string | undefined => {
   if (!statusEnum) return undefined;
@@ -240,6 +276,22 @@ export const mapHebrewToLeadStatusEnum = (hebrewStatus?: string): LeadStatusEnum
     entry = Object.entries(LEAD_STATUS_DISPLAY).find(([, value]) => value === hebrewStatus);
   }
   return entry ? entry[0] as LeadStatusEnum : undefined;
+};
+
+// Function to map English Enum value (used in code) to Hebrew string (used in DB)
+export const mapLeadSourceToHebrew = (sourceEnum?: LeadSourceEnum): string | undefined => {
+  if (!sourceEnum) return undefined;
+  return LEAD_SOURCE_DB_MAP[sourceEnum];
+};
+
+// Function to map Hebrew string (from DB or UI) to English Enum value (for code use)
+export const mapHebrewToLeadSourceEnum = (hebrewSource?: string): LeadSourceEnum | undefined => {
+  if (!hebrewSource) return undefined;
+  let entry = Object.entries(LEAD_SOURCE_DB_MAP).find(([, value]) => value === hebrewSource);
+  if (!entry) {
+    entry = Object.entries(LEAD_SOURCE_DISPLAY).find(([, value]) => value === hebrewSource);
+  }
+  return entry ? entry[0] as LeadSourceEnum : undefined;
 };
 
 // Enhanced filters
