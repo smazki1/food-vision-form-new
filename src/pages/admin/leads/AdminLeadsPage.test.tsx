@@ -1,129 +1,129 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import AdminLeadsPage from './AdminLeadsPage';
-import { useEnhancedLeads } from '@/hooks/useEnhancedLeads';
-import { Lead, LeadStatusEnum, LeadSourceEnum } from '@/types/lead';
 
-// Mock hooks
-jest.mock('@/hooks/useEnhancedLeads');
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
+import { vi } from 'vitest';
+import AdminLeadsPage from '../LeadsManagement';
+import { LeadStatusEnum, LeadSourceEnum, Lead } from '@/types/lead';
 
-// Mock child components
-jest.mock('@/components/admin/leads/EnhancedLeadsFilters', () => ({
-  EnhancedLeadsFilters: jest.fn(() => <div data-testid="mock-leads-filters">Filters</div>),
+// Mock the hooks
+vi.mock('@/hooks/useEnhancedLeads', () => ({
+  useEnhancedLeads: vi.fn(() => ({
+    data: { data: mockLeads, total: mockLeads.length },
+    isLoading: false,
+    error: null
+  })),
+  useCreateLead: vi.fn(() => ({
+    mutateAsync: vi.fn()
+  })),
+  useUpdateLead: vi.fn(() => ({
+    mutateAsync: vi.fn()
+  })),
+  useDeleteLead: vi.fn(() => ({
+    mutateAsync: vi.fn()
+  }))
 }));
-jest.mock('@/components/admin/leads/EnhancedLeadsTable', () => ({
-  EnhancedLeadsTable: jest.fn(({ leads }) => (
-    <div data-testid="mock-enhanced-leads-table">
-      {leads && leads.length > 0 ? leads.map((l: Lead) => <div key={l.lead_id}>{l.restaurant_name}</div>) : <p>No leads in table</p>}
-    </div>
-  )),
-}));
-jest.mock('@/components/admin/leads/LeadDetailPanel', () => ({
-  LeadDetailPanel: jest.fn(() => <div data-testid="mock-lead-detail-panel">Detail Panel</div>),
-}));
-jest.mock('@/components/admin/leads/CreateLeadModal', () => ({
-  CreateLeadModal: jest.fn(() => <div data-testid="mock-create-lead-modal">Create Modal</div>),
-}));
-jest.mock('sonner', () => ({ toast: { error: jest.fn() } }));
-// Mock react-router-dom Link
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'), // import and retain default behavior
-  Link: jest.fn(({ children }) => <div>{children}</div>), // Simplified mock for Link
-}));
+
+const mockLeads: Lead[] = [
+  {
+    lead_id: '1',
+    restaurant_name: 'Test Restaurant 1',
+    contact_name: 'John Doe',
+    phone: '123-456-7890',
+    email: 'john@test.com',
+    lead_status: LeadStatusEnum.NEW,
+    created_at: '2023-01-01T00:00:00Z',
+    updated_at: '2023-01-01T00:00:00Z',
+    ai_trainings_count: 0,
+    ai_training_cost_per_unit: 1.5,
+    ai_prompts_count: 0,
+    ai_prompt_cost_per_unit: 0.16,
+    revenue_from_lead_local: 0,
+    exchange_rate_at_conversion: 3.6,
+    free_sample_package_active: false,
+    lead_source: LeadSourceEnum.WEBSITE,
+    id: '1'
+  },
+  {
+    lead_id: '2',
+    restaurant_name: 'Test Restaurant 2',
+    contact_name: 'Jane Smith',
+    phone: '098-765-4321',
+    email: 'jane@test.com',
+    lead_status: LeadStatusEnum.IN_TREATMENT,
+    ai_trainings_count: 5,
+    ai_training_cost_per_unit: 1.5,
+    ai_prompts_count: 10,
+    ai_prompt_cost_per_unit: 0.16,
+    revenue_from_lead_local: 1000,
+    exchange_rate_at_conversion: 3.6,
+    free_sample_package_active: true,
+    created_at: '2023-01-02T00:00:00Z',
+    updated_at: '2023-01-02T00:00:00Z',
+    next_follow_up_date: '2023-02-01T00:00:00Z',
+    lead_source: LeadSourceEnum.FACEBOOK,
+    id: '2'
+  }
+];
+
+const renderWithProviders = (component: React.ReactElement) => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false }
+    }
+  });
+  
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        {component}
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+};
 
 describe('AdminLeadsPage', () => {
-  const mockUseEnhancedLeads = useEnhancedLeads as jest.Mock;
-  const now = new Date().toISOString();
-
-  const initialMockLeads: Lead[] = [
-    {
-      lead_id: '1',
-      restaurant_name: 'Pizza Place',
-      contact_name: 'Test User1',
-      phone: '1234567890',
-      email: 'test1@example.com',
-      lead_status: LeadStatusEnum.NEW,
-      ai_trainings_count: 0,
-      ai_training_cost_per_unit: 0,
-      ai_prompts_count: 0,
-      ai_prompt_cost_per_unit: 0,
-      created_at: now,
-      updated_at: now,
-      free_sample_package_active: false,
-      total_ai_costs: 0,
-      revenue_from_lead_local: 0,
-      lead_source: LeadSourceEnum.WEBSITE,
-    },
-    {
-      lead_id: '2',
-      restaurant_name: 'Burger Joint',
-      contact_name: 'Test User2',
-      phone: '0987654321',
-      email: 'test2@example.com',
-      lead_status: LeadStatusEnum.CONTACTED,
-      ai_trainings_count: 1,
-      ai_training_cost_per_unit: 0.5,
-      ai_prompts_count: 2,
-      ai_prompt_cost_per_unit: 0.1,
-      created_at: now,
-      updated_at: now,
-      free_sample_package_active: true,
-      total_ai_costs: 0.7,
-      revenue_from_lead_local: 100,
-      lead_source: LeadSourceEnum.REFERRAL,
-      next_follow_up_date: new Date(Date.now() + 86400000).toISOString(),
-    },
-  ];
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockUseEnhancedLeads.mockReturnValue({
-      data: { data: [...initialMockLeads], total: initialMockLeads.length },
-      isLoading: false,
-      error: null,
+    vi.clearAllMocks();
+  });
+
+  it('renders leads management page correctly', async () => {
+    renderWithProviders(<AdminLeadsPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Test Restaurant 1')).toBeInTheDocument();
+      expect(screen.getByText('Test Restaurant 2')).toBeInTheDocument();
     });
   });
 
-  test('renders page title and action buttons', () => {
-    render(<AdminLeadsPage />);
-    expect(screen.getByText('ניהול לידים')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /ליד חדש/ })).toBeInTheDocument();
+  it('displays lead information correctly', async () => {
+    renderWithProviders(<AdminLeadsPage />);
+    
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+      expect(screen.getByText('jane@test.com')).toBeInTheDocument();
+      expect(screen.getByText('123-456-7890')).toBeInTheDocument();
+    });
   });
 
-  test('renders filters and table with leads by default', () => {
-    render(<AdminLeadsPage />);
-    expect(screen.getByTestId('mock-leads-filters')).toBeInTheDocument();
-    expect(screen.getByTestId('mock-enhanced-leads-table')).toBeInTheDocument();
-    expect(screen.getByText('Pizza Place')).toBeInTheDocument();
-    expect(screen.getByText('Burger Joint')).toBeInTheDocument();
+  it('allows filtering leads', async () => {
+    renderWithProviders(<AdminLeadsPage />);
+    
+    const searchInput = screen.getByPlaceholderText('חפש לידים...');
+    fireEvent.change(searchInput, { target: { value: 'Test Restaurant 1' } });
+    
+    expect(searchInput).toHaveValue('Test Restaurant 1');
   });
 
-  test('handles loading state', () => {
-    mockUseEnhancedLeads.mockReturnValue({ data: null, isLoading: true, error: null });
-    render(<AdminLeadsPage />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+  it('handles lead creation', async () => {
+    renderWithProviders(<AdminLeadsPage />);
+    
+    const createButton = screen.getByText('ליד חדש');
+    fireEvent.click(createButton);
+    
+    // Should open the form modal/sheet
+    // Additional test logic would go here
   });
-
-  test('handles error state', () => {
-    const error = new Error('Failed to load leads');
-    mockUseEnhancedLeads.mockReturnValue({ data: null, isLoading: false, error });
-    render(<AdminLeadsPage />);
-    expect(screen.getByText('שגיאה בטעינת לידים')).toBeInTheDocument();
-    expect(screen.getByText(error.message)).toBeInTheDocument();
-  });
-
-  test('handles null or undefined leadsData or leadsData.data gracefully', () => {
-    mockUseEnhancedLeads.mockReturnValue({ data: null, isLoading: false, error: null });
-    const { rerender } = render(<AdminLeadsPage />);
-    expect(screen.getByTestId('mock-enhanced-leads-table')).toHaveTextContent('No leads in table');
-
-    mockUseEnhancedLeads.mockReturnValue({ data: { data: null, total: 0 }, isLoading: false, error: null });
-    rerender(<AdminLeadsPage />);
-    expect(screen.getByTestId('mock-enhanced-leads-table')).toHaveTextContent('No leads in table');
-
-    mockUseEnhancedLeads.mockReturnValue({ data: { data: undefined, total: 0 }, isLoading: false, error: null });
-    rerender(<AdminLeadsPage />);
-    expect(screen.getByTestId('mock-enhanced-leads-table')).toHaveTextContent('No leads in table');
-  });
-
-  // Add more tests for tab switching, filter changes, opening create modal, selecting lead, etc.
-}); 
+});

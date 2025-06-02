@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback } from "react";
 import { 
   useEnhancedLeads, 
@@ -16,7 +17,7 @@ import { LeadsFilterPopover } from "@/components/admin/leads/filters/LeadsFilter
 import { ActiveFiltersBadges } from "@/components/admin/leads/filters/ActiveFiltersBadges";
 import { LeadsContent } from "@/components/admin/leads/LeadsContent";
 import { LeadFormSheet } from "@/components/admin/leads/LeadFormSheet";
-import LeadDetailsSheet from "@/components/admin/leads/LeadDetailsSheet";
+import { LeadDetailsSheet } from "@/components/admin/leads/LeadDetailsSheet";
 
 const LeadsManagement: React.FC = () => {
   // State for filters
@@ -112,7 +113,10 @@ const LeadsManagement: React.FC = () => {
     try {
       setFormLoading(true);
       if (currentLeadForForm && currentLeadForForm.lead_id) {
-        await updateLeadMutation.mutateAsync({ lead_id: currentLeadForForm.lead_id, ...formData });
+        await updateLeadMutation.mutateAsync({ 
+          leadId: currentLeadForForm.lead_id, 
+          updates: formData 
+        });
       } else {
         await createLeadMutation.mutateAsync(formData);
       }
@@ -127,7 +131,10 @@ const LeadsManagement: React.FC = () => {
   
   const handleUpdateLeadDetails = async (id: string, updates: Partial<Lead>) => {
     try {
-      await updateLeadMutation.mutateAsync({ lead_id: id, ...updates });
+      await updateLeadMutation.mutateAsync({ 
+        leadId: id, 
+        updates: updates 
+      });
       if (selectedLeadForDetails && selectedLeadForDetails.lead_id === id) {
         setSelectedLeadForDetails(prev => prev ? {...prev, ...updates} : null);
       }
@@ -260,8 +267,7 @@ const LeadsManagement: React.FC = () => {
               setSelectedLeadForDetails(null);
             }}
             lead={selectedLeadForDetails}
-            onUpdate={handleUpdateLeadDetails}
-            onDelete={handleDeleteLead}
+            onSave={(leadData) => handleUpdateLeadDetails(selectedLeadForDetails.lead_id, leadData)}
           />
         )}
       </div>

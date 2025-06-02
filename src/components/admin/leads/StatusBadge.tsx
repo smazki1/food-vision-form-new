@@ -21,7 +21,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
       case LeadStatusEnum.CONVERTED_TO_CLIENT:
         return "converted";
       case LeadStatusEnum.ARCHIVED:
-        return "archived";
+        return "secondary";
       default:
         return "default";
     }
