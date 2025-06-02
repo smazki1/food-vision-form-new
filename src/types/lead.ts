@@ -1,3 +1,4 @@
+
 // Database types
 export type LeadStatus = 'ליד חדש' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
 export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינסטגרם' | 'גוגל' | 'אחר';
@@ -101,6 +102,23 @@ export interface Lead {
   ai_training_15_count?: number;
   ai_training_25_count?: number;
   is_archived?: boolean;
+}
+
+// Lead activity and comment interfaces
+export interface LeadActivity {
+  activity_id: string;
+  lead_id: string;
+  activity_description: string;
+  activity_timestamp: string;
+  user_id?: string;
+}
+
+export interface LeadComment {
+  comment_id: string;
+  lead_id: string;
+  comment_text: string;
+  comment_timestamp: string;
+  user_id?: string;
 }
 
 // Legacy Lead interface for backward compatibility

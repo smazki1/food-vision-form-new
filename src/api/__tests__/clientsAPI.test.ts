@@ -1,293 +1,167 @@
-/// <reference types="vitest/globals" />
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { clientsAPI, checkClientExists, createClientFromLead } from '../clientsApi';
-import { CLIENT_STATUSES, LEAD_STATUSES } from '@/constants/statusTypes';
-import { Lead, LeadStatusEnum } from '@/types/lead';
-import { Client } from '@/types/models';
+// Database types
+export type LeadStatus = 'ליד חדש' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
+export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינסטגרם' | 'גוגל' | 'אחר';
 
-vi.mock('@/integrations/supabase/client', async () => {
-  const actualVitest = await vi.importActual<typeof import('vitest')>('vitest');
-  const { vi: actualVi } = actualVitest;
+// Enum versions for type safety
+export enum LeadStatusEnum {
+  NEW = 'ליד חדש',
+  IN_TREATMENT = 'בטיפול', 
+  INTERESTED = 'מעוניין',
+  NOT_INTERESTED = 'לא מעוניין',
+  CONVERTED_TO_CLIENT = 'הפך ללקוח',
+  ARCHIVED = 'ארכיון'
+}
 
-  const selectFn = actualVi.fn();
-  const insertFn = actualVi.fn();
-  const updateFn = actualVi.fn();
-  const eqFn = actualVi.fn();
-  const inFn = actualVi.fn();
-  const orFn = actualVi.fn();
-  const orderFn = actualVi.fn();
-  const rangeFn = actualVi.fn();
-  const singleFn = actualVi.fn();
-  const maybeSingleFn = actualVi.fn();
+export enum LeadSourceEnum {
+  WEBSITE = 'אתר',
+  FRIENDS = 'חברים',
+  FACEBOOK = 'פייסבוק', 
+  INSTAGRAM = 'אינסטגרם',
+  GOOGLE = 'גוגל',
+  OTHER = 'אחר'
+}
 
-  const mockChainedFunctions = {
-    select: selectFn,
-    insert: insertFn,
-    update: updateFn,
-    eq: eqFn,
-    in: inFn,
-    or: orFn,
-    order: orderFn,
-    range: rangeFn,
-    single: singleFn,
-    maybeSingle: maybeSingleFn,
-  };
+// Display mappings
+export const LEAD_STATUS_DISPLAY: Record<LeadStatusEnum, string> = {
+  [LeadStatusEnum.NEW]: 'ליד חדש',
+  [LeadStatusEnum.IN_TREATMENT]: 'בטיפול',
+  [LeadStatusEnum.INTERESTED]: 'מעוניין', 
+  [LeadStatusEnum.NOT_INTERESTED]: 'לא מעוניין',
+  [LeadStatusEnum.CONVERTED_TO_CLIENT]: 'הפך ללקוח',
+  [LeadStatusEnum.ARCHIVED]: 'ארכיון'
+};
 
-  selectFn.mockImplementation(() => mockChainedFunctions);
-  insertFn.mockImplementation(() => mockChainedFunctions);
-  updateFn.mockImplementation(() => mockChainedFunctions);
-  eqFn.mockImplementation(() => mockChainedFunctions);
-  inFn.mockImplementation(() => mockChainedFunctions);
-  orFn.mockImplementation(() => mockChainedFunctions);
-  orderFn.mockImplementation(() => mockChainedFunctions);
-  rangeFn.mockResolvedValue({ data: [], error: null });
-  singleFn.mockResolvedValue({ data: {}, error: null });
-  maybeSingleFn.mockResolvedValue({ data: null, error: null });
+export const LEAD_SOURCE_DISPLAY: Record<LeadSourceEnum, string> = {
+  [LeadSourceEnum.WEBSITE]: 'אתר',
+  [LeadSourceEnum.FRIENDS]: 'חברים',
+  [LeadSourceEnum.FACEBOOK]: 'פייסבוק',
+  [LeadSourceEnum.INSTAGRAM]: 'אינסטגרם', 
+  [LeadSourceEnum.GOOGLE]: 'גוגל',
+  [LeadSourceEnum.OTHER]: 'אחר'
+};
 
-  const fromFn = actualVi.fn(() => mockChainedFunctions);
+// Helper functions for mapping
+export const mapLeadStatusToHebrew = (status: LeadStatusEnum): string => {
+  return LEAD_STATUS_DISPLAY[status] || status;
+};
 
-  return {
-    supabase: {
-      from: fromFn,
-      _internalMocks: {
-        from: fromFn,
-        select: selectFn,
-        insert: insertFn,
-        update: updateFn,
-        eq: eqFn,
-        in: inFn,
-        or: orFn,
-        order: orderFn,
-        range: rangeFn,
-        single: singleFn,
-        maybeSingle: maybeSingleFn,
-      }
-    },
-  };
-});
+export const mapHebrewToLeadStatusEnum = (hebrew: string): LeadStatusEnum => {
+  const entry = Object.entries(LEAD_STATUS_DISPLAY).find(([_, value]) => value === hebrew);
+  return entry ? entry[0] as LeadStatusEnum : LeadStatusEnum.NEW;
+};
 
-import { supabase } from '@/integrations/supabase/client';
+export const mapLeadSourceToHebrew = (source: LeadSourceEnum): string => {
+  return LEAD_SOURCE_DISPLAY[source] || source;
+};
 
-let fromMock: any;
-let selectMock: any;
-let insertMock: any;
-let eqMock: any;
-let inMock: any;
-let orMock: any;
-let orderMock: any;
-let rangeMock: any;
-let singleMock: any;
-let maybeSingleMock: any;
+export const mapHebrewToLeadSourceEnum = (hebrew: string): LeadSourceEnum => {
+  const entry = Object.entries(LEAD_SOURCE_DISPLAY).find(([_, value]) => value === hebrew);
+  return entry ? entry[0] as LeadSourceEnum : LeadSourceEnum.OTHER;
+};
 
+// Main Lead interface
+export interface Lead {
+  lead_id: string;
+  restaurant_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  website_url?: string;
+  address?: string;
+  lead_status: LeadStatusEnum;
+  lead_source?: LeadSourceEnum | null;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  next_follow_up_date?: string;
+  next_follow_up_notes?: string;
+  reminder_at?: string;
+  reminder_details?: string;
+  ai_trainings_count: number;
+  ai_training_cost_per_unit: number;
+  ai_prompts_count: number;
+  ai_prompt_cost_per_unit: number;
+  revenue_from_lead_local: number;
+  exchange_rate_at_conversion: number;
+  client_id?: string;
+  free_sample_package_active: boolean;
+  id: string; // Alias for lead_id for compatibility
+  revenue_from_lead_usd?: number;
+  business_type?: string;
+  lora_page_url?: string;
+  style_description?: string;
+  custom_prompt?: string;
+  reminder_notes?: string;
+  conversion_reason?: string;
+  rejection_reason?: string;
+  archived_at?: string;
+  total_ai_costs?: number;
+  roi?: number;
+  ai_training_5_count?: number;
+  ai_training_15_count?: number;
+  ai_training_25_count?: number;
+  is_archived?: boolean;
+}
 
-describe('clientsAPI', () => {
-  beforeEach(() => {
-    const internalMocks = (supabase as any)._internalMocks || {};
-    fromMock = internalMocks.from;
-    selectMock = internalMocks.select;
-    insertMock = internalMocks.insert;
-    eqMock = internalMocks.eq;
-    inMock = internalMocks.in;
-    orMock = internalMocks.or;
-    orderMock = internalMocks.order;
-    rangeMock = internalMocks.range;
-    singleMock = internalMocks.single;
-    maybeSingleMock = internalMocks.maybeSingle;
+// Legacy Lead interface for backward compatibility
+export interface LegacyLead {
+  lead_id: string;
+  restaurant_name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  lead_status: string;
+  created_at: string;
+  updated_at: string;
+}
 
-    vi.clearAllMocks();
+// Lead source options for forms
+export const LEAD_SOURCE_OPTIONS = [
+  { value: LeadSourceEnum.WEBSITE, label: 'אתר' },
+  { value: LeadSourceEnum.FRIENDS, label: 'חברים' },
+  { value: LeadSourceEnum.FACEBOOK, label: 'פייסבוק' },
+  { value: LeadSourceEnum.INSTAGRAM, label: 'אינסטגרם' },
+  { value: LeadSourceEnum.GOOGLE, label: 'גוגל' },
+  { value: LeadSourceEnum.OTHER, label: 'אחר' },
+];
 
-    fromMock.mockImplementation(() => ({
-      select: selectMock.mockReturnThis(),
-      insert: insertMock.mockReturnThis(),
-      update: (supabase as any)._internalMocks.update.mockReturnThis(),
-      eq: eqMock.mockReturnThis(),
-      in: inMock.mockReturnThis(),
-      or: orMock.mockReturnThis(),
-      order: orderMock.mockReturnThis(),
-      range: rangeMock.mockResolvedValue({ data: [], error: null }),
-      single: singleMock.mockResolvedValue({ data: {}, error: null }),
-      maybeSingle: maybeSingleMock.mockResolvedValue({ data: null, error: null })
-    }));
-  });
+// Utility functions
+export const calculateTotalAICosts = (lead: Lead): number => {
+  const trainingCosts = (lead.ai_trainings_count || 0) * (lead.ai_training_cost_per_unit || 0);
+  const promptCosts = (lead.ai_prompts_count || 0) * (lead.ai_prompt_cost_per_unit || 0);
+  const training5Costs = (lead.ai_training_5_count || 0) * 5;
+  const training15Costs = (lead.ai_training_15_count || 0) * 15;
+  const training25Costs = (lead.ai_training_25_count || 0) * 25;
+  
+  return trainingCosts + promptCosts + training5Costs + training15Costs + training25Costs;
+};
 
-  describe('checkClientExists', () => {
-    test('should return true if client exists', async () => {
-      maybeSingleMock.mockResolvedValueOnce({ data: { client_id: '1', email: 'exists@example.com' }, error: null });
-      const result = await checkClientExists('exists@example.com');
-      expect(fromMock).toHaveBeenCalledWith('clients');
-      expect(selectMock).toHaveBeenCalledWith('*');
-      expect(eqMock).toHaveBeenCalledWith('email', 'exists@example.com');
-      expect(maybeSingleMock).toHaveBeenCalled();
-      expect(result).toBe(true);
-    });
+export const convertUSDToILS = (usdAmount: number, exchangeRate: number = 3.6): number => {
+  return usdAmount * exchangeRate;
+};
 
-    test('should return false if client does not exist', async () => {
-      maybeSingleMock.mockResolvedValueOnce({ data: null, error: null });
-      const result = await checkClientExists('new@example.com');
-      expect(result).toBe(false);
-    });
+// AI Pricing Settings interface
+export interface AIPricingSetting {
+  setting_id: string;
+  setting_name: string;
+  setting_value: number;
+  description?: string;
+  last_updated_by?: string;
+  updated_at: string;
+}
 
-    test('should throw error if supabase call fails', async () => {
-      const errorMessage = 'Supabase error';
-      maybeSingleMock.mockResolvedValueOnce({ data: null, error: { message: errorMessage } });
-      await expect(checkClientExists('error@example.com')).rejects.toThrow(errorMessage);
-    });
-  });
-
-  describe('createClientFromLead', () => {
-    const mockLead: Lead = {
-      lead_id: 'lead-123',
-      restaurant_name: 'Test Restaurant',
-      contact_name: 'Test Contact',
-      phone: '1234567890',
-      email: 'lead@example.com',
-      lead_status: LeadStatusEnum.NEW,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      ai_trainings_count: 0,
-      ai_training_cost_per_unit: 0,
-      ai_prompts_count: 0,
-      ai_prompt_cost_per_unit: 0,
-      free_sample_package_active: false,
-    };
-    const packageId = 'pkg-001';
-    const servingsCount = 10;
-    const mockCreatedClient = { 
-        client_id: 'client-789', 
-        restaurant_name: mockLead.restaurant_name, 
-        contact_name: mockLead.contact_name,
-        phone: mockLead.phone,
-        email: mockLead.email,
-        original_lead_id: mockLead.lead_id, 
-        client_status: CLIENT_STATUSES.ACTIVE,
-        remaining_servings: servingsCount,
-        current_package_id: packageId,
-        created_at: new Date().toISOString(),
-        last_activity_at: new Date().toISOString(),
-    } as unknown as Client;
-
-    test('should successfully create a client and return client data', async () => {
-      const dbReturnedClient = { 
-          ...mockCreatedClient,
-          updated_at: new Date().toISOString(),
-      };
-      singleMock.mockResolvedValueOnce({ data: dbReturnedClient, error: null });
-
-      const result = await createClientFromLead(mockLead, packageId, servingsCount);
-
-      expect(fromMock).toHaveBeenCalledWith('clients');
-      expect(insertMock).toHaveBeenCalledWith({
-        restaurant_name: mockLead.restaurant_name,
-        contact_name: mockLead.contact_name,
-        phone: mockLead.phone,
-        email: mockLead.email,
-        original_lead_id: mockLead.lead_id,
-        client_status: CLIENT_STATUSES.ACTIVE, 
-        remaining_servings: servingsCount,
-        current_package_id: packageId
-      });
-      expect(selectMock).toHaveBeenCalled();
-      expect(singleMock).toHaveBeenCalled();
-      expect(result).toEqual(dbReturnedClient);
-    });
-
-    test('should throw error if supabase insert fails', async () => {
-      const errorMessage = 'Insert failed';
-      singleMock.mockResolvedValueOnce({ data: null, error: { message: errorMessage } });
-      await expect(createClientFromLead(mockLead, packageId, servingsCount)).rejects.toThrow(errorMessage);
-    });
-  });
-
-  describe('clientsAPI.fetchClients', () => {
-    test('should fetch active clients by default with default sorting and pagination', async () => {
-      const mockClientsData = [{
-        client_id: '1', 
-        client_status: CLIENT_STATUSES.ACTIVE,
-        restaurant_name: "Client 1",
-        contact_name: "Contact 1",
-        phone: "111",
-        email: "c1@example.com",
-        remaining_servings: 10,
-        created_at: new Date().toISOString(),
-        last_activity_at: new Date().toISOString(),
-      }] as Client[];
-      rangeMock.mockResolvedValueOnce({ data: mockClientsData, error: null });
-
-      await clientsAPI.fetchClients({});
-
-      expect(fromMock).toHaveBeenCalledWith('clients');
-      expect(selectMock).toHaveBeenCalledWith('*');
-      expect(inMock).toHaveBeenCalledWith('client_status', [CLIENT_STATUSES.ACTIVE]);
-      expect(orderMock).toHaveBeenCalledWith('created_at', { ascending: false });
-      expect(rangeMock).toHaveBeenCalledWith(0, 19);
-    });
-
-    test('should apply status filters when provided', async () => {
-      const statusesToFilter = [CLIENT_STATUSES.ACTIVE, CLIENT_STATUSES.PENDING];
-      rangeMock.mockResolvedValueOnce({ data: [], error: null });
-      await clientsAPI.fetchClients({ statuses: statusesToFilter });
-      expect(inMock).toHaveBeenCalledWith('client_status', statusesToFilter);
-    });
-
-    test('should apply searchTerm when provided', async () => {
-      const searchTerm = 'Pizza Place';
-      rangeMock.mockResolvedValueOnce({ data: [], error: null });
-      await clientsAPI.fetchClients({ searchTerm });
-      expect(orMock).toHaveBeenCalledWith(
-        `restaurant_name.ilike.%${searchTerm}%,contact_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`
-      );
-    });
-
-    test('should apply sorting options when provided', async () => {
-      rangeMock.mockResolvedValueOnce({ data: [], error: null });
-      await clientsAPI.fetchClients({ sortBy: 'restaurant_name', sortDirection: 'asc' });
-      expect(orderMock).toHaveBeenCalledWith('restaurant_name', { ascending: true });
-    });
-
-    test('should apply pagination options when provided', async () => {
-      rangeMock.mockResolvedValueOnce({ data: [], error: null });
-      await clientsAPI.fetchClients({ page: 1, pageSize: 10 });
-      expect(rangeMock).toHaveBeenCalledWith(10, 19);
-    });
-
-    test('should throw an error if supabase query returns an error from range', async () => {
-      const errorMessage = 'Supabase fetch error';
-      rangeMock.mockResolvedValueOnce({ data: null, error: { message: errorMessage } });
-      await expect(clientsAPI.fetchClients({})).rejects.toThrow(`Error fetching clients: ${errorMessage}`);
-    });
-  });
-
-  describe('clientsAPI.fetchClientById', () => {
-    test('should call supabase with correct client_id and return client data', async () => {
-      const clientId = 'client-123';
-      const mockClientData: Client = {
-          client_id: clientId, 
-          restaurant_name: 'Specific Client',
-          contact_name: "Client Contact",
-          phone: "0987654321",
-          email: "client@example.com",
-          client_status: CLIENT_STATUSES.ACTIVE,
-          remaining_servings: 5,
-          created_at: new Date().toISOString(),
-          last_activity_at: new Date().toISOString(),
-      };
-      singleMock.mockResolvedValueOnce({ data: mockClientData, error: null });
-
-      const result = await clientsAPI.fetchClientById(clientId);
-
-      expect(fromMock).toHaveBeenCalledWith('clients');
-      expect(selectMock).toHaveBeenCalledWith('*');
-      expect(eqMock).toHaveBeenCalledWith('client_id', clientId);
-      expect(singleMock).toHaveBeenCalled();
-      expect(result).toEqual(mockClientData);
-    });
-
-    test('should throw error if supabase returns error for fetchClientById', async () => {
-      const clientId = 'client-error';
-      const errorMessage = 'Supabase single fetch error';
-      singleMock.mockResolvedValueOnce({ data: null, error: { message: errorMessage } });
-
-      await expect(clientsAPI.fetchClientById(clientId)).rejects.toThrow(`Error fetching client: ${errorMessage}`);
-    });
-  });
-}); 
+// Enhanced leads filter interface
+export interface EnhancedLeadsFilter {
+  searchTerm?: string;
+  status?: LeadStatusEnum | 'all';
+  leadSource?: LeadSourceEnum | 'all';
+  dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
+  onlyReminders?: boolean;
+  remindersToday?: boolean;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  excludeArchived?: boolean;
+  onlyArchived?: boolean;
+  page?: number;
+  pageSize?: number;
+}

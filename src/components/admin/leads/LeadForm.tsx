@@ -18,9 +18,9 @@ import {
 
 interface LeadFormProps {
   lead?: Lead;
-  onSave: (data: Partial<Lead>) => void;
+  onSubmit: (data: Partial<Lead>) => void;
   onCancel: () => void;
-  mode?: 'create' | 'edit';
+  isLoading?: boolean;
 }
 
 interface FormData {
@@ -38,7 +38,7 @@ interface FormData {
   free_sample_package_active: boolean;
 }
 
-export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode = 'create' }) => {
+export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSubmit, onCancel, isLoading = false }) => {
   const [formData, setFormData] = useState<FormData>({
     restaurant_name: '',
     contact_name: '',
@@ -55,7 +55,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
   });
 
   useEffect(() => {
-    if (lead && mode === 'edit') {
+    if (lead) {
       setFormData({
         restaurant_name: lead.restaurant_name || '',
         contact_name: lead.contact_name || '',
@@ -71,7 +71,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
         free_sample_package_active: lead.free_sample_package_active || false,
       });
     }
-  }, [lead, mode]);
+  }, [lead]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -91,17 +91,17 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
 
     const dataToSave: Partial<Lead> = {
       ...formData,
-      reminder_at: formData.reminder_date ? new Date(formData.reminder_date).toISOString() : null,
+      reminder_at: formData.reminder_date ? new Date(formData.reminder_date).toISOString() : undefined,
       lead_source: formData.lead_source || null,
     };
 
-    onSave(dataToSave);
+    onSubmit(dataToSave);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{mode === 'create' ? 'Create Lead' : 'Edit Lead'}</CardTitle>
+        <CardTitle>{lead ? 'Edit Lead' : 'Create Lead'}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -169,7 +169,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
             <Label htmlFor="lead_status">Lead Status</Label>
             <Select onValueChange={(value) => handleSelectChange('lead_status', value as LeadStatusEnum)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a status" defaultValue={formData.lead_status} />
+                <SelectValue placeholder="Select a status" />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(LEAD_STATUS_DISPLAY).map(([key, value]) => (
@@ -182,7 +182,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
             <Label htmlFor="lead_source">Lead Source</Label>
             <Select onValueChange={(value) => handleSelectChange('lead_source', value as LeadSourceEnum)}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a source" defaultValue={formData.lead_source || ''} />
+                <SelectValue placeholder="Select a source" />
               </SelectTrigger>
               <SelectContent>
                 {LEAD_SOURCE_OPTIONS.map((option) => (
@@ -229,13 +229,17 @@ export const LeadForm: React.FC<LeadFormProps> = ({ lead, onSave, onCancel, mode
             />
           </div>
           <div className="flex justify-end">
-            <Button type="button" variant="ghost" onClick={onCancel}>
+            <Button type="button" variant="ghost" onClick={onCancel} disabled={isLoading}>
               Cancel
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save'}
+            </Button>
           </div>
         </form>
       </CardContent>
     </Card>
   );
 };
+
+export default LeadForm;

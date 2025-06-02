@@ -1,33 +1,27 @@
 
 import React from "react";
-import { LeadStatus } from "@/types/lead";
+import { LeadStatusEnum } from "@/types/lead";
 import { Badge } from "@/components/ui/badge";
 
 interface StatusBadgeProps {
-  status: LeadStatus;
+  status: LeadStatusEnum;
 }
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-  const getStatusBadgeVariant = (status: LeadStatus) => {
+  const getStatusBadgeVariant = (status: LeadStatusEnum) => {
     switch (status) {
-      case "ליד חדש":
+      case LeadStatusEnum.NEW:
         return "new-lead";
-      case "פנייה ראשונית בוצעה":
+      case LeadStatusEnum.IN_TREATMENT:
         return "initial-contact";
-      case "מעוניין":
+      case LeadStatusEnum.INTERESTED:
         return "interested";
-      case "לא מעוניין":
+      case LeadStatusEnum.NOT_INTERESTED:
         return "not-interested";
-      case "נקבעה פגישה/שיחה":
-        return "meeting-scheduled";
-      case "הדגמה בוצעה":
-        return "demo-completed";
-      case "הצעת מחיר נשלחה":
-        return "quote-sent";
-      case "ממתין לתשובה":
-        return "awaiting-response";
-      case "הפך ללקוח":
+      case LeadStatusEnum.CONVERTED_TO_CLIENT:
         return "converted";
+      case LeadStatusEnum.ARCHIVED:
+        return "archived";
       default:
         return "default";
     }

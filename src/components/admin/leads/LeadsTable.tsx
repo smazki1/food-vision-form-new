@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Lead, LeadStatusEnum, LEAD_STATUS_DISPLAY } from "@/types/lead";
 import { 
@@ -35,13 +36,8 @@ interface LeadsTableProps {
 
 const LEAD_STATUS_COLORS: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.NEW]: '#3B82F6',
-  [LeadStatusEnum.CONTACTED]: '#F59E0B',
-  [LeadStatusEnum.INTERESTED_SENT_PICS]: '#10B981',
-  [LeadStatusEnum.WAITING_REPLY]: '#EAB308',
-  [LeadStatusEnum.MEETING_SCHEDULED]: '#8B5CF6',
-  [LeadStatusEnum.DEMO_DONE]: '#2563EB',
-  [LeadStatusEnum.QUOTE_SENT]: '#EC4899',
-  [LeadStatusEnum.COLD_FOLLOW_UP]: '#6B7280',
+  [LeadStatusEnum.IN_TREATMENT]: '#F59E0B',
+  [LeadStatusEnum.INTERESTED]: '#10B981',
   [LeadStatusEnum.NOT_INTERESTED]: '#EF4444',
   [LeadStatusEnum.CONVERTED_TO_CLIENT]: '#059669',
   [LeadStatusEnum.ARCHIVED]: '#D1D5DB',

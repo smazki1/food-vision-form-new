@@ -26,7 +26,7 @@ export interface DashboardSettings {
 export interface EnhancedLeadsFilter {
   searchTerm?: string;
   status?: LeadStatusEnum | 'all';
-  leadSource?: string | 'all'; // Changed to string instead of LeadSourceEnum
+  leadSource?: LeadSourceEnum | 'all'; // Fixed to use LeadSourceEnum
   dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
   onlyReminders?: boolean;
   remindersToday?: boolean;
