@@ -3,6 +3,7 @@ import { EnhancedLeadsTable } from '@/components/admin/leads/EnhancedLeadsTable'
 import { EnhancedLeadsFilters } from '@/components/admin/leads/EnhancedLeadsFilters';
 import { LeadDetailPanel } from '@/components/admin/leads/LeadDetailPanel';
 import { CreateLeadModal } from '@/components/admin/leads/CreateLeadModal';
+import { LeadsTableDiagnostics } from '@/components/admin/leads/LeadsTableDiagnostics';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { useEnhancedLeads } from '@/hooks/useEnhancedLeads'; // Temporarily commented out
@@ -19,7 +20,8 @@ import {
   PlusCircle, 
   Archive, 
   BarChart2, 
-  Settings 
+  Settings,
+  Bug
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -101,40 +103,26 @@ const AdminLeadsPage = () => {
   // const leads = (simpleLeadsData || []) as Lead[]; // Using data directly from simple hook, with type assertion for debugging
   
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">ניהול לידים</h1>
-        
+    <div className="container mx-auto py-6 px-4 space-y-6 max-w-7xl">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">ניהול לידים</h1>
         <div className="flex gap-2">
-          <Button
-            variant="default"
-            onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>ליד חדש</span>
-          </Button>
-          
-          <Button
-            variant="outline"
-            asChild
-            className="flex items-center gap-2"
-          >
-            <Link to="/admin/leads/costs-report">
-              <BarChart2 className="h-4 w-4" />
-              <span>דוח עלויות</span>
-            </Link>
-          </Button>
-          
-          <Button
-            variant="outline"
-            asChild
-            className="flex items-center gap-2"
-          >
-            <Link to="/admin/leads/ai-pricing">
-              <Settings className="h-4 w-4" />
-              <span>הגדרות AI</span>
-            </Link>
+          <Link to="/admin/leads/ai-pricing">
+            <Button variant="outline" size="sm">
+              <BarChart2 className="h-4 w-4 ml-1" />
+              תמחור AI
+            </Button>
+          </Link>
+          <Link to="/admin/leads/costs-report">
+            <Button variant="outline" size="sm">
+              <BarChart2 className="h-4 w-4 ml-1" />
+              דוח עלויות
+            </Button>
+          </Link>
+          <Button onClick={() => setCreateModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+            <PlusCircle className="h-4 w-4 ml-1" />
+            ליד חדש
           </Button>
         </div>
       </div>
@@ -143,6 +131,10 @@ const AdminLeadsPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="leads">לידים פעילים</TabsTrigger>
           <TabsTrigger value="archive">ארכיון</TabsTrigger>
+          <TabsTrigger value="diagnostics">
+            <Bug className="h-4 w-4 ml-1" />
+            אבחון שדות
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="leads">
@@ -185,6 +177,10 @@ const AdminLeadsPage = () => {
               isArchiveView={true}
             />
           )}
+        </TabsContent>
+
+        <TabsContent value="diagnostics">
+          <LeadsTableDiagnostics />
         </TabsContent>
       </Tabs>
       
