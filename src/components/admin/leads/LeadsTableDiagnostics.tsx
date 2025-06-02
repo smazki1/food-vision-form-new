@@ -24,6 +24,7 @@ import {
   EyeOff 
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast } from 'sonner';
 
 interface FieldDiagnostic {
   fieldName: string;
@@ -206,6 +207,86 @@ export const LeadsTableDiagnostics: React.FC = () => {
     }
   };
 
+  const createTestLeadsWithROI = async () => {
+    try {
+      const testLeads = [
+        {
+          restaurant_name: 'מסעדת בדיקת ROI 1',
+          contact_name: 'בדיקה 1',
+          phone: '050-1234567',
+          email: 'test1@example.com',
+          lead_status: 'ליד חדש',
+          ai_trainings_count: 5,
+          ai_training_cost_per_unit: 2.5,
+          ai_prompts_count: 10,
+          ai_prompt_cost_per_unit: 0.1,
+          revenue_from_lead_local: 5000, // ₪5,000
+          exchange_rate_at_conversion: 3.5, // $1 = ₪3.5
+        },
+        {
+          restaurant_name: 'מסעדת בדיקת ROI 2',
+          contact_name: 'בדיקה 2',
+          phone: '050-7654321',
+          email: 'test2@example.com',
+          lead_status: 'הפך ללקוח',
+          ai_trainings_count: 3,
+          ai_training_cost_per_unit: 2.5,
+          ai_prompts_count: 15,
+          ai_prompt_cost_per_unit: 0.1,
+          revenue_from_lead_local: 10000, // ₪10,000
+          exchange_rate_at_conversion: 3.5,
+        },
+      ];
+
+      for (const lead of testLeads) {
+        const { error } = await supabase.from('leads').insert(lead);
+        if (error) throw error;
+      }
+
+      toast.success('נוצרו 2 לידים לדוגמה עם נתוני ROI בהצלחה!');
+      refetch(); // Refresh the diagnostics
+    } catch (error) {
+      console.error('Error creating test leads:', error);
+      toast.error('שגיאה ביצירת לידים לדוגמה: ' + (error as Error).message);
+    }
+  };
+
+  const checkROICalculation = async () => {
+    try {
+      // Run a test query to check the ROI calculation directly
+      const { data, error } = await supabase
+        .from('leads')
+        .select(`
+          restaurant_name,
+          ai_trainings_count,
+          ai_training_cost_per_unit,
+          ai_prompts_count,
+          ai_prompt_cost_per_unit,
+          total_ai_costs,
+          revenue_from_lead_local,
+          exchange_rate_at_conversion,
+          revenue_from_lead_usd,
+          roi
+        `)
+        .not('revenue_from_lead_local', 'is', null)
+        .not('total_ai_costs', 'is', null)
+        .limit(5);
+
+      if (error) throw error;
+
+      console.log('ROI Calculation Check:', data);
+      
+      if (data && data.length > 0) {
+        toast.success(`נמצאו ${data.length} לידים עם נתוני הכנסות ועלויות. בדוק את הקונסול לפרטים.`);
+      } else {
+        toast.warning('לא נמצאו לידים עם נתוני הכנסות ועלויות');
+      }
+    } catch (error) {
+      console.error('Error checking ROI calculation:', error);
+      toast.error('שגיאה בבדיקת חישוב ROI: ' + (error as Error).message);
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -334,9 +415,24 @@ export const LeadsTableDiagnostics: React.FC = () => {
               <li>• חסרים נתוני עלויות AI ברוב הלידים</li>
               <li>• שגיאה בנוסחת החישוב של ROI</li>
             </ul>
-            <Button variant="outline" size="sm" className="text-red-700 border-red-300">
-              לחץ לתיקון אוטומטי של ROI
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-red-700 border-red-300"
+                onClick={createTestLeadsWithROI}
+              >
+                יצור לידים לדוגמה עם ROI
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-blue-700 border-blue-300"
+                onClick={checkROICalculation}
+              >
+                בדוק חישוב ROI במסד הנתונים
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>
