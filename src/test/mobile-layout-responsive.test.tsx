@@ -123,7 +123,7 @@ describe('Mobile Responsive Layouts', () => {
   it('AdminLayout - displays full width on mobile, no horizontal scroll', () => {
     const { container } = render(
       <MemoryRouter>
-        {withProviders(<AdminLayout />)}
+        {withProviders(<AdminLayout><div>Test Content</div></AdminLayout>)}
       </MemoryRouter>
     );
     const main = container.querySelector('main');
@@ -166,7 +166,7 @@ describe('Mobile Responsive Layouts', () => {
   });
 
   it('Error: if CSS fails to load, layout still renders (fallback)', () => {
-    // Simולציה: הסר את כל הסגנונות
+    // Simulacija: הסר את כל הסגנונות
     const styleSheets = Array.from(document.styleSheets);
     styleSheets.forEach((sheet) => {
       try { document.adoptedStyleSheets = []; } catch {}
@@ -182,4 +182,4 @@ describe('Mobile Responsive Layouts', () => {
   it.skip('Integration: layout + card + form all fill width and no scroll', () => {
     // בדיקה זו לא רלוונטית ל-JSDOM כי Tailwind לא משפיע על getComputedStyle
   });
-}); 
+});

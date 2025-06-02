@@ -1,7 +1,8 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
 import { navItems } from "./nav-items";
 import "./App.css";
 import { UnifiedAuthProvider } from "./providers/UnifiedAuthProvider";
@@ -29,6 +30,7 @@ import SubmissionsPage from "@/pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "@/pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "@/pages/admin/SubmissionDetailsPage";
 import LeadsTestPage from "@/pages/admin/LeadsTestPage";
+import AlertsDashboard from "@/pages/admin/AlertsDashboard";
 import React from "react";
 
 const queryClient = new QueryClient();
@@ -128,7 +130,9 @@ const App = () => (
                 <Route path="/admin/*" element={
                   <CurrentUserRoleProvider>
                     <AdminRoute>
-                      <AdminLayout />
+                      <AdminLayout>
+                        <Outlet />
+                      </AdminLayout>
                     </AdminRoute>
                   </CurrentUserRoleProvider>
                 }>
@@ -141,6 +145,7 @@ const App = () => (
                   <Route path="submissions" element={<SubmissionsPage />} />
                   <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
                   <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+                  <Route path="alerts" element={<AlertsDashboard />} />
                   {/* Add more admin routes as needed */}
                   <Route path="leads-test-page" element={<LeadsTestPage />} />
                 </Route>

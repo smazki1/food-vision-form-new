@@ -31,6 +31,13 @@ const AlertsDashboard: React.FC = () => {
     );
   }
 
+  // Filter alerts based on the current filter
+  const filteredAlerts = alerts.filter(alert => {
+    if (alertFilter === 'all') return true;
+    if (alertFilter === 'new') return alert.status === 'new';
+    return alert.type === alertFilter;
+  });
+
   return (
     <AdminLayout>
       <div className="container mx-auto p-6">
@@ -62,7 +69,7 @@ const AlertsDashboard: React.FC = () => {
             />
             
             <div className="grid gap-4">
-              {alerts.length === 0 ? (
+              {filteredAlerts.length === 0 ? (
                 <Card>
                   <CardContent className="p-6 text-center">
                     <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-2" />
@@ -70,25 +77,24 @@ const AlertsDashboard: React.FC = () => {
                   </CardContent>
                 </Card>
               ) : (
-                alerts.map((alert) => (
-                  <Card key={alert.alert_id} className="hover:shadow-md transition-shadow">
+                filteredAlerts.map((alert) => (
+                  <Card key={alert.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <AlertTriangle className="h-4 w-4 text-orange-500" />
-                            <Badge variant="outline">{alert.alert_type}</Badge>
+                            <Badge variant="outline">{alert.type}</Badge>
                           </div>
-                          <h3 className="font-medium mb-1">{alert.alert_title}</h3>
-                          <p className="text-sm text-muted-foreground">{alert.alert_description}</p>
+                          <h3 className="font-medium mb-1">{alert.message}</h3>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {new Date(alert.created_at).toLocaleDateString('he-IL')}
+                            {new Date(alert.timestamp).toLocaleDateString('he-IL')}
                           </p>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="sm"
-                          onClick={() => markAsViewed(alert.alert_id)}
+                          onClick={() => markAsViewed(alert.id)}
                         >
                           סמן כנקרא
                         </Button>
@@ -101,7 +107,7 @@ const AlertsDashboard: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="reminders">
-            <RemindersSchedule />
+            <RemindersSchedule reminders={upcomingReminders} />
           </TabsContent>
         </Tabs>
       </div>
