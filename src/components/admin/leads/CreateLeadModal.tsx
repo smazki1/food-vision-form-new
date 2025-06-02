@@ -31,12 +31,12 @@ import {
 } from '@/components/ui/form';
 import { 
   LeadStatusEnum, 
-  LeadSourceEnum,
-  LEAD_STATUS_DISPLAY,
-  LEAD_SOURCE_DISPLAY 
+  LEAD_STATUS_DISPLAY
 } from '@/types/lead';
 import { useCreateLead } from '@/hooks/useEnhancedLeads';
 import { toast } from 'sonner';
+import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
+import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
 
 const createLeadSchema = z.object({
   restaurant_name: z.string().min(1, 'שם מסעדה נדרש'),
@@ -47,7 +47,7 @@ const createLeadSchema = z.object({
   address: z.string().optional(),
   business_type: z.string().optional(),
   lead_status: z.nativeEnum(LeadStatusEnum).default(LeadStatusEnum.NEW),
-  lead_source: z.nativeEnum(LeadSourceEnum).optional(),
+  lead_source: z.string().optional(),
   notes: z.string().optional(),
   free_sample_package_active: z.boolean().default(false),
 });
@@ -76,7 +76,7 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
       address: '',
       business_type: '',
       lead_status: LeadStatusEnum.NEW,
-      lead_source: undefined,
+      lead_source: '',
       notes: '',
       free_sample_package_active: false,
     },
@@ -189,7 +189,10 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                     <FormItem>
                       <FormLabel>סוג עסק</FormLabel>
                       <FormControl>
-                        <Input placeholder="מסעדה, בית קפה, מאפייה..." {...field} />
+                        <SmartBusinessTypeSelect
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -262,20 +265,13 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>מקור</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="בחר מקור" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(LEAD_SOURCE_DISPLAY).map(([key, display]) => (
-                            <SelectItem key={key} value={key}>
-                              {display}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <SmartLeadSourceSelect
+                          value={field.value || ''}
+                          onValueChange={field.onChange}
+                          placeholder="בחר מקור ליד"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

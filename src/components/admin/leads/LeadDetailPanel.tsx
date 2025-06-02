@@ -36,28 +36,31 @@ import {
   Building2,
   FileText,
   BarChart3,
-  Edit2,
-  Save,
   MessageSquare,
   Clock,
   TrendingUp,
   Activity,
-  Plus
+  Plus,
+  Flag,
+  Share,
+  Store
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Lead, 
   LEAD_STATUS_DISPLAY, 
-  LEAD_SOURCE_DISPLAY,
   LeadStatusEnum,
-  LeadSourceEnum
+  mapLeadStatusToHebrew,
+  mapHebrewToLeadStatusEnum
 } from '@/types/lead';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { calculateTotalAICosts, convertUSDToILS } from '@/types/lead';
-import { useUpdateLead, useAddLeadComment, useLeadActivities } from '@/hooks/useEnhancedLeads';
+import { useUpdateLead, useAddLeadComment, useLeadActivities, LEAD_QUERY_KEY } from '@/hooks/useEnhancedLeads';
 import { toast } from 'sonner';
 import { FollowUpScheduler } from './FollowUpScheduler';
+import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
+import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
 
 interface LeadDetailPanelProps {
   leadId: string;
@@ -70,18 +73,9 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   onClose,
   isArchiveView = false,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
-  const [editData, setEditData] = useState<Partial<Lead>>({});
   const [newComment, setNewComment] = useState('');
   const [showFollowUpScheduler, setShowFollowUpScheduler] = useState(false);
-  const [costUpdates, setCostUpdates] = useState({
-    ai_training_25_count: '',
-    ai_training_15_count: '',
-    ai_training_5_count: '',
-    ai_prompts_count: '',
-    revenue_from_lead_local: '',
-  });
 
   // Add new state for inline editing
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -117,61 +111,17 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
   // Initialize edit data when lead is loaded
   React.useEffect(() => {
-    if (lead && !isEditing) {
-      setEditData(lead);
-      setCostUpdates({
-        ai_training_25_count: lead.ai_training_25_count?.toString() || '0',
-        ai_training_15_count: lead.ai_training_15_count?.toString() || '0',
-        ai_training_5_count: lead.ai_training_5_count?.toString() || '0',
-        ai_prompts_count: lead.ai_prompts_count?.toString() || '0',
-        revenue_from_lead_local: lead.revenue_from_lead_local?.toString() || '0',
-      });
+    if (lead && !editingField) {
+      setTempValues(lead);
+      
+      // Debug status conversion
+      console.log('Lead status from DB:', lead.lead_status);
+      const enumStatus = mapHebrewToLeadStatusEnum(lead.lead_status as string);
+      console.log('Converted to enum:', enumStatus);
+      const backToHebrew = mapLeadStatusToHebrew(enumStatus as LeadStatusEnum);
+      console.log('Back to Hebrew:', backToHebrew);
     }
-  }, [lead, isEditing]);
-
-  const handleSave = () => {
-    if (!lead) return;
-
-    // Only include the fields that were actually edited
-    const cleanEditData = { ...editData } as any; // Type assertion for safe deletion
-    
-    // Remove fields that shouldn't be updated or don't exist in DB
-    delete cleanEditData.created_at;
-    delete cleanEditData.updated_at;
-    delete cleanEditData.last_updated_at; // Remove this field if it exists
-    delete cleanEditData.total_ai_costs; // Computed field
-    delete cleanEditData.revenue_from_lead_usd; // Computed field
-    delete cleanEditData.roi; // Computed field
-    delete cleanEditData.lead_id; // Don't send the ID in the update data
-
-    const updates = {
-      ...cleanEditData,
-      lead_id: leadId,
-      // Convert cost strings to numbers
-      ai_training_25_count: costUpdates.ai_training_25_count ? parseInt(costUpdates.ai_training_25_count) : 0,
-      ai_training_15_count: costUpdates.ai_training_15_count ? parseInt(costUpdates.ai_training_15_count) : 0,
-      ai_training_5_count: costUpdates.ai_training_5_count ? parseInt(costUpdates.ai_training_5_count) : 0,
-      ai_prompts_count: costUpdates.ai_prompts_count ? parseInt(costUpdates.ai_prompts_count) : 0,
-      revenue_from_lead_local: costUpdates.revenue_from_lead_local ? parseFloat(costUpdates.revenue_from_lead_local) : null,
-    };
-
-    console.log('HandleSave - sending updates:', updates);
-
-    updateLead.mutate(
-      updates,
-      {
-        onSuccess: () => {
-          toast.success('פרטי הליד עודכנו בהצלחה');
-          setIsEditing(false);
-          queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
-          queryClient.refetchQueries({ queryKey: ['lead', leadId] });
-        },
-        onError: (error) => {
-          toast.error(`שגיאה בעדכון הליד: ${error.message}`);
-        },
-      }
-    );
-  };
+  }, [lead, editingField]);
 
   const handleAddComment = () => {
     if (!newComment.trim()) {
@@ -196,6 +146,8 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
   // Add auto-save function
   const handleFieldBlur = async (fieldName: string, value: any) => {
+    console.log(`handleFieldBlur called for field: ${fieldName} with value:`, value);
+    
     if (editingField === fieldName && tempValues[fieldName] !== undefined) {
       // Check if value actually changed
       const originalValue = lead?.[fieldName as keyof Lead];
@@ -232,6 +184,12 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
         processedValue = value ? parseFloat(value.toString()) : null;
       }
       
+      // Special handling for lead_status - convert enum to Hebrew
+      if (fieldName === 'lead_status') {
+        processedValue = mapLeadStatusToHebrew(value as LeadStatusEnum);
+        console.log(`Converting lead_status from ${value} to ${processedValue}`);
+      }
+      
       const updateData = { [fieldName]: processedValue, lead_id: leadId };
       
       try {
@@ -241,6 +199,13 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
         // Force refresh the lead data to ensure UI updates
         await queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
         await queryClient.refetchQueries({ queryKey: ['lead', leadId] });
+        
+        // Also invalidate leads list to update table view - use LEAD_QUERY_KEY from useEnhancedLeads
+        // This will invalidate all queries that start with the LEAD_QUERY_KEY
+        await queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
+        await queryClient.invalidateQueries({ queryKey: ['enhanced-leads'] });
+        await queryClient.invalidateQueries({ queryKey: ['leads'] });
+        await queryClient.invalidateQueries({ queryKey: ['archived-leads'] });
         
         setEditingField(null);
         setTempValues({});
@@ -252,6 +217,61 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
         // Revert to original value on error
         setTempValues({});
         setEditingField(null);
+      }
+    } else {
+      // For fields that don't use editing state (like Select dropdowns)
+      console.log(`Direct save for field ${fieldName} with value:`, value);
+      
+      // Field-specific labels for messages
+      const fieldLabels: Record<string, string> = {
+        contact_name: 'שם איש הקשר',
+        restaurant_name: 'שם המסעדה',
+        phone: 'מספר טלפון',
+        email: 'כתובת אימייל',
+        business_type: 'סוג עסק',
+        lead_status: 'סטטוס',
+        lead_source: 'מקור ליד',
+        address: 'כתובת',
+        website_url: 'אתר אינטרנט',
+        notes: 'הערות',
+      };
+
+      // Check if value actually changed
+      const originalValue = lead?.[fieldName as keyof Lead];
+      if (originalValue === value) {
+        console.log(`No change detected for ${fieldName}, skipping save`);
+        return;
+      }
+
+      // Special handling for lead_status - convert enum to Hebrew
+      let processedValue = value;
+      if (fieldName === 'lead_status') {
+        processedValue = mapLeadStatusToHebrew(value as LeadStatusEnum);
+        console.log(`Converting lead_status from ${value} to ${processedValue}`);
+      }
+      
+      const updateData = { [fieldName]: processedValue, lead_id: leadId };
+      
+      try {
+        console.log(`Direct saving field ${fieldName} with value:`, processedValue);
+        await updateLead.mutateAsync(updateData);
+        
+        // Force refresh the lead data to ensure UI updates
+        await queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
+        await queryClient.refetchQueries({ queryKey: ['lead', leadId] });
+        
+        // Also invalidate leads list to update table view - use LEAD_QUERY_KEY from useEnhancedLeads
+        // This will invalidate all queries that start with the LEAD_QUERY_KEY
+        await queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
+        await queryClient.invalidateQueries({ queryKey: ['enhanced-leads'] });
+        await queryClient.invalidateQueries({ queryKey: ['leads'] });
+        await queryClient.invalidateQueries({ queryKey: ['archived-leads'] });
+        
+        setUpdateCounter(prev => prev + 1);
+        toast.success(`${fieldLabels[fieldName] || 'שדה'} עודכן בהצלחה`);
+      } catch (error) {
+        console.error('Direct save failed:', error);
+        toast.error(`שגיאה בשמירת ${fieldLabels[fieldName] || fieldName}: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
       }
     }
   };
@@ -423,32 +443,6 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
               </SheetDescription>
             </div>
             <div className="flex items-center gap-2">
-              {!isArchiveView && (
-                <Button
-                  variant={isEditing ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    if (isEditing) {
-                      handleSave();
-                    } else {
-                      setIsEditing(true);
-                    }
-                  }}
-                  disabled={updateLead.isPending}
-                >
-                  {isEditing ? (
-                    <>
-                      <Save className="h-4 w-4 ml-1" />
-                      שמור
-                    </>
-                  ) : (
-                    <>
-                      <Edit2 className="h-4 w-4 ml-1" />
-                      ערוך
-                    </>
-                  )}
-                </Button>
-              )}
               <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-4 w-4" />
               </Button>
@@ -467,18 +461,24 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
             {/* Details Tab */}
             <TabsContent value="details" className="space-y-6 mt-6">
-              {/* Status and Source */}
-              <div className="flex gap-3">
-                <Badge 
-                  variant="default" 
-                  className="bg-primary/10 text-primary border-primary/20"
-                >
-                  {LEAD_STATUS_DISPLAY[lead.lead_status as keyof typeof LEAD_STATUS_DISPLAY]}
-                </Badge>
-                {lead.lead_source && (
-                  <Badge variant="outline">
-                    {LEAD_SOURCE_DISPLAY[lead.lead_source as keyof typeof LEAD_SOURCE_DISPLAY]}
+              {/* Status and Source - Always visible */}
+              <div className="flex gap-3 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Flag className="h-4 w-4 text-muted-foreground" />
+                  <Badge 
+                    variant="default" 
+                    className="bg-primary/10 text-primary border-primary/20"
+                  >
+                    {LEAD_STATUS_DISPLAY[lead.lead_status as keyof typeof LEAD_STATUS_DISPLAY]}
                   </Badge>
+                </div>
+                {lead.lead_source && (
+                  <div className="flex items-center gap-2">
+                    <Share className="h-4 w-4 text-muted-foreground" />
+                    <Badge variant="outline">
+                      {lead.lead_source}
+                    </Badge>
+                  </div>
                 )}
               </div>
 
@@ -488,214 +488,183 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   <CardTitle className="text-lg">פרטי קשר</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {isEditing ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>שם מסעדה</Label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Store className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
                         <InlineEditField
+                          key={`restaurant_name_${lead.restaurant_name}_${updateCounter}`}
                           fieldName="restaurant_name"
-                          value={editData.restaurant_name || ''}
+                          value={lead.restaurant_name}
                           placeholder="שם מסעדה"
                         />
+                        <p className="text-sm text-muted-foreground">שם מסעדה</p>
                       </div>
-                      <div>
-                        <Label>איש קשר</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <FileText className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
                         <InlineEditField
+                          key={`contact_name_${lead.contact_name}_${updateCounter}`}
                           fieldName="contact_name"
-                          value={editData.contact_name || ''}
+                          value={lead.contact_name}
                           placeholder="איש קשר"
                         />
+                        <p className="text-sm text-muted-foreground">איש קשר</p>
                       </div>
-                      <div>
-                        <Label>טלפון</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Phone className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
                         <InlineEditField
+                          key={`phone_${lead.phone}_${updateCounter}`}
                           fieldName="phone"
-                          value={editData.phone || ''}
+                          value={lead.phone}
                           type="tel"
                           placeholder="טלפון"
                         />
+                        <p className="text-sm text-muted-foreground">טלפון</p>
                       </div>
-                      <div>
-                        <Label>אימייל</Label>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Mail className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
                         <InlineEditField
+                          key={`email_${lead.email}_${updateCounter}`}
                           fieldName="email"
-                          value={editData.email || ''}
+                          value={lead.email}
                           type="email"
                           placeholder="אימייל"
                         />
+                        <p className="text-sm text-muted-foreground">אימייל</p>
                       </div>
-                      <div>
-                        <Label>סוג עסק</Label>
-                        <InlineEditField
-                          fieldName="business_type"
-                          value={editData.business_type || ''}
-                          placeholder="סוג עסק"
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Building2 className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <Label className="text-sm text-muted-foreground">סוג עסק</Label>
+                        <SmartBusinessTypeSelect
+                          value={lead.business_type || ''}
+                          onValueChange={(value) => {
+                            handleFieldBlur('business_type', value);
+                          }}
+                          placeholder="בחר סוג עסק"
                         />
                       </div>
-                      <div>
-                        <Label>אתר אינטרנט</Label>
-                        <InlineEditField
-                          fieldName="website_url"
-                          value={editData.website_url || ''}
-                          placeholder="אתר אינטרנט"
-                        />
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
+                        <MapPin className="h-4 w-4" />
                       </div>
-                      <div className="col-span-2">
-                        <Label>כתובת</Label>
+                      <div className="flex-1">
                         <InlineEditField
                           key={`address_${lead.address}_${updateCounter}`}
                           fieldName="address"
-                          value={editData.address || ''}
+                          value={lead.address || ''}
                           multiline
                           placeholder="כתובת"
                         />
-                      </div>
-                      <div>
-                        <Label>סטטוס</Label>
-                        <Select
-                          value={editData.lead_status || lead.lead_status}
-                          onValueChange={(value) => setEditData({ ...editData, lead_status: value as LeadStatusEnum })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(LEAD_STATUS_DISPLAY).map(([key, display]) => (
-                              <SelectItem key={key} value={key}>
-                                {display}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>מקור</Label>
-                        <Select
-                          value={editData.lead_source || lead.lead_source || ''}
-                          onValueChange={(value) => setEditData({ ...editData, lead_source: value as LeadSourceEnum })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(LEAD_SOURCE_DISPLAY).map(([key, display]) => (
-                              <SelectItem key={key} value={key}>
-                                {display}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="col-span-2">
-                        <Label>הערות</Label>
-                        <InlineEditField
-                          fieldName="notes"
-                          value={editData.notes || ''}
-                          multiline
-                          placeholder="הערות"
-                        />
+                        <p className="text-sm text-muted-foreground">כתובת</p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                        <Globe className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <InlineEditField
+                          key={`website_url_${lead.website_url}_${updateCounter}`}
+                          fieldName="website_url"
+                          value={lead.website_url || ''}
+                          placeholder="אתר אינטרנט"
+                        />
+                        <p className="text-sm text-muted-foreground">אתר אינטרנט</p>
+                      </div>
+                    </div>
+
+                    {/* Status and Source editing fields - always visible */}
+                    <div className="border-t pt-4 space-y-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <FileText className="h-4 w-4" />
+                          <Flag className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                          <InlineEditField
-                            key={`contact_name_${lead.contact_name}_${updateCounter}`}
-                            fieldName="contact_name"
-                            value={lead.contact_name}
-                            placeholder="איש קשר"
-                          />
-                          <p className="text-sm text-muted-foreground">איש קשר</p>
+                          <Label className="text-sm text-muted-foreground">סטטוס</Label>
+                          <Select
+                            value={mapHebrewToLeadStatusEnum(lead.lead_status as string) || lead.lead_status}
+                            onValueChange={(value) => {
+                              console.log('Status Select onValueChange - selected value:', value);
+                              handleFieldBlur('lead_status', value);
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(LEAD_STATUS_DISPLAY).map(([key, display]) => (
+                                <SelectItem key={key} value={key}>
+                                  {display}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Phone className="h-4 w-4" />
+                          <Share className="h-4 w-4" />
                         </div>
                         <div className="flex-1">
-                          <InlineEditField
-                            key={`phone_${lead.phone}_${updateCounter}`}
-                            fieldName="phone"
-                            value={lead.phone}
-                            type="tel"
-                            placeholder="טלפון"
+                          <Label className="text-sm text-muted-foreground">מקור</Label>
+                          <SmartLeadSourceSelect
+                            value={lead.lead_source || ''}
+                            onValueChange={(value) => {
+                              handleFieldBlur('lead_source', value);
+                            }}
+                            placeholder="בחר מקור ליד"
                           />
-                          <p className="text-sm text-muted-foreground">טלפון</p>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Mail className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <InlineEditField
-                            key={`email_${lead.email}_${updateCounter}`}
-                            fieldName="email"
-                            value={lead.email}
-                            type="email"
-                            placeholder="אימייל"
-                          />
-                          <p className="text-sm text-muted-foreground">אימייל</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                          <Building2 className="h-4 w-4" />
-                        </div>
-                        <div className="flex-1">
-                          <InlineEditField
-                            key={`business_type_${lead.business_type}_${updateCounter}`}
-                            fieldName="business_type"
-                            value={lead.business_type || ''}
-                            placeholder="סוג עסק"
-                          />
-                          <p className="text-sm text-muted-foreground">סוג עסק</p>
-                        </div>
-                      </div>
-
-                      {(lead.address || editingField === 'address') && (
+                    {/* Notes field - always visible if exists or being edited */}
+                    {(lead.notes || editingField === 'notes') && (
+                      <div className="border-t pt-4">
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
-                            <MapPin className="h-4 w-4" />
+                            <MessageSquare className="h-4 w-4" />
                           </div>
                           <div className="flex-1">
                             <InlineEditField
-                              key={`address_${lead.address}_${updateCounter}`}
-                              fieldName="address"
-                              value={lead.address || ''}
+                              key={`notes_${lead.notes}_${updateCounter}`}
+                              fieldName="notes"
+                              value={lead.notes || ''}
                               multiline
-                              placeholder="כתובת"
+                              placeholder="הערות"
                             />
-                            <p className="text-sm text-muted-foreground">כתובת</p>
+                            <p className="text-sm text-muted-foreground">הערות</p>
                           </div>
                         </div>
-                      )}
-
-                      {(lead.website_url || editingField === 'website_url') && (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                            <Globe className="h-4 w-4" />
-                          </div>
-                          <div className="flex-1">
-                            <InlineEditField
-                              key={`website_url_${lead.website_url}_${updateCounter}`}
-                              fieldName="website_url"
-                              value={lead.website_url || ''}
-                              placeholder="אתר אינטרנט"
-                            />
-                            <p className="text-sm text-muted-foreground">אתר אינטרנט</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -710,18 +679,6 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   </Badge>
                 </CardContent>
               </Card>
-
-              {/* Notes */}
-              {lead.notes && !isEditing && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">הערות</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm whitespace-pre-wrap">{lead.notes}</p>
-                  </CardContent>
-                </Card>
-              )}
             </TabsContent>
 
             {/* Costs Tab */}
@@ -915,50 +872,27 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {isEditing ? (
-                    <div className="space-y-4">
-                      <div>
-                        <Label>תאריך מעקב הבא</Label>
-                        <InlineEditField
-                          fieldName="next_follow_up_date"
-                          value={editData.next_follow_up_date?.split('T')[0] || ''}
-                          type="date"
-                        />
+                  {lead.next_follow_up_date ? (
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-orange-600" />
                       </div>
                       <div>
-                        <Label>הערות למעקב</Label>
-                        <InlineEditField
-                          fieldName="next_follow_up_notes"
-                          value={editData.next_follow_up_notes || ''}
-                          multiline
-                        />
+                        <p className="font-medium">{formatDate(lead.next_follow_up_date)}</p>
+                        <p className="text-sm text-muted-foreground">תאריך מעקב הבא</p>
                       </div>
                     </div>
                   ) : (
-                    <>
-                      {lead.next_follow_up_date ? (
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
-                            <Calendar className="h-4 w-4 text-orange-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{formatDate(lead.next_follow_up_date)}</p>
-                            <p className="text-sm text-muted-foreground">תאריך מעקב הבא</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center py-8 text-muted-foreground">
-                          <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>לא נקבע מועד למעקב</p>
-                        </div>
-                      )}
-                      
-                      {lead.next_follow_up_notes && (
-                        <div className="mt-3 p-3 bg-muted/30 rounded-lg">
-                          <p className="text-sm whitespace-pre-wrap">{lead.next_follow_up_notes}</p>
-                        </div>
-                      )}
-                    </>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>לא נקבע מועד למעקב</p>
+                    </div>
+                  )}
+                  
+                  {lead.next_follow_up_notes && (
+                    <div className="mt-3 p-3 bg-muted/30 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">{lead.next_follow_up_notes}</p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -977,4 +911,4 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
       </SheetContent>
     </Sheet>
   );
-}; 
+};

@@ -51,7 +51,7 @@ export type Lead = {
   roi?: number; // Generated column
   
   // Lead management
-  lead_source?: LeadSourceEnum;
+  lead_source?: string; // Changed from LeadSourceEnum to string for free text
   created_at: string;
   updated_at: string;
   next_follow_up_date?: string;
@@ -156,18 +156,6 @@ export enum LeadStatusEnum {
   ARCHIVED = 'archived'
 }
 
-export enum LeadSourceEnum {
-  WEBSITE = 'website',
-  REFERRAL = 'referral',
-  FACEBOOK = 'facebook',
-  INSTAGRAM = 'instagram',
-  CAMPAIGN = 'campaign', // קמפיין
-  TELEMARKETING = 'telemarketing', // טלמרקטינג
-  AUTO_SUBMISSION = 'auto_submission',
-  OTHER = 'other'
-}
-
-// AI Training Cost Tiers
 export const AI_TRAINING_TIERS = {
   TIER_25: { cost: 2.5, label: 'אימון $2.5' },
   TIER_15: { cost: 1.5, label: 'אימון $1.5' },
@@ -204,9 +192,6 @@ export const LEAD_SOURCE_OPTIONS = [
 // New status options
 export const LEAD_STATUS_ENUM_OPTIONS = Object.values(LeadStatusEnum);
 
-// New source options
-export const LEAD_SOURCE_ENUM_OPTIONS = Object.values(LeadSourceEnum);
-
 // Mapping from status enum to the *actual Hebrew string values in the DB enum lead_status_type*
 export const LEAD_STATUS_DB_MAP: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.NEW]: 'ליד חדש',
@@ -237,27 +222,10 @@ export const LEAD_STATUS_DISPLAY: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.ARCHIVED]: 'ארכיון'
 };
 
-// Enhanced mapping from source enum to display text including new sources
-export const LEAD_SOURCE_DISPLAY: Record<LeadSourceEnum, string> = {
-  [LeadSourceEnum.WEBSITE]: 'אתר',
-  [LeadSourceEnum.REFERRAL]: 'הפניה',
-  [LeadSourceEnum.FACEBOOK]: 'פייסבוק',
-  [LeadSourceEnum.INSTAGRAM]: 'אינסטגרם',
-  [LeadSourceEnum.CAMPAIGN]: 'קמפיין',
-  [LeadSourceEnum.TELEMARKETING]: 'טלמרקטינג',
-  [LeadSourceEnum.AUTO_SUBMISSION]: 'הגשה אוטומטית',
-  [LeadSourceEnum.OTHER]: 'אחר'
-};
-
 // Function to map English Enum value (used in code) to Hebrew string (used in DB)
 export const mapLeadStatusToHebrew = (statusEnum?: LeadStatusEnum): string | undefined => {
   if (!statusEnum) return undefined;
   return LEAD_STATUS_DB_MAP[statusEnum]; // Changed to use the new DB map
-};
-
-export const mapLeadSourceToHebrew = (sourceEnum?: LeadSourceEnum): string | undefined => {
-  if (!sourceEnum) return undefined;
-  return LEAD_SOURCE_DISPLAY[sourceEnum];
 };
 
 // Function to map Hebrew string (from DB or UI) to English Enum value (for code use)
@@ -274,17 +242,11 @@ export const mapHebrewToLeadStatusEnum = (hebrewStatus?: string): LeadStatusEnum
   return entry ? entry[0] as LeadStatusEnum : undefined;
 };
 
-export const mapHebrewToLeadSourceEnum = (hebrewSource?: string): LeadSourceEnum | undefined => {
-  if (!hebrewSource) return undefined;
-  const entry = Object.entries(LEAD_SOURCE_DISPLAY).find(([, value]) => value === hebrewSource);
-  return entry ? entry[0] as LeadSourceEnum : undefined;
-};
-
 // Enhanced filters
 export type EnhancedLeadsFilter = {
   searchTerm?: string;
   status?: LeadStatusEnum | 'all';
-  leadSource?: LeadSourceEnum | 'all';
+  leadSource?: string | 'all'; // Changed from LeadSourceEnum to string
   businessType?: string | 'all';
   dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
   onlyReminders?: boolean;

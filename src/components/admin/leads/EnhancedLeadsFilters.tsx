@@ -16,11 +16,11 @@ import {
 } from '@/types/filters';
 import { 
   LeadStatusEnum, 
-  LeadSourceEnum,
-  LEAD_STATUS_DISPLAY,
-  LEAD_SOURCE_DISPLAY 
+  LEAD_STATUS_DISPLAY
 } from '@/types/lead';
 import { Search, Filter, X, Calendar, Bell } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EnhancedLeadsFiltersProps {
   filters: EnhancedLeadsFilter;
@@ -33,6 +33,27 @@ export const EnhancedLeadsFilters: React.FC<EnhancedLeadsFiltersProps> = ({
   onFilterChange,
   isArchiveView = false
 }) => {
+  // Fetch unique lead sources from database
+  const { data: leadSources = [] } = useQuery({
+    queryKey: ['unique-lead-sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('lead_source')
+        .not('lead_source', 'is', null)
+        .not('lead_source', 'eq', '');
+
+      if (error) throw error;
+
+      // Get unique lead sources
+      const uniqueSources = Array.from(
+        new Set(data.map(item => item.lead_source).filter(Boolean))
+      ).sort();
+
+      return uniqueSources;
+    },
+  });
+
   const updateFilter = (key: keyof EnhancedLeadsFilter, value: any) => {
     onFilterChange({
       ...filters,
@@ -120,16 +141,16 @@ export const EnhancedLeadsFilters: React.FC<EnhancedLeadsFiltersProps> = ({
             <Label>מקור</Label>
             <Select
               value={filters.leadSource || 'all'}
-              onValueChange={(value) => updateFilter('leadSource', value === 'all' ? 'all' : value as LeadSourceEnum)}
+              onValueChange={(value) => updateFilter('leadSource', value === 'all' ? 'all' : value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="בחר מקור" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל המקורות</SelectItem>
-                {Object.entries(LEAD_SOURCE_DISPLAY).map(([key, display]) => (
-                  <SelectItem key={key} value={key}>
-                    {display}
+                {leadSources.map((source) => (
+                  <SelectItem key={source} value={source}>
+                    {source}
                   </SelectItem>
                 ))}
               </SelectContent>

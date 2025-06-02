@@ -6,12 +6,9 @@ import {
   LeadActivity,
   LeadComment,
   LeadStatusEnum,
-  LeadSourceEnum,
   AIPricingSetting,
   mapLeadStatusToHebrew,
-  mapLeadSourceToHebrew,
   mapHebrewToLeadStatusEnum,
-  mapHebrewToLeadSourceEnum,
   LEAD_STATUS_DISPLAY
 } from "@/types/lead";
 import { EnhancedLeadsFilter } from "@/types/filters";
@@ -42,13 +39,6 @@ const applyFilters = (query: any, filters: EnhancedLeadsFilter) => {
     const hebrewStatus = mapLeadStatusToHebrew(filters.status);
     if (hebrewStatus) {
       filteredQuery = filteredQuery.eq('lead_status', hebrewStatus);
-    }
-  }
-  
-  if (filters.leadSource && filters.leadSource !== 'all') {
-    const hebrewSource = mapLeadSourceToHebrew(filters.leadSource);
-    if (hebrewSource) {
-      filteredQuery = filteredQuery.eq('lead_source', hebrewSource);
     }
   }
   
@@ -170,8 +160,8 @@ export const fetchEnhancedLeads = async (filters?: EnhancedLeadsFilter): Promise
       if (hebrewStatus) query = query.eq('lead_status', hebrewStatus);
     }
     if (filters.leadSource && filters.leadSource !== 'all') {
-      const hebrewSource = mapLeadSourceToHebrew(filters.leadSource);
-      if (hebrewSource) query = query.eq('lead_source', hebrewSource);
+      // Direct string comparison for lead source since it's now free text
+      query = query.eq('lead_source', filters.leadSource);
     }
     if (filters.excludeArchived) {
       const archivedStatusHebrew = mapLeadStatusToHebrew(LeadStatusEnum.ARCHIVED);
@@ -265,24 +255,15 @@ export const useCreateLead = () => {
       
       // Convert lead_status to Hebrew for database
       if (finalLeadData.lead_status) {
-        const hebrewStatus = mapLeadStatusToHebrew(finalLeadData.lead_status as LeadStatusEnum);
+        const hebrewStatus = mapLeadStatusToHebrew(finalLeadData.lead_status);
         if (hebrewStatus) {
           finalLeadData.lead_status = hebrewStatus as any;
-        } else {
-          console.warn(`Unrecognized lead status: ${finalLeadData.lead_status}, defaulting to NEW`);
-          finalLeadData.lead_status = mapLeadStatusToHebrew(LeadStatusEnum.NEW) as any;
         }
       } else {
         finalLeadData.lead_status = mapLeadStatusToHebrew(LeadStatusEnum.NEW) as any; 
       }
       
-      // Convert lead_source to Hebrew for database if it exists
-      if (finalLeadData.lead_source) {
-        const hebrewSource = mapLeadSourceToHebrew(finalLeadData.lead_source as LeadSourceEnum);
-        if (hebrewSource) {
-          finalLeadData.lead_source = hebrewSource as any;
-        }
-      }
+      // Lead source is now free text, no conversion needed
 
       console.log('Creating lead with data:', finalLeadData);
       
