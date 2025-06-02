@@ -1,4 +1,3 @@
-
 import { LeadSource, LeadStatus } from "./lead";
 import { LeadStatusEnum, LeadSourceEnum } from './lead';
 
@@ -26,7 +25,7 @@ export interface DashboardSettings {
 export interface EnhancedLeadsFilter {
   searchTerm?: string;
   status?: LeadStatusEnum | 'all';
-  leadSource?: LeadSourceEnum | 'all'; // Fixed to use LeadSourceEnum
+  leadSource?: string | 'all'; // Updated to use string for free text lead sources
   dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
   onlyReminders?: boolean;
   remindersToday?: boolean;

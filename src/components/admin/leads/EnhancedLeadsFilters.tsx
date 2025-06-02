@@ -40,14 +40,13 @@ export const EnhancedLeadsFilters: React.FC<EnhancedLeadsFiltersProps> = ({
       const { data, error } = await supabase
         .from('leads')
         .select('lead_source')
-        .not('lead_source', 'is', null)
-        .not('lead_source', 'eq', '');
+        .not('lead_source', 'is', null);
 
       if (error) throw error;
 
-      // Get unique lead sources
+      // Get unique lead sources and filter out empty strings
       const uniqueSources = Array.from(
-        new Set(data.map(item => item.lead_source).filter(Boolean))
+        new Set(data.map(item => item.lead_source).filter(source => source && source.trim() !== ''))
       ).sort();
 
       return uniqueSources;

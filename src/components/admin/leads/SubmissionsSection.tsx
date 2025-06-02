@@ -171,7 +171,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
       {/* Submission Viewer in Sheet */}
       <Sheet open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <SheetContent 
-          side="left" 
+          side="right" 
           className="w-[90vw] max-w-[1200px] sm:max-w-[1200px] p-0"
         >
           <SheetHeader className="px-6 py-4 border-b">

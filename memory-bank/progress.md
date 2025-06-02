@@ -2,6 +2,29 @@
 
 ## Recently Completed
 
+### Critical System Restoration (2024-12-19 - CURRENT)
+- [x] **Sheet Side Direction Fix:** Fixed LeadDetailPanel and SubmissionsSection to use `side="right"` for proper RTL layout
+- [x] **Always-Editable Interface Restoration:** Restored complete Notion-like editing functionality:
+  - Converted back to always-editable interface with auto-save
+  - Added comprehensive field handlers for all 17 editable fields
+  - Implemented proper tabs structure (Details, Costs, Activity, Submissions)
+  - Restored SmartBusinessTypeSelect and SmartLeadSourceSelect components
+- [x] **Database Query Fixes:** Fixed 400 errors in lead source queries:
+  - Removed problematic `.not().eq()` chain in EnhancedLeadsFilters
+  - Simplified query to use just `.not('lead_source', 'is', null)`
+  - Updated filtering logic to handle empty strings properly
+- [x] **Type System Corrections:** Fixed lead type definitions:
+  - Updated Lead interface to use `string` for lead_status (Hebrew stored in DB)
+  - Changed lead_source from enum to `string` for free text support
+  - Updated EnhancedLeadsFilter interface accordingly
+  - Simplified status handling to work directly with Hebrew strings
+- [x] **Accessibility Improvements:** Added missing SheetDescription components to resolve warnings
+- [ ] **Cache Invalidation Verification:** Need to verify table updates are still working properly
+- [ ] **Bulk Selection Testing:** Need to verify bulk selection functionality still works
+- [ ] **Complete System Testing:** Full end-to-end testing required
+
+**Status: IN PROGRESS - Major fixes applied, testing required**
+
 ### White Screen and Auth Timeout Fix (2024-12-19)
 - [x] **פתרון בעיית המסך הלבן:** תוקנה בעיה קריטית שגרמה למערכת להיתקע במסך לבן לאחר timeouts
 - [x] **תיקון נתיבי הפניה שגויים:** תוקן נתיב מ-`/customer-dashboard` ל-`/customer/dashboard` ב-PublicOnlyRoute

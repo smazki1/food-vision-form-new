@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback } from "react";
 import { 
   useEnhancedLeads, 
@@ -23,7 +22,7 @@ const LeadsManagement: React.FC = () => {
   // State for filters
   const [searchTerm, setSearchTerm] = useState("");
   const [status, setStatus] = useState<LeadStatusEnum | "all">("all");
-  const [leadSource, setLeadSource] = useState<LeadSourceEnum | "all">("all");
+  const [leadSource, setLeadSource] = useState<string | "all">("all");
   const [dateFilter, setDateFilter] = useState<"today" | "this-week" | "this-month" | "all">("all");
   const [onlyReminders, setOnlyReminders] = useState(false);
   const [remindersToday, setRemindersToday] = useState(false);

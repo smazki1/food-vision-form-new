@@ -1,4 +1,3 @@
-
 // Database types
 export type LeadStatus = 'ליד חדש' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
 export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינסטגרם' | 'גוגל' | 'אחר';
@@ -69,8 +68,8 @@ export interface Lead {
   email: string;
   website_url?: string;
   address?: string;
-  lead_status: LeadStatusEnum;
-  lead_source?: LeadSourceEnum | null;
+  lead_status: string; // Hebrew string stored in database
+  lead_source?: string | null; // Changed to string for free text
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -172,7 +171,7 @@ export interface AIPricingSetting {
 export interface EnhancedLeadsFilter {
   searchTerm?: string;
   status?: LeadStatusEnum | 'all';
-  leadSource?: LeadSourceEnum | 'all';
+  leadSource?: string | 'all'; // Changed to string for free text lead sources
   dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
   onlyReminders?: boolean;
   remindersToday?: boolean;
