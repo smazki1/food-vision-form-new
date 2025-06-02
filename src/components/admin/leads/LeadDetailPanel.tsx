@@ -399,7 +399,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   if (isLoading) {
     return (
       <Sheet open={true} onOpenChange={onClose}>
-        <SheetContent className="w-[600px] sm:w-[700px]">
+        <SheetContent className="w-[50vw] max-w-[800px] min-w-[600px] overflow-y-auto">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -414,7 +414,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   if (error || !lead) {
     return (
       <Sheet open={true} onOpenChange={onClose}>
-        <SheetContent className="w-[600px] sm:w-[700px]">
+        <SheetContent className="w-[50vw] max-w-[800px] min-w-[600px] overflow-y-auto">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <p className="text-red-600">שגיאה בטעינת פרטי הליד</p>
@@ -433,7 +433,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
   return (
     <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent className="w-[600px] sm:w-[700px] overflow-y-auto">
+      <SheetContent className="w-[50vw] max-w-[800px] min-w-[600px] overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -494,28 +494,28 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         <Store className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`restaurant_name_${lead.restaurant_name}_${updateCounter}`}
-                          fieldName="restaurant_name"
+                        <Label className="text-sm text-muted-foreground">שם מסעדה</Label>
+                        <Input
                           value={lead.restaurant_name}
+                          onChange={(e) => handleFieldBlur('restaurant_name', e.target.value)}
                           placeholder="שם מסעדה"
+                          className="mt-1"
                         />
-                        <p className="text-sm text-muted-foreground">שם מסעדה</p>
                       </div>
                     </div>
-
+                  
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         <FileText className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`contact_name_${lead.contact_name}_${updateCounter}`}
-                          fieldName="contact_name"
+                        <Label className="text-sm text-muted-foreground">איש קשר</Label>
+                        <Input
                           value={lead.contact_name}
+                          onChange={(e) => handleFieldBlur('contact_name', e.target.value)}
                           placeholder="איש קשר"
+                          className="mt-1"
                         />
-                        <p className="text-sm text-muted-foreground">איש קשר</p>
                       </div>
                     </div>
 
@@ -524,14 +524,14 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         <Phone className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`phone_${lead.phone}_${updateCounter}`}
-                          fieldName="phone"
-                          value={lead.phone}
+                        <Label className="text-sm text-muted-foreground">טלפון</Label>
+                        <Input
                           type="tel"
+                          value={lead.phone}
+                          onChange={(e) => handleFieldBlur('phone', e.target.value)}
                           placeholder="טלפון"
+                          className="mt-1"
                         />
-                        <p className="text-sm text-muted-foreground">טלפון</p>
                       </div>
                     </div>
 
@@ -540,14 +540,14 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         <Mail className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`email_${lead.email}_${updateCounter}`}
-                          fieldName="email"
-                          value={lead.email}
+                        <Label className="text-sm text-muted-foreground">אימייל</Label>
+                        <Input
                           type="email"
+                          value={lead.email}
+                          onChange={(e) => handleFieldBlur('email', e.target.value)}
                           placeholder="אימייל"
+                          className="mt-1"
                         />
-                        <p className="text-sm text-muted-foreground">אימייל</p>
                       </div>
                     </div>
 
@@ -572,29 +572,28 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         <MapPin className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`address_${lead.address}_${updateCounter}`}
-                          fieldName="address"
+                        <Label className="text-sm text-muted-foreground">כתובת</Label>
+                        <Textarea
                           value={lead.address || ''}
-                          multiline
+                          onChange={(e) => handleFieldBlur('address', e.target.value)}
                           placeholder="כתובת"
+                          className="mt-1 min-h-[60px]"
                         />
-                        <p className="text-sm text-muted-foreground">כתובת</p>
                       </div>
                     </div>
-
+                  
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                         <Globe className="h-4 w-4" />
                       </div>
                       <div className="flex-1">
-                        <InlineEditField
-                          key={`website_url_${lead.website_url}_${updateCounter}`}
-                          fieldName="website_url"
+                        <Label className="text-sm text-muted-foreground">אתר אינטרנט</Label>
+                        <Input
                           value={lead.website_url || ''}
+                          onChange={(e) => handleFieldBlur('website_url', e.target.value)}
                           placeholder="אתר אינטרנט"
+                          className="mt-1"
                         />
-                        <p className="text-sm text-muted-foreground">אתר אינטרנט</p>
                       </div>
                     </div>
 
@@ -644,39 +643,65 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                       </div>
                     </div>
 
-                    {/* Notes field - always visible if exists or being edited */}
-                    {(lead.notes || editingField === 'notes') && (
-                      <div className="border-t pt-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
-                            <MessageSquare className="h-4 w-4" />
-                          </div>
-                          <div className="flex-1">
-                            <InlineEditField
-                              key={`notes_${lead.notes}_${updateCounter}`}
-                              fieldName="notes"
-                              value={lead.notes || ''}
-                              multiline
-                              placeholder="הערות"
-                            />
-                            <p className="text-sm text-muted-foreground">הערות</p>
-                          </div>
+                    {/* Notes field - always visible and editable */}
+                    <div className="border-t pt-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center mt-1">
+                          <MessageSquare className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1">
+                          <Label className="text-sm text-muted-foreground">הערות</Label>
+                          <Textarea
+                            value={lead.notes || ''}
+                            onChange={(e) => handleFieldBlur('notes', e.target.value)}
+                            placeholder="הערות"
+                            className="mt-1 min-h-[80px]"
+                          />
                         </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Demo Package Status */}
+              {/* Free Taste Package */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">חבילת דמו</CardTitle>
+                  <CardTitle className="text-lg">חבילת טעימה חינמית</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Badge variant={lead.free_sample_package_active ? "default" : "secondary"}>
-                    {lead.free_sample_package_active ? 'פעילה' : 'לא פעילה'}
-                  </Badge>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={lead.free_sample_package_active ? "default" : "secondary"}>
+                        {lead.free_sample_package_active ? 'פעילה' : 'לא פעילה'}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {lead.free_sample_package_active ? 
+                          'הלקוח זכאי לחבילת טעימה חינמית' : 
+                          'חבילת טעימה לא מופעלת'
+                        }
+                      </span>
+                    </div>
+                    <Button
+                      variant={lead.free_sample_package_active ? "destructive" : "default"}
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const newStatus = !lead.free_sample_package_active;
+                          await handleFieldBlur('free_sample_package_active', newStatus);
+                          toast.success(
+                            newStatus ? 
+                              'חבילת טעימה חינמית הופעלה בהצלחה' : 
+                              'חבילת טעימה חינמית בוטלה'
+                          );
+                        } catch (error) {
+                          toast.error('שגיאה בעדכון חבילת הטעימה');
+                        }
+                      }}
+                    >
+                      {lead.free_sample_package_active ? 'בטל חבילה' : 'הפעל חבילה'}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -718,42 +743,58 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>אימונים ($2.5)</Label>
-                        <InlineEditField
-                          key={`ai_training_25_count_${lead.ai_training_25_count}_${updateCounter}`}
-                          fieldName="ai_training_25_count"
-                          value={lead.ai_training_25_count || 0}
+                        <Input
                           type="number"
                           min="0"
+                          step="1"
+                          value={lead.ai_training_25_count || 0}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            handleFieldBlur('ai_training_25_count', value);
+                          }}
+                          className="mt-1"
                         />
                       </div>
                       <div>
                         <Label>אימונים ($1.5)</Label>
-                        <InlineEditField
-                          key={`ai_training_15_count_${lead.ai_training_15_count}_${updateCounter}`}
-                          fieldName="ai_training_15_count"
-                          value={lead.ai_training_15_count || 0}
+                        <Input
                           type="number"
                           min="0"
+                          step="1"
+                          value={lead.ai_training_15_count || 0}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            handleFieldBlur('ai_training_15_count', value);
+                          }}
+                          className="mt-1"
                         />
                       </div>
                       <div>
                         <Label>אימונים ($5.0)</Label>
-                        <InlineEditField
-                          key={`ai_training_5_count_${lead.ai_training_5_count}_${updateCounter}`}
-                          fieldName="ai_training_5_count"
-                          value={lead.ai_training_5_count || 0}
+                        <Input
                           type="number"
                           min="0"
+                          step="1"
+                          value={lead.ai_training_5_count || 0}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            handleFieldBlur('ai_training_5_count', value);
+                          }}
+                          className="mt-1"
                         />
                       </div>
                       <div>
                         <Label>פרומפטים ($0.16)</Label>
-                        <InlineEditField
-                          key={`ai_prompts_count_${lead.ai_prompts_count}_${updateCounter}`}
-                          fieldName="ai_prompts_count"
-                          value={lead.ai_prompts_count || 0}
+                        <Input
                           type="number"
                           min="0"
+                          step="1"
+                          value={lead.ai_prompts_count || 0}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            handleFieldBlur('ai_prompts_count', value);
+                          }}
+                          className="mt-1"
                         />
                       </div>
                     </div>
@@ -765,13 +806,16 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                     <h4 className="font-medium">ניהול הכנסות</h4>
                     <div>
                       <Label>הכנסות מהליד (₪)</Label>
-                      <InlineEditField
-                        key={`revenue_from_lead_local_${lead.revenue_from_lead_local}_${updateCounter}`}
-                        fieldName="revenue_from_lead_local"
-                        value={lead.revenue_from_lead_local || 0}
+                      <Input
                         type="number"
                         min="0"
                         step="0.01"
+                        value={lead.revenue_from_lead_local || 0}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0;
+                          handleFieldBlur('revenue_from_lead_local', value);
+                        }}
+                        className="mt-1"
                       />
                     </div>
                     {lead.revenue_from_lead_local && (
