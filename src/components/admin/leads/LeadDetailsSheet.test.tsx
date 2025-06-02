@@ -1,12 +1,88 @@
 /// <reference types="vitest/globals" />
 
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LeadDetailsSheet } from './LeadDetailsSheet';
+import '@testing-library/jest-dom';
+import LeadDetailsSheet from './LeadDetailsSheet';
 import { MOCK_PACKAGES } from '@/types/package';
-import { Lead } from '@/types/lead';
+import { Lead, LeadStatusEnum, LeadSourceEnum, LEAD_STATUS_DISPLAY, LEAD_SOURCE_DISPLAY } from '@/types/lead';
 import { toast } from 'sonner';
+import { I18nextProvider } from "react-i18next";
+// import i18n from "@/lib/i18n/config"; // Commenting out problematic import for now
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// Début du mock i18n global pour ce fichier de test
+const i18nMock = {
+  t: (key: string, options?: any) => {
+    if (options && typeof options === 'object' && 'count' in options) {
+      return `${key}_count:${options.count}`;
+    }
+    return key;
+  },
+  language: 'en',
+  isInitialized: true,
+  on: vi.fn(),
+  off: vi.fn(),
+  changeLanguage: vi.fn().mockResolvedValue(undefined),
+  getFixedT: vi.fn().mockImplementation((lng?: string, ns?: string | string[], keyPrefix?: string) => (key: string, options?: any) => {
+    let fullKey = key;
+    if (keyPrefix) fullKey = `${keyPrefix}.${key}`;
+    if (ns) {
+      const namespace = Array.isArray(ns) ? ns[0] : ns;
+      fullKey = `${namespace}:${fullKey}`;
+    }
+    if (options && typeof options === 'object' && 'count' in options) {
+      return `${fullKey}_count:${options.count}`;
+    }
+    return fullKey;
+  }),
+  useSuspense: false,
+  dir: (language: string) => language === 'he' ? 'rtl' : 'ltr',
+  services: {
+    resourceStore: {
+      data: {
+        en: { translation: { testKey: "Test Value" } },
+        he: { translation: { testKey: "ערך בדיקה" } }
+      },
+      on: vi.fn(),
+      off: vi.fn(),
+      hasResourceBundle: vi.fn().mockReturnValue(true),
+      getResourceBundle: vi.fn().mockImplementation((lng, ns) => ({ testKey: lng === 'he' ? "ערך בדיקה" : "Test Value" })),
+      addResourceBundle: vi.fn(),
+      loadNamespaces: vi.fn().mockResolvedValue(undefined),
+    },
+    interpolator: {
+      interpolate: (str: string, params: any, lng: string) => {
+        let result = str;
+        for (const key in params) {
+          result = result.replace(new RegExp(`{{${key}}}`, 'g'), params[key]);
+        }
+        return result;
+      },
+      parse: vi.fn(),
+      nest: vi.fn(),
+      init: vi.fn(),
+    },
+    formatter: {
+      format: (value: any, format?: string, lng?: string) => String(value),
+      add: vi.fn(),
+      init: vi.fn(),
+    }
+  },
+  isLanguageChanging: false,
+  hasLoadedNamespace: vi.fn().mockReturnValue(true),
+  loadNamespaces: vi.fn().mockResolvedValue(undefined),
+  reloadResources: vi.fn().mockResolvedValue(undefined),
+  setDefaultNamespace: vi.fn(),
+  loaded: {},
+  options: {},
+  modules: {},
+  isMock: true, // Custom flag to identify it as a mock
+  resolvedLanguage: 'en',
+};
+// Fin du mock i18n
 
 // Mock API calls directly in the factory
 vi.mock('@/api/clientsApi', () => ({
@@ -17,8 +93,18 @@ vi.mock('@/api/clientsApi', () => ({
 // Mock useLeads hook
 const mockUpdateLeadStatusHook = vi.fn();
 vi.mock('@/hooks/useLeads', () => ({
-  useLeads: () => ({
-    updateLeadStatus: mockUpdateLeadStatusHook,
+  useUpdateLeadStatus: () => ({
+    mutateAsync: mockUpdateLeadStatusHook,
+    isLoading: false,
+  }),
+  // Mock other hooks if LeadDetailsSheet directly or indirectly uses them
+  useUpdateLead: () => ({ // Add mock for useUpdateLead
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isLoading: false,
+  }),
+  useDeleteLead: () => ({ // Add mock for useDeleteLead
+    mutateAsync: vi.fn().mockResolvedValue({}),
+    isLoading: false,
   }),
 }));
 
@@ -33,36 +119,63 @@ vi.mock('sonner', () => ({
 // Now, import the mocked functions for use in tests
 import { checkClientExists, createClientFromLead } from '@/api/clientsApi';
 
-const mockLead: Lead = {
-  id: 'lead1',
+const queryClient = new QueryClient();
+
+const mockLeadBase: Omit<Lead, 'lead_id' | 'created_at' | 'updated_at' | 'total_ai_costs' | 'roi' | 'revenue_from_lead_usd' | 'next_follow_up_date' | 'next_follow_up_notes' | 'client_id' | 'free_sample_package_active' | 'address' | 'website_url' | 'ai_trainings_count' | 'ai_training_cost_per_unit' | 'ai_prompts_count' | 'ai_prompt_cost_per_unit' | 'exchange_rate_at_conversion' | 'revenue_from_lead_local'> = {
   restaurant_name: 'Test Restaurant',
   contact_name: 'Test Contact',
-  phone_number: '1234567890',
   email: 'test@example.com',
-  lead_status: 'ליד חדש',
-  created_at: new Date().toISOString(),
-  last_updated_at: new Date().toISOString(),
-  lead_source: 'אתר',
-  notes: 'Some notes',
-  reminder_at: null,
-  reminder_details: null,
-  free_sample_package_active: false,
+  phone: '1234567890', // Standardized to 'phone'
+  lead_status: LeadStatusEnum.NEW,
+  lead_source: LeadSourceEnum.WEBSITE,
+  notes: 'Initial notes for testing.',
 };
 
-const mockOnUpdate = vi.fn();
-const mockOnDeleteLeadConfirm = vi.fn();
+const mockLead: Lead = {
+  ...mockLeadBase,
+  lead_id: "1",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  next_follow_up_date: null,
+  next_follow_up_notes: null,
+  ai_trainings_count: 0,
+  ai_training_cost_per_unit: 1.5,
+  ai_prompts_count: 0,
+  ai_prompt_cost_per_unit: 0.16,
+  total_ai_costs: 0,
+  revenue_from_lead_local: 0,
+  revenue_from_lead_usd: 0,
+  exchange_rate_at_conversion: null,
+  roi: 0,
+  client_id: null,
+  free_sample_package_active: false,
+  address: "123 Test St",
+  website_url: "http://test.com",
+};
+
 const mockOnOpenChange = vi.fn();
+const mockOnUpdate = vi.fn();
+const mockOnDelete = vi.fn();
+const mockOnClose = vi.fn();
 
 const defaultProps = {
   isOpen: true,
   onOpenChange: mockOnOpenChange,
   lead: mockLead,
   onUpdate: mockOnUpdate,
-  onDeleteLeadConfirm: mockOnDeleteLeadConfirm,
+  onDelete: mockOnDelete,
+  onClose: mockOnClose,
 };
 
 const renderComponent = (props = {}) => {
-  return render(<LeadDetailsSheet {...defaultProps} {...props} />);
+  const mergedProps = { ...defaultProps, ...props };
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <I18nextProvider i18n={i18nMock as any}>
+        <LeadDetailsSheet {...mergedProps} />
+      </I18nextProvider>
+    </QueryClientProvider>
+  );
 };
 
 describe('LeadDetailsSheet', () => {
@@ -73,8 +186,9 @@ describe('LeadDetailsSheet', () => {
     (createClientFromLead as ReturnType<typeof vi.fn>).mockReset();
     mockUpdateLeadStatusHook.mockReset();
     mockOnUpdate.mockReset();
-    mockOnDeleteLeadConfirm.mockReset();
+    mockOnDelete.mockReset();
     mockOnOpenChange.mockReset();
+    mockOnClose.mockReset();
     if (toast.success && typeof (toast.success as any).mockReset === 'function') {
       (toast.success as any).mockReset();
     }
@@ -84,6 +198,7 @@ describe('LeadDetailsSheet', () => {
     if (toast.info && typeof (toast.info as any).mockReset === 'function') {
       (toast.info as any).mockReset();
     }
+    queryClient.clear(); // Clear query cache before each test
   });
 
   describe('Convert to Client Functionality', () => {
@@ -109,7 +224,7 @@ describe('LeadDetailsSheet', () => {
         packageToSelect.package_id,
         packageToSelect.total_servings
       ));
-      await waitFor(() => expect(mockUpdateLeadStatusHook).toHaveBeenCalledWith(mockLead.id, 'הפך ללקוח'));
+      await waitFor(() => expect(mockUpdateLeadStatusHook).toHaveBeenCalledWith(mockLead.lead_id, 'הפך ללקוח'));
       await waitFor(() => expect(toast.success).toHaveBeenCalledWith('הליד הומר ללקוח בהצלחה'));
     });
 
@@ -147,8 +262,8 @@ describe('LeadDetailsSheet', () => {
     it('should clear reminder fields if they exist when lead is converted', async () => {
       const leadWithReminder: Lead = {
         ...mockLead,
-        reminder_at: new Date().toISOString(),
-        reminder_details: 'Call back tomorrow',
+        next_follow_up_date: new Date().toISOString(),
+        next_follow_up_notes: 'Call back tomorrow',
       };
       (checkClientExists as ReturnType<typeof vi.fn>).mockResolvedValue(false);
       (createClientFromLead as ReturnType<typeof vi.fn>).mockResolvedValue({});
@@ -164,9 +279,9 @@ describe('LeadDetailsSheet', () => {
       
       await userEvent.click(screen.getByRole('button', { name: 'המר ללקוח' }));
 
-      await waitFor(() => expect(mockOnUpdate).toHaveBeenCalledWith(leadWithReminder.id, {
-        reminder_at: null,
-        reminder_details: null,
+      await waitFor(() => expect(mockOnUpdate).toHaveBeenCalledWith(leadWithReminder.lead_id, {
+        next_follow_up_date: null,
+        next_follow_up_notes: null,
       }));
       await waitFor(() => expect(toast.success).toHaveBeenCalledWith('הליד הומר ללקוח בהצלחה'));
     });
@@ -216,7 +331,7 @@ describe('LeadDetailsSheet', () => {
       await userEvent.click(screen.getByRole('button', { name: /שמור שינויים/i }));
 
       await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.id, expect.objectContaining({
+        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.lead_id, expect.objectContaining({
           restaurant_name: newRestaurantName,
           notes: newNotes,
         }));
@@ -267,7 +382,7 @@ describe('LeadDetailsSheet', () => {
       renderComponent();
       expect(screen.getByLabelText(/שם מסעדה/i)).toHaveValue(mockLead.restaurant_name);
       expect(screen.getByLabelText(/שם איש קשר/i)).toHaveValue(mockLead.contact_name);
-      expect(screen.getByLabelText(/מספר טלפון/i)).toHaveValue(mockLead.phone_number);
+      expect(screen.getByLabelText(/מספר טלפון/i)).toHaveValue(mockLead.phone);
       expect(screen.getByLabelText(/אימייל/i)).toHaveValue(mockLead.email);
       expect(screen.getByDisplayValue(mockLead.notes!)).toBeInTheDocument(); // For textarea
       
@@ -277,7 +392,7 @@ describe('LeadDetailsSheet', () => {
       expect(selectTrigger).toBeInTheDocument();
       // Check for the displayed text within the trigger.
       // This might need adjustment based on the exact DOM structure of SelectTrigger's children
-      expect(within(selectTrigger).getByText(mockLead.lead_status)).toBeInTheDocument();
+      expect(within(selectTrigger).getByText(LEAD_STATUS_DISPLAY[mockLead.lead_status])).toBeInTheDocument();
     });
 
     // SKIPPING: Difficult to reliably trigger Radix Select onValueChange in JSDOM for status updates.
@@ -296,7 +411,7 @@ describe('LeadDetailsSheet', () => {
       await userEvent.click(optionToSelect);
 
       await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.id, { lead_status: statusToAttempt });
+        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.lead_id, { lead_status: statusToAttempt });
       });
 
       // Check for error toast
@@ -333,8 +448,8 @@ describe('LeadDetailsSheet', () => {
       })).toBeInTheDocument();
     });
 
-    it('should call onDeleteLeadConfirm, show success toast, and call onOpenChange(false) on confirmed deletion', async () => {
-      mockOnDeleteLeadConfirm.mockResolvedValue({}); 
+    it('should call onDelete, show success toast, and call onOpenChange(false) on confirmed deletion', async () => {
+      mockOnDelete.mockResolvedValue({}); 
       renderComponent();
 
       const sheetFooter = screen.getByTestId('lead-details-sheet-footer');
@@ -348,12 +463,12 @@ describe('LeadDetailsSheet', () => {
       const confirmDeleteButtonInDialog = within(deleteDialog! as HTMLElement).getByRole('button', { name: /מחק ליד/i });
       await userEvent.click(confirmDeleteButtonInDialog);
 
-      await waitFor(() => expect(mockOnDeleteLeadConfirm).toHaveBeenCalledWith(mockLead.id));
+      await waitFor(() => expect(mockOnDelete).toHaveBeenCalledWith(mockLead.lead_id));
       await waitFor(() => expect(toast.success).toHaveBeenCalledWith('הליד נמחק בהצלחה'));
       await waitFor(() => expect(mockOnOpenChange).toHaveBeenCalledWith(false)); 
     });
 
-    it('should not call onDeleteLeadConfirm if deletion is cancelled from dialog', async () => {
+    it('should not call onDelete if deletion is cancelled from dialog', async () => {
       renderComponent();
       const sheetFooter = screen.getByTestId('lead-details-sheet-footer');
       const initialDeleteButton = within(sheetFooter).getByRole('button', { name: /מחק ליד/i });
@@ -366,12 +481,12 @@ describe('LeadDetailsSheet', () => {
       const cancelButtonInDialog = within(deleteDialog! as HTMLElement).getByRole('button', { name: /ביטול/i });
       await userEvent.click(cancelButtonInDialog);
 
-      expect(mockOnDeleteLeadConfirm).not.toHaveBeenCalled();
+      expect(mockOnDelete).not.toHaveBeenCalled();
       expect(screen.queryByText(/אישור מחיקת ליד/i)).not.toBeInTheDocument();
     });
 
     it('should handle API error during lead deletion and keep dialog open', async () => {
-      mockOnDeleteLeadConfirm.mockRejectedValue(new Error('Deletion failed'));
+      mockOnDelete.mockRejectedValue(new Error('Deletion failed'));
       renderComponent();
 
       const sheetFooter = screen.getByTestId('lead-details-sheet-footer');
@@ -385,7 +500,7 @@ describe('LeadDetailsSheet', () => {
       const confirmDeleteButtonInDialog = within(deleteDialog! as HTMLElement).getByRole('button', { name: 'מחק ליד' });
       await userEvent.click(confirmDeleteButtonInDialog);
 
-      await waitFor(() => expect(mockOnDeleteLeadConfirm).toHaveBeenCalledWith(mockLead.id));
+      await waitFor(() => expect(mockOnDelete).toHaveBeenCalledWith(mockLead.lead_id));
       await waitFor(() => expect(toast.error).toHaveBeenCalledWith('שגיאה במחיקת הליד'));
       expect(mockOnOpenChange).not.toHaveBeenCalledWith(false); 
       
@@ -399,14 +514,14 @@ describe('LeadDetailsSheet', () => {
   // Placeholder for other interactions
   describe('Other Interactions', () => {
     it('should correctly display lead status using StatusBadge', () => {
-      const leadWithSpecificStatus: Lead = { ...mockLead, lead_status: 'מעוניין' }; // Example status
+      const leadWithSpecificStatus: Lead = { ...mockLead, lead_status: LeadStatusEnum.CONTACTED }; // Example status
       renderComponent({ lead: leadWithSpecificStatus });
 
       const statusLabel = screen.getByText('סטטוס:');
       const statusContainer = statusLabel.parentElement;
       expect(statusContainer).toBeInTheDocument();
 
-      const statusBadgeElement = within(statusContainer!).getByText(leadWithSpecificStatus.lead_status);
+      const statusBadgeElement = within(statusContainer!).getByText(LEAD_STATUS_DISPLAY[leadWithSpecificStatus.lead_status]);
       expect(statusBadgeElement).toBeInTheDocument();
       expect(statusBadgeElement.tagName).toBe('DIV');
     });
@@ -424,7 +539,7 @@ describe('LeadDetailsSheet', () => {
       await userEvent.click(optionToSelect);
 
       await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.id, { lead_status: statusToSelect });
+        expect(mockOnUpdate).toHaveBeenCalledWith(mockLead.lead_id, { lead_status: statusToSelect });
       });
       expect(toast.success).toHaveBeenCalledWith('סטטוס הליד עודכן בהצלחה');
       await waitFor(() => {
@@ -439,7 +554,7 @@ describe('LeadDetailsSheet', () => {
       const mockDateISO = mockDate.toISOString();
 
       mockOnUpdate.mockResolvedValue({});
-      const leadWithoutReminder = { ...mockLead, reminder_at: null, reminder_details: null };
+      const leadWithoutReminder = { ...mockLead, next_follow_up_date: null, next_follow_up_notes: null };
       renderComponent({ lead: leadWithoutReminder });
 
       const datePickerButton = screen.getByRole('button', { name: /תאריך תזכורת/i });
@@ -464,13 +579,13 @@ describe('LeadDetailsSheet', () => {
       await userEvent.click(saveChangesButton);
 
       await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(leadWithoutReminder.id, expect.objectContaining({
-          reminder_at: expect.stringContaining(mockDateISO.split('T')[0]), 
-          reminder_details: reminderText,
+        expect(mockOnUpdate).toHaveBeenCalledWith(leadWithoutReminder.lead_id, expect.objectContaining({
+          next_follow_up_date: expect.stringContaining(mockDateISO.split('T')[0]), 
+          next_follow_up_notes: reminderText,
           // Include other form fields as they are part of the same form submission
           restaurant_name: leadWithoutReminder.restaurant_name,
           contact_name: leadWithoutReminder.contact_name,
-          phone_number: leadWithoutReminder.phone_number,
+          phone: leadWithoutReminder.phone,
           email: leadWithoutReminder.email,
           lead_status: leadWithoutReminder.lead_status,
           lead_source: leadWithoutReminder.lead_source,
@@ -488,8 +603,8 @@ describe('LeadDetailsSheet', () => {
 
       const leadWithReminder = { 
         ...mockLead, 
-        reminder_at: new Date().toISOString(), 
-        reminder_details: reminderText 
+        next_follow_up_date: new Date().toISOString(), 
+        next_follow_up_notes: reminderText 
       };
       // Re-render the component with a lead that HAS a reminder
       renderComponent({ lead: leadWithReminder }); 
@@ -506,13 +621,13 @@ describe('LeadDetailsSheet', () => {
       await userEvent.click(saveChangesButton);
 
       await waitFor(() => {
-        expect(mockOnUpdate).toHaveBeenCalledWith(leadWithReminder.id, expect.objectContaining({
-          reminder_at: null, 
-          reminder_details: null, 
+        expect(mockOnUpdate).toHaveBeenCalledWith(leadWithReminder.lead_id, expect.objectContaining({
+          next_follow_up_date: null, 
+          next_follow_up_notes: null, 
           // Ensure other fields are also part of the update, as it's a general form save
           restaurant_name: leadWithReminder.restaurant_name,
           contact_name: leadWithReminder.contact_name,
-          phone_number: leadWithReminder.phone_number,
+          phone: leadWithReminder.phone,
           email: leadWithReminder.email,
           lead_status: leadWithReminder.lead_status, // Status should remain
           lead_source: leadWithReminder.lead_source,
@@ -524,7 +639,7 @@ describe('LeadDetailsSheet', () => {
       expect(toast.success).toHaveBeenCalledWith('הליד עודכן בהצלחה'); 
       
       // Verify reminder is no longer displayed in the input
-      // After clearing, the input itself should disappear because reminder_at is null
+      // After clearing, the input itself should disappear because next_follow_up_date is null
       expect(screen.queryByPlaceholderText(/פרטי התזכורת.../i)).not.toBeInTheDocument();
       
       // "תאריך תזכורת" button should revert to placeholder text (or its default state)
@@ -532,7 +647,7 @@ describe('LeadDetailsSheet', () => {
     });
 
     it('should disable convert to client button if lead_status is "הפך ללקוח"', () => {
-      const convertedLead: Lead = { ...mockLead, lead_status: 'הפך ללקוח' };
+      const convertedLead: Lead = { ...mockLead, lead_status: LeadStatusEnum.CONTACTED };
       renderComponent({ lead: convertedLead });
 
       const sheetFooter = screen.getByTestId('lead-details-sheet-footer');
@@ -540,5 +655,23 @@ describe('LeadDetailsSheet', () => {
       
       expect(convertToClientButton).toBeDisabled();
     });
+  });
+
+  test('should display phone number correctly in form', () => {
+    renderComponent({ lead: mockLead });
+    expect(screen.getByLabelText(/מספר טלפון/i)).toHaveValue(mockLead.phone);
+  });
+  
+  test('displays reminder information if next_follow_up_date is set', () => {
+    const reminderDate = new Date();
+    reminderDate.setDate(reminderDate.getDate() + 1);
+    const leadWithReminder: Lead = {
+      ...mockLead,
+      lead_id: "lead-with-reminder",
+      next_follow_up_date: reminderDate.toISOString(),
+      next_follow_up_notes: "Follow up on quote",
+      phone: "444555666",
+    };
+    renderComponent({ lead: leadWithReminder });
   });
 }); 

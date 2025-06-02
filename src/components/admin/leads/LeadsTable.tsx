@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Lead } from "@/types/lead";
+import { Lead, LeadStatusEnum, LEAD_STATUS_DISPLAY } from "@/types/lead";
 import { 
   Table, 
   TableBody, 
@@ -8,104 +8,147 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { format } from "date-fns";
-import { ArrowUpAZ, ArrowDownAZ } from "lucide-react";
+import { formatDate, formatCurrency } from "@/utils/formatters";
+import { ArrowUpDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "./StatusBadge";
 import { ReminderCell } from "./ReminderCell";
 import { DeleteLeadDialog } from "./DeleteLeadDialog";
 import { LeadsTableLoadingState } from "./LeadsTableLoadingState";
 import { LeadsEmptyState } from "./LeadsEmptyState";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface LeadsTableProps {
   leads: Lead[];
-  onEdit: (lead: Lead) => void;
   isLoading: boolean;
-  sortBy?: string;
-  sortDirection?: "asc" | "desc";
-  onSort: (field: string) => void;
+  error: Error | null;
+  onSort: (field: keyof Lead | 'actions' | 'select') => void;
+  currentSort: { field: keyof Lead | 'actions' | 'select'; direction: 'asc' | 'desc' } | null;
+  selectedLeads: Set<string>;
+  onSelectLead: (leadId: string) => void;
+  onSelectAllLeads: (selectAll: boolean) => void;
+  onViewLead: (lead: Lead) => void;
+  onEditLead: (lead: Lead) => void;
+  onDeleteLead: (leadId: string) => void;
 }
+
+const LEAD_STATUS_COLORS: Record<LeadStatusEnum, string> = {
+  [LeadStatusEnum.NEW]: '#3B82F6',
+  [LeadStatusEnum.CONTACTED]: '#F59E0B',
+  [LeadStatusEnum.INTERESTED_SENT_PICS]: '#10B981',
+  [LeadStatusEnum.WAITING_REPLY]: '#EAB308',
+  [LeadStatusEnum.MEETING_SCHEDULED]: '#8B5CF6',
+  [LeadStatusEnum.DEMO_DONE]: '#2563EB',
+  [LeadStatusEnum.QUOTE_SENT]: '#EC4899',
+  [LeadStatusEnum.COLD_FOLLOW_UP]: '#6B7280',
+  [LeadStatusEnum.NOT_INTERESTED]: '#EF4444',
+  [LeadStatusEnum.CONVERTED_TO_CLIENT]: '#059669',
+  [LeadStatusEnum.ARCHIVED]: '#D1D5DB',
+};
 
 const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
-  onEdit,
   isLoading,
-  sortBy = "",
-  sortDirection = "desc",
+  error,
   onSort,
+  currentSort,
+  selectedLeads,
+  onSelectLead,
+  onSelectAllLeads,
+  onViewLead,
+  onEditLead,
+  onDeleteLead
 }) => {
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy");
-  };
-
-  const renderSortIcon = (field: string) => {
-    if (sortBy !== field) return null;
-    return sortDirection === "asc" ? (
-      <ArrowUpAZ className="w-4 h-4 mr-1" />
-    ) : (
-      <ArrowDownAZ className="w-4 h-4 mr-1" />
+  const renderSortableHeader = (field: keyof Lead | 'actions' | 'select', displayName: string) => {
+    if (field === 'actions' || field === 'select') {
+      return displayName;
+    }
+    const isSorted = currentSort?.field === field;
+    return (
+      <Button variant="ghost" onClick={() => onSort(field)}>
+        {displayName}
+        {isSorted ? (currentSort?.direction === 'asc' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />) : <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />}
+      </Button>
     );
   };
 
-  const renderSortableHeader = (field: string, label: string) => (
-    <Button 
-      variant="ghost" 
-      size="sm" 
-      className="p-0 font-medium flex items-center hover:bg-transparent hover:text-primary" 
-      onClick={() => onSort(field)}
-    >
-      {renderSortIcon(field)}
-      {label}
-    </Button>
-  );
-
   if (isLoading) {
-    return <LeadsTableLoadingState />;
+    return <div className="text-center py-10">טוען לידים...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-red-500">שגיאה בטעינת לידים: {error.message}</div>;
   }
 
   if (leads.length === 0) {
     return <LeadsEmptyState />;
   }
+  
+  const allSelected = leads.length > 0 && selectedLeads.size === leads.length;
 
   return (
-    <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{renderSortableHeader("restaurant_name", "שם מסעדה")}</TableHead>
-              <TableHead>{renderSortableHeader("contact_name", "איש קשר")}</TableHead>
-              <TableHead>{renderSortableHeader("phone_number", "טלפון")}</TableHead>
-              <TableHead>{renderSortableHeader("lead_status", "סטטוס")}</TableHead>
-              <TableHead>{renderSortableHeader("created_at", "תאריך יצירה")}</TableHead>
-              <TableHead>{renderSortableHeader("last_updated_at", "תאריך עדכון")}</TableHead>
-              <TableHead>{renderSortableHeader("reminder_at", "תזכורת")}</TableHead>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <Checkbox
+                checked={allSelected}
+                onCheckedChange={(checked) => onSelectAllLeads(Boolean(checked))}
+                aria-label="Select all"
+              />
+            </TableHead>
+            <TableHead>{renderSortableHeader("restaurant_name", "שם מסעדה")}</TableHead>
+            <TableHead>{renderSortableHeader("contact_name", "איש קשר")}</TableHead>
+            <TableHead>{renderSortableHeader("phone", "טלפון")}</TableHead>
+            <TableHead>{renderSortableHeader("lead_status", "סטטוס")}</TableHead>
+            <TableHead>{renderSortableHeader("updated_at", "תאריך עדכון")}</TableHead>            
+            <TableHead>{renderSortableHeader("next_follow_up_date", "תזכורת")}</TableHead>
+            <TableHead>{renderSortableHeader("total_ai_costs", "עלויות AI")}</TableHead>
+            <TableHead>{renderSortableHeader("roi", "ROI")}</TableHead>
+            <TableHead>פעולות</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {leads.map((lead) => (
+            <TableRow key={lead.lead_id}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedLeads.has(lead.lead_id)}
+                  onCheckedChange={() => onSelectLead(lead.lead_id)}
+                  aria-label="Select row"
+                />
+              </TableCell>
+              <TableCell className="font-medium hover:underline cursor-pointer" onClick={() => onViewLead(lead)}>
+                {lead.restaurant_name}
+              </TableCell>
+              <TableCell>{lead.contact_name}</TableCell>
+              <TableCell>{lead.phone}</TableCell>
+              <TableCell>
+                {lead.lead_status ? (
+                  <Badge style={{ backgroundColor: LEAD_STATUS_COLORS[lead.lead_status] || 'grey' }} className="text-white">
+                    {LEAD_STATUS_DISPLAY[lead.lead_status] || lead.lead_status}
+                  </Badge>
+                ) : 'N/A'}
+              </TableCell>
+              <TableCell>{formatDate(lead.updated_at)}</TableCell>
+              <TableCell>{formatDate(lead.next_follow_up_date)}</TableCell>
+              <TableCell>{formatCurrency(lead.total_ai_costs)}</TableCell>
+              <TableCell>{lead.roi ? `${lead.roi.toFixed(2)}%` : 'N/A'}</TableCell>
+              <TableCell>
+                <Button variant="outline" size="sm" onClick={() => onEditLead(lead)} className="mr-2">
+                  ערוך
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => onDeleteLead(lead.lead_id)}>
+                  מחק
+                </Button>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {leads.map((lead) => (
-              <TableRow 
-                key={lead.id} 
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onEdit(lead)}
-              >
-                <TableCell className="font-medium">{lead.restaurant_name}</TableCell>
-                <TableCell>{lead.contact_name}</TableCell>
-                <TableCell>{lead.phone_number}</TableCell>
-                <TableCell>
-                  <StatusBadge status={lead.lead_status} />
-                </TableCell>
-                <TableCell>{formatDate(lead.created_at)}</TableCell>
-                <TableCell>{formatDate(lead.last_updated_at)}</TableCell>
-                <TableCell>
-                  <ReminderCell reminderDate={lead.reminder_at} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
 

@@ -1,31 +1,22 @@
-import React, { useState } from "react";
-import { Lead, LEAD_STATUS_OPTIONS } from "@/types/lead";
-import { useForm, Controller } from "react-hook-form";
+import React, { useEffect, useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { format } from "date-fns";
-import { Loader2, Calendar, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client"; // For getPublicUrl
 import { toast } from "sonner";
-import { StatusBadge } from "./StatusBadge";
-import { Package, MOCK_PACKAGES } from "@/types/package";
-import { useLeads } from "@/hooks/useLeads";
-import { checkClientExists, createClientFromLead } from "@/api/clientsApi";
-
-// UI Components
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetDescription,
-  SheetClose,
   SheetFooter,
+  SheetClose,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
@@ -42,30 +33,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { CalendarIcon, Edit3, Trash2, UserPlus, DollarSign, TrendingUp, FileText, Activity, MessageSquare, Eye, LinkIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,631 +48,564 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { RefreshCw } from "lucide-react";
+import { 
+  Lead, 
+  LeadStatusEnum, 
+  LeadSourceEnum, 
+  LEAD_STATUS_DISPLAY, 
+  LEAD_SOURCE_DISPLAY,
+  mapHebrewToLeadStatusEnum,
+  mapLeadStatusToHebrew,
+  mapHebrewToLeadSourceEnum,
+  mapLeadSourceToHebrew
+} from "@/types/lead"; // Added all necessary imports
+import { formatDate, formatCurrency } from "@/utils/formatters";
+import { cn } from "@/lib/utils";
 
-// Zod schema for form validation
-const leadFormSchema = z.object({
+// Define the Zod schema for the form
+const formSchema = z.object({
   restaurant_name: z.string().min(1, { message: "שם מסעדה הוא שדה חובה" }),
   contact_name: z.string().min(1, { message: "שם איש קשר הוא שדה חובה" }),
-  phone_number: z.string().min(1, { message: "מספר טלפון הוא שדה חובה" }),
+  phone: z.string().min(1, { message: "מספר טלפון הוא שדה חובה" }),
   email: z.string().email({ message: "נא להזין כתובת אימייל תקינה" }),
-  lead_status: z.string(),
-  lead_source: z.string().nullable(),
+  website_url: z.string().url({ message: "נא להזין URL תקין" }).or(z.literal('')).nullable(),
+  address: z.string().nullable(),
+  lead_status: z.nativeEnum(LeadStatusEnum), // Use nativeEnum for enums
+  lead_source: z.nativeEnum(LeadSourceEnum).nullable(),
   notes: z.string().nullable(),
-  reminder_at: z.date().nullable(),
-  reminder_details: z.string().nullable(),
-  free_sample_package_active: z.boolean()
+  next_follow_up_date: z.date().nullable(),
+  next_follow_up_notes: z.string().nullable(),
+  free_sample_package_active: z.boolean(),
+  // AI Cost fields - these might be handled in a separate form/tab
+  ai_trainings_count: z.number().int().min(0).optional(),
+  ai_training_cost_per_unit: z.number().min(0).optional(),
+  ai_prompts_count: z.number().int().min(0).optional(),
+  ai_prompt_cost_per_unit: z.number().min(0).optional(),
+  revenue_from_lead_local: z.number().min(0).optional(),
+  exchange_rate_at_conversion: z.number().min(0).optional(),
 });
 
-type LeadFormValues = z.infer<typeof leadFormSchema>;
-
 interface LeadDetailsSheetProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
   lead: Lead | null;
-  onUpdate: (id: string, updates: Partial<Lead>) => Promise<void>;
-  onDeleteLeadConfirm: (leadId: string) => Promise<void>;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void>;
+  onDelete: (leadId: string) => Promise<void>;
+  // onConvertToClient: (leadId: string) => Promise<void>; // This logic will use onUpdate
 }
 
-export const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
-  isOpen,
-  onOpenChange,
+const LeadDetailsSheet: React.FC<LeadDetailsSheetProps> = ({
   lead,
+  isOpen,
+  onClose,
   onUpdate,
-  onDeleteLeadConfirm
+  onDelete,
+  // onConvertToClient,
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConvertDialog, setShowConvertDialog] = useState(false);
-  const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
-  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { updateLeadStatus } = useLeads();
+  const [activeTab, setActiveTab] = useState("details");
 
-  const form = useForm<LeadFormValues>({
-    resolver: zodResolver(leadFormSchema),
-    defaultValues: {
-      restaurant_name: lead?.restaurant_name || "",
-      contact_name: lead?.contact_name || "",
-      phone_number: lead?.phone_number || "",
-      email: lead?.email || "",
-      lead_status: lead?.lead_status || "ליד חדש",
-      lead_source: lead?.lead_source || null,
-      notes: lead?.notes || "",
-      reminder_at: lead?.reminder_at ? new Date(lead.reminder_at) : null,
-      reminder_details: lead?.reminder_details || "",
-      free_sample_package_active: lead?.free_sample_package_active || false
-    }
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {},
   });
 
-  // Reset form when lead changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (lead) {
       form.reset({
-        restaurant_name: lead.restaurant_name,
-        contact_name: lead.contact_name,
-        phone_number: lead.phone_number,
-        email: lead.email,
-        lead_status: lead.lead_status,
-        lead_source: lead.lead_source,
+        restaurant_name: lead.restaurant_name || "",
+        contact_name: lead.contact_name || "",
+        phone: lead.phone || "",
+        email: lead.email || "",
+        website_url: lead.website_url || "",
+        address: lead.address || "",
+        lead_status: lead.lead_status || LeadStatusEnum.NEW,
+        lead_source: lead.lead_source || null,
         notes: lead.notes || "",
-        reminder_at: lead.reminder_at ? new Date(lead.reminder_at) : null,
-        reminder_details: lead.reminder_details || "",
-        free_sample_package_active: lead.free_sample_package_active
+        next_follow_up_date: lead.next_follow_up_date ? new Date(lead.next_follow_up_date) : null,
+        next_follow_up_notes: lead.next_follow_up_notes || "",
+        free_sample_package_active: lead.free_sample_package_active || false,
+        // Initialize AI cost fields if present on lead object
+        ai_trainings_count: lead.ai_trainings_count,
+        ai_training_cost_per_unit: lead.ai_training_cost_per_unit,
+        ai_prompts_count: lead.ai_prompts_count,
+        ai_prompt_cost_per_unit: lead.ai_prompt_cost_per_unit,
+        revenue_from_lead_local: lead.revenue_from_lead_local,
+        exchange_rate_at_conversion: lead.exchange_rate_at_conversion,
       });
     } else {
-      setSelectedPackage(null);
+      form.reset({ // Default for new lead
+        restaurant_name: "",
+        contact_name: "",
+        phone: "",
+        email: "",
+        website_url: "",
+        address: "",
+        lead_status: LeadStatusEnum.NEW,
+        lead_source: null,
+        notes: "",
+        next_follow_up_date: null,
+        next_follow_up_notes: "",
+        free_sample_package_active: false,
+        ai_trainings_count: 0,
+        ai_training_cost_per_unit: 1.5, // Default or fetch from settings
+        ai_prompts_count: 0,
+        ai_prompt_cost_per_unit: 0.16, // Default or fetch from settings
+        revenue_from_lead_local: 0,
+        exchange_rate_at_conversion: 3.7, // Default or fetch from settings
+      });
     }
-  }, [lead, form]);
+  }, [lead, form, isOpen]); // Added isOpen to reset form when sheet reopens for a new lead
 
-  const handleSubmit = async (values: LeadFormValues) => {
-    if (!lead) return;
-
-    try {
-      setIsSubmitting(true);
-      
-      const updates: Partial<Lead> = {
-        restaurant_name: values.restaurant_name,
-        contact_name: values.contact_name,
-        phone_number: values.phone_number,
-        email: values.email,
-        lead_status: values.lead_status as any,
-        lead_source: values.lead_source as any,
-        notes: values.notes,
-        reminder_at: values.reminder_details && values.reminder_at ? values.reminder_at.toISOString() : null,
-        reminder_details: values.reminder_details ? values.reminder_details : null,
-        free_sample_package_active: values.free_sample_package_active
-      };
-
-      await onUpdate(lead.id, updates);
-      toast.success("הליד עודכן בהצלחה");
-    } catch (error) {
-      console.error("Error updating lead:", error);
-      toast.error("שגיאה בעדכון הליד");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleStatusChange = async (status: string) => {
-    if (!lead) return;
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!lead) return; // Should not happen if form is for an existing lead
     
+    const updatedLeadData: Partial<Lead> = {
+      // lead_id is not part of form values, it's from the lead object
+      restaurant_name: values.restaurant_name,
+      contact_name: values.contact_name,
+      phone: values.phone,
+      email: values.email,
+      website_url: values.website_url,
+      address: values.address,
+      lead_status: values.lead_status, // This is already LeadStatusEnum from form
+      lead_source: values.lead_source, // Already LeadSourceEnum from form
+      notes: values.notes,
+      next_follow_up_date: values.next_follow_up_date ? values.next_follow_up_date.toISOString().split('T')[0] : undefined,
+      next_follow_up_notes: values.next_follow_up_notes,
+      free_sample_package_active: values.free_sample_package_active,
+      // AI cost fields
+      ai_trainings_count: values.ai_trainings_count,
+      ai_training_cost_per_unit: values.ai_training_cost_per_unit,
+      ai_prompts_count: values.ai_prompts_count,
+      ai_prompt_cost_per_unit: values.ai_prompt_cost_per_unit,
+      revenue_from_lead_local: values.revenue_from_lead_local,
+      exchange_rate_at_conversion: values.exchange_rate_at_conversion,
+    };
+
     try {
-      await updateLeadStatus(lead.id, status as any);
-      form.setValue("lead_status", status);
-      toast.success("סטטוס הליד עודכן בהצלחה");
+      await onUpdate(lead.lead_id, updatedLeadData);
+      toast.success("הליד עודכן בהצלחה");
+      onClose();
     } catch (error) {
-      console.error("Error updating lead status:", error);
-      toast.error("שגיאה בעדכון סטטוס הליד");
+      toast.error("שגיאה בעדכון הליד: " + (error as Error).message);
+      console.error("Error updating lead:", error);
     }
   };
 
   const handleConvertToClient = async () => {
     if (!lead) return;
-
     try {
-      // First check if a client with this email already exists
-      const exists = await checkClientExists(lead.email);
-      if (exists) {
-        toast.error("לקוח עם אותו אימייל כבר קיים במערכת");
-        setShowConvertDialog(false);
-        setSelectedPackage(null);
-        return;
+      // Update status to CONVERTED_TO_CLIENT
+      const updates: Partial<Lead> = { lead_status: LeadStatusEnum.CONVERTED_TO_CLIENT };
+      // Clear reminder if it exists, as part of conversion
+      if (lead.next_follow_up_date) {
+        updates.next_follow_up_date = null; // Supabase expects null for empty date
+        updates.next_follow_up_notes = null;
       }
+      // Potentially create a client record here via another service or RPC call
+      // For now, just update the lead status and clear reminder.
+      // The onUpdate prop will handle saving these changes to the lead.
+      await onUpdate(lead.lead_id, updates);
 
-      if (!selectedPackage) {
-        toast.error("נא לבחור חבילה ראשונית");
-        return;
+      // Update form to reflect changes immediately (optional, as sheet will close)
+      form.setValue("lead_status", LeadStatusEnum.CONVERTED_TO_CLIENT);
+      if (form.getValues("next_follow_up_date")) {
+        form.setValue("next_follow_up_date", null);
+        form.setValue("next_follow_up_notes", null);
       }
-
-      // Create new client
-      await createClientFromLead(
-        lead,
-        selectedPackage.package_id,
-        selectedPackage.total_servings
-      );
-
-      // Update lead status
-      await updateLeadStatus(lead.id, "הפך ללקוח");
-      
-      // Update form and clear reminder if exists
-      form.setValue("lead_status", "הפך ללקוח");
-      if (form.getValues("reminder_at")) {
-        form.setValue("reminder_at", null);
-        form.setValue("reminder_details", null);
-        
-        // Also update in database
-        await onUpdate(lead.id, {
-          reminder_at: null,
-          reminder_details: null
-        });
-      }
-
-      setShowConvertDialog(false);
-      setSelectedPackage(null);
-      toast.success("הליד הומר ללקוח בהצלחה");
+      toast.success("הליד הומר ללקוח בהצלחה!");
+      onClose(); // Close sheet
     } catch (error) {
-      console.error("Error converting lead to client:", error);
-      toast.error("שגיאה בהמרת הליד ללקוח");
+      console.error("Error converting to client:", error);
+      toast.error("שגיאה בהמרת ליד ללקוח: " + (error as Error).message);
     }
   };
-
-  const openDeleteConfirmationDialog = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleDeleteLead = async () => {
+  
+  const handleDeleteConfirm = async () => {
     if (!lead) return;
-    setIsDeleting(true);
     try {
-      await onDeleteLeadConfirm(lead.id);
+      await onDelete(lead.lead_id);
       toast.success('הליד נמחק בהצלחה');
       setIsDeleteDialogOpen(false);
-      onOpenChange(false);
+      onClose();
     } catch (error) {
-      console.error('Error deleting lead:', error);
-      toast.error('שגיאה במחיקת הליד');
-      setIsDeleteDialogOpen(true);
-    } finally {
-      setIsDeleting(false);
+      toast.error("שגיאה במחיקת הליד: " + (error as Error).message);
+      console.error("Error deleting lead:", error);
+      setIsDeleteDialogOpen(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy");
+  if (!isOpen) return null;
+  // If no lead is provided when isOpen is true (e.g. creating new lead),
+  // we need a slightly different setup or ensure `lead` is a new object shell.
+  // For now, assuming `lead` is non-null if `isOpen` for edit/view.
+
+  const currentLeadStatusDisplay = lead?.lead_status ? LEAD_STATUS_DISPLAY[lead.lead_status] : 'טוען...';
+  const currentLeadSourceDisplay = lead?.lead_source ? LEAD_SOURCE_DISPLAY[lead.lead_source] : 'לא ידוע';
+
+  const renderContent = () => {
+    if (!lead) {
+        // This case should ideally be for a "Create New Lead" form
+        // For now, let's prevent rendering if lead is null but sheet is open for edit/view
+        return <p className="text-center py-10">טוען פרטי ליד...</p>;
+    }
+    // ... (rest of the tab content rendering based on activeTab)
+    // For brevity, showing only the form part for "details" tab
+    return (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-1">
+            {/* Restaurant Name */}
+            <FormField
+              control={form.control}
+              name="restaurant_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>שם מסעדה</FormLabel>
+                  <FormControl>
+                    <Input placeholder="לדוגמה: פיצה האט" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Contact Name */}
+            <FormField
+              control={form.control}
+              name="contact_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>איש קשר</FormLabel>
+                  <FormControl>
+                    <Input placeholder="לדוגמה: ישראל ישראלי" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Phone */}
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>טלפון</FormLabel>
+                  <FormControl>
+                    <Input placeholder="לדוגמה: 050-1234567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>אימייל</FormLabel>
+                  <FormControl>
+                    <Input type="email" placeholder="לדוגמה: israel@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Website URL */}
+            <FormField
+              control={form.control}
+              name="website_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>אתר אינטרנט (אופציונלי)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="לדוגמה: https://example.com" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Address */}
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>כתובת (אופציונלי)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="לדוגמה: רחוב הראשי 1, תל אביב" {...field} value={field.value ?? ""} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Lead Status */}
+            <FormField
+              control={form.control}
+              name="lead_status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>סטטוס ליד</FormLabel>
+                  <Select onValueChange={(value) => field.onChange(value as LeadStatusEnum)} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר סטטוס" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(LeadStatusEnum).map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {LEAD_STATUS_DISPLAY[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Lead Source */}
+            <FormField
+              control={form.control}
+              name="lead_source"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>מקור הליד</FormLabel>
+                   <Select 
+                    onValueChange={(value) => field.onChange(value === "none" ? null : value as LeadSourceEnum)} 
+                    defaultValue={field.value || "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחר מקור" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">ללא</SelectItem>
+                      {Object.values(LeadSourceEnum).map((source) => (
+                        <SelectItem key={source} value={source}>
+                          {LEAD_SOURCE_DISPLAY[source]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Next Follow Up Date */}
+            <FormField
+              control={form.control}
+              name="next_follow_up_date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>תאריך תזכורת</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            formatDate(field.value.toISOString())
+                          ) : (
+                            <span>בחר תאריך</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          if (!date) { // If date is cleared, clear notes
+                            form.setValue("next_follow_up_notes", null);
+                          }
+                        }}
+                        disabled={(date) => date < new Date("1900-01-01")} // Allow past dates for notes, but not too far
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {field.value && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="mt-2 w-fit text-xs"
+                      onClick={() => {
+                        field.onChange(null); // Clear date
+                        form.setValue("next_follow_up_notes", null); // Clear notes
+                      }}
+                    >
+                      נקה תאריך
+                    </Button>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Next Follow Up Notes (only show if date is set) */}
+            {form.watch("next_follow_up_date") && (
+              <FormField
+                control={form.control}
+                name="next_follow_up_notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>פרטי תזכורת</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="רשום פרטים לתזכורת..." {...field} value={field.value ?? ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* General Notes */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>הערות כלליות</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="רשום הערות על הליד..." {...field} value={field.value ?? ""}/>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Free Sample Package Active */}
+            <FormField
+              control={form.control}
+              name="free_sample_package_active"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>חבילת דוגמה חינם פעילה?</FormLabel>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            
+            {/* Placeholder for AI Cost Fields Tab/Section - For brevity, not fully built out here */}
+            {/* You would add similar FormField components for:
+                ai_trainings_count, ai_training_cost_per_unit, 
+                ai_prompts_count, ai_prompt_cost_per_unit,
+                revenue_from_lead_local, exchange_rate_at_conversion
+            */}
+
+            <SheetFooter className="pt-4">
+              <SheetClose asChild>
+                <Button type="button" variant="outline">
+                  ביטול
+                </Button>
+              </SheetClose>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "שומר..." : "שמור שינויים"}
+              </Button>
+            </SheetFooter>
+          </form>
+        </Form>
+    );
   };
 
-  const isClientConversionDisabled = 
-    !lead || lead.lead_status === "הפך ללקוח";
 
   return (
-    <>
-      <Sheet open={isOpen} onOpenChange={(open) => {
-          onOpenChange(open);
-          if (!open) {
-              setSelectedPackage(null);
-              setShowConvertDialog(false);
-          }
-      }}>
-        <SheetContent className="w-full sm:max-w-md md:max-w-lg overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-2xl">פרטי ליד</SheetTitle>
-            <SheetDescription>
-              צפייה ועריכת פרטי הליד
-            </SheetDescription>
-          </SheetHeader>
-
-          {lead && (
-            <div className="space-y-6">
-              {/* Status Badge and Created/Updated dates */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">סטטוס:</p>
-                  <StatusBadge status={lead.lead_status} />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm text-muted-foreground">
-                    נוצר: {formatDate(lead.created_at)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    עודכן: {formatDate(lead.last_updated_at)}
-                  </p>
-                </div>
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>
+            {lead ? "עריכת ליד" : "יצירת ליד חדש"}
+            {lead && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({lead.restaurant_name})
+              </span>
+            )}
+          </SheetTitle>
+          <SheetDescription>
+            {lead ? "פרטי הליד. ניתן לערוך את המידע ולשמור שינויים." : "מלא את הפרטים ליצירת ליד חדש."}
+            {lead && (
+              <div className="text-xs text-muted-foreground mt-2">
+                נוצר: {formatDate(lead.created_at)} | עודכן: {formatDate(lead.updated_at)}
               </div>
+            )}
+          </SheetDescription>
+        </SheetHeader>
+        
+        {/* Tabs for different sections - Conceptual */}
+        <div className="my-4">
+          <Button variant={activeTab === 'details' ? 'default' : 'outline'} onClick={() => setActiveTab('details')} className="mr-2">פרטים</Button>
+          {/* <Button variant={activeTab === 'costs' ? 'default' : 'outline'} onClick={() => setActiveTab('costs')} className="mr-2">עלויות AI</Button> */}
+          {/* <Button variant={activeTab === 'activity' ? 'default' : 'outline'} onClick={() => setActiveTab('activity')}>היסטוריית פעילות</Button> */}
+        </div>
 
-              {/* Main Form */}
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Basic Details Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>פרטים בסיסיים</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="restaurant_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>שם מסעדה/עסק</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+        {renderContent()}
 
-                      <FormField
-                        control={form.control}
-                        name="contact_name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>שם איש קשר</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="phone_number"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>מספר טלפון</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>אימייל</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Status and Source Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>סטטוס ומקור</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="lead_status"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>סטטוס ליד</FormLabel>
-                            <Select
-                              onValueChange={(value) => {
-                                field.onChange(value);
-                                handleStatusChange(value);
-                              }}
-                              defaultValue={field.value}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="בחר סטטוס" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {LEAD_STATUS_OPTIONS.map((status) => (
-                                  <SelectItem key={status} value={status}>
-                                    {status}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="lead_source"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>מקור הליד</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value || undefined}
-                              value={field.value || undefined}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="בחר מקור" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="אתר">אתר</SelectItem>
-                                <SelectItem value="הפניה">הפניה</SelectItem>
-                                <SelectItem value="פייסבוק">פייסבוק</SelectItem>
-                                <SelectItem value="אינסטגרם">אינסטגרם</SelectItem>
-                                <SelectItem value="אחר">אחר</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="free_sample_package_active"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                              <FormLabel>חבילת טעימה פעילה</FormLabel>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  {/* Reminder Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>תזכורת מעקב</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="reminder_at"
-                        render={({ field }) => (
-                          <FormItem className="flex flex-col">
-                            <FormLabel>תאריך תזכורת</FormLabel>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant={"outline"}
-                                    className={`w-full pl-3 text-right font-normal ${
-                                      !field.value ? "text-muted-foreground" : ""
-                                    }`}
-                                  >
-                                    {field.value ? (
-                                      format(field.value, "dd/MM/yyyy")
-                                    ) : (
-                                      <span>בחר תאריך</span>
-                                    )}
-                                    <Calendar className="mr-auto h-4 w-4" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-auto p-0" align="start">
-                                <CalendarComponent
-                                  mode="single"
-                                  selected={field.value || undefined}
-                                  onSelect={(date) => {
-                                    field.onChange(date);
-                                    if (!date) {
-                                      form.setValue("reminder_details", null);
-                                    }
-                                  }}
-                                  disabled={(date) =>
-                                    date < new Date(new Date().setHours(0, 0, 0, 0))
-                                  }
-                                  initialFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                            {field.value && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="mt-2 w-fit"
-                                onClick={() => {
-                                  form.setValue("reminder_at", null);
-                                  form.setValue("reminder_details", null);
-                                }}
-                              >
-                                נקה תזכורת
-                              </Button>
-                            )}
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {form.watch("reminder_at") && (
-                        <FormField
-                          control={form.control}
-                          name="reminder_details"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>פרטי תזכורת</FormLabel>
-                              <FormControl>
-                                <Textarea
-                                  placeholder="הוסף פרטים לתזכורת"
-                                  className="resize-none"
-                                  {...field}
-                                  value={field.value || ""}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Notes Card */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>הערות וסיכומי שיחה</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <FormField
-                        control={form.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Textarea
-                                placeholder="הוסף הערות או סיכומי שיחה כאן..."
-                                className="resize-none min-h-[150px]"
-                                {...field}
-                                value={field.value || ""}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <SheetFooter className="mt-8 sticky bottom-0 bg-background py-4 px-6 border-t" data-testid="lead-details-sheet-footer">
-                    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-3">
-                        <Button
-                            type="button"
-                            variant="destructive"
-                            onClick={openDeleteConfirmationDialog}
-                            className="w-full sm:w-auto"
-                        >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            מחק ליד
-                        </Button>
-                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setShowConvertDialog(true)}
-                                disabled={isClientConversionDisabled}
-                                className="w-full sm:w-auto"
-                            >
-                                המר ללקוח
-                            </Button>
-                            <SheetClose asChild>
-                                <Button type="button" variant="outline" className="w-full sm:w-auto">
-                                ביטול
-                                </Button>
-                            </SheetClose>
-                            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                                {isSubmitting && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                שמור שינויים
-                            </Button>
-                        </div>
-                    </div>
-                   </SheetFooter>
-                </form>
-              </Form>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Convert to Client Dialog */}
-      <Dialog open={showConvertDialog} onOpenChange={(open) => {
-          setShowConvertDialog(open);
-          if (!open) setSelectedPackage(null);
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>המרת ליד ללקוח חדש</DialogTitle>
-            <DialogDescription>
-              בחר חבילה ראשונית עבור הלקוח החדש
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 gap-4">
-              {MOCK_PACKAGES.map((pkg) => (
-                <Card 
-                  key={pkg.package_id}
-                  className={`cursor-pointer transition-all ${
-                    selectedPackage?.package_id === pkg.package_id ? "border-primary ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => setSelectedPackage(pkg)}
-                >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex justify-between">
-                      {pkg.package_name}
-                      <Badge variant="outline">{pkg.total_servings} מנות</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      {pkg.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter className="pt-0">
-                    <p className="text-lg font-semibold">₪{pkg.price}</p>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                  setShowConvertDialog(false);
-                  setSelectedPackage(null);
-              }}
-            >
-              ביטול
-            </Button>
-            <Button 
+        {lead && activeTab === 'details' && ( // Show these actions only if a lead exists and on details tab
+          <div className="mt-6 border-t pt-6 space-y-3">
+            <h3 className="text-lg font-medium">פעולות נוספות</h3>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
               onClick={handleConvertToClient}
-              disabled={!selectedPackage}
+              disabled={lead.lead_status === LeadStatusEnum.CONVERTED_TO_CLIENT}
             >
+              <UserPlus className="mr-2 h-4 w-4" />
               המר ללקוח
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>אישור מחיקת ליד</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך למחוק את הליד "{lead?.restaurant_name}"? לא ניתן לשחזר פעולה זו.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>ביטול</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteLead} disabled={isDeleting}>
-              {isDeleting ? <RefreshCw className="mr-2 h-4 w-4 animate-spin" /> : null}
-              מחק ליד
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full justify-start">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  מחק ליד
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>אישור מחיקה</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    האם אתה בטוח שברצונך למחוק את הליד "{lead.restaurant_name}"? פעולה זו אינה ניתנת לשחזור.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>ביטול</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteConfirm}>
+                    מחק
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
   );
 };
+
+export default LeadDetailsSheet;

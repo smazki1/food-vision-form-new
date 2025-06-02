@@ -30,7 +30,7 @@ const SubmissionDetailsPage: React.FC = () => {
         .select(`
           *,
           clients(restaurant_name, contact_name, email, phone),
-          leads(restaurant_name, contact_name, email, phone_number)
+          leads(restaurant_name, contact_name, email, phone)
         `)
         .eq("submission_id", submissionId)
         .single();
@@ -355,7 +355,7 @@ const SubmissionDetailsPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <Phone className="h-4 w-4 text-gray-500" />
-                    <span>{submission.leads.phone_number}</span>
+                    <span>{submission.leads.phone}</span>
                   </div>
                 </>
               ) : (

@@ -1,6 +1,12 @@
-import React, { useState } from "react";
-import { useLeads } from "@/hooks/useLeads";
-import { Lead, LeadStatus, LeadSource } from "@/types/lead";
+import React, { useState, useMemo, useCallback } from "react";
+import { 
+  useEnhancedLeads, 
+  useCreateLead, 
+  useUpdateLead, 
+  useDeleteLead 
+} from "@/hooks/useEnhancedLeads";
+import { Lead, LeadStatusEnum, LeadSourceEnum } from "@/types/lead";
+import { EnhancedLeadsFilter } from "@/types/filters";
 import { toast } from "sonner";
 
 // Import our components
@@ -10,142 +16,178 @@ import { LeadsFilterPopover } from "@/components/admin/leads/filters/LeadsFilter
 import { ActiveFiltersBadges } from "@/components/admin/leads/filters/ActiveFiltersBadges";
 import { LeadsContent } from "@/components/admin/leads/LeadsContent";
 import { LeadFormSheet } from "@/components/admin/leads/LeadFormSheet";
-import { LeadDetailsSheet } from "@/components/admin/leads/LeadDetailsSheet";
+import LeadDetailsSheet from "@/components/admin/leads/LeadDetailsSheet";
 
 const LeadsManagement: React.FC = () => {
   // State for filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [leadStatus, setLeadStatus] = useState<LeadStatus | "all">("all");
-  const [leadSource, setLeadSource] = useState<LeadSource | "all">("all");
+  const [status, setStatus] = useState<LeadStatusEnum | "all">("all");
+  const [leadSource, setLeadSource] = useState<LeadSourceEnum | "all">("all");
   const [dateFilter, setDateFilter] = useState<"today" | "this-week" | "this-month" | "all">("all");
   const [onlyReminders, setOnlyReminders] = useState(false);
   const [remindersToday, setRemindersToday] = useState(false);
   const [filtersVisible, setFiltersVisible] = useState(false);
   
   // Sorting state
-  const [sortBy, setSortBy] = useState<string>("created_at");
+  const [sortBy, setSortBy] = useState<keyof Lead | 'actions' | 'select'>("created_at");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   
   // Lead form state
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [currentLead, setCurrentLead] = useState<Lead | undefined>(undefined);
+  const [currentLeadForForm, setCurrentLeadForForm] = useState<Lead | undefined>(undefined);
   const [formLoading, setFormLoading] = useState(false);
   
   // Lead details state
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLeadForDetails, setSelectedLeadForDetails] = useState<Lead | null>(null);
 
-  // Get leads with filters and sorting
-  const { leads, loading, addLead, updateLead, deleteLead } = useLeads({
+  // Selection state
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+
+  // Create the filters object for useEnhancedLeads
+  const filters = useMemo((): EnhancedLeadsFilter => ({
     searchTerm,
-    leadStatus,
-    leadSource,
-    dateFilter,
+    status: status === "all" ? undefined : status,
+    leadSource: leadSource === "all" ? undefined : leadSource,
+    dateFilter: dateFilter === "all" ? undefined : dateFilter,
     onlyReminders,
     remindersToday,
-    sortBy,
-    sortDirection
-  });
+    sortBy: sortBy as string,
+    sortDirection,
+    excludeArchived: true,
+  }), [searchTerm, status, leadSource, dateFilter, onlyReminders, remindersToday, sortBy, sortDirection]);
+
+  // Get leads with filters and sorting using the new hook
+  const { data: leadsData, isLoading: loading, error } = useEnhancedLeads(filters);
+  const leads = leadsData?.data || [];
+
+  // Mutations from the new hook
+  const createLeadMutation = useCreateLead();
+  const updateLeadMutation = useUpdateLead();
+  const deleteLeadMutation = useDeleteLead();
   
   const handleCreateLead = () => {
-    setCurrentLead(undefined);
+    setCurrentLeadForForm(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditLead = (lead: Lead) => {
-    setSelectedLead(lead);
+    setSelectedLeadForDetails(lead);
     setIsDetailsOpen(true);
   };
 
   const handleViewLead = (lead: Lead) => {
-    setSelectedLead(lead);
+    setSelectedLeadForDetails(lead);
     setIsDetailsOpen(true);
   };
 
   const handleDeleteLead = async (id: string) => {
     try {
-      await deleteLead(id);
-      if (selectedLead && selectedLead.id === id) {
+      await deleteLeadMutation.mutateAsync(id);
+      if (selectedLeadForDetails && selectedLeadForDetails.lead_id === id) {
         setIsDetailsOpen(false);
-        setSelectedLead(null);
+        setSelectedLeadForDetails(null);
       }
-    } catch (error) {
-      console.error("Error deleting lead from LeadsManagementPage:", error);
+      setSelectedLeads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+    } catch (err) {
+      console.error("Error deleting lead from LeadsManagementPage:", err);
     }
   };
 
   const handleConvertToClient = (lead: Lead) => {
-    setSelectedLead(lead);
+    setSelectedLeadForDetails(lead);
     setIsDetailsOpen(true);
-    // The conversion functionality is handled in the details sheet
   };
 
   const handleCloseForm = () => {
     setIsFormOpen(false);
-    setCurrentLead(undefined);
+    setCurrentLeadForForm(undefined);
   };
 
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (formData: Partial<Omit<Lead, 'lead_id' | 'created_at' | 'updated_at' | 'total_ai_costs' | 'roi' | 'revenue_from_lead_usd'>>) => {
     try {
       setFormLoading(true);
-      
-      if (currentLead) {
-        await updateLead(currentLead.id, data);
+      if (currentLeadForForm && currentLeadForForm.lead_id) {
+        await updateLeadMutation.mutateAsync({ lead_id: currentLeadForForm.lead_id, ...formData });
       } else {
-        await addLead(data);
+        await createLeadMutation.mutateAsync(formData);
       }
-      
       setIsFormOpen(false);
-      setCurrentLead(undefined);
-    } catch (error) {
-      console.error("Form submission error:", error);
+      setCurrentLeadForForm(undefined);
+    } catch (err) {
+      console.error("Form submission error in LeadsManagement:", err);
     } finally {
       setFormLoading(false);
     }
   };
   
-  const handleUpdateLead = async (id: string, updates: Partial<Lead>) => {
+  const handleUpdateLeadDetails = async (id: string, updates: Partial<Lead>) => {
     try {
-      await updateLead(id, updates);
-      if (selectedLead && selectedLead.id === id) {
-        setSelectedLead({
-          ...selectedLead,
-          ...updates,
-          last_updated_at: new Date().toISOString()
-        });
+      await updateLeadMutation.mutateAsync({ lead_id: id, ...updates });
+      if (selectedLeadForDetails && selectedLeadForDetails.lead_id === id) {
+        setSelectedLeadForDetails(prev => prev ? {...prev, ...updates} : null);
       }
-    } catch (error) {
-      console.error("Error updating lead:", error);
-      throw error;
+    } catch (err) {
+      console.error("Error updating lead from LeadsManagement:", err);
     }
   };
 
   const clearAllFilters = () => {
     setSearchTerm("");
-    setLeadStatus("all");
+    setStatus("all");
     setLeadSource("all");
     setDateFilter("all");
     setOnlyReminders(false);
     setRemindersToday(false);
+    setSelectedLeads(new Set());
   };
 
-  const handleSort = (field: string) => {
+  const handleSort = useCallback((field: keyof Lead | 'actions' | 'select') => {
     if (sortBy === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      setSortDirection(prevDirection => prevDirection === "asc" ? "desc" : "asc");
     } else {
       setSortBy(field);
       setSortDirection("desc");
     }
-  };
+  }, [sortBy]);
+
+  const handleSelectLead = useCallback((leadId: string) => {
+    setSelectedLeads(prevSelectedLeads => {
+      const newSelectedLeads = new Set(prevSelectedLeads);
+      if (newSelectedLeads.has(leadId)) {
+        newSelectedLeads.delete(leadId);
+      } else {
+        newSelectedLeads.add(leadId);
+      }
+      return newSelectedLeads;
+    });
+  }, []);
+
+  const handleSelectAllLeads = useCallback((selectAll: boolean) => {
+    if (selectAll) {
+      setSelectedLeads(new Set(leads.map(lead => lead.lead_id)));
+    } else {
+      setSelectedLeads(new Set());
+    }
+  }, [leads]);
 
   // Count active filters
   const activeFiltersCount = [
-    leadStatus !== "all", 
+    status !== "all", 
     leadSource !== "all", 
     dateFilter !== "all", 
     onlyReminders, 
     remindersToday
   ].filter(Boolean).length;
+  
+  const currentSortForTable = useMemo(() => ({
+    field: sortBy,
+    direction: sortDirection
+  }), [sortBy, sortDirection]);
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
@@ -160,12 +202,12 @@ const LeadsManagement: React.FC = () => {
             open={filtersVisible}
             onOpenChange={setFiltersVisible}
             activeFiltersCount={activeFiltersCount}
-            leadStatus={leadStatus}
+            leadStatus={status}
             leadSource={leadSource}
             dateFilter={dateFilter}
             onlyReminders={onlyReminders}
             remindersToday={remindersToday}
-            onLeadStatusChange={setLeadStatus}
+            onLeadStatusChange={setStatus}
             onLeadSourceChange={setLeadSource}
             onDateFilterChange={setDateFilter}
             onOnlyRemindersChange={setOnlyReminders}
@@ -173,13 +215,13 @@ const LeadsManagement: React.FC = () => {
             onClearAllFilters={clearAllFilters}
           />
         </div>
-        <ActiveFiltersBadges
-          leadStatus={leadStatus}
+        <ActiveFiltersBadges 
+          leadStatus={status}
           leadSource={leadSource}
           dateFilter={dateFilter}
           onlyReminders={onlyReminders}
           remindersToday={remindersToday}
-          onClearLeadStatus={() => setLeadStatus("all")}
+          onClearLeadStatus={() => setStatus("all")}
           onClearLeadSource={() => setLeadSource("all")}
           onClearDateFilter={() => setDateFilter("all")}
           onClearOnlyReminders={() => setOnlyReminders(false)}
@@ -187,32 +229,41 @@ const LeadsManagement: React.FC = () => {
           onClearAll={clearAllFilters}
         />
         <LeadsContent
-          leads={leads}
+          leads={leads || []}
           loading={loading}
+          error={error}
           searchTerm={searchTerm}
           activeFiltersCount={activeFiltersCount}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
+          currentSort={currentSortForTable}
           onSort={handleSort}
-          onEdit={handleEditLead}
-          onDelete={handleDeleteLead}
+          onEditLead={handleEditLead}
+          onDeleteLead={handleDeleteLead}
+          onViewLead={handleViewLead}
           onConvertToClient={handleConvertToClient}
+          selectedLeads={selectedLeads}
+          onSelectLead={handleSelectLead}
+          onSelectAllLeads={handleSelectAllLeads}
         />
         <LeadFormSheet
           isOpen={isFormOpen}
           onOpenChange={setIsFormOpen}
-          lead={currentLead}
+          lead={currentLeadForForm}
           onSubmit={handleFormSubmit}
           onCancel={handleCloseForm}
           isLoading={formLoading}
         />
-        <LeadDetailsSheet
-          isOpen={isDetailsOpen}
-          onOpenChange={setIsDetailsOpen}
-          lead={selectedLead}
-          onUpdate={handleUpdateLead}
-          onDeleteLeadConfirm={handleDeleteLead}
-        />
+        {selectedLeadForDetails && (
+          <LeadDetailsSheet
+            isOpen={isDetailsOpen}
+            onClose={() => {
+              setIsDetailsOpen(false);
+              setSelectedLeadForDetails(null);
+            }}
+            lead={selectedLeadForDetails}
+            onUpdate={handleUpdateLeadDetails}
+            onDelete={handleDeleteLead}
+          />
+        )}
       </div>
     </div>
   );

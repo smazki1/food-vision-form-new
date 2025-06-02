@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAlerts } from "@/hooks/useAlerts";
 import { AlertType } from "@/types/alert";
@@ -16,14 +15,17 @@ const AlertsDashboard: React.FC = () => {
   
   // Get alerts data
   const { 
-    alerts, 
+    alerts: rawAlerts, 
     allAlertsCount,
     filteredAlertsCount,
-    upcomingReminders,
+    upcomingReminders: rawUpcomingReminders,
     markAsViewed, 
     dismissAlert,
     markAllAsViewed
   } = useAlerts({ typeFilter });
+  
+  const alerts = rawAlerts || []; // Ensure alerts is always an array
+  const upcomingReminders = rawUpcomingReminders || []; // Ensure upcomingReminders is always an array
   
   // Apply sorting
   const sortedAlerts = [...alerts].sort((a, b) => {

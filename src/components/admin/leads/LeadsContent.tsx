@@ -1,40 +1,66 @@
-
 import React from "react";
 import { Lead } from "@/types/lead";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import LeadsTable from "@/components/admin/leads/LeadsTable";
+import { useTranslation } from "react-i18next";
+import { Spinner } from "@/components/ui/spinner";
 
 interface LeadsContentProps {
   leads: Lead[];
   loading: boolean;
+  error: Error | null;
   searchTerm: string;
   activeFiltersCount: number;
-  sortBy?: string;
-  sortDirection?: "asc" | "desc";
-  onSort: (field: string) => void;
-  onEdit: (lead: Lead) => void;
-  onDelete: (id: string) => void;
+  currentSort: { field: keyof Lead | 'actions' | 'select'; direction: 'asc' | 'desc' } | null;
+  onSort: (field: keyof Lead | 'actions' | 'select') => void;
+  onEditLead: (lead: Lead) => void;
+  onDeleteLead: (id: string) => void;
+  onViewLead: (lead: Lead) => void;
   onConvertToClient: (lead: Lead) => void;
+  selectedLeads: Set<string>;
+  onSelectLead: (leadId: string) => void;
+  onSelectAllLeads: (selectAll: boolean) => void;
+  isArchiveView?: boolean;
 }
 
 export const LeadsContent: React.FC<LeadsContentProps> = ({
-  leads,
+  leads = [],
   loading,
+  error,
   searchTerm,
   activeFiltersCount,
-  sortBy,
-  sortDirection,
+  currentSort,
   onSort,
-  onEdit,
-  onDelete,
+  onEditLead,
+  onDeleteLead,
+  onViewLead,
   onConvertToClient,
+  selectedLeads,
+  onSelectLead,
+  onSelectAllLeads,
+  isArchiveView = false,
 }) => {
-  if (loading) {
+  const { t } = useTranslation();
+
+  if (error) {
+    return <div className="p-4 text-center text-red-500">Error loading leads: {error.message}</div>;
+  }
+
+  if (loading && leads.length === 0) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-64 w-full" />
+      <div className="flex justify-center items-center p-12">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!loading && leads.length === 0) {
+    return (
+      <div className="p-4 text-center">
+        <p>
+          {isArchiveView ? t('leadsPage.noLeadsFoundInArchive') : t('leadsPage.noLeadsFound')}
+        </p>
       </div>
     );
   }
@@ -50,11 +76,16 @@ export const LeadsContent: React.FC<LeadsContentProps> = ({
       <CardContent>
         <LeadsTable
           leads={leads}
-          onEdit={onEdit}
           isLoading={loading}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
+          error={error}
+          currentSort={currentSort}
           onSort={onSort}
+          selectedLeads={selectedLeads}
+          onSelectLead={onSelectLead}
+          onSelectAllLeads={onSelectAllLeads}
+          onViewLead={onViewLead}
+          onEditLead={onEditLead}
+          onDeleteLead={onDeleteLead}
         />
       </CardContent>
     </Card>

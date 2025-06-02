@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/163</span>
+                <span class='fraction'>0/162</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/163</span>
+                <span class='fraction'>0/162</span>
             </div>
         
             
@@ -321,14 +321,12 @@
 <a name='L256'></a><a href='#L256'>256</a>
 <a name='L257'></a><a href='#L257'>257</a>
 <a name='L258'></a><a href='#L258'>258</a>
-<a name='L259'></a><a href='#L259'>259</a>
-<a name='L260'></a><a href='#L260'>260</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L259'></a><a href='#L259'>259</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -581,8 +579,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >import React from "react";</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import React from "react";</span></span></span>
 <span class="cstat-no" title="statement not covered" >import { useForm } from "react-hook-form";</span>
 <span class="cstat-no" title="statement not covered" >import { zodResolver } from "@hookform/resolvers/zod";</span>
 <span class="cstat-no" title="statement not covered" >import { z } from "zod";</span>
@@ -620,7 +617,7 @@ import {
 <span class="cstat-no" title="statement not covered" >const leadFormSchema = z.object({</span>
 <span class="cstat-no" title="statement not covered" >  restaurant_name: z.string().min(1, { message: "שם מסעדה הוא שדה חובה" }),</span>
 <span class="cstat-no" title="statement not covered" >  contact_name: z.string().min(1, { message: "שם איש קשר הוא שדה חובה" }),</span>
-<span class="cstat-no" title="statement not covered" >  phone_number: z.string().min(9, { message: "יש להזין מספר טלפון תקין" }),</span>
+<span class="cstat-no" title="statement not covered" >  phone: z.string().min(9, { message: "יש להזין מספר טלפון תקין" }),</span>
 <span class="cstat-no" title="statement not covered" >  email: z.string().email({ message: "יש להזין כתובת אימייל תקינה" }),</span>
 <span class="cstat-no" title="statement not covered" >  lead_source: z.string().nullable(),</span>
 <span class="cstat-no" title="statement not covered" >  notes: z.string().nullable(),</span>
@@ -649,7 +646,7 @@ interface LeadFormProps {
 <span class="cstat-no" title="statement not covered" >    defaultValues: {</span>
 <span class="cstat-no" title="statement not covered" >      restaurant_name: lead?.restaurant_name || "",</span>
 <span class="cstat-no" title="statement not covered" >      contact_name: lead?.contact_name || "",</span>
-<span class="cstat-no" title="statement not covered" >      phone_number: lead?.phone_number || "",</span>
+<span class="cstat-no" title="statement not covered" >      phone: lead?.phone || "",</span>
 <span class="cstat-no" title="statement not covered" >      email: lead?.email || "",</span>
 <span class="cstat-no" title="statement not covered" >      lead_source: lead?.lead_source || null,</span>
 <span class="cstat-no" title="statement not covered" >      notes: lead?.notes || null,</span>
@@ -696,7 +693,7 @@ interface LeadFormProps {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        &lt;FormField</span>
 <span class="cstat-no" title="statement not covered" >          control={form.control}</span>
-<span class="cstat-no" title="statement not covered" >          name="phone_number"</span>
+<span class="cstat-no" title="statement not covered" >          name="phone"</span>
 <span class="cstat-no" title="statement not covered" >          render={({ field }) =&gt; (</span>
 <span class="cstat-no" title="statement not covered" >            &lt;FormItem&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;FormLabel&gt;מספר טלפון *&lt;/FormLabel&gt;</span>
@@ -847,7 +844,7 @@ interface LeadFormProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-31T11:57:05.097Z
+                at 2025-06-01T12:35:34.021Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

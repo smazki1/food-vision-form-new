@@ -261,6 +261,10 @@ export function SubmissionDetailsPage() {
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
           <DialogContent className="max-w-3xl p-0">
+            <DialogHeader className="sr-only">
+              <DialogTitle>צפייה בתמונה</DialogTitle>
+              <DialogDescription>תצוגה מוגדלת של התמונה</DialogDescription>
+            </DialogHeader>
             <img src={selectedImage} alt="Selected Preview" className="max-h-[80vh] w-auto mx-auto" />
           </DialogContent>
         </Dialog>

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,7 +36,7 @@ import { Lead, LEAD_SOURCE_OPTIONS } from "@/types/lead";
 const leadFormSchema = z.object({
   restaurant_name: z.string().min(1, { message: "שם מסעדה הוא שדה חובה" }),
   contact_name: z.string().min(1, { message: "שם איש קשר הוא שדה חובה" }),
-  phone_number: z.string().min(9, { message: "יש להזין מספר טלפון תקין" }),
+  phone: z.string().min(9, { message: "יש להזין מספר טלפון תקין" }),
   email: z.string().email({ message: "יש להזין כתובת אימייל תקינה" }),
   lead_source: z.string().nullable(),
   notes: z.string().nullable(),
@@ -66,7 +65,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
     defaultValues: {
       restaurant_name: lead?.restaurant_name || "",
       contact_name: lead?.contact_name || "",
-      phone_number: lead?.phone_number || "",
+      phone: lead?.phone || "",
       email: lead?.email || "",
       lead_source: lead?.lead_source || null,
       notes: lead?.notes || null,
@@ -113,7 +112,7 @@ const LeadForm: React.FC<LeadFormProps> = ({
 
         <FormField
           control={form.control}
-          name="phone_number"
+          name="phone"
           render={({ field }) => (
             <FormItem>
               <FormLabel>מספר טלפון *</FormLabel>
