@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead, EnhancedLeadsFilter, AIPricingSetting } from '@/types/lead';
@@ -77,8 +76,9 @@ export const useUpdateLead = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['lead', variables.leadId] });
     }
   });
 };
@@ -258,5 +258,24 @@ export const useUpdateAIPricingSetting = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-pricing-settings'] });
     }
+  });
+};
+
+export const useLeadById = (leadId: string | null) => {
+  return useQuery({
+    queryKey: ['lead', leadId],
+    queryFn: async () => {
+      if (!leadId) throw new Error('Lead ID is required');
+      
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('lead_id', leadId)
+        .single();
+
+      if (error) throw error;
+      return data as Lead;
+    },
+    enabled: !!leadId
   });
 };

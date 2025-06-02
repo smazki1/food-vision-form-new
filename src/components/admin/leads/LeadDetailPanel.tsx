@@ -16,6 +16,7 @@ import {
   useUpdateLead, 
   useAddLeadComment, 
   useLeadActivities,
+  useLeadById,
   LEAD_QUERY_KEY 
 } from '@/hooks/useEnhancedLeads';
 import { 
@@ -80,23 +81,13 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   const addCommentMutation = useAddLeadComment();
   const { data: activities, isLoading: activitiesLoading } = useLeadActivities(leadId);
 
-  useEffect(() => {
-    const fetchLead = async () => {
-      try {
-        const data = queryClient.getQueryData<any>([LEAD_QUERY_KEY])?.data;
-        const foundLead = data?.find((l: Lead) => l.lead_id === leadId);
-        setLead(foundLead || null);
-      } catch (error) {
-        console.error('Failed to fetch lead:', error);
-        toast.error('Failed to fetch lead details');
-        setLead(null);
-      }
-    };
+  const { data: leadData, isLoading: leadLoading, error: leadError } = useLeadById(leadId);
 
-    if (leadId) {
-      fetchLead();
+  useEffect(() => {
+    if (leadData) {
+      setLead(leadData);
     }
-  }, [leadId, queryClient]);
+  }, [leadData]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim() || !lead) return;
@@ -139,7 +130,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
     }
   };
 
-  if (!lead) {
+  if (leadLoading) {
     return (
       <Sheet open={!!leadId} onOpenChange={onClose}>
         <SheetContent 
@@ -150,7 +141,28 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
             <SheetTitle>פרטי ליד</SheetTitle>
             <SheetDescription>טוען פרטי ליד...</SheetDescription>
           </SheetHeader>
-          <p>טוען פרטי ליד...</p>
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  if (leadError || !lead) {
+    return (
+      <Sheet open={!!leadId} onOpenChange={onClose}>
+        <SheetContent 
+          side="right" 
+          className="w-[90vw] max-w-[1000px] sm:max-w-[1000px] p-6"
+        >
+          <SheetHeader>
+            <SheetTitle>פרטי ליד</SheetTitle>
+            <SheetDescription>שגיאה בטעינת פרטי ליד</SheetDescription>
+          </SheetHeader>
+          <p className="text-red-600">
+            {leadError ? 'שגיאה בטעינת פרטי הליד' : 'ליד לא נמצא'}
+          </p>
         </SheetContent>
       </Sheet>
     );

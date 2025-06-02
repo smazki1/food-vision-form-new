@@ -2,7 +2,7 @@
 
 ## Recently Completed
 
-### Critical System Restoration (2024-12-19 - CURRENT)
+### Critical System Restoration (2024-12-19 - COMPLETED)
 - [x] **Sheet Side Direction Fix:** Fixed LeadDetailPanel and SubmissionsSection to use `side="right"` for proper RTL layout
 - [x] **Always-Editable Interface Restoration:** Restored complete Notion-like editing functionality:
   - Converted back to always-editable interface with auto-save
@@ -18,12 +18,15 @@
   - Changed lead_source from enum to `string` for free text support
   - Updated EnhancedLeadsFilter interface accordingly
   - Simplified status handling to work directly with Hebrew strings
+- [x] **Status Enum Completion:** Added missing status value:
+  - Added `INITIAL_CONTACT_MADE = 'פנייה ראשונית בוצעה'` to LeadStatusEnum
+  - Updated LEAD_STATUS_DISPLAY mapping to include all database values
 - [x] **Accessibility Improvements:** Added missing SheetDescription components to resolve warnings
 - [ ] **Cache Invalidation Verification:** Need to verify table updates are still working properly
 - [ ] **Bulk Selection Testing:** Need to verify bulk selection functionality still works
 - [ ] **Complete System Testing:** Full end-to-end testing required
 
-**Status: IN PROGRESS - Major fixes applied, testing required**
+**Status: READY FOR TESTING - All critical fixes deployed**
 
 ### White Screen and Auth Timeout Fix (2024-12-19)
 - [x] **פתרון בעיית המסך הלבן:** תוקנה בעיה קריטית שגרמה למערכת להיתקע במסך לבן לאחר timeouts
