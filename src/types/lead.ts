@@ -5,6 +5,7 @@ export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינס�
 // Enum versions for type safety
 export enum LeadStatusEnum {
   NEW = 'ליד חדש',
+  INITIAL_CONTACT_MADE = 'פנייה ראשונית בוצעה',
   IN_TREATMENT = 'בטיפול', 
   INTERESTED = 'מעוניין',
   NOT_INTERESTED = 'לא מעוניין',
@@ -24,6 +25,7 @@ export enum LeadSourceEnum {
 // Display mappings
 export const LEAD_STATUS_DISPLAY: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.NEW]: 'ליד חדש',
+  [LeadStatusEnum.INITIAL_CONTACT_MADE]: 'פנייה ראשונית בוצעה',
   [LeadStatusEnum.IN_TREATMENT]: 'בטיפול',
   [LeadStatusEnum.INTERESTED]: 'מעוניין', 
   [LeadStatusEnum.NOT_INTERESTED]: 'לא מעוניין',
