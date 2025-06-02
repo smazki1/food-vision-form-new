@@ -18,7 +18,9 @@ import {
   PlusCircle, 
   Archive, 
   BarChart2, 
-  Settings
+  Settings,
+  Trash2,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -47,6 +49,9 @@ const AdminLeadsPage = () => {
   // State for create lead modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
   
+  // State for bulk selection
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
+  
   // Update filters when changed
   const handleFilterChange = (newFilters: EnhancedLeadsFilter) => {
     setFilters(newFilters);
@@ -60,6 +65,27 @@ const AdminLeadsPage = () => {
   // Close the detail panel
   const handleCloseDetailPanel = () => {
     setSelectedLeadId(null);
+  };
+  
+  // Handle bulk selection
+  const handleSelectLead = (leadId: string) => {
+    setSelectedLeads(prev => {
+      const newSelected = new Set(prev);
+      if (newSelected.has(leadId)) {
+        newSelected.delete(leadId);
+      } else {
+        newSelected.add(leadId);
+      }
+      return newSelected;
+    });
+  };
+  
+  const handleSelectAllLeads = (selectAll: boolean) => {
+    if (selectAll) {
+      setSelectedLeads(new Set(leads.map(lead => lead.lead_id)));
+    } else {
+      setSelectedLeads(new Set());
+    }
   };
   
   // Handle tab change
@@ -97,6 +123,37 @@ const AdminLeadsPage = () => {
   // The leads to display based on the current tab
   const leads = leadsData?.data || [];
   
+  // Bulk actions handlers
+  const handleBulkDelete = async () => {
+    if (selectedLeads.size === 0) return;
+    
+    if (window.confirm(`האם אתה בטוח שברצונך למחוק ${selectedLeads.size} לידים?`)) {
+      try {
+        // TODO: Implement bulk delete mutation
+        toast.success(`${selectedLeads.size} לידים נמחקו בהצלחה`);
+        setSelectedLeads(new Set());
+      } catch (error) {
+        toast.error('שגיאה במחיקת לידים');
+      }
+    }
+  };
+  
+  const handleBulkArchive = async () => {
+    if (selectedLeads.size === 0) return;
+    
+    try {
+      // TODO: Implement bulk archive mutation
+      toast.success(`${selectedLeads.size} לידים הועברו לארכיון`);
+      setSelectedLeads(new Set());
+    } catch (error) {
+      toast.error('שגיאה בהעברת לידים לארכיון');
+    }
+  };
+  
+  const clearSelection = () => {
+    setSelectedLeads(new Set());
+  };
+  
   return (
     <div className="container mx-auto py-6 px-4 space-y-6 max-w-7xl">
       {/* Header */}
@@ -122,6 +179,45 @@ const AdminLeadsPage = () => {
         </div>
       </div>
       
+      {/* Bulk Actions Bar */}
+      {selectedLeads.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-blue-900">
+              {selectedLeads.size} לידים נבחרו
+            </span>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleBulkArchive}
+                className="text-blue-700 border-blue-300 hover:bg-blue-100"
+              >
+                <Archive className="h-4 w-4 ml-1" />
+                העבר לארכיון
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={handleBulkDelete}
+                className="text-red-700 border-red-300 hover:bg-red-100"
+              >
+                <Trash2 className="h-4 w-4 ml-1" />
+                מחק
+              </Button>
+            </div>
+          </div>
+          <Button 
+            size="sm" 
+            variant="ghost"
+            onClick={clearSelection}
+            className="text-blue-700 hover:bg-blue-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+      
       <Tabs defaultValue="leads" value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="mb-4">
           <TabsTrigger value="leads">לידים פעילים</TabsTrigger>
@@ -145,6 +241,9 @@ const AdminLeadsPage = () => {
               onLeadSelect={handleLeadSelect}
               selectedLeadId={selectedLeadId}
               isArchiveView={false}
+              selectedLeads={selectedLeads}
+              onSelectLead={handleSelectLead}
+              onSelectAllLeads={handleSelectAllLeads}
             />
           )}
         </TabsContent>
@@ -166,6 +265,9 @@ const AdminLeadsPage = () => {
               onLeadSelect={handleLeadSelect}
               selectedLeadId={selectedLeadId}
               isArchiveView={true}
+              selectedLeads={selectedLeads}
+              onSelectLead={handleSelectLead}
+              onSelectAllLeads={handleSelectAllLeads}
             />
           )}
         </TabsContent>

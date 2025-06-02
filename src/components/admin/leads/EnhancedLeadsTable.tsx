@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   MoreHorizontal, 
   Archive, 
@@ -63,13 +64,19 @@ interface EnhancedLeadsTableProps {
   onLeadSelect: (leadId: string) => void;
   selectedLeadId: string | null;
   isArchiveView?: boolean;
+  selectedLeads?: Set<string>;
+  onSelectLead?: (leadId: string) => void;
+  onSelectAllLeads?: (selectAll: boolean) => void;
 }
 
 export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
   leads,
   onLeadSelect,
   selectedLeadId,
-  isArchiveView = false
+  isArchiveView = false,
+  selectedLeads = new Set(),
+  onSelectLead,
+  onSelectAllLeads
 }) => {
   const [followUpLead, setFollowUpLead] = useState<Lead | null>(null);
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
@@ -174,6 +181,15 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
         <Table>
           <TableHeader>
             <TableRow>
+              {onSelectAllLeads && (
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={leads.length > 0 && selectedLeads.size === leads.length}
+                    onCheckedChange={(checked) => onSelectAllLeads(Boolean(checked))}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+              )}
               <TableHead className="w-[200px]">שם מסעדה</TableHead>
               <TableHead>איש קשר</TableHead>
               <TableHead>סטטוס</TableHead>
@@ -195,17 +211,23 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
               return (
                 <TableRow 
                   key={lead.lead_id}
-                  className={`${isSelected ? 'bg-muted/50' : ''} ${isReminderDue ? 'bg-yellow-50' : ''}`}
+                  className={`${isSelected ? 'bg-muted/50' : ''} ${isReminderDue ? 'bg-yellow-50' : ''} hover:bg-gray-50 cursor-pointer`}
+                  onClick={() => onLeadSelect(lead.lead_id)}
                 >
+                  {onSelectLead && (
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedLeads.has(lead.lead_id)}
+                        onCheckedChange={() => onSelectLead(lead.lead_id)}
+                        aria-label="Select row"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     <div className="flex items-center">
-                      <Button 
-                        variant="ghost" 
-                        className="p-0 hover:bg-transparent hover:underline text-left justify-start"
-                        onClick={() => onLeadSelect(lead.lead_id)}
-                      >
+                      <span className="hover:underline">
                         {lead.restaurant_name}
-                      </Button>
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -267,7 +289,11 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
+                        <Button 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <span className="sr-only">פתח תפריט</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>

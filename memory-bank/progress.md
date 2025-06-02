@@ -57,17 +57,15 @@
     - ✅ **Testing Framework:** Comprehensive testing checklist created for field validation
     - ✅ **Cache Management:** Fixed table view synchronization with proper query invalidation
     - ✅ **Debugging Infrastructure:** Added comprehensive logging for troubleshooting
-    - ✅ **Smart Components Integration:** Business type and lead source with Notion-style functionality
-    - ✅ **Status Field Fix:** Complete enum conversion system (English ↔ Hebrew) for proper display and storage
-    - ✅ **Database Compatibility:** All field types properly handled (text, numbers, enums, free text)
-    - ✅ **Error Handling:** Robust error handling with user-friendly messages
-    - ✅ **MAJOR UI ENHANCEMENT (2024-12-19):** Enhanced user experience with immediate input access
-      - **Wider Panel:** Sheet width increased to 50vw (half screen) for better workspace
-      - **Direct Input Fields:** All basic fields (restaurant name, contact, phone, email, address, website, notes) now use direct Input/Textarea
-      - **Number Inputs with Controls:** AI cost fields have immediate number inputs with step controls and arrows
-      - **Revenue Input:** Direct number input for revenue with decimal support
-      - **Free Taste Package:** Renamed from "demo package" with toggle button for activation/deactivation
-      - **No Click-to-Edit:** Eliminated all click-to-edit interactions for seamless experience
+    - ✅ **LEAD_QUERY_KEY integration:** Fixed cache invalidation to use proper query key patterns from useEnhancedLeads
+    - ✅ **Lead Status Enum Conversion:** Fixed status selector with proper Hebrew/English enum conversion
+    - ✅ **Status Display Fix:** Corrected status Select component to show current values properly
+    - ✅ **SmartLeadSourceSelect Fix:** Resolved 400 errors in lead source queries
+    - ✅ **Missing Functionality Restoration:** Restored bulk selection, row click, and bulk actions
+      - **Row Click:** Entire table rows are now clickable to open lead details
+      - **Bulk Selection:** Added checkboxes for selecting multiple leads
+      - **Bulk Actions Bar:** Shows when leads are selected with archive/delete options
+      - **Enhanced UX:** Proper event handling to prevent conflicts between row clicks and checkboxes
   - **STATUS: PRODUCTION READY & DEPLOYED** 🎉
 - [x] **Smart Business Type Selector:** Implemented Notion-style business type selection
   - Predefined options with ability to add custom types
