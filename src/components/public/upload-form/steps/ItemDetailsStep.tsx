@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
@@ -123,7 +122,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
             name="description"
             value={formData.description || ''}
             onChange={handleChange}
-            placeholder="פסטה קרבונרה עם בייקון פריך, פרמז'ן מגורר, ביצה טרייה וצ'ילי גרוס. מוגש עם פרוסת לחם שום"
+            placeholder="פסטה קרבונרה עם חזה עוף מוזהב, פרמז'ן מגורר, ביצה טרייה וצ'ילי גרוס. מוגש עם פרוסת לחם שום"
             rows={4}
             className={cn(
               "w-full px-6 py-4 text-lg border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20 resize-none",
