@@ -294,3 +294,129 @@
 - ✔️ **תיקון בעיית Token Refresh** - המערכת כעת מבצעת רענון token ברקע מבלי להפריע לחוויית המשתמש
 - ✔️ **אימות חווית המשתמש** - כל הממשקים פועלים בצורה חלקה ללא loading screens מיותרים
 - ✔️ **יציבות מערכת** - כל הבעיות הקריטיות נפתרו והמערכת יציבה לשימוש יומיומי 
+
+## Progress Log - Food Vision CRM
+
+## Recent Work Summary
+
+### ✅ Lead Detail Panel Always-Editable Implementation
+**Completed**: Full implementation of always-editable fields with Notion-like interface experience.
+
+**Major Features Implemented**:
+- Direct input access for all 17 fields (no click-to-edit)
+- Wide dialog window (50vw with responsive constraints)
+- Auto-save functionality with comprehensive error handling
+- Enhanced UX with immediate feedback
+- Package section renamed to "חבילת טעימה חינמית"
+
+**Files Modified**:
+- `LeadDetailPanel.tsx` - Major refactoring with direct input components
+- `SmartBusinessTypeSelect.tsx` - Notion-style business type selection
+- `SmartLeadSourceSelect.tsx` - Free text lead source selection
+
+### ✅ UI Content Localization
+**Completed**: Replaced "בייקון" (bacon) with "חזה עוף מוזהב" (golden chicken breast) in upload form.
+
+**Files Modified**:
+- `src/components/public/upload-form/steps/ItemDetailsStep.tsx`
+
+### 🔧 ROI Display Issue Investigation & Resolution
+**Problem Identified**: ROI column not displaying in leads table despite being properly configured.
+
+**Root Causes Found**:
+1. **LocalStorage Override**: Column visibility settings stored in localStorage could hide ROI column
+2. **Data Availability**: Potential lack of ROI data in database
+3. **Display Logic**: Complex visibility management system
+
+**Solutions Implemented**:
+1. **Debug Infrastructure**:
+   - Added ROI debugging logs in `EnhancedLeadsTable.tsx`
+   - Real-time analysis of ROI data availability
+   - Visibility status tracking
+
+2. **Reset Functionality**:
+   - `forceResetColumns()` function to clear localStorage issues
+   - "🔧 איפוס מלא (תיקון ROI)" button in column settings
+   - Automatic page reload after reset
+
+3. **User Warning System**:
+   - Yellow warning banner when ROI column is hidden
+   - Clear instructions for fixing the issue
+   - Visual feedback for problematic states
+
+**Technical Details**:
+- ROI column properly defined in `DEFAULT_COLUMNS` with `visible: true`
+- Formatter function `formatPercentage()` working correctly
+- Database field `roi` included in SQL SELECT queries
+- Problem likely related to localStorage cache of column settings
+
+**Files Modified**:
+- `src/components/admin/leads/EnhancedLeadsTable.tsx`
+- Added comprehensive debugging and reset functionality
+
+### 🔍 Field Validation Status
+
+**All Core Fields Verified**:
+- ✅ `restaurant_name` - Direct input, working
+- ✅ `contact_name` - Direct input, working  
+- ✅ `phone` - Direct input, working
+- ✅ `email` - Direct input, working
+- ✅ `business_type` - Smart select with fallback "—", working
+- ✅ `lead_status` - Status badge with color coding, working
+- ✅ `lead_source` - Fallback "—" for null values, working
+- ✅ `total_ai_costs` - Currency formatting, working
+- 🔧 `roi` - Percentage formatting, debugging implemented
+- ✅ `created_at` - Date formatting (he-IL locale), working
+- ✅ `next_follow_up_date` - Date formatting, working
+- ✅ `actions` - Button array with conditional logic, working
+
+**Display Logic Verification**:
+- ✅ Null/undefined values properly handled with "—" fallback
+- ✅ Currency formatting with `formatCurrency()` function
+- ✅ Percentage formatting with `formatPercentage()` function  
+- ✅ Date formatting with `toLocaleDateString('he-IL')`
+- ✅ Status enum conversion with `LEAD_STATUS_DISPLAY` mapping
+
+## Current Status
+
+### Production Deployment
+- ✅ All changes successfully deployed to Vercel
+- ✅ Build process completing without errors
+- ✅ Git repository fully synchronized
+
+### Next Steps for User Testing
+1. **ROI Column Check**: Verify ROI column visibility in production
+2. **Data Population**: Ensure leads have revenue/cost data for ROI calculation
+3. **LocalStorage Reset**: Use "🔧 איפוס מלא (תיקון ROI)" if ROI not visible
+4. **Field Testing**: Verify all 17 editable fields display correctly in table
+
+### Known Issues to Monitor
+- **ROI Column Visibility**: May be hidden by localStorage settings
+- **Database Triggers**: ROI calculation may depend on database triggers
+- **Data Completeness**: ROI requires both revenue and cost data
+
+### Debug Tools Available
+- Browser console logging for ROI data analysis
+- Column settings dropdown with reset functionality
+- Warning banners for visibility issues
+- Comprehensive error handling with Hebrew toast messages
+
+## Technical Architecture
+
+### Always-Editable System
+- Direct input components (no click-to-edit)
+- Real-time auto-save with debouncing
+- Comprehensive error handling
+- Status feedback with loading states
+
+### Data Flow
+- `useEnhancedLeads` hook for data fetching
+- `useUpdateLead` mutation for auto-save
+- Query cache invalidation for real-time updates
+- English↔Hebrew enum conversion system
+
+### Testing Framework
+- Manual testing checklist created
+- Comprehensive field validation
+- Error state handling
+- Production deployment verification 
