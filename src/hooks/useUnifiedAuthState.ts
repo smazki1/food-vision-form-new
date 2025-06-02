@@ -66,17 +66,33 @@ export const useUnifiedAuthState = () => {
     });
   }, []);
   
+  // Add emergency recovery function for page refresh scenarios
+  const emergencyRecovery = useCallback(() => {
+    console.warn("[UNIFIED_AUTH] Emergency recovery triggered - resetting to safe state");
+    updateAuthState({
+      loading: false,
+      initialized: true,
+      authLoadingTimeout: true,
+      hasError: false,
+      errorMessage: null
+    });
+    
+    // Force page refresh after brief delay if we're still stuck
+    setTimeout(() => {
+      if (authState.loading || !authState.initialized) {
+        console.warn("[UNIFIED_AUTH] Force refresh - recovery failed");
+        window.location.reload();
+      }
+    }, 2000);
+  }, [updateAuthState, authState.loading, authState.initialized]);
+  
   // Set up loading timeouts - force completion after specified duration
   useEffect(() => {
     if (authState.loading && !authState.authLoadingTimeout) {
       const timeoutId = setTimeout(() => {
         console.warn("[UNIFIED_AUTH] Auth loading timeout reached, forcing completion");
-        updateAuthState({ 
-          authLoadingTimeout: true,
-          loading: false,
-          initialized: true,
-        });
-      }, 20000); // 20 second timeout
+        emergencyRecovery();
+      }, 15000); // Reduced to 15 seconds
       
       return () => clearTimeout(timeoutId);
     }
@@ -89,7 +105,7 @@ export const useUnifiedAuthState = () => {
           clientAuthLoadingTimeout: true,
           loading: false 
         });
-      }, 20000); // 20 second timeout
+      }, 15000); // Reduced to 15 seconds
       
       return () => clearTimeout(timeoutId);
     }
@@ -100,11 +116,30 @@ export const useUnifiedAuthState = () => {
     authState.isAuthenticated,
     authState.clientId,
     authState.role,
-    updateAuthState
+    updateAuthState,
+    emergencyRecovery
   ]);
+  
+  // Recovery mechanism for page refresh
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && (authState.loading || !authState.initialized)) {
+        console.log("[UNIFIED_AUTH] Page became visible while loading - triggering recovery");
+        setTimeout(() => {
+          if (authState.loading || !authState.initialized) {
+            emergencyRecovery();
+          }
+        }, 3000);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [authState.loading, authState.initialized, emergencyRecovery]);
   
   return {
     ...authState,
     updateAuthState,
+    emergencyRecovery,
   };
 };

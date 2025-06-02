@@ -29,56 +29,116 @@ import SubmissionsPage from "@/pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "@/pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "@/pages/admin/SubmissionDetailsPage";
 import LeadsTestPage from "@/pages/admin/LeadsTestPage";
+import React from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <UnifiedAuthProvider>
-      <ClientAuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <Routes>
-              {/* Public and customer routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
-              <Route path="/admin-login" element={<PublicOnlyRoute><AdminLogin /></PublicOnlyRoute>} />
-              <Route path="/public-upload" element={<PublicUploadPage />} />
-              <Route path="/food-vision-form" element={<FoodVisionForm />} />
-              <Route path="/smart-upload" element={<SmartUploadPage />} />
-              <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-              <Route path="/customer/home" element={<CustomerHomePage />} />
-              {/* Editor routes (add more as needed) */}
-              <Route path="/editor" element={<EditorDashboardPage />} />
-              <Route path="/editor/submission/:submissionId" element={<SubmissionProcessingPage />} />
+// Emergency recovery component for app crashes
+const ErrorFallback: React.FC<{ error: Error; resetError: () => void }> = ({ error, resetError }) => (
+  <div className="flex flex-col items-center justify-center min-h-screen p-8">
+    <h1 className="text-2xl font-bold text-red-600 mb-4">משהו השתבש</h1>
+    <p className="text-gray-600 mb-4">אירעה שגיאה בלתי צפויה במערכת</p>
+    <div className="bg-gray-100 p-4 rounded-lg mb-4 max-w-lg">
+      <pre className="text-sm text-red-600 whitespace-pre-wrap">{error.message}</pre>
+    </div>
+    <div className="flex gap-4">
+      <button 
+        onClick={resetError}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        נסה שוב
+      </button>
+      <button 
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+      >
+        רענן עמוד
+      </button>
+    </div>
+  </div>
+);
 
-              {/* Admin routes - all nested under /admin/* with layout and providers */}
-              <Route path="/admin/*" element={
-                <CurrentUserRoleProvider>
-                  <AdminRoute>
-                    <AdminLayout />
-                  </AdminRoute>
-                </CurrentUserRoleProvider>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="clients" element={<ClientsList />} />
-                <Route path="clients/:clientId" element={<ClientDetails />} />
-                <Route path="packages" element={<PackagesManagementPage />} />
-                <Route path="leads" element={<LeadsManagement />} />
-                <Route path="submissions" element={<SubmissionsPage />} />
-                <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
-                <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                {/* Add more admin routes as needed */}
-                <Route path="leads-test-page" element={<LeadsTestPage />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ClientAuthProvider>
-    </UnifiedAuthProvider>
-  </QueryClientProvider>
+// Simple error boundary
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App crashed:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return (
+        <ErrorFallback
+          error={this.state.error}
+          resetError={() => this.setState({ hasError: false, error: null })}
+        />
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+const App = () => (
+  <AppErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <UnifiedAuthProvider>
+        <ClientAuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <Routes>
+                {/* Public and customer routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
+                <Route path="/admin-login" element={<PublicOnlyRoute><AdminLogin /></PublicOnlyRoute>} />
+                <Route path="/public-upload" element={<PublicUploadPage />} />
+                <Route path="/food-vision-form" element={<FoodVisionForm />} />
+                <Route path="/smart-upload" element={<SmartUploadPage />} />
+                <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
+                <Route path="/customer/home" element={<CustomerHomePage />} />
+                {/* Editor routes (add more as needed) */}
+                <Route path="/editor" element={<EditorDashboardPage />} />
+                <Route path="/editor/submission/:submissionId" element={<SubmissionProcessingPage />} />
+
+                {/* Admin routes - all nested under /admin/* with layout and providers */}
+                <Route path="/admin/*" element={
+                  <CurrentUserRoleProvider>
+                    <AdminRoute>
+                      <AdminLayout />
+                    </AdminRoute>
+                  </CurrentUserRoleProvider>
+                }>
+                  <Route index element={<Dashboard />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="clients" element={<ClientsList />} />
+                  <Route path="clients/:clientId" element={<ClientDetails />} />
+                  <Route path="packages" element={<PackagesManagementPage />} />
+                  <Route path="leads" element={<LeadsManagement />} />
+                  <Route path="submissions" element={<SubmissionsPage />} />
+                  <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
+                  <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+                  {/* Add more admin routes as needed */}
+                  <Route path="leads-test-page" element={<LeadsTestPage />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ClientAuthProvider>
+      </UnifiedAuthProvider>
+    </QueryClientProvider>
+  </AppErrorBoundary>
 );
 
 export default App;

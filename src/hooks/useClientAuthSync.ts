@@ -1,5 +1,4 @@
-
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface UseClientAuthSyncProps {
   clientId: string | null;
@@ -29,6 +28,7 @@ export const useClientAuthSync = ({
   user,
   connectionVerified
 }: UseClientAuthSyncProps) => {
+  const forcedCompletionRef = useRef(false);
   
   // Enhanced sync with UnifiedAuth client ID
   useEffect(() => {
@@ -40,6 +40,11 @@ export const useClientAuthSync = ({
       isAuthenticated,
       initialized
     });
+
+    // Don't sync if we already forced completion
+    if (forcedCompletionRef.current) {
+      return;
+    }
 
     if (isAuthenticated && initialized && !authLoading && 
         unifiedClientId && !clientId && 
@@ -54,19 +59,23 @@ export const useClientAuthSync = ({
       });
     }
     
-    // Force completion after shorter timeout
+    // Only force completion if we're truly stuck and auth is fully initialized
     if (isAuthenticated && initialized && !authLoading && 
-        clientRecordStatus === 'loading' && authenticating) {
+        clientRecordStatus === 'loading' && authenticating && 
+        !forcedCompletionRef.current) {
       
       const forceTimeout = setTimeout(() => {
-        console.warn("[CLIENT_AUTH_PROVIDER] Forcing completion due to extended loading");
-        updateClientAuthState({
-          clientId: unifiedClientId || null,
-          clientRecordStatus: unifiedClientId ? 'found' : 'not-found',
-          authenticating: false,
-          errorState: null
-        });
-      }, 1000); // Reduced to 1 second
+        if (!forcedCompletionRef.current) {
+          console.warn("[CLIENT_AUTH_PROVIDER] Forcing completion due to extended loading");
+          forcedCompletionRef.current = true;
+          updateClientAuthState({
+            clientId: unifiedClientId || null,
+            clientRecordStatus: unifiedClientId ? 'found' : 'not-found',
+            authenticating: false,
+            errorState: null
+          });
+        }
+      }, 5000); // Increased to 5 seconds to avoid rapid cycling
       
       return () => clearTimeout(forceTimeout);
     }
@@ -83,8 +92,14 @@ export const useClientAuthSync = ({
       clientId,
       unifiedClientId,
       connectionVerified,
-      userId: user?.id
+      userId: user?.id,
+      forcedCompletion: forcedCompletionRef.current
     });
+
+    // Reset forced completion flag when auth state changes significantly
+    if (!isAuthenticated || !initialized || authLoading) {
+      forcedCompletionRef.current = false;
+    }
 
     // Handle initial loading
     if (!initialized || authLoading) {
@@ -100,6 +115,7 @@ export const useClientAuthSync = ({
     // Clear state for unauthenticated users
     if (!isAuthenticated) {
       if (clientId !== null || authenticating !== false || clientRecordStatus !== 'not-found') {
+        forcedCompletionRef.current = false; // Reset on logout
         updateClientAuthState({
           clientId: null,
           authenticating: false,
