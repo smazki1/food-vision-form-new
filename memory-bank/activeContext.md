@@ -2,6 +2,34 @@
 
 ## Current Status
 
+### White Screen and Auth Timeout Fix (2024-12-19) - ✅ COMPLETED
+**בעיה שזוהתה:** המערכת נתקעת במסך לבן לאחר זמן ארוך ויש בעיות timeout שגורמות להחזרה למסך loading. הבעיה מתרחשת בכל הדפים, לא רק בעמוד ספציפי.
+
+**גורמים שזוהו:**
+1. **נתיב שגוי ב-PublicOnlyRoute**: ההפניה הייתה ל-`/customer-dashboard` במקום `/customer/dashboard`
+2. **טיפול לקוי ב-role=null**: כשהמשתמש מאומת אבל ה-role הוא null, המערכת לא ידעה איך לטפל בזה
+3. **Timeout של שנייה אחת**: ב-useClientAuthSync היה timeout קצר מדי שגרם ללולאות
+4. **חוסר מנגנון recovery**: לא היה פתרון לmצבים של תקיעות
+
+**פתרונות שיושמו:**
+1. **תיקון נתיבי ההפניה**: תוקנו כל הנתיבים השגויים ב-PublicOnlyRoute
+2. **טיפול ב-role null/undefined**: הוספת לוגיקה מיוחדת למקרים שהrole לא נקבע עדיין
+3. **הגדלת timeout ל-5 שניות**: הפחתת הלחץ על המערכת בuseClientAuthSync
+4. **מנגנון forced completion**: מניעת לולאות אינסופיות ב-useClientAuthSync
+5. **emergency recovery**: הוספת מנגנון התאוששות ב-useUnifiedAuthState שכולל:
+   - הפעלת timeout ל-15 שניות במקום 20
+   - זיהוי חזרה לכרטיסייה (visibility change detection)
+   - רענון אוטומטי של העמוד במקרי קיצון
+6. **Error boundary**: הוספת מנגנון תפיסת שגיאות ב-App.tsx עם אפשרות recovery ידנית
+
+**תוצאות צפויות:**
+- מסך לבן לא אמור להתרחש יותר
+- רענון העמוד יחזיר את המערכת לתפקוד
+- טיפול טוב יותר במעברים בין כרטיסיות
+- פחות timeouts והודעות שגיאה
+
+**סטטוס פריסה:** ✅ נפרס לפרודקשן ומוכן לבדיקה
+
 ### Token Refresh Loop Fix (2024-12-19) - ✅ COMPLETED
 **בעיה שזוהתה:** כשמשתמש במערכת האדמין עובר לכרטיסייה אחרת או עובר זמן וחוזר, המערכת מציגה מסך "Verifying admin access..." ונכנסת למצב loading מחדש.
 
@@ -73,12 +101,16 @@ With the authentication and authorization systems now stable, the primary focus 
     *   `isSubmitDisabled` Fix (`FormNavigation.tsx`).
     *   Form Submission Conflict (`additional_details` fixed with `upsert`).
 
-### Admin Interface Stability Fixes (2024-12-19) - ✅ COMPLETED
-- **Fixed Admin Leads Page Issues (Phase 1)** - Resolved critical 400 errors and UI warnings
-- **Extended RLS Fixes (Phase 2)** - Added temporary policies for customer_submissions and clients tables  
-- **Fixed Client Details Page (Phase 3)** - Added missing route and RLS policies for individual client viewing
-- **Improved Accessibility** - Fixed multiple Dialog components missing required descriptions
-- **All Changes Deployed** - All three phases committed to git and deployed to production
+### Admin Leads Page Core Issues (2024-12-19) - ✅ COMPLETED
+**בעיה שזוהתה:** לחיצה על לידים בעמוד `/admin/leads` הביאה למסכים ריקים עם שגיאות 400 ובעיות בהקשר האימות.
+
+**פתרונות שיושמו:**
+1. **תיקון RLS policies** - יצירת מדיניות זמנית לכל הטבלאות הרלוונטיות
+2. **תיקון נתיבי router** - הוספת נתיב חסר ל-ClientDetails
+3. **תיקון בעיות נגישות** - הוספת DialogDescription בכל הקומפוננטים הרלוונטיים
+4. **תיקון validation בטפסים** - תיקון Select.Item עם value ריק
+
+*סטטוס פריסה: ✅ נפרס לפרודקשן*
 
 ## Active Development Areas
 
@@ -141,88 +173,4 @@ With the authentication and authorization systems now stable, the primary focus 
 1.  **Critical:** Public form submission errors (PGRST202 function not found, column `phone_number`/`status` does not exist, invalid ENUM input for `lead_status_type`).
 2.  **Critical:** Multiple sequential database migration failures due to issues in `20240530000000_advanced_leads_management.sql` and other migration files (e.g., `CREATE POLICY IF NOT EXISTS` syntax, missing functions like `get_my_role`).
 3.  **Critical:** Login loop & "Access Denied: Insufficient privileges" error for admin users.
-4.  **High:** Unstable rendering/routing loop in `AdminLayout.tsx` during auth state changes.
-5.  Persistent error toasts after auth issues were resolved.
-6.  `Select.Item` value error in `CustomerGallery.tsx`.
-7.  "Invalid hook call" in `FoodVisionForm.tsx`.
-8.  `isSubmitDisabled` being `null` in `FormNavigation.tsx`.
-9.  `409 Conflict` on `additional_details` table (fixed with `upsert`).
-10. Initial `VITE_SUPABASE_URL` identification.
-11. Previous customer submissions display issue.
-12. Potential TypeScript type inference issue with `supabase.rpc('get_my_role')` (implicitly resolved by ensuring correct arguments and successful calls).
-
-## עדכון 2024-07-23
-- ✔️ בעיית עמוד "חבילות" נפתרה (אי-התאמה בין route ל-nav, הנתיב תוקן ל-/admin/packages).
-- כל עמודי האדמין המרכזיים עובדים ונטענים כראוי.
-
-## Next Steps
-1. **בדיקה ידנית של המערכת** - לוודא שכל ההגשות מוצגות נכון במערכת האדמין
-2. **ממשק אדמין משופר** - אפשרות לסנן ולמיין הגשות לפי סוג קישור (לקוח/ליד/אנונימי)
-3. **תיעוד והדרכה** - עדכון תיעוד המערכת והכשרת צוות האדמין 
-
-# Active Context - Current Work Focus
-
-## Current Task: Admin Interface Stability & Bug Fixes
-
-### Status: NEARLY COMPLETE ✅
-
-**What was accomplished:**
-1. **Fixed Admin Leads Page Issues (Phase 1)** - Resolved critical 400 errors and UI warnings
-2. **Extended RLS Fixes (Phase 2)** - Added temporary policies for customer_submissions and clients tables  
-3. **Fixed Client Details Page (Phase 3)** - Added missing route and RLS policies for individual client viewing
-4. **Improved Accessibility** - Fixed multiple Dialog components missing required descriptions
-5. **All Changes Deployed** - All three phases committed to git and deployed to production
-
-**Current State:**
-- Admin interface should now be fully functional including client details viewing
-- All major Dialog accessibility warnings resolved
-- Comprehensive temporary RLS policies in place for all admin tables
-- Client details page route now properly configured and accessible
-- All changes deployed to production and ready for testing
-
-### Next Steps:
-
-1. **User Testing Required** - Verify that:
-   - Admin leads page loads without errors ✅ (should be working)
-   - Client details page opens when clicking on individual clients ✅ (should be working now)
-   - All admin pages function correctly without 400 errors
-   - Dialog components display without accessibility warnings
-
-2. **If Testing Successful** - Move to next phase of tasks:
-   - Gather user requirements for additional admin features
-   - Begin authentication system improvements (replace temporary RLS with proper role checking)
-   - Address any remaining UI/UX issues
-
-### Technical Notes:
-- Temporary RLS policies now cover: `leads`, `customer_submissions`, `clients`, `dishes`, `cocktails`, `drinks`, `service_packages`
-- All policies allow full access to authenticated users (interim solution)
-- Client details route: `/admin/clients/:clientId` properly configured
-- DialogDescription added to all major admin components 
-
-## Next Priority: User Experience Testing
-**Priority: High**
-*   **Test Token Refresh Fix:** Verify that the token refresh no longer causes loading screens or auth loops
-*   **Multi-Tab Testing:** Test switching between browser tabs and returning to verify seamless experience
-*   **Long Session Testing:** Leave the admin interface open for extended periods to test token refresh behavior
-
-## Technical Implementation Details
-
-**Token Refresh Handling Strategy:**
-```typescript
-// Handle TOKEN_REFRESHED events silently - don't reset state
-if (event === 'TOKEN_REFRESHED' && session?.user) {
-  console.log("Token refreshed silently for user:", session.user.id);
-  // Just update userId if needed, but don't trigger full re-auth
-  if (session.user.id !== userId) {
-    setUserId(session.user.id);
-  }
-  return;
-}
-```
-
-**Cache Management:**
-- Extended cache TTL to 30 minutes for better token refresh compatibility
-- Added `refreshAuthDataSilently` function for background updates
-- Prevented cache clearing during routine token refreshes
-
-**Memory Bank Updated:** Progress tracking and active context files updated to reflect completed token refresh fix and current status. 
+4.  **High:** Unstable rendering/routing loop in `AdminLayout.tsx`

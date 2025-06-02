@@ -54,7 +54,19 @@ const ErrorFallback: React.FC<{ error: Error; resetError: () => void }> = ({ err
       >
         רענן עמוד
       </button>
+      <button 
+        onClick={() => {
+          localStorage.clear();
+          window.location.href = '/admin-login';
+        }}
+        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+      >
+        איפוס מלא
+      </button>
     </div>
+    <p className="text-sm text-gray-500 mt-4">
+      אם הבעיה נמשכת, נסה "איפוס מלא" שינקה את כל הנתונים השמורים
+    </p>
   </div>
 );
 
