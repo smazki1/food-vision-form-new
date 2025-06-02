@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { optimizedAuthService } from '@/services/optimizedAuthService';
@@ -37,58 +36,65 @@ export const useAuthInitialization = (
             hasLinkedClientRecord: false
           });
         }
-      }, 10000); // Increased timeout to 10 seconds
+      }, 10000);
 
       try {
+        updateAuthState({ loading: true });
+        
+        // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!isMounted) return;
-
+        
         if (error) {
           console.error("[AUTH_INIT] Session error:", error);
           hasInitialized.current = true;
           updateAuthState({
             loading: false,
             initialized: true,
-            hasError: true,
-            errorMessage: error.message,
             user: null,
             session: null,
-            isAuthenticated: false
+            isAuthenticated: false,
+            role: null,
+            clientId: null,
+            hasLinkedClientRecord: false,
+            hasError: true,
+            errorMessage: error.message
           });
           return;
         }
 
-        hasInitialized.current = true;
-        
         if (session?.user) {
-          console.log("[AUTH_INIT] User found, determining role for:", session.user.id);
+          hasInitialized.current = true;
           await determineUserRole(session.user, session, updateAuthState);
         } else {
-          console.log("[AUTH_INIT] No session found");
+          hasInitialized.current = true;
           updateAuthState({
+            loading: false,
+            initialized: true,
             user: null,
             session: null,
             isAuthenticated: false,
-            loading: false,
-            initialized: true,
             role: null,
             clientId: null,
             hasLinkedClientRecord: false
           });
         }
       } catch (error) {
-        console.error("[AUTH_INIT] Initialization error:", error);
+        console.error("[AUTH_INIT] Auth initialization error:", error);
         if (isMounted) {
           hasInitialized.current = true;
           updateAuthState({
             loading: false,
             initialized: true,
-            hasError: true,
-            errorMessage: error instanceof Error ? error.message : 'Failed to initialize auth',
             user: null,
             session: null,
-            isAuthenticated: false
+            isAuthenticated: false,
+            role: null,
+            clientId: null,
+            hasLinkedClientRecord: false,
+            hasError: true,
+            errorMessage: error instanceof Error ? error.message : 'Failed to initialize authentication'
           });
         }
       }
@@ -99,6 +105,17 @@ export const useAuthInitialization = (
         if (!isMounted) return;
 
         console.log("[AUTH_INIT] Auth state change:", event, session?.user?.id);
+
+        // Handle TOKEN_REFRESHED silently - don't reset everything
+        if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log("[AUTH_INIT] Token refreshed silently for user:", session.user.id);
+          // Just update the session object, but don't trigger full re-initialization
+          updateAuthState({
+            session: session,
+            user: session.user
+          });
+          return;
+        }
 
         if (event === 'SIGNED_OUT') {
           hasInitialized.current = true;

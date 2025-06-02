@@ -59,6 +59,16 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
       timeoutRef.current = null;
     }
 
+    // Handle TOKEN_REFRESHED events silently - don't reset state
+    if (event === 'TOKEN_REFRESHED' && session?.user) {
+      console.log("[useCurrentUserRoleEngine] Token refreshed silently for user:", session.user.id);
+      // Just update userId if needed, but don't trigger full re-auth
+      if (session.user.id !== userId) {
+        setUserId(session.user.id);
+      }
+      return;
+    }
+
     if (event === 'SIGNED_OUT' || !session) {
       setStatus('NO_SESSION');
       setRole(null);
@@ -125,7 +135,7 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [forceComplete]);
+  }, [forceComplete, userId]);
 
   const isAdmin = role === 'admin';
   const isAccountManager = role === 'account_manager';
