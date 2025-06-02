@@ -3,13 +3,11 @@ import { EnhancedLeadsTable } from '@/components/admin/leads/EnhancedLeadsTable'
 import { EnhancedLeadsFilters } from '@/components/admin/leads/EnhancedLeadsFilters';
 import { LeadDetailPanel } from '@/components/admin/leads/LeadDetailPanel';
 import { CreateLeadModal } from '@/components/admin/leads/CreateLeadModal';
-import { LeadsTableDiagnostics } from '@/components/admin/leads/LeadsTableDiagnostics';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { useEnhancedLeads } from '@/hooks/useEnhancedLeads'; // Temporarily commented out
-// import { useSimpleLeads } from '@/hooks/useSimpleLeads'; // Using simple hook for debugging
+import { useEnhancedLeads } from '@/hooks/useEnhancedLeads';
 import { EnhancedLeadsFilter } from '@/types/filters';
-import { Lead } from '@/types/lead'; // Import the Lead type
+import { Lead } from '@/types/lead';
 import { 
   Tabs, 
   TabsContent, 
@@ -20,8 +18,7 @@ import {
   PlusCircle, 
   Archive, 
   BarChart2, 
-  Settings,
-  Bug
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -84,8 +81,7 @@ const AdminLeadsPage = () => {
   };
   
   // Fetch leads data
-  const { data: leadsData, isLoading, error } = useEnhancedLeads(filters); // Temporarily commented out
-  // const { data: simpleLeadsData, isLoading, error } = useSimpleLeads(); // Using simple hook
+  const { data: leadsData, isLoading, error } = useEnhancedLeads(filters);
   
   // Handle error state
   if (error) {
@@ -99,8 +95,7 @@ const AdminLeadsPage = () => {
   }
   
   // The leads to display based on the current tab
-  const leads = leadsData?.data || []; // Temporarily commented out
-  // const leads = (simpleLeadsData || []) as Lead[]; // Using data directly from simple hook, with type assertion for debugging
+  const leads = leadsData?.data || [];
   
   return (
     <div className="container mx-auto py-6 px-4 space-y-6 max-w-7xl">
@@ -131,10 +126,6 @@ const AdminLeadsPage = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="leads">לידים פעילים</TabsTrigger>
           <TabsTrigger value="archive">ארכיון</TabsTrigger>
-          <TabsTrigger value="diagnostics">
-            <Bug className="h-4 w-4 ml-1" />
-            אבחון שדות
-          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="leads">
@@ -177,10 +168,6 @@ const AdminLeadsPage = () => {
               isArchiveView={true}
             />
           )}
-        </TabsContent>
-
-        <TabsContent value="diagnostics">
-          <LeadsTableDiagnostics />
         </TabsContent>
       </Tabs>
       

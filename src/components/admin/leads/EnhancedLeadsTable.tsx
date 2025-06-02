@@ -52,7 +52,8 @@ import {
   RotateCcw, 
   UserPlus,
   Settings,
-  GripVertical
+  GripVertical,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   useArchiveLead, 
@@ -89,6 +90,13 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
   { id: 'next_follow_up', key: 'next_follow_up_date', label: 'תזכורת', visible: false },
   { id: 'actions', key: 'actions', label: 'פעולות', visible: true, width: '200px', required: true },
 ];
+
+// Force reset function to clear localStorage issues
+const forceResetColumns = () => {
+  localStorage.removeItem('leads-table-columns');
+  console.log('🔧 נוקה localStorage של עמודות הטבלה - ROI אמור להיות מוצג כעת');
+  window.location.reload(); // Reload to apply changes
+};
 
 // Status color mapping
 const getStatusColor = (status: LeadStatusEnum): string => {
@@ -222,6 +230,9 @@ const ColumnSettingsDropdown = ({
         <DropdownMenuItem onClick={() => onReorder(DEFAULT_COLUMNS)}>
           אפס להגדרות ברירת מחדל
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={forceResetColumns} className="text-orange-600 hover:text-orange-800">
+          🔧 איפוס מלא (תיקון ROI)
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -280,6 +291,25 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
   // Get visible columns for rendering
   const visibleColumns = columns.filter(col => col.visible);
   
+  // Debug ROI data
+  const leadsWithROI = leads.filter(lead => lead.roi !== null && lead.roi !== undefined);
+  const leadsWithRevenueAndCosts = leads.filter(lead => 
+    (lead.revenue_from_lead_local && lead.revenue_from_lead_local > 0) || 
+    (lead.total_ai_costs && lead.total_ai_costs > 0)
+  );
+  
+  // Log debug info about ROI
+  useEffect(() => {
+    if (leads.length > 0) {
+      console.log(`🔍 ROI Debug Info:
+        - Total leads: ${leads.length}
+        - Leads with ROI data: ${leadsWithROI.length}
+        - Leads with revenue/costs: ${leadsWithRevenueAndCosts.length}
+        - ROI column visible: ${visibleColumns.find(col => col.id === 'roi') ? 'YES' : 'NO'}
+        - Sample lead with ROI:`, leadsWithROI[0] || 'None');
+    }
+  }, [leads, leadsWithROI.length, visibleColumns]);
+
   // Handle archive action
   const handleArchive = (e: React.MouseEvent, leadId: string) => {
     e.stopPropagation(); // Prevent row click
@@ -482,6 +512,17 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
 
   return (
     <div className="space-y-4">
+      {/* ROI Column Warning */}
+      {!visibleColumns.find(col => col.id === 'roi') && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <span className="text-yellow-800 text-sm">
+            <strong>שים לב:</strong> עמודת ה-ROI לא מוצגת כרגע. 
+            לחץ על "הגדרות עמודות" ובחר "🔧 איפוס מלא (תיקון ROI)" לתיקון הבעיה.
+          </span>
+        </div>
+      )}
+
       {/* Column Settings */}
       <div className="flex justify-end">
         <ColumnSettingsDropdown
