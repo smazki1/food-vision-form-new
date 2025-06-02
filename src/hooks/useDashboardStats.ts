@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,16 +88,16 @@ export function useDashboardStats() {
         lowServingsClientsResult
       ] = await Promise.all([
         // Total leads
-        supabase.from("leads").select("id", { count: "exact", head: true }),
+        supabase.from("leads").select("lead_id", { count: "exact", head: true }),
         
         // New leads this week
         supabase.from("leads")
-          .select("id", { count: "exact", head: true })
+          .select("lead_id", { count: "exact", head: true })
           .gte("created_at", oneWeekAgoStr),
           
         // New leads this month
         supabase.from("leads")
-          .select("id", { count: "exact", head: true })
+          .select("lead_id", { count: "exact", head: true })
           .gte("created_at", startMonthStr)
           .lte("created_at", endMonthStr),
         
@@ -127,10 +126,10 @@ export function useDashboardStats() {
           
         // Converted leads this month (for conversion rate)
         supabase.from("leads")
-          .select("id", { count: "exact", head: true })
+          .select("lead_id", { count: "exact", head: true })
           .eq("lead_status", "הפך ללקוח")
-          .gte("last_updated_at", startMonthStr)
-          .lte("last_updated_at", endMonthStr),
+          .gte("updated_at", startMonthStr)
+          .lte("updated_at", endMonthStr),
           
         // Leads by status
         supabase.from("leads")

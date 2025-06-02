@@ -198,7 +198,7 @@ export const useLegacyLeads = (filters?: LegacyLeadsFilterType) => {
         ...(newLead as any), // Added as any to suppress immediate TS error, but this is problematic
         id: `temp_${generateId()}`,
         created_at: new Date().toISOString(),
-        last_updated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         lead_status: "ליד חדש" as LeadStatus,
         free_sample_package_active: false,
         restaurant_name: (newLead as any).restaurant_name || '',
@@ -243,7 +243,7 @@ export const useLegacyLeads = (filters?: LegacyLeadsFilterType) => {
   });
 
   const updateLeadMutation = useMutation({
-    mutationFn: ({ id, updates }: { id: string, updates: Partial<Omit<LegacyLead, "id" | "created_at" | "last_updated_at" | "free_sample_package_active">>) => 
+    mutationFn: ({ id, updates }: { id: string, updates: Partial<Omit<LegacyLead, "id" | "created_at" | "updated_at" | "free_sample_package_active">>) => 
       apiUpdateLead(id, updates), // This will cause an error
     onMutate: async ({ id, updates }) => {
       // Get current lead data
@@ -251,7 +251,7 @@ export const useLegacyLeads = (filters?: LegacyLeadsFilterType) => {
       const originalLead = currentLeads.find(lead => lead.id === id);
       
       if (originalLead) {
-        const optimisticLead = { ...originalLead, ...updates, last_updated_at: new Date().toISOString() };
+        const optimisticLead = { ...originalLead, ...updates, updated_at: new Date().toISOString() };
         
         // Apply optimistic update
         applyOptimisticUpdate({
@@ -323,11 +323,11 @@ export const useLegacyLeads = (filters?: LegacyLeadsFilterType) => {
     }
   });
 
-  const addLead = async (newLead: Omit<LegacyLead, "id" | "created_at" | "last_updated_at" | "lead_status" | "free_sample_package_active">) => {
+  const addLead = async (newLead: Omit<LegacyLead, "id" | "created_at" | "updated_at" | "lead_status" | "free_sample_package_active">) => {
     return addLeadMutation.mutateAsync(newLead as any); // Added as any
   };
 
-  const updateLead = async (id: string, updates: Partial<Omit<LegacyLead, "id" | "created_at" | "last_updated_at" | "free_sample_package_active">>) => {
+  const updateLead = async (id: string, updates: Partial<Omit<LegacyLead, "id" | "created_at" | "updated_at" | "free_sample_package_active">>) => {
     return updateLeadMutation.mutateAsync({ id, updates });
   };
 

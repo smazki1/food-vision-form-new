@@ -1,40 +1,26 @@
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Calendar, 
-  UserCheck, 
-  RotateCcw,
-  Clock 
-} from 'lucide-react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger 
-} from '@/components/ui/popover';
-import { 
-  Card, 
-  CardContent,
-  CardFooter 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { EnhancedLeadsFilter } from '@/types/filters';
+  EnhancedLeadsFilter, 
+} from '@/types/filters';
 import { 
   LeadStatusEnum, 
-  LeadSourceEnum, 
-  LEAD_STATUS_DISPLAY, 
+  LeadSourceEnum,
+  LEAD_STATUS_DISPLAY,
   LEAD_SOURCE_DISPLAY 
 } from '@/types/lead';
+import { Search, Filter, X, Calendar, Bell } from 'lucide-react';
 
 interface EnhancedLeadsFiltersProps {
   filters: EnhancedLeadsFilter;
@@ -45,58 +31,16 @@ interface EnhancedLeadsFiltersProps {
 export const EnhancedLeadsFilters: React.FC<EnhancedLeadsFiltersProps> = ({
   filters,
   onFilterChange,
-  isArchiveView = false,
+  isArchiveView = false
 }) => {
-  const [searchInput, setSearchInput] = useState(filters.searchTerm || '');
-  
-  // Handle search input submit
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onFilterChange({ ...filters, searchTerm: searchInput });
-  };
-  
-  // Handle status filter change
-  const handleStatusChange = (status: string) => {
+  const updateFilter = (key: keyof EnhancedLeadsFilter, value: any) => {
     onFilterChange({
       ...filters,
-      status: status === 'all' ? 'all' : status as LeadStatusEnum,
+      [key]: value,
     });
   };
-  
-  // Handle source filter change
-  const handleSourceChange = (source: string) => {
-    onFilterChange({
-      ...filters,
-      leadSource: source === 'all' ? 'all' : source as LeadSourceEnum,
-    });
-  };
-  
-  // Handle date filter change
-  const handleDateFilterChange = (value: string) => {
-    onFilterChange({ ...filters, dateFilter: value as 'all' | 'today' | 'this-week' | 'this-month' });
-  };
-  
-  // Handle reminders filter change
-  const handleRemindersFilterChange = (checked: boolean | 'indeterminate') => {
-    if (typeof checked === 'boolean') {
-      onFilterChange({ ...filters, onlyReminders: checked });
-    }
-  };
-  
-  // Handle reminders today filter change
-  const handleRemindersTodayFilterChange = (checked: boolean | 'indeterminate') => {
-    if (typeof checked === 'boolean') {
-      onFilterChange({ ...filters, remindersToday: checked });
-    }
-  };
-  
-  // Handle sort change
-  const handleSortChange = (field: string, direction: 'asc' | 'desc') => {
-    onFilterChange({ ...filters, sortBy: field, sortDirection: direction });
-  };
-  
-  // Reset all filters to default
-  const handleResetFilters = () => {
+
+  const clearFilters = () => {
     onFilterChange({
       searchTerm: '',
       status: 'all',
@@ -109,212 +53,174 @@ export const EnhancedLeadsFilters: React.FC<EnhancedLeadsFiltersProps> = ({
       excludeArchived: !isArchiveView,
       onlyArchived: isArchiveView,
     });
-    setSearchInput('');
-  };
-  
-  // Check if there are any active filters
-  const hasActiveFilters = () => {
-    return (
-      !!filters.searchTerm ||
-      filters.status !== 'all' ||
-      filters.leadSource !== 'all' ||
-      filters.dateFilter !== 'all' ||
-      filters.onlyReminders ||
-      filters.remindersToday ||
-      filters.sortBy !== 'created_at' ||
-      filters.sortDirection !== 'desc'
-    );
-  };
-  
-  // Count active filters for badge
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (filters.searchTerm) count++;
-    if (filters.status !== 'all') count++;
-    if (filters.leadSource !== 'all') count++;
-    if (filters.dateFilter !== 'all') count++;
-    if (filters.onlyReminders) count++;
-    if (filters.remindersToday) count++;
-    if (filters.sortBy !== 'created_at' || filters.sortDirection !== 'desc') count++;
-    return count;
   };
 
   return (
     <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4 md:items-end">
-          {/* Search input */}
-          <div className="flex-1">
-            <form onSubmit={handleSearchSubmit} className="flex items-center">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">סינון לידים</h3>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={clearFilters}
+            className="flex items-center gap-2"
+          >
+            <X className="h-4 w-4" />
+            נקה סינונים
+          </Button>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Search Term */}
+          <div className="space-y-2">
+            <Label htmlFor="search">חיפוש חופשי</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="חיפוש לפי שם מסעדה, איש קשר, טלפון או אימייל"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="rounded-r-none"
+                id="search"
+                placeholder="שם מסעדה, איש קשר, טלפון או אימייל"
+                value={filters.searchTerm || ''}
+                onChange={(e) => updateFilter('searchTerm', e.target.value)}
+                className="pl-10"
               />
-              <Button type="submit" className="rounded-l-none" variant="secondary">
-                <Search className="h-4 w-4" />
-              </Button>
-            </form>
+            </div>
           </div>
 
-          {/* Status filter */}
-          <div className="min-w-[160px]">
-            <Select
-              value={filters.status?.toString() || 'all'}
-              onValueChange={handleStatusChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="סטטוס" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">כל הסטטוסים</SelectItem>
-                {Object.values(LeadStatusEnum)
-                  .filter(status => isArchiveView ? status === LeadStatusEnum.ARCHIVED : status !== LeadStatusEnum.ARCHIVED)
-                  .map((status) => (
-                    <SelectItem key={status} value={status}>
-                      {LEAD_STATUS_DISPLAY[status]}
+          {/* Status Filter */}
+          {!isArchiveView && (
+            <div className="space-y-2">
+              <Label>סטטוס</Label>
+              <Select
+                value={filters.status || 'all'}
+                onValueChange={(value) => updateFilter('status', value === 'all' ? 'all' : value as LeadStatusEnum)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר סטטוס" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הסטטוסים</SelectItem>
+                  {Object.entries(LEAD_STATUS_DISPLAY).map(([key, display]) => (
+                    <SelectItem key={key} value={key}>
+                      {display}
                     </SelectItem>
                   ))}
-              </SelectContent>
-            </Select>
-          </div>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          {/* Source filter */}
-          <div className="min-w-[160px]">
+          {/* Source Filter */}
+          <div className="space-y-2">
+            <Label>מקור</Label>
             <Select
-              value={filters.leadSource?.toString() || 'all'}
-              onValueChange={handleSourceChange}
+              value={filters.leadSource || 'all'}
+              onValueChange={(value) => updateFilter('leadSource', value === 'all' ? 'all' : value as LeadSourceEnum)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="מקור" />
+                <SelectValue placeholder="בחר מקור" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל המקורות</SelectItem>
-                {Object.values(LeadSourceEnum).map((source) => (
-                  <SelectItem key={source} value={source}>
-                    {LEAD_SOURCE_DISPLAY[source]}
+                {Object.entries(LEAD_SOURCE_DISPLAY).map(([key, display]) => (
+                  <SelectItem key={key} value={key}>
+                    {display}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Advanced filters popover */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                <span>סינון מתקדם</span>
-                {getActiveFilterCount() > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {getActiveFilterCount()}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-4" align="end">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium mb-2">סינון מתקדם</h3>
-                
-                {/* Date filter */}
-                <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    תאריך יצירה
-                  </h4>
-                  <Select
-                    value={filters.dateFilter || 'all'}
-                    onValueChange={handleDateFilterChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחר טווח תאריכים" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">הכל</SelectItem>
-                      <SelectItem value="today">היום</SelectItem>
-                      <SelectItem value="this-week">השבוע</SelectItem>
-                      <SelectItem value="this-month">החודש</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                {/* Reminders filter */}
-                <div>
-                  <h4 className="text-sm font-medium mb-2 flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    תזכורות
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="only-reminders"
-                        checked={filters.onlyReminders || false}
-                        onCheckedChange={handleRemindersFilterChange}
-                      />
-                      <label 
-                        htmlFor="only-reminders" 
-                        className="text-sm cursor-pointer"
-                      >
-                        רק לידים עם תזכורת
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="reminders-today"
-                        checked={filters.remindersToday || false}
-                        onCheckedChange={handleRemindersTodayFilterChange}
-                      />
-                      <label 
-                        htmlFor="reminders-today" 
-                        className="text-sm cursor-pointer"
-                      >
-                        תזכורות להיום
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Sorting */}
-                <div>
-                  <h4 className="text-sm font-medium mb-2">מיון לפי</h4>
-                  <Select
-                    value={`${filters.sortBy || 'created_at'}-${filters.sortDirection || 'desc'}`}
-                    onValueChange={(value) => {
-                      const [field, direction] = value.split('-');
-                      handleSortChange(field, direction as 'asc' | 'desc');
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="מיון לפי" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="created_at-desc">תאריך יצירה (מהחדש לישן)</SelectItem>
-                      <SelectItem value="created_at-asc">תאריך יצירה (מהישן לחדש)</SelectItem>
-                      <SelectItem value="restaurant_name-asc">שם מסעדה (א-ת)</SelectItem>
-                      <SelectItem value="restaurant_name-desc">שם מסעדה (ת-א)</SelectItem>
-                      <SelectItem value="total_ai_costs-desc">עלויות AI (גבוה לנמוך)</SelectItem>
-                      <SelectItem value="total_ai_costs-asc">עלויות AI (נמוך לגבוה)</SelectItem>
-                      <SelectItem value="roi-desc">ROI (גבוה לנמוך)</SelectItem>
-                      <SelectItem value="roi-asc">ROI (נמוך לגבוה)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Reset filters button - only visible if there are active filters */}
-          {hasActiveFilters() && (
-            <Button 
-              variant="ghost" 
-              onClick={handleResetFilters}
-              className="flex items-center gap-2"
+          {/* Date Filter */}
+          <div className="space-y-2">
+            <Label>תקופה</Label>
+            <Select
+              value={filters.dateFilter || 'all'}
+              onValueChange={(value) => updateFilter('dateFilter', value)}
             >
-              <RotateCcw className="h-4 w-4" />
-              <span>איפוס סינון</span>
-            </Button>
-          )}
+              <SelectTrigger>
+                <SelectValue placeholder="בחר תקופה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">כל התקופות</SelectItem>
+                <SelectItem value="today">היום</SelectItem>
+                <SelectItem value="this-week">השבוע</SelectItem>
+                <SelectItem value="this-month">החודש</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Reminder Filters */}
+        <div className="flex flex-wrap gap-6 pt-2">
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Checkbox
+              id="onlyReminders"
+              checked={filters.onlyReminders || false}
+              onCheckedChange={(checked) => updateFilter('onlyReminders', checked === true)}
+            />
+            <Label htmlFor="onlyReminders" className="flex items-center gap-2 cursor-pointer">
+              <Bell className="h-4 w-4" />
+              רק לידים עם תזכורות
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2 space-x-reverse">
+            <Checkbox
+              id="remindersToday"
+              checked={filters.remindersToday || false}
+              onCheckedChange={(checked) => updateFilter('remindersToday', checked === true)}
+            />
+            <Label htmlFor="remindersToday" className="flex items-center gap-2 cursor-pointer">
+              <Calendar className="h-4 w-4" />
+              תזכורות להיום
+            </Label>
+          </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t">
+          <div className="space-y-2">
+            <Label>מיון לפי</Label>
+            <Select
+              value={filters.sortBy || 'created_at'}
+              onValueChange={(value) => updateFilter('sortBy', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_at">תאריך יצירה</SelectItem>
+                <SelectItem value="updated_at">תאריך עדכון</SelectItem>
+                <SelectItem value="restaurant_name">שם מסעדה</SelectItem>
+                <SelectItem value="lead_status">סטטוס</SelectItem>
+                <SelectItem value="next_follow_up_date">תאריך מעקב</SelectItem>
+                <SelectItem value="total_ai_costs">עלויות AI</SelectItem>
+                <SelectItem value="roi">ROI</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>כיוון מיון</Label>
+            <Select
+              value={filters.sortDirection || 'desc'}
+              onValueChange={(value) => updateFilter('sortDirection', value as 'asc' | 'desc')}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">יורד (החדש לישן)</SelectItem>
+                <SelectItem value="asc">עולה (הישן לחדש)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardContent>
     </Card>

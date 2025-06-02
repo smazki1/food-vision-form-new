@@ -254,21 +254,37 @@ export const useCreateLead = () => {
   return useMutation<Lead, Error, Partial<Lead>>({
     mutationFn: async (newLeadData) => {
       let finalLeadData = { ...newLeadData };
-      if (newLeadData.lead_status) {
-        if (typeof newLeadData.lead_status === 'string' && LEAD_STATUS_DISPLAY[newLeadData.lead_status as LeadStatusEnum]) {
-          // Already a valid LeadStatusEnum key, no action needed
+      
+      // Remove fields that shouldn't be inserted or are auto-generated
+      delete finalLeadData.lead_id;
+      delete finalLeadData.created_at;
+      delete finalLeadData.updated_at;
+      delete finalLeadData.total_ai_costs; // This is a computed/generated column
+      delete finalLeadData.revenue_from_lead_usd; // This is a computed/generated column
+      delete finalLeadData.roi; // This is a computed/generated column
+      
+      // Convert lead_status to Hebrew for database
+      if (finalLeadData.lead_status) {
+        const hebrewStatus = mapLeadStatusToHebrew(finalLeadData.lead_status as LeadStatusEnum);
+        if (hebrewStatus) {
+          finalLeadData.lead_status = hebrewStatus as any;
         } else {
-          const mappedStatus = mapHebrewToLeadStatusEnum(newLeadData.lead_status as string);
-          if (mappedStatus) {
-            finalLeadData.lead_status = mappedStatus;
-          } else {
-            console.warn(`Unrecognized lead status: ${newLeadData.lead_status}, defaulting to NEW`);
-            finalLeadData.lead_status = LeadStatusEnum.NEW;
-          }
+          console.warn(`Unrecognized lead status: ${finalLeadData.lead_status}, defaulting to NEW`);
+          finalLeadData.lead_status = mapLeadStatusToHebrew(LeadStatusEnum.NEW) as any;
         }
       } else {
-        finalLeadData.lead_status = LeadStatusEnum.NEW; 
+        finalLeadData.lead_status = mapLeadStatusToHebrew(LeadStatusEnum.NEW) as any; 
       }
+      
+      // Convert lead_source to Hebrew for database if it exists
+      if (finalLeadData.lead_source) {
+        const hebrewSource = mapLeadSourceToHebrew(finalLeadData.lead_source as LeadSourceEnum);
+        if (hebrewSource) {
+          finalLeadData.lead_source = hebrewSource as any;
+        }
+      }
+
+      console.log('Creating lead with data:', finalLeadData);
       
       const { data, error } = await supabase
         .from('leads')
@@ -277,6 +293,7 @@ export const useCreateLead = () => {
         .single();
 
       if (error) {
+        console.error('Database insert error:', error);
         toast.error(`Error creating lead: ${error.message}`);
         throw error;
       }
@@ -294,42 +311,121 @@ export const useCreateLead = () => {
 
 export const useUpdateLead = () => {
   const queryClient = useQueryClient();
-  return useMutation<Lead, Error, Partial<Lead> & { lead_id: string }>({
-    mutationFn: async (leadToUpdate) => {
-      const { lead_id, ...updateData } = leadToUpdate;
-      
-      let finalUpdateData = { ...updateData };
-      if (updateData.lead_status && typeof updateData.lead_status === 'string' && !LEAD_STATUS_DISPLAY[updateData.lead_status as LeadStatusEnum]) {
-        const mappedStatus = mapHebrewToLeadStatusEnum(updateData.lead_status);
-        if (mappedStatus) {
-          finalUpdateData.lead_status = mappedStatus;
-        } else {
-           console.warn(`Unrecognized lead status for update: ${updateData.lead_status}`);
-           delete finalUpdateData.lead_status;
+  return useMutation<Lead, Error, Partial<Lead> & { lead_id: string }>(
+    {
+      mutationFn: async (leadToUpdate) => {
+        const { lead_id, ...updateData } = leadToUpdate;
+        
+        console.log('useUpdateLead - RAW INPUT:', leadToUpdate);
+        console.log('useUpdateLead - lead_id:', lead_id);
+        console.log('useUpdateLead - updateData before filtering:', updateData);
+        
+        let finalUpdateData = { ...updateData } as any; // Type assertion to allow deletion of unknown fields
+        
+        // Remove fields that shouldn't be updated directly or don't exist in DB
+        delete finalUpdateData.created_at;
+        delete finalUpdateData.updated_at;
+        delete finalUpdateData.last_updated_at; // This field doesn't exist in DB
+        delete finalUpdateData.total_ai_costs; // This is a computed/generated column
+        delete finalUpdateData.revenue_from_lead_usd; // This is a computed/generated column
+        delete finalUpdateData.roi; // This is a computed/generated column
+        delete finalUpdateData.lead_id; // Don't include lead_id in the update data itself
+        
+        console.log('useUpdateLead - finalUpdateData after filtering:', finalUpdateData);
+
+        // Check if value actually changed by comparing with current data
+        const { data: currentLead } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('lead_id', lead_id)
+          .single();
+
+        if (currentLead) {
+          const hasChanges = Object.keys(finalUpdateData).some(key => {
+            const currentValue = currentLead[key];
+            const newValue = finalUpdateData[key];
+            
+            // Handle number conversions
+            if (typeof newValue === 'number' && typeof currentValue === 'number') {
+              return Math.abs(newValue - currentValue) > 0.01; // Small tolerance for float comparison
+            }
+            
+            // Handle string comparisons
+            return currentValue !== newValue;
+          });
+
+          if (!hasChanges) {
+            console.log('useUpdateLead - No changes detected, returning current lead');
+            return currentLead as Lead;
+          }
         }
-      }
 
-      const { data, error } = await supabase
-        .from('leads')
-        .update(finalUpdateData)
-        .eq('lead_id', lead_id)
-        .select()
-        .single();
+        console.log('Updating lead with data:', finalUpdateData);
 
-      if (error) {
-        toast.error(`Error updating lead: ${error.message}`);
-        throw error;
-      }
-      return data as Lead;
-    },
-    onSuccess: (updatedLead) => {
-        toast.success("Lead updated successfully!");
+        const { data, error } = await supabase
+          .from('leads')
+          .update(finalUpdateData)
+          .eq('lead_id', lead_id)
+          .select('*')
+          .single();
+
+        if (error) {
+          console.error('Database update error:', error);
+          console.error('Error message:', error.message);
+          console.error('Error code:', error.code);
+          console.error('Error details:', error.details);
+          console.error('Error hint:', error.hint);
+          
+          // Log the raw error response if available
+          if ((error as any).response) {
+            console.error('Raw error response:', (error as any).response);
+          }
+          
+          // Log the full error as JSON string for complete visibility
+          try {
+            console.error('Full error JSON:', JSON.stringify(error, null, 2));
+          } catch (e) {
+            console.error('Could not stringify error:', e);
+          }
+          
+          // Handle specific database errors with Hebrew messages
+          if (error.code === '23505') {
+            // Unique constraint violation
+            throw new Error('כתובת האימייל כבר קיימת במערכת');
+          } else if (error.code === '23502') {
+            // Not null constraint violation
+            throw new Error('שדה חובה חסר');
+          } else if (error.message?.includes('last_updated_at')) {
+            throw new Error('שגיאת עדכון: שדה לא קיים במסד הנתונים');
+          } else {
+            // Log the full error for debugging
+            console.error('FULL ERROR OBJECT KEYS:', Object.keys(error));
+            console.error('ERROR MESSAGE:', error.message);
+            throw new Error(`שגיאה בעדכון: ${error.message}`);
+          }
+        }
+
+        if (!data) {
+          throw new Error('לא התקבלו נתונים מהשרת');
+        }
+
+        return data as Lead;
+      },
+      onSuccess: (data, variables, context) => {
+        // Invalidate both the main leads list and the specific lead query
         queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
-        if (updatedLead && updatedLead.lead_id) {
-          queryClient.invalidateQueries({ queryKey: [SINGLE_LEAD_QUERY_KEY_PREFIX, updatedLead.lead_id] });
-        }
-    },
-  });
+        queryClient.invalidateQueries({ queryKey: ['enhanced-leads'] });
+        queryClient.invalidateQueries({ queryKey: ['lead', variables.lead_id] });
+        
+        // Also set the query data directly to trigger immediate update
+        queryClient.setQueryData(['lead', variables.lead_id], data);
+        console.log('Update successful:', data);
+      },
+      onError: (error, variables, context) => {
+        console.error('Update error:', error);
+      },
+    }
+  );
 };
 
 export const useArchiveLead = () => {
@@ -459,7 +555,7 @@ export const useAddLeadActivity = () => {
   return useMutation<LeadActivity, Error, { lead_id: string; activity_description: string; user_id?: string }>({
     mutationFn: async (activityData) => {
       const { data, error } = await supabase
-        .from('lead_activities')
+        .from('lead_activity_log')
         .insert([{ ...activityData, activity_timestamp: new Date().toISOString() }])
         .select()
         .single();
@@ -479,7 +575,13 @@ export const useAddLeadActivity = () => {
 export const fetchLeadComments = async (leadId: string): Promise<LeadComment[]> => {
     const { data, error } = await supabase
         .from('lead_comments')
-        .select('*')
+        .select(`
+          comment_id,
+          comment_text,
+          comment_timestamp,
+          lead_id,
+          user_id
+        `)
         .eq('lead_id', leadId)
         .order('comment_timestamp', { ascending: false });
 
@@ -497,8 +599,14 @@ export const useLeadComments = (leadId: string | null) => {
 
 export const fetchLeadActivities = async (leadId: string): Promise<LeadActivity[]> => {
     const { data, error } = await supabase
-        .from('lead_activities')
-        .select('*')
+        .from('lead_activity_log')
+        .select(`
+          activity_id,
+          activity_description,
+          activity_timestamp,
+          lead_id,
+          user_id
+        `)
         .eq('lead_id', leadId)
         .order('activity_timestamp', { ascending: false });
 

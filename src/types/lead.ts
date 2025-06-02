@@ -10,7 +10,7 @@ export type LegacyLead = {
   lead_status: LeadStatus;
   lead_source: LeadSource | null;
   created_at: string;
-  last_updated_at: string;
+  updated_at: string;
   notes: string | null;
   reminder_at: string | null;
   reminder_details: string | null;
@@ -21,7 +21,7 @@ export type LegacyLead = {
 export type LeadStatus = Database["public"]["Enums"]["lead_status_type"];
 export type LeadSource = Database["public"]["Enums"]["lead_source_type"];
 
-// New Lead type matching the enhanced schema
+// Enhanced Lead type with comprehensive CRM fields
 export type Lead = {
   lead_id: string;
   restaurant_name: string;
@@ -30,25 +30,78 @@ export type Lead = {
   email: string;
   website_url?: string;
   address?: string;
+  business_type?: string;
+  is_archived?: boolean;
   lead_status: LeadStatusEnum;
-  ai_trainings_count: number;
+  
+  // AI Cost tracking with multiple tiers
+  ai_trainings_count: number; // Legacy field, kept for compatibility
+  ai_training_25_count?: number; // $2.5 training
+  ai_training_15_count?: number; // $1.5 training  
+  ai_training_5_count?: number;  // $5.0 training
   ai_training_cost_per_unit: number;
   ai_prompts_count: number;
   ai_prompt_cost_per_unit: number;
   total_ai_costs?: number; // Generated column
+  
+  // Revenue and ROI
   revenue_from_lead_local?: number;
   exchange_rate_at_conversion?: number;
   revenue_from_lead_usd?: number; // Generated column
   roi?: number; // Generated column
+  
+  // Lead management
   lead_source?: LeadSourceEnum;
   created_at: string;
   updated_at: string;
   next_follow_up_date?: string;
   notes?: string;
   next_follow_up_notes?: string;
+  reminder_notes?: string;
+  
+  // Conversion tracking
   client_id?: string;
+  conversion_reason?: string;
+  rejection_reason?: string;
   free_sample_package_active: boolean;
+  
+  // Relation fields
+  lora_page_url?: string;
+  style_description?: string;
+  custom_prompt?: string;
+  
+  // Legacy fields
   previous_status?: string;
+};
+
+// Business Type
+export type BusinessType = {
+  id: string;
+  type_name: string;
+  created_at: string;
+  created_by?: string;
+};
+
+// Lead Submission Relationship
+export type LeadSubmission = {
+  id: string;
+  lead_id: string;
+  submission_id: string;
+  created_at: string;
+};
+
+// Enhanced Lead Reminder
+export type LeadReminder = {
+  id: string;
+  lead_id: string;
+  reminder_date: string;
+  reminder_type: string;
+  title: string;
+  description?: string;
+  is_completed: boolean;
+  completed_at?: string;
+  created_by?: string;
+  created_at: string;
 };
 
 // Activity log entry
@@ -79,6 +132,15 @@ export type AIPricingSetting = {
   updated_at: string;
 };
 
+// Enhanced Lead with related data
+export type EnhancedLead = Lead & {
+  submissions?: LeadSubmission[];
+  reminders?: LeadReminder[];
+  activities?: LeadActivity[];
+  comments?: LeadComment[];
+  business_type_info?: BusinessType;
+};
+
 // New enum types matching the database enums
 export enum LeadStatusEnum {
   NEW = 'new',
@@ -99,9 +161,21 @@ export enum LeadSourceEnum {
   REFERRAL = 'referral',
   FACEBOOK = 'facebook',
   INSTAGRAM = 'instagram',
+  CAMPAIGN = 'campaign', // קמפיין
+  TELEMARKETING = 'telemarketing', // טלמרקטינג
   AUTO_SUBMISSION = 'auto_submission',
   OTHER = 'other'
 }
+
+// AI Training Cost Tiers
+export const AI_TRAINING_TIERS = {
+  TIER_25: { cost: 2.5, label: 'אימון $2.5' },
+  TIER_15: { cost: 1.5, label: 'אימון $1.5' },
+  TIER_5: { cost: 5.0, label: 'אימון $5.0' }
+} as const;
+
+export const AI_PROMPT_COST = 0.16;
+export const USD_TO_ILS_RATE = 3.6; // Can be made dynamic later
 
 // Legacy status options - kept for backward compatibility
 export const LEAD_STATUS_OPTIONS: LeadStatus[] = [
@@ -116,14 +190,16 @@ export const LEAD_STATUS_OPTIONS: LeadStatus[] = [
   "הפך ללקוח",
 ];
 
-// Legacy source options - kept for backward compatibility
-export const LEAD_SOURCE_OPTIONS: LeadSource[] = [
+// Enhanced source options including new values
+export const LEAD_SOURCE_OPTIONS = [
   "אתר",
-  "הפניה",
+  "הפניה", 
   "פייסבוק",
   "אינסטגרם",
+  "קמפיין",
+  "טלמרקטינג",
   "אחר",
-];
+] as const;
 
 // New status options
 export const LEAD_STATUS_ENUM_OPTIONS = Object.values(LeadStatusEnum);
@@ -161,12 +237,14 @@ export const LEAD_STATUS_DISPLAY: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.ARCHIVED]: 'ארכיון'
 };
 
-// Mapping from source enum to display text
+// Enhanced mapping from source enum to display text including new sources
 export const LEAD_SOURCE_DISPLAY: Record<LeadSourceEnum, string> = {
   [LeadSourceEnum.WEBSITE]: 'אתר',
   [LeadSourceEnum.REFERRAL]: 'הפניה',
   [LeadSourceEnum.FACEBOOK]: 'פייסבוק',
   [LeadSourceEnum.INSTAGRAM]: 'אינסטגרם',
+  [LeadSourceEnum.CAMPAIGN]: 'קמפיין',
+  [LeadSourceEnum.TELEMARKETING]: 'טלמרקטינג',
   [LeadSourceEnum.AUTO_SUBMISSION]: 'הגשה אוטומטית',
   [LeadSourceEnum.OTHER]: 'אחר'
 };
@@ -202,11 +280,12 @@ export const mapHebrewToLeadSourceEnum = (hebrewSource?: string): LeadSourceEnum
   return entry ? entry[0] as LeadSourceEnum : undefined;
 };
 
-// Filter for leads list
-export type LeadsFilter = {
+// Enhanced filters
+export type EnhancedLeadsFilter = {
   searchTerm?: string;
   status?: LeadStatusEnum | 'all';
   leadSource?: LeadSourceEnum | 'all';
+  businessType?: string | 'all';
   dateFilter?: 'today' | 'this-week' | 'this-month' | 'all';
   onlyReminders?: boolean;
   remindersToday?: boolean;
@@ -214,4 +293,37 @@ export type LeadsFilter = {
   sortDirection?: 'asc' | 'desc';
   excludeArchived?: boolean;
   onlyArchived?: boolean;
+  hasDemoPackage?: boolean;
+  hasConversions?: boolean;
 };
+
+// Cost calculation utilities
+export const calculateTotalAICosts = (lead: Partial<Lead>): number => {
+  const training25Cost = (lead.ai_training_25_count || 0) * AI_TRAINING_TIERS.TIER_25.cost;
+  const training15Cost = (lead.ai_training_15_count || 0) * AI_TRAINING_TIERS.TIER_15.cost;
+  const training5Cost = (lead.ai_training_5_count || 0) * AI_TRAINING_TIERS.TIER_5.cost;
+  const promptCost = (lead.ai_prompts_count || 0) * AI_PROMPT_COST;
+  
+  return training25Cost + training15Cost + training5Cost + promptCost;
+};
+
+export const calculateROI = (revenue: number, costs: number): number | null => {
+  if (costs <= 0) return null;
+  return ((revenue - costs) / costs) * 100;
+};
+
+export const convertUSDToILS = (usdAmount: number, rate: number = USD_TO_ILS_RATE): number => {
+  return usdAmount * rate;
+};
+
+export const convertILSToUSD = (ilsAmount: number, rate: number = USD_TO_ILS_RATE): number => {
+  return ilsAmount / rate;
+};
+
+// Form validation schemas (can be used with zod)
+export const LeadFormFields = {
+  REQUIRED: ['restaurant_name', 'contact_name', 'phone', 'email'] as const,
+  OPTIONAL: ['website_url', 'address', 'business_type', 'style_description', 'custom_prompt', 'notes'] as const,
+  COST_TRACKING: ['ai_training_25_count', 'ai_training_15_count', 'ai_training_5_count', 'ai_prompts_count'] as const,
+  REVENUE: ['revenue_from_lead_local', 'exchange_rate_at_conversion'] as const
+} as const;

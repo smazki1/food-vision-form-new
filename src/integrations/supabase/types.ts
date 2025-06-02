@@ -71,6 +71,27 @@ export type Database = {
         }
         Relationships: []
       }
+      business_types: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          type_name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          type_name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          type_name?: string
+        }
+        Relationships: []
+      }
       client_packages: {
         Row: {
           client_id: string
@@ -528,30 +549,124 @@ export type Database = {
           },
         ]
       }
+      lead_reminders: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_completed: boolean | null
+          lead_id: string
+          reminder_date: string
+          reminder_type: string | null
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lead_id: string
+          reminder_date: string
+          reminder_type?: string | null
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          lead_id?: string
+          reminder_date?: string
+          reminder_type?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_reminders_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["lead_id"]
+          },
+        ]
+      }
+      lead_submissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          submission_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_submissions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["lead_id"]
+          },
+          {
+            foreignKeyName: "lead_submissions_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "customer_submissions"
+            referencedColumns: ["submission_id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           address: string | null
           ai_prompt_cost_per_unit: number | null
           ai_prompts_count: number
+          ai_training_15_count: number | null
+          ai_training_25_count: number | null
+          ai_training_5_count: number | null
           ai_training_cost_per_unit: number | null
           ai_trainings_count: number
+          business_type: string | null
           client_id: string | null
           contact_name: string
+          conversion_reason: string | null
           created_at: string
+          custom_prompt: string | null
           email: string
           exchange_rate_at_conversion: number | null
           free_sample_package_active: boolean
+          is_archived: boolean | null
           lead_id: string
           lead_source: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status: Database["public"]["Enums"]["lead_status_type"]
+          lora_page_url: string | null
           next_follow_up_date: string | null
           next_follow_up_notes: string | null
           notes: string | null
           phone: string
+          rejection_reason: string | null
+          reminder_notes: string | null
           restaurant_name: string
           revenue_from_lead_local: number | null
           revenue_from_lead_usd: number | null
           roi: number | null
+          style_description: string | null
           total_ai_costs: number | null
           updated_at: string
           website_url: string | null
@@ -560,25 +675,36 @@ export type Database = {
           address?: string | null
           ai_prompt_cost_per_unit?: number | null
           ai_prompts_count?: number
+          ai_training_15_count?: number | null
+          ai_training_25_count?: number | null
+          ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
+          business_type?: string | null
           client_id?: string | null
           contact_name: string
+          conversion_reason?: string | null
           created_at?: string
+          custom_prompt?: string | null
           email: string
           exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean
+          is_archived?: boolean | null
           lead_id?: string
           lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status?: Database["public"]["Enums"]["lead_status_type"]
+          lora_page_url?: string | null
           next_follow_up_date?: string | null
           next_follow_up_notes?: string | null
           notes?: string | null
           phone: string
+          rejection_reason?: string | null
+          reminder_notes?: string | null
           restaurant_name: string
           revenue_from_lead_local?: number | null
           revenue_from_lead_usd?: number | null
           roi?: number | null
+          style_description?: string | null
           total_ai_costs?: number | null
           updated_at?: string
           website_url?: string | null
@@ -587,25 +713,36 @@ export type Database = {
           address?: string | null
           ai_prompt_cost_per_unit?: number | null
           ai_prompts_count?: number
+          ai_training_15_count?: number | null
+          ai_training_25_count?: number | null
+          ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
+          business_type?: string | null
           client_id?: string | null
           contact_name?: string
+          conversion_reason?: string | null
           created_at?: string
+          custom_prompt?: string | null
           email?: string
           exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean
+          is_archived?: boolean | null
           lead_id?: string
           lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
           lead_status?: Database["public"]["Enums"]["lead_status_type"]
+          lora_page_url?: string | null
           next_follow_up_date?: string | null
           next_follow_up_notes?: string | null
           notes?: string | null
           phone?: string
+          rejection_reason?: string | null
+          reminder_notes?: string | null
           restaurant_name?: string
           revenue_from_lead_local?: number | null
           revenue_from_lead_usd?: number | null
           roi?: number | null
+          style_description?: string | null
           total_ai_costs?: number | null
           updated_at?: string
           website_url?: string | null
@@ -816,6 +953,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_business_type: {
+        Args: { type_name: string }
+        Returns: string
+      }
+      get_business_types: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          type_name: string
+          created_at: string
+        }[]
+      }
       get_client_for_user: {
         Args: { user_auth_id: string }
         Returns: string
@@ -870,20 +1019,27 @@ export type Database = {
           p_restaurant_name: string
           p_item_type: string
           p_item_name: string
+          p_contact_name: string
+          p_contact_phone: string
+          p_contact_email: string
           p_description?: string
           p_category?: string
           p_ingredients?: string[]
           p_reference_image_urls?: string[]
-          p_contact_email?: string
-          p_contact_phone?: string
-          p_contact_name?: string
         }
         Returns: Json
       }
     }
     Enums: {
       client_status_type: "פעיל" | "לא פעיל" | "בהמתנה"
-      lead_source_type: "אתר" | "הפניה" | "פייסבוק" | "אינסטגרם" | "אחר"
+      lead_source_type:
+        | "אתר"
+        | "הפניה"
+        | "פייסבוק"
+        | "אינסטגרם"
+        | "אחר"
+        | "קמפיין"
+        | "טלמרקטינג"
       lead_status_type:
         | "ליד חדש"
         | "פנייה ראשונית בוצעה"
@@ -1011,7 +1167,15 @@ export const Constants = {
   public: {
     Enums: {
       client_status_type: ["פעיל", "לא פעיל", "בהמתנה"],
-      lead_source_type: ["אתר", "הפניה", "פייסבוק", "אינסטגרם", "אחר"],
+      lead_source_type: [
+        "אתר",
+        "הפניה", 
+        "פייסבוק",
+        "אינסטגרם",
+        "אחר",
+        "קמפיין",
+        "טלמרקטינג",
+      ],
       lead_status_type: [
         "ליד חדש",
         "פנייה ראשונית בוצעה",

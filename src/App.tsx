@@ -24,7 +24,7 @@ import Dashboard from "@/pages/admin/Dashboard";
 import ClientsList from "@/pages/admin/ClientsList";
 import ClientDetails from "@/pages/admin/ClientDetails";
 import PackagesManagementPage from "@/pages/admin/PackagesManagementPage";
-import LeadsManagement from "@/pages/admin/LeadsManagement";
+import AdminLeadsPage from "@/pages/admin/leads";
 import SubmissionsPage from "@/pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "@/pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "@/pages/admin/SubmissionDetailsPage";
@@ -137,7 +137,7 @@ const App = () => (
                   <Route path="clients" element={<ClientsList />} />
                   <Route path="clients/:clientId" element={<ClientDetails />} />
                   <Route path="packages" element={<PackagesManagementPage />} />
-                  <Route path="leads" element={<LeadsManagement />} />
+                  <Route path="leads" element={<AdminLeadsPage />} />
                   <Route path="submissions" element={<SubmissionsPage />} />
                   <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
                   <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
