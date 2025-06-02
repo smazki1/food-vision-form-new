@@ -118,3 +118,5 @@ export function LeadDetailsSheet({ lead, isOpen, onClose, onSave }: LeadDetailsS
     </Sheet>
   );
 }
+
+export default LeadDetailsSheet;

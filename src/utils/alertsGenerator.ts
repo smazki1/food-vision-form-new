@@ -1,6 +1,6 @@
 
 import { format, isToday, isPast, differenceInHours } from "date-fns";
-import { Lead } from "@/types/lead";
+import { Lead, LeadStatusEnum } from "@/types/lead";
 import { Client } from "@/types/client";
 import { 
   Alert, 
@@ -43,8 +43,8 @@ function generateNewLeadAlerts(leads: Lead[]): NewLeadAlert[] {
       // Filter leads that were created in the last 24 hours
       const hoursAgo = differenceInHours(new Date(), new Date(lead.created_at));
       return hoursAgo <= 24 && 
-             lead.lead_status !== "הפך ללקוח" && 
-             lead.lead_status !== "לא מעוניין";
+             lead.lead_status !== LeadStatusEnum.CONVERTED_TO_CLIENT && 
+             lead.lead_status !== LeadStatusEnum.NOT_INTERESTED;
     })
     .map(lead => ({
       id: generateId(),
@@ -53,7 +53,7 @@ function generateNewLeadAlerts(leads: Lead[]): NewLeadAlert[] {
       timestamp: lead.created_at,
       severity: "medium",
       status: "new",
-      leadId: lead.id,
+      leadId: lead.lead_id,
       restaurantName: lead.restaurant_name
     }));
 }
@@ -66,8 +66,8 @@ function generateReminderDueAlerts(leads: Lead[]): ReminderDueAlert[] {
       
       const reminderDate = new Date(lead.reminder_at);
       return (isToday(reminderDate) || isPast(reminderDate)) && 
-             lead.lead_status !== "הפך ללקוח" && 
-             lead.lead_status !== "לא מעוניין";
+             lead.lead_status !== LeadStatusEnum.CONVERTED_TO_CLIENT && 
+             lead.lead_status !== LeadStatusEnum.NOT_INTERESTED;
     })
     .map(lead => ({
       id: generateId(),
@@ -76,7 +76,7 @@ function generateReminderDueAlerts(leads: Lead[]): ReminderDueAlert[] {
       timestamp: lead.reminder_at || new Date().toISOString(),
       severity: "high",
       status: "new",
-      leadId: lead.id,
+      leadId: lead.lead_id,
       contactName: lead.contact_name,
       reminderDetails: lead.reminder_details
     }));

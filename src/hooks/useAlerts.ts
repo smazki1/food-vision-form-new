@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -23,7 +24,7 @@ export function useAlerts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('clients')
-        .select('client_id, restaurant_name, remaining_servings')
+        .select('*')
         .lt('remaining_servings', 5);
 
       if (error) throw error;
@@ -40,9 +41,16 @@ export function useAlerts() {
     alerts,
     upcomingReminders,
     loading: leadsLoading || clientsLoading,
+    allAlertsCount: alerts.length,
+    filteredAlertsCount: alerts.filter(alert => alert.status === 'new').length,
     markAsViewed: (alertId: string) => {
-      // Implementation for marking alerts as viewed
       console.log('Marking alert as viewed:', alertId);
+    },
+    dismissAlert: (alertId: string) => {
+      console.log('Dismissing alert:', alertId);
+    },
+    markAllAsViewed: () => {
+      console.log('Marking all alerts as viewed');
     }
   };
 }
