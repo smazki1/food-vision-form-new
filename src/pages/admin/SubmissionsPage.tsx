@@ -1,75 +1,91 @@
-import React, { useState } from "react";
-import { useAllSubmissions } from "@/hooks/useAllSubmissions";
-import { SubmissionsTable } from "@/components/admin/submissions/SubmissionsTable";
-import { Submission } from "@/api/submissionApi";
-import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
-const SubmissionsPage: React.FC = () => {
-  const { submissions, loading, refreshSubmissions } = useAllSubmissions();
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Submission } from '@/api/submissionApi';
+import { Link } from 'react-router-dom';
 
-  // Filter submissions based on selected status
-  const filteredSubmissions = statusFilter === "all"
-    ? submissions
-    : submissions.filter(submission => submission.submission_status === statusFilter);
+const SubmissionsPage = () => {
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleViewDetails = (submission: Submission) => {
-    // In a real application, this would open a details modal or navigate to a details page
-    console.log("View submission details:", submission);
-  };
+  const { data: submissions = [], isLoading } = useQuery({
+    queryKey: ['submissions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select('*')
+        .order('uploaded_at', { ascending: false });
 
-  // Get unique statuses from submissions for the filter
-  const uniqueStatuses = Array.from(
-    new Set(submissions.map(submission => submission.submission_status))
+      if (error) throw error;
+      return data as Submission[];
+    }
+  });
+
+  const filteredSubmissions = submissions.filter(submission =>
+    submission.item_name_at_submission.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ממתינה לעיבוד': return 'bg-yellow-100 text-yellow-800';
+      case 'בעיבוד': return 'bg-blue-100 text-blue-800';
+      case 'מוכנה להצגה': return 'bg-purple-100 text-purple-800';
+      case 'הערות התקבלו': return 'bg-orange-100 text-orange-800';
+      case 'הושלמה ואושרה': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (isLoading) {
+    return <div className="p-6">טוען הגשות...</div>;
+  }
+
   return (
-    <div className="container max-w-7xl mx-auto py-8" dir="rtl">
-      <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">הגשות</h1>
-          <p className="text-muted-foreground">
-            ניהול וצפייה בהגשות של לקוחות
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="סנן לפי סטטוס" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">כל הסטטוסים</SelectItem>
-              {uniqueStatuses.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => refreshSubmissions()}
-            disabled={loading}
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-4">ניהול הגשות</h1>
+        <Input
+          placeholder="חיפוש לפי שם מנה..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md"
+        />
       </div>
 
-      <SubmissionsTable 
-        submissions={filteredSubmissions}
-        loading={loading}
-        onViewDetails={handleViewDetails}
-      />
+      <div className="grid gap-4">
+        {filteredSubmissions.map((submission) => (
+          <Card key={submission.submission_id}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{submission.item_name_at_submission}</CardTitle>
+                  <p className="text-sm text-gray-600">{submission.item_type}</p>
+                </div>
+                <Badge className={getStatusColor(submission.submission_status)}>
+                  {submission.submission_status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  <p>תמונות מעובדות: {submission.processed_image_urls?.length || 0}</p>
+                  <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
+                </div>
+                <Button asChild>
+                  <Link to={`/admin/submissions/${submission.submission_id}`}>
+                    צפה בפרטים
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 };

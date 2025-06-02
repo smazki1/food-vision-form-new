@@ -642,6 +642,7 @@ export type Database = {
           ai_training_5_count: number | null
           ai_training_cost_per_unit: number | null
           ai_trainings_count: number
+          archived_at: string | null
           business_type: string | null
           client_id: string | null
           contact_name: string
@@ -680,6 +681,7 @@ export type Database = {
           ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
+          archived_at?: string | null
           business_type?: string | null
           client_id?: string | null
           contact_name: string
@@ -718,6 +720,7 @@ export type Database = {
           ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
+          archived_at?: string | null
           business_type?: string | null
           client_id?: string | null
           contact_name?: string
@@ -957,6 +960,10 @@ export type Database = {
         Args: { type_name: string }
         Returns: string
       }
+      convert_lead_to_client: {
+        Args: { p_lead_id: string }
+        Returns: string
+      }
       get_business_types: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1169,7 +1176,7 @@ export const Constants = {
       client_status_type: ["פעיל", "לא פעיל", "בהמתנה"],
       lead_source_type: [
         "אתר",
-        "הפניה", 
+        "הפניה",
         "פייסבוק",
         "אינסטגרם",
         "אחר",
