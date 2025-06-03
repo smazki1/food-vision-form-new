@@ -1,0 +1,136 @@
+# Food Vision AI - Project Intelligence
+
+## Core Architecture Patterns
+
+### Admin vs Customer Data Access Separation
+**Critical Pattern**: Admin and customer users have fundamentally different data access patterns:
+- **Admin users**: No client records, access all data via admin-specific hooks and RLS policies
+- **Customer users**: Tied to specific client records, access data through client-filtered hooks
+- **Implementation**: Create separate hook files (`useAdminSubmissions.ts` vs `useSubmissions.ts`) to handle these different access patterns
+- **Database**: Use direct queries for admin, RLS policies with client filters for customers
+
+### Database RLS (Row Level Security) Management
+**Key Learning**: RLS policies can be complex and sometimes require temporary solutions:
+- **Admin access**: Create temp policies like `temp_admin_access_all_submissions` for authenticated users when complex RPC functions fail
+- **Simple queries**: Prefer direct table queries over complex RPC functions to avoid 400 errors
+- **Separate data fetching**: Use separate queries for related data (client, lead) instead of complex joins
+- **Enhanced logging**: Always add comprehensive console logging for debugging database access
+
+### Component Conditional Logic for Multi-Role Support
+**Pattern**: Components serving both admin and customer users need conditional logic:
+```typescript
+// Example from SubmissionViewer
+const shouldUseAdminHooks = viewMode === 'admin' || viewMode === 'editor';
+const submission = shouldUseAdminHooks 
+  ? useAdminSubmission(submissionId) 
+  : useSubmission(submissionId);
+```
+- **Route-based detection**: Use URL paths or view mode props to determine user context
+- **Hook selection**: Conditionally choose appropriate hooks based on user role
+- **Link generation**: Admin links should use `/admin/` routes, customer links use `/customer/`
+
+## CRM Development Insights
+
+### Always-Editable Interface Philosophy
+**User Preference**: Notion-like editing experience is strongly preferred:
+- **No edit mode**: Remove edit/save/cancel buttons entirely
+- **Inline editing**: Click any field to edit directly with auto-save
+- **Real-time feedback**: Hebrew toast messages for successful updates
+- **Visual consistency**: All fields should look editable and accessible
+
+### Smart Selector Components
+**Pattern**: Business type and lead source selectors should be expandable:
+- **Predefined options**: Offer common choices for quick selection
+- **Free text input**: Allow custom values that get auto-saved for future use
+- **Auto-value addition**: Current field values automatically added to dropdown if missing
+- **Database persistence**: New values saved to respective tables for reuse
+
+### Lead Management System Architecture
+**Database Design**: Lead management requires multiple interconnected tables:
+- **Core lead data**: `leads` table with restaurant, contact, status information
+- **Activity tracking**: `lead_activities` table for timeline and comments
+- **Cost tracking**: Fields for AI training costs, revenue, ROI calculations
+- **Follow-up system**: Scheduled follow-ups with templates and automation
+
+## Technical Implementation Patterns
+
+### Query Key Management
+**Critical**: Use consistent query key patterns for cache invalidation:
+```typescript
+const LEAD_QUERY_KEY = ['leads'] as const;
+// Invalidate with: queryClient.invalidateQueries({ queryKey: LEAD_QUERY_KEY });
+```
+
+### Error Handling and Debugging
+**Best Practice**: Always implement comprehensive logging:
+- **Hook entry points**: Log function entry with parameters
+- **Database queries**: Log query execution and results
+- **Error states**: Log errors with context information
+- **Success states**: Log successful operations with data
+
+### Authentication State Management
+**Learned Solution**: Handle token refresh gracefully:
+- **Background refresh**: TOKEN_REFRESHED events should refresh quietly without UI reset
+- **Cache preservation**: Avoid clearing cache during token refresh
+- **Recovery mechanisms**: Implement emergency recovery for white screen issues
+- **Timeout handling**: Use reasonable timeouts (5-15 seconds) to prevent infinite loops
+
+## File Organization Insights
+
+### Hook Organization
+**Pattern**: Separate hooks by user role and functionality:
+- `src/hooks/useSubmissions.ts` - Customer-specific submission hooks
+- `src/hooks/useAdminSubmissions.ts` - Admin-specific submission hooks
+- `src/hooks/admin/` - Directory for admin-specific functionality
+- `src/hooks/__tests__/` - Keep tests alongside hooks with `.tsx` extension for JSX
+
+### Component Structure
+**Pattern**: Admin components should be self-contained:
+- `src/components/admin/` - All admin-specific components
+- `src/pages/admin/` - Admin page components
+- `src/components/customer/` - Customer-specific components
+- Clear separation prevents accidental cross-contamination
+
+## Memory Bank Integration
+
+### Documentation Philosophy
+**Critical**: Memory bank files are essential for context preservation:
+- **activeContext.md**: Current work focus and immediate next steps
+- **progress.md**: Completed features with implementation details
+- **systemPatterns.md**: Architecture decisions and patterns
+- **Always update**: Keep memory bank current after significant changes
+
+### Project Phases and Planning
+**Pattern**: Break complex features into phases:
+1. **Database schema**: Start with migrations and database structure
+2. **Basic functionality**: Implement core features without UI polish
+3. **UI enhancement**: Add visual polish and user experience improvements
+4. **Integration**: Connect with existing systems
+5. **Testing and deployment**: Comprehensive testing and production deployment
+
+## Current System Status (2024-12-19)
+
+### ✅ Completed Systems
+- **Authentication**: Stable with timeout handling and recovery
+- **Admin Interface**: Full CRM with lead management and submission access
+- **Upload Forms**: All three submission paths working (unified, public, legacy)
+- **Database**: Optimized schema with proper RLS policies
+- **Webhook Integration**: Complete Make.com integration deployed
+
+### 🎯 Next Development Areas
+- **Enhanced analytics**: Dashboard improvements for business intelligence
+- **Mobile responsiveness**: Ensure admin interface works on mobile
+- **Performance optimization**: Code splitting for large bundles
+- **Documentation**: User guides and training materials
+
+### ⚠️ Known Considerations
+- **Temporary RLS policies**: Review and formalize temporary admin access policies
+- **Bundle size**: Consider dynamic imports for chunks larger than 500KB
+- **Test coverage**: Continue expanding test suite for new features
+
+## User Feedback Integration
+**Key Learning**: User feedback drives feature priorities:
+- **Always-editable interface**: Strongly preferred over traditional edit modes
+- **Visual consistency**: Hebrew language support and RTL layout critical
+- **Performance**: Fast response times more important than feature complexity
+- **Simplicity**: Remove unnecessary steps and buttons from workflows 

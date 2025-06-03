@@ -11,9 +11,19 @@ import { Link } from 'react-router-dom';
 const SubmissionsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: submissions = [], isLoading } = useQuery({
+  const { data: submissions = [], isLoading, error } = useQuery({
     queryKey: ['submissions'],
     queryFn: async () => {
+      console.log('[SubmissionsPage] Starting to fetch submissions...');
+      
+      // Check current session
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[SubmissionsPage] Current session:', session);
+      console.log('[SubmissionsPage] User ID:', session?.user?.id);
+      console.log('[SubmissionsPage] User role:', session?.user?.user_metadata?.role);
+      
+      // Use simple direct query - no RPC needed for listing
+      console.log('[SubmissionsPage] Using direct query...');
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
@@ -44,7 +54,14 @@ const SubmissionsPage = () => {
         `)
         .order('uploaded_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[SubmissionsPage] Error fetching submissions:', error);
+        throw error;
+      }
+      
+      console.log('[SubmissionsPage] Fetched submissions:', data);
+      console.log('[SubmissionsPage] Number of submissions:', data?.length);
+      
       return data as Submission[];
     }
   });
@@ -68,10 +85,29 @@ const SubmissionsPage = () => {
     return <div className="p-6">טוען הגשות...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg">
+          <h2 className="font-bold mb-2">שגיאה בטעינת הגשות</h2>
+          <p>{(error as Error).message}</p>
+          <details className="mt-2">
+            <summary className="cursor-pointer">פרטים טכניים</summary>
+            <pre className="mt-2 text-xs">{JSON.stringify(error, null, 2)}</pre>
+          </details>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">ניהול הגשות</h1>
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <p>סה"כ הגשות: {submissions.length}</p>
+          <p>הגשות מסוננות: {filteredSubmissions.length}</p>
+        </div>
         <Input
           placeholder="חיפוש לפי שם מנה..."
           value={searchTerm}
@@ -80,37 +116,46 @@ const SubmissionsPage = () => {
         />
       </div>
 
-      <div className="grid gap-4">
-        {filteredSubmissions.map((submission) => (
-          <Card key={submission.submission_id}>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle>{submission.item_name_at_submission}</CardTitle>
-                  <p className="text-sm text-gray-600">{submission.item_type}</p>
+      {filteredSubmissions.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-gray-600">לא נמצאו הגשות</p>
+          {submissions.length === 0 && (
+            <p className="text-sm text-gray-500 mt-2">בדוק את הלוגים בקונסול לפרטים נוספים</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {filteredSubmissions.map((submission) => (
+            <Card key={submission.submission_id}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle>{submission.item_name_at_submission}</CardTitle>
+                    <p className="text-sm text-gray-600">{submission.item_type}</p>
+                  </div>
+                  <Badge className={getStatusColor(submission.submission_status)}>
+                    {submission.submission_status}
+                  </Badge>
                 </div>
-                <Badge className={getStatusColor(submission.submission_status)}>
-                  {submission.submission_status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600">
-                  <p>תמונות מקוריות: {submission.original_image_urls?.length || 0}</p>
-                  <p>תמונות מעובדות: {submission.processed_image_urls?.length || 0}</p>
-                  <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center">
+                  <div className="text-sm text-gray-600">
+                    <p>תמונות מקוריות: {submission.original_image_urls?.length || 0}</p>
+                    <p>תמונות מעובדות: {submission.processed_image_urls?.length || 0}</p>
+                    <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
+                  </div>
+                  <Button asChild>
+                    <Link to={`/admin/submissions/${submission.submission_id}`}>
+                      צפה בפרטים
+                    </Link>
+                  </Button>
                 </div>
-                <Button asChild>
-                  <Link to={`/admin/submissions/${submission.submission_id}`}>
-                    צפה בפרטים
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

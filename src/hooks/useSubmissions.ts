@@ -2,6 +2,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useClientAuth } from "./useClientAuth";
 import { useUnifiedAuth } from "./useUnifiedAuth";
+import { useCurrentUserRole } from "./useCurrentUserRole";
 import { Submission as ProcessedItem, SubmissionStatus } from "@/api/submissionApi";
 import { toast } from 'sonner';
 import { 
@@ -23,6 +24,7 @@ export interface ClientPackageInfo {
 export function useSubmissions() {
   const { clientId: clientAuthClientId, isAuthenticated: clientAuthIsAuthenticated, clientRecordStatus } = useClientAuth();
   const { user, clientId: unifiedClientId, isAuthenticated: unifiedIsAuthenticated, loading: unifiedLoading, initialized } = useUnifiedAuth();
+  const { role } = useCurrentUserRole();
   
   const effectiveClientId = unifiedClientId || clientAuthClientId;
   
@@ -38,8 +40,29 @@ export function useSubmissions() {
     unifiedLoading,
     initialized,
     userEmail: user?.email,
+    userRole: role,
     timestamp: Date.now()
   });
+
+  // Admin/Editor users should not use this customer-specific hook
+  if (role === 'admin' || role === 'editor') {
+    console.error("[useSubmissions] CRITICAL: Admin/Editor users should not use useSubmissions hook. Use useAllSubmissions, useSubmissionsWithFilters, or other admin-specific hooks instead.");
+    
+    return {
+      submissions: [],
+      submissionsLength: 0,
+      remainingServings: undefined,
+      totalAllowedSubmissions: undefined,
+      packageDetails: null,
+      loading: false,
+      clientLoading: false,
+      error: new Error("Admin/Editor users cannot access customer submissions through this hook. Please use admin-specific submission hooks."),
+      refreshSubmissions: () => {},
+      refreshPackageDetails: () => {},
+      clientId: null,
+      isAuthenticated: false,
+    };
+  }
 
   const queryEnabled = !!effectiveClientId && unifiedIsAuthenticated && initialized && !unifiedLoading;
 
@@ -281,7 +304,35 @@ export const useSubmission = (submissionId: string) => {
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
-          *,
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone,
+          lead_id,
+          created_at,
+          "status_ממתינה_לעיבוד_at",
+          "status_בעיבוד_at",
+          "status_מוכנה_להצגה_at",
+          "status_הערות_התקבלו_at",
+          "status_הושלמה_ואושרה_at",
           clients(restaurant_name, contact_name, email, phone),
           leads(restaurant_name, contact_name, email, phone)
         `)
@@ -289,7 +340,15 @@ export const useSubmission = (submissionId: string) => {
         .single();
 
       if (error) throw error;
-      return data as EnhancedSubmission;
+      
+      // Handle joined data that comes as arrays
+      const processedData = {
+        ...data,
+        clients: Array.isArray(data.clients) && data.clients.length > 0 ? data.clients[0] : undefined,
+        leads: Array.isArray(data.leads) && data.leads.length > 0 ? data.leads[0] : undefined
+      };
+      
+      return processedData as unknown as EnhancedSubmission;
     },
     enabled: !!submissionId,
   });
@@ -514,7 +573,35 @@ export const useSubmissionsWithFilters = (filters: {
       let query = supabase
         .from('customer_submissions')
         .select(`
-          *,
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone,
+          lead_id,
+          created_at,
+          "status_ממתינה_לעיבוד_at",
+          "status_בעיבוד_at",
+          "status_מוכנה_להצגה_at",
+          "status_הערות_התקבלו_at",
+          "status_הושלמה_ואושרה_at",
           clients(restaurant_name, contact_name, email, phone),
           leads(restaurant_name, contact_name, email, phone)
         `);
@@ -543,7 +630,15 @@ export const useSubmissionsWithFilters = (filters: {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as EnhancedSubmission[];
+      
+      // Handle joined data that comes as arrays
+      const processedData = data?.map(item => ({
+        ...item,
+        clients: Array.isArray(item.clients) && item.clients.length > 0 ? item.clients[0] : undefined,
+        leads: Array.isArray(item.leads) && item.leads.length > 0 ? item.leads[0] : undefined
+      }));
+      
+      return (processedData || []) as EnhancedSubmission[];
     },
   });
 };
@@ -633,7 +728,35 @@ export const useUnlinkedSubmissions = () => {
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
-          *,
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone,
+          lead_id,
+          created_at,
+          "status_ממתינה_לעיבוד_at",
+          "status_בעיבוד_at",
+          "status_מוכנה_להצגה_at",
+          "status_הערות_התקבלו_at",
+          "status_הושלמה_ואושרה_at",
           clients(restaurant_name, contact_name, email, phone)
         `)
         .is('lead_id', null)
@@ -641,7 +764,14 @@ export const useUnlinkedSubmissions = () => {
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      return data as EnhancedSubmission[];
+      
+      // Handle joined data that comes as arrays
+      const processedData = data?.map(item => ({
+        ...item,
+        clients: Array.isArray(item.clients) && item.clients.length > 0 ? item.clients[0] : undefined
+      }));
+      
+      return (processedData || []) as EnhancedSubmission[];
     },
   });
 };
@@ -656,7 +786,35 @@ export const useSearchSubmissionById = (submissionId: string) => {
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
-          *,
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone,
+          lead_id,
+          created_at,
+          "status_ממתינה_לעיבוד_at",
+          "status_בעיבוד_at",
+          "status_מוכנה_להצגה_at",
+          "status_הערות_התקבלו_at",
+          "status_הושלמה_ואושרה_at",
           clients(restaurant_name, contact_name, email, phone),
           leads(restaurant_name, contact_name, email, phone)
         `)
@@ -667,7 +825,15 @@ export const useSearchSubmissionById = (submissionId: string) => {
         if (error.code === 'PGRST116') return null; // Not found
         throw error;
       }
-      return data as EnhancedSubmission;
+      
+      // Handle joined data that comes as arrays
+      const processedData = {
+        ...data,
+        clients: Array.isArray(data.clients) && data.clients.length > 0 ? data.clients[0] : undefined,
+        leads: Array.isArray(data.leads) && data.leads.length > 0 ? data.leads[0] : undefined
+      };
+      
+      return processedData as unknown as EnhancedSubmission;
     },
     enabled: !!submissionId && submissionId.length >= 8,
     retry: false

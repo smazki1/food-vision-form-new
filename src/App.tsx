@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -104,55 +103,60 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
+// Customer route wrapper
+const CustomerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <ClientAuthProvider>
+    {children}
+  </ClientAuthProvider>
+);
+
 const App = () => (
   <AppErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <UnifiedAuthProvider>
-        <ClientAuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
-              <Routes>
-                {/* Public and customer routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
-                <Route path="/admin-login" element={<PublicOnlyRoute><AdminLogin /></PublicOnlyRoute>} />
-                <Route path="/public-upload" element={<PublicUploadPage />} />
-                <Route path="/food-vision-form" element={<FoodVisionForm />} />
-                <Route path="/smart-upload" element={<SmartUploadPage />} />
-                <Route path="/customer/dashboard" element={<CustomerDashboardPage />} />
-                <Route path="/customer/home" element={<CustomerHomePage />} />
-                {/* Editor routes (add more as needed) */}
-                <Route path="/editor" element={<EditorDashboardPage />} />
-                <Route path="/editor/submission/:submissionId" element={<SubmissionProcessingPage />} />
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes - no client auth needed */}
+              <Route path="/" element={<Index />} />
+              <Route path="/admin-login" element={<PublicOnlyRoute><AdminLogin /></PublicOnlyRoute>} />
+              <Route path="/public-upload" element={<PublicUploadPage />} />
+              <Route path="/food-vision-form" element={<FoodVisionForm />} />
+              <Route path="/smart-upload" element={<SmartUploadPage />} />
 
-                {/* Admin routes - all nested under /admin/* with layout and providers */}
-                <Route path="/admin/*" element={
-                  <CurrentUserRoleProvider>
-                    <AdminRoute>
-                      <AdminLayout>
-                        <Outlet />
-                      </AdminLayout>
-                    </AdminRoute>
-                  </CurrentUserRoleProvider>
-                }>
-                  <Route index element={<Dashboard />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="clients" element={<ClientsList />} />
-                  <Route path="clients/:clientId" element={<ClientDetails />} />
-                  <Route path="packages" element={<PackagesManagementPage />} />
-                  <Route path="leads" element={<AdminLeadsPage />} />
-                  <Route path="submissions" element={<SubmissionsPage />} />
-                  <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
-                  <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                  <Route path="alerts" element={<AlertsDashboard />} />
-                  {/* Add more admin routes as needed */}
-                  <Route path="leads-test-page" element={<LeadsTestPage />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </ClientAuthProvider>
+              {/* Customer routes - wrapped with ClientAuthProvider */}
+              <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
+              <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
+              <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
+
+              {/* Editor routes - no client auth needed */}
+              <Route path="/editor" element={<EditorDashboardPage />} />
+              <Route path="/editor/submission/:submissionId" element={<SubmissionProcessingPage />} />
+
+              {/* Admin routes - no client auth needed */}
+              <Route path="/admin/*" element={
+                <CurrentUserRoleProvider>
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                </CurrentUserRoleProvider>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="clients" element={<ClientsList />} />
+                <Route path="clients/:clientId" element={<ClientDetails />} />
+                <Route path="packages" element={<PackagesManagementPage />} />
+                <Route path="leads" element={<AdminLeadsPage />} />
+                <Route path="submissions" element={<SubmissionsPage />} />
+                <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
+                <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
+                <Route path="alerts" element={<AlertsDashboard />} />
+                <Route path="leads-test-page" element={<LeadsTestPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
       </UnifiedAuthProvider>
     </QueryClientProvider>
   </AppErrorBoundary>

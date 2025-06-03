@@ -7,7 +7,16 @@ import {
   SubmissionStatusKey
 } from '@/types/submission';
 
-// Custom hooks
+// Custom hooks - use admin-specific hooks for admin/editor views
+import {
+  useAdminSubmission,
+  useAdminSubmissionComments,
+  useAdminUpdateSubmissionStatus,
+  useAdminUpdateSubmissionLora,
+  useAdminAddSubmissionComment
+} from '@/hooks/useAdminSubmissions';
+
+// Customer hooks for client view
 import {
   useSubmission,
   useSubmissionComments,
@@ -74,12 +83,18 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     fixed_prompt: ''
   });
 
-  // Custom hooks
-  const { data: submission, isLoading, error } = useSubmission(submissionId);
-  const { data: comments = [] } = useSubmissionComments(submissionId);
-  const updateStatusMutation = useUpdateSubmissionStatus();
-  const updateLoraMutation = useUpdateSubmissionLora();
-  const addCommentMutation = useAddSubmissionComment();
+  // Custom hooks - conditionally use admin hooks for admin/editor views
+  const useSubmissionHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminSubmission : useSubmission;
+  const useCommentsHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminSubmissionComments : useSubmissionComments;
+  const useUpdateStatusHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminUpdateSubmissionStatus : useUpdateSubmissionStatus;
+  const useUpdateLoraHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminUpdateSubmissionLora : useUpdateSubmissionLora;
+  const useAddCommentHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminAddSubmissionComment : useAddSubmissionComment;
+
+  const { data: submission, isLoading, error } = useSubmissionHook(submissionId);
+  const { data: comments = [] } = useCommentsHook(submissionId);
+  const updateStatusMutation = useUpdateStatusHook();
+  const updateLoraMutation = useUpdateLoraHook();
+  const addCommentMutation = useAddCommentHook();
 
   // Initialize LoRA data when submission loads
   useEffect(() => {

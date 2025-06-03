@@ -74,7 +74,7 @@ const ImagesTabContent = ({
                 .insert({
                   user_id: submission.client_id,
                   message: `תמונה חדשה התווספה ל${submission.item_name_at_submission}`,
-                  link: `/customer/submissions/${submission.submission_id}`,
+                  link: `/admin/submissions/${submission.submission_id}`,
                   related_entity_id: submission.submission_id,
                   related_entity_type: "submission"
                 });
