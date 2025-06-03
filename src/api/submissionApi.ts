@@ -19,6 +19,7 @@ export type Submission = {
   assigned_package_id_at_submission?: string;
   submission_status: SubmissionStatus;
   uploaded_at: string;
+  original_image_urls: string[] | null;
   processed_image_urls: string[] | null;
   main_processed_image_url: string | null;
   edit_history: any | null;

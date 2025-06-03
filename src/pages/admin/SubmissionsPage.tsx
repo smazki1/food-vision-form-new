@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,7 +16,33 @@ const SubmissionsPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('customer_submissions')
-        .select('*')
+        .select(`
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          lora_link,
+          lora_name,
+          fixed_prompt,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone
+        `)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
@@ -73,6 +98,7 @@ const SubmissionsPage = () => {
             <CardContent>
               <div className="flex justify-between items-center">
                 <div className="text-sm text-gray-600">
+                  <p>תמונות מקוריות: {submission.original_image_urls?.length || 0}</p>
                   <p>תמונות מעובדות: {submission.processed_image_urls?.length || 0}</p>
                   <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
                 </div>
