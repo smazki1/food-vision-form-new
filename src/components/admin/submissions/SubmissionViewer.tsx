@@ -85,9 +85,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   useEffect(() => {
     if (submission) {
       setLoraData({
-        lora_link: submission.lora_link || '',
-        lora_name: submission.lora_name || '',
-        fixed_prompt: submission.fixed_prompt || ''
+        lora_link: '',
+        lora_name: '',
+        fixed_prompt: ''
       });
     }
   }, [submission]);

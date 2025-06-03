@@ -29,11 +29,9 @@ export type Submission = {
   assigned_editor_id: string | null;
   target_completion_date: string | null;
   priority: string | null;
-  // Enhanced fields for comprehensive submission management
-  lora_link?: string | null;
-  lora_name?: string | null;
-  fixed_prompt?: string | null;
   created_lead_id?: string | null;
+  lead_id?: string | null;
+  created_at: string;
   // Related data
   clients?: { restaurant_name: string; contact_name: string; email: string; phone: string };
   leads?: { restaurant_name: string; contact_name: string; email: string; phone: string };

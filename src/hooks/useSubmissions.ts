@@ -75,6 +75,7 @@ export function useSubmissions() {
             assigned_package_id_at_submission,
             submission_status,
             uploaded_at,
+            original_image_urls,
             processed_image_urls,
             main_processed_image_url,
             edit_history,
@@ -84,6 +85,11 @@ export function useSubmissions() {
             assigned_editor_id,
             target_completion_date,
             priority,
+            created_lead_id,
+            submission_contact_name,
+            submission_contact_email,
+            submission_contact_phone,
+            lead_id,
             created_at
           `)
           .eq("client_id", effectiveClientId)

@@ -35,13 +35,12 @@ const SubmissionsPage = () => {
           assigned_editor_id,
           target_completion_date,
           priority,
-          lora_link,
-          lora_name,
-          fixed_prompt,
           created_lead_id,
           submission_contact_name,
           submission_contact_email,
-          submission_contact_phone
+          submission_contact_phone,
+          lead_id,
+          created_at
         `)
         .order('uploaded_at', { ascending: false });
 
