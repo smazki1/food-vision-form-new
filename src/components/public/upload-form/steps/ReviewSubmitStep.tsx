@@ -1,10 +1,14 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle } from 'lucide-react';
+import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, onBack }) => {
+export interface ReviewSubmitStepProps extends PublicStepProps {
+  isSubmitting?: boolean;
+}
+
+const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubmit, onBack, isSubmitting = false }) => {
   const { formData } = useNewItemForm();
 
   const {
@@ -101,21 +105,35 @@ const ReviewSubmitStep: React.FC<PublicStepProps> = ({ errors, onFinalSubmit, on
         <div className="flex justify-between items-center">
           <button
             onClick={onBack}
-            className="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+            disabled={isSubmitting}
+            className={cn(
+              "px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+              isSubmitting && "opacity-50 cursor-not-allowed"
+            )}
           >
             חזור
           </button>
           
           <button
             onClick={onFinalSubmit}
-            disabled={!onFinalSubmit}
+            disabled={!onFinalSubmit || isSubmitting}
             className={cn(
               "px-12 py-4 rounded-xl font-bold text-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl flex items-center space-x-3 rtl:space-x-reverse",
-              "bg-[#8B1E3F] hover:bg-[#721832] text-white focus:ring-4 focus:ring-[#8B1E3F]/20"
+              "bg-[#8B1E3F] hover:bg-[#721832] text-white focus:ring-4 focus:ring-[#8B1E3F]/20",
+              (isSubmitting || !onFinalSubmit) && "opacity-75 cursor-not-allowed hover:bg-[#8B1E3F] hover:transform-none hover:shadow-xl"
             )}
           >
-            <CheckCircle className="w-6 h-6" />
-            <span>שלח בקשה</span>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span>שולח בקשה...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-6 h-6" />
+                <span>שלח בקשה</span>
+              </>
+            )}
           </button>
         </div>
 

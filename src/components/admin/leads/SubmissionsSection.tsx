@@ -318,7 +318,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
       {/* Submission Viewer Modal */}
       {selectedSubmissionId && (
         <Sheet open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-          <SheetContent className="w-full max-w-4xl">
+          <SheetContent className="w-full max-w-[95vw] sm:max-w-[90vw]">
             <SheetHeader>
               <SheetTitle>פרטי הגשה</SheetTitle>
               <SheetDescription>
@@ -329,7 +329,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
               <SubmissionViewer
                 submissionId={selectedSubmissionId}
                 viewMode="admin"
-                context="lead-panel"
+                context="full-page"
                 onClose={handleCloseViewer}
               />
             </div>

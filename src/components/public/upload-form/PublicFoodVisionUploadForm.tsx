@@ -16,6 +16,7 @@ export interface PublicStepProps {
   errors?: Record<string, string>;
   onFinalSubmit?: () => void; 
   onBack?: () => void;
+  isSubmitting?: boolean;
 }
 
 const publicFormSteps = [
@@ -122,6 +123,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
               errors={errors}
               onFinalSubmit={isReviewStep ? handleFinalSubmit : undefined}
               onBack={handlePrevious}
+              isSubmitting={isSubmitting}
             />
 
             {/* Navigation Buttons - Centered and Mobile Responsive */}

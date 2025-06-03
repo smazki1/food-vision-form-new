@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
 import ItemDetailsStep from './steps/ItemDetailsStep';
@@ -258,7 +258,14 @@ const UnifiedUploadForm: React.FC = () => {
                 disabled={isSubmitting}
                 className="bg-green-600 hover:bg-green-700"
               >
-                {isSubmitting ? 'שולח...' : 'שלח הגשה'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    שולח...
+                  </>
+                ) : (
+                  'שלח הגשה'
+                )}
               </Button>
             )}
           </div>

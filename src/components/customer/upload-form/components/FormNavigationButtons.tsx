@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface FormNavigationButtonsProps {
   formSteps: any[];
@@ -52,8 +52,12 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
           : "bg-[#F3752B] hover:bg-[#F3752B]/90"
         )}
       >
-        {isSubmitting ? 
-          'שולח...' : 
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            שולח...
+          </>
+        ) : 
           isLastStep ? 
             'שלח הגשה' : 
             (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'

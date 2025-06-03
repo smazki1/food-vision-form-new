@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useClientAuth } from '@/hooks/useClientAuth';
-import { ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import ClientRestaurantDetailsStep from './steps/ClientRestaurantDetailsStep';
 import ClientItemDetailsStep, { ClientItemDetailsFormData } from './steps/ClientItemDetailsStep';
@@ -266,7 +266,14 @@ const ClientUnifiedUploadForm: React.FC = () => {
                 disabled={isSubmittingClient}
                 className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full bg-green-600 text-white hover:bg-green-700"
               >
-                {isSubmittingClient ? 'שולח...' : 'שלח הגשה'}
+                {isSubmittingClient ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    שולח...
+                  </>
+                ) : (
+                  'שלח הגשה'
+                )}
               </Button>
             )}
           </div>

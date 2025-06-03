@@ -112,6 +112,11 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
     try {
       const updates = { [fieldName]: value };
+      
+      // When updating prompts count, also ensure the cost per unit is set to 0.162
+      if (fieldName === 'ai_prompts_count') {
+        updates.ai_prompt_cost_per_unit = 0.162;
+      }
 
       await updateLeadMutation.mutateAsync({
         leadId: lead.lead_id,
@@ -119,14 +124,20 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
       });
       
       console.log(`Successfully updated ${fieldName}`);
-      toast.success(`השדה ${fieldName === 'lead_status' ? 'סטטוס' : 'נתונים'} עודכן בהצלחה`);
+      toast.success(`השדה ${fieldName === 'lead_status' ? 'סטטוס' : 
+        fieldName === 'ai_prompts_count' ? 'פרומפטים' :
+        fieldName === 'ai_training_25_count' ? 'אימונים $2.5' :
+        fieldName === 'ai_training_15_count' ? 'אימונים $1.5' :
+        fieldName === 'ai_training_5_count' ? 'אימונים $5' :
+        'נתונים'} עודכן בהצלחה`);
       
       // Update local state
-      setLead(prev => prev ? { ...prev, [fieldName]: value } : null);
+      setLead(prev => prev ? { ...prev, ...updates } : null);
       
     } catch (error) {
       console.error(`Error updating ${fieldName}:`, error);
-      toast.error(`שגיאה בעדכון השדה ${fieldName === 'lead_status' ? 'סטטוס' : ''}`);
+      toast.error(`שגיאה בעדכון השדה ${fieldName === 'lead_status' ? 'סטטוס' : 
+        fieldName === 'ai_prompts_count' ? 'פרומפטים' : ''}`);
     }
   };
 
@@ -431,16 +442,22 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium">ROI (%)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={lead.roi || ''}
-                        onBlur={(e) => handleFieldBlur('roi', parseFloat(e.target.value) || 0)}
-                        onChange={(e) => setLead(prev => prev ? {...prev, roi: parseFloat(e.target.value) || 0} : null)}
-                        className="mt-1"
-                        placeholder="0.00"
-                      />
+                      <Label className="text-sm font-medium">סך כל העלויות (₪)</Label>
+                      <div className="mt-1 p-2 bg-gray-50 rounded border">
+                        <span className="text-lg font-semibold">
+                          ₪{(
+                            (
+                              ((lead.ai_training_25_count || 0) * 2.5) +
+                              ((lead.ai_training_15_count || 0) * 1.5) +
+                              ((lead.ai_training_5_count || 0) * 5) +
+                              ((lead.ai_prompts_count || 0) * 0.162)
+                            ) * (lead.exchange_rate_at_conversion || 3.6)
+                          ).toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        סכום אימונים + פרומפטים בשקלים
+                      </p>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">עלויות AI כוללות (USD)</Label>
@@ -450,7 +467,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label className="text-sm font-medium">אימוני AI (2.5$)</Label>
                       <Input
@@ -483,6 +500,18 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         value={lead.ai_training_5_count || ''}
                         onBlur={(e) => handleFieldBlur('ai_training_5_count', parseInt(e.target.value) || 0)}
                         onChange={(e) => setLead(prev => prev ? {...prev, ai_training_5_count: parseInt(e.target.value) || 0} : null)}
+                        className="mt-1"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">פרומפטים (0.162$)</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={lead.ai_prompts_count || ''}
+                        onBlur={(e) => handleFieldBlur('ai_prompts_count', parseInt(e.target.value) || 0)}
+                        onChange={(e) => setLead(prev => prev ? {...prev, ai_prompts_count: parseInt(e.target.value) || 0} : null)}
                         className="mt-1"
                         placeholder="0"
                       />

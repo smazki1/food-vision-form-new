@@ -39,7 +39,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create trigger for submission_comments
-CREATE TRIGGER IF NOT EXISTS set_submission_comments_updated_at
+DROP TRIGGER IF EXISTS set_submission_comments_updated_at ON public.submission_comments;
+CREATE TRIGGER set_submission_comments_updated_at
 BEFORE UPDATE ON public.submission_comments
 FOR EACH ROW
 EXECUTE FUNCTION public.trigger_set_timestamp();
