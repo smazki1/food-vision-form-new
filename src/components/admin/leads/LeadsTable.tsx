@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Lead, LeadStatusEnum, LEAD_STATUS_DISPLAY } from "@/types/lead";
 import { 
@@ -36,6 +35,7 @@ interface LeadsTableProps {
 
 const LEAD_STATUS_COLORS: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.NEW]: '#3B82F6',
+  [LeadStatusEnum.INITIAL_CONTACT_MADE]: '#8B5CF6',
   [LeadStatusEnum.IN_TREATMENT]: '#F59E0B',
   [LeadStatusEnum.INTERESTED]: '#10B981',
   [LeadStatusEnum.NOT_INTERESTED]: '#EF4444',
@@ -123,7 +123,10 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
               <TableCell>{lead.phone}</TableCell>
               <TableCell>
                 {lead.lead_status ? (
-                  <Badge style={{ backgroundColor: LEAD_STATUS_COLORS[lead.lead_status] || 'grey' }} className="text-white">
+                  <Badge 
+                    style={{ backgroundColor: LEAD_STATUS_COLORS[lead.lead_status] || 'grey' }} 
+                    className="text-white rounded-none"
+                  >
                     {LEAD_STATUS_DISPLAY[lead.lead_status] || lead.lead_status}
                   </Badge>
                 ) : 'N/A'}

@@ -331,6 +331,45 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                       </p>
                     </div>
                   </div>
+
+                  {/* Free Sample Package Toggle Card */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building className="h-5 w-5" />
+                        חבילת טעימות
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div>
+                          <h4 className="font-medium">חבילת טעימות פעילה</h4>
+                          <p className="text-sm text-gray-600">
+                            {lead.free_sample_package_active 
+                              ? 'הליד מקושר לחבילת טעימות פעילה'
+                              : 'הליד לא מקושר לחבילת טעימות'}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm font-medium">
+                            {lead.free_sample_package_active ? 'פעיל' : 'כבוי'}
+                          </span>
+                          <button
+                            onClick={() => handleFieldBlur('free_sample_package_active', !lead.free_sample_package_active)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                              lead.free_sample_package_active ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                lead.free_sample_package_active ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </CardContent>
               </Card>
 
@@ -413,7 +452,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-sm font-medium">אימוני AI (25$)</Label>
+                      <Label className="text-sm font-medium">אימוני AI (2.5$)</Label>
                       <Input
                         type="number"
                         min="0"
@@ -425,7 +464,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">אימוני AI (15$)</Label>
+                      <Label className="text-sm font-medium">אימוני AI (1.5$)</Label>
                       <Input
                         type="number"
                         min="0"

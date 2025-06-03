@@ -109,8 +109,8 @@ const ImagesTabContent = ({
     if (!hasProcessedImages || !hasMainImage) {
       toast({
         title: "לא ניתן לסמן כמוכן להצגה",
-        description: "יש להעלות לפחות תמונה אחת ולהגדיר תמונה ראשית",
-        variant: "destructive", // Changed from "warning" to "destructive"
+        description: "יש להעלות לפחות 4 תמונות ולהגדיר תמונה ראשית",
+        variant: "destructive",
       });
       return;
     }

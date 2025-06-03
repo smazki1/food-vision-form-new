@@ -34,8 +34,8 @@ export const useClientFormValidation = () => {
         }
         break;
       case 3: // Image Upload
-        if (!formData.referenceImages || formData.referenceImages.length === 0) {
-          newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+        if (formData.referenceImages.length < 4) {
+          newErrors.referenceImages = 'יש להעלות לפחות 4 תמונות';
         }
         break;
       case 4: // Review step - Final check
@@ -45,8 +45,8 @@ export const useClientFormValidation = () => {
         if (!formData.itemType) { // Ensure itemType is selected
           newErrors.itemType = 'סוג הפריט הוא שדה חובה';
         }
-        if (!formData.referenceImages || formData.referenceImages.length === 0) {
-          newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+        if (formData.referenceImages.length < 4) {
+          newErrors.referenceImages = 'יש להעלות לפחות 4 תמונות';
         }
         break;
     }

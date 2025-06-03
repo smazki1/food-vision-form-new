@@ -52,6 +52,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const statusColorMap: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.NEW]: 'bg-blue-100 text-blue-800',
+  [LeadStatusEnum.INITIAL_CONTACT_MADE]: 'bg-purple-100 text-purple-800',
   [LeadStatusEnum.IN_TREATMENT]: 'bg-yellow-100 text-yellow-800',
   [LeadStatusEnum.INTERESTED]: 'bg-green-100 text-green-800',
   [LeadStatusEnum.NOT_INTERESTED]: 'bg-red-100 text-red-800',
@@ -240,7 +241,7 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusColorMap[lead.lead_status]}>
+                    <Badge className={`${statusColorMap[lead.lead_status]} rounded-none`}>
                       {LEAD_STATUS_DISPLAY[lead.lead_status]}
                     </Badge>
                   </TableCell>

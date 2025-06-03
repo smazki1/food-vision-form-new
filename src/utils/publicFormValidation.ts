@@ -1,4 +1,3 @@
-
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
 export const validateRestaurantDetailsStep = (formData: NewItemFormData): Record<string, string> => {
@@ -29,7 +28,10 @@ export const validateItemDetailsStep = (formData: NewItemFormData): Record<strin
 export const validateImageUploadStep = (formData: NewItemFormData): Record<string, string> => {
   const errors: Record<string, string> = {};
   if (formData.referenceImages.length === 0) {
-    errors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+    errors.referenceImages = 'יש להעלות לפחות 4 תמונות';
+  }
+  if (formData.referenceImages.length < 4) {
+    errors.referenceImages = 'יש להעלות לפחות 4 תמונות';
   }
   if (formData.referenceImages.length > 10) {
     errors.referenceImages = 'ניתן להעלות עד 10 תמונות';

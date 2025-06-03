@@ -313,8 +313,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
           </CardContent>
         </Card>
 
-        {/* Info Grid - 3 Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Info Grid - Responsive Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           
           {/* Submission Details */}
           <Card>
@@ -397,6 +397,38 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
               )}
             </CardContent>
           </Card>
+
+          {/* Original Submission Contact Info (if available) */}
+          {(submission.submission_contact_name || submission.submission_contact_email || submission.submission_contact_phone) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  פרטי יצירת קשר מהטופס
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {submission.submission_contact_name && (
+                  <div>
+                    <Label className="text-xs text-gray-500">שם איש קשר</Label>
+                    <p className="text-sm font-medium">{submission.submission_contact_name}</p>
+                  </div>
+                )}
+                {submission.submission_contact_email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    <p className="text-sm">{submission.submission_contact_email}</p>
+                  </div>
+                )}
+                {submission.submission_contact_phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-400" />
+                    <p className="text-sm">{submission.submission_contact_phone}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* AI & LoRA Settings */}
           <Card>

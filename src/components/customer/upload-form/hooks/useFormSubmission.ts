@@ -33,10 +33,9 @@ export const useFormSubmission = () => {
       return false;
     }
 
-    if (formData.referenceImages.length === 0) {
-      console.log('[FormSubmission] No images uploaded');
-      toast.error("יש להעלות לפחות תמונה אחת.");
-      setStepErrors({ referenceImages: "יש להעלות לפחות תמונה אחת." });
+    if (formData.referenceImages.length < 4) {
+      toast.error("יש להעלות לפחות 4 תמונות.");
+      setStepErrors({ referenceImages: "יש להעלות לפחות 4 תמונות." });
       return false;
     }
 

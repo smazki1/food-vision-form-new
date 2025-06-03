@@ -123,9 +123,9 @@ describe('usePublicFormSubmission', () => {
       });
 
       expect(submissionResult).toBe(false);
-      expect(toast.error).toHaveBeenCalledWith('יש להעלות לפחות תמונה אחת.');
+      expect(toast.error).toHaveBeenCalledWith('יש להעלות לפחות 4 תמונות.');
       if (mockSetStepErrors) {
-        expect(mockSetStepErrors).toHaveBeenCalledWith({ referenceImages: 'יש להעלות לפחות תמונה אחת.' });
+        expect(mockSetStepErrors).toHaveBeenCalledWith({ referenceImages: 'יש להעלות לפחות 4 תמונות.' });
       }
     });
   });

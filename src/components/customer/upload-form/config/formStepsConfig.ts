@@ -1,4 +1,3 @@
-
 import React from 'react';
 import RestaurantDetailsStep from '../steps/RestaurantDetailsStep';
 import CombinedUploadStep from '../steps/CombinedUploadStep';
@@ -31,8 +30,8 @@ const validateCombinedUpload = (formData: NewItemFormData): Record<string, strin
   if (!formData.itemType) {
     errors.itemType = 'סוג הפריט הוא שדה חובה';
   }
-  if (formData.referenceImages.length === 0) {
-    errors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+  if (formData.referenceImages.length < 4) {
+    errors.referenceImages = 'יש להעלות לפחות 4 תמונות';
   }
   if (formData.referenceImages.length > 10) {
     errors.referenceImages = 'ניתן להעלות עד 10 תמונות';

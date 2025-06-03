@@ -43,10 +43,10 @@ export const usePublicFormSubmission = () => {
       return false;
     }
 
-    if (formData.referenceImages.length === 0) {
-      console.log('[PublicFormSubmission] No images uploaded');
-      toast.error("יש להעלות לפחות תמונה אחת.");
-      setStepErrors?.({ referenceImages: "יש להעלות לפחות תמונה אחת." });
+    if (formData.referenceImages.length < 4) {
+      console.log('[PublicFormSubmission] Not enough images uploaded');
+      toast.error("יש להעלות לפחות 4 תמונות.");
+      setStepErrors?.({ referenceImages: "יש להעלות לפחות 4 תמונות." });
       return false;
     }
 

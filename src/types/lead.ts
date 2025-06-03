@@ -1,5 +1,5 @@
 // Database types
-export type LeadStatus = 'ליד חדש' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
+export type LeadStatus = 'ליד חדש' | 'פנייה ראשונית בוצעה' | 'בטיפול' | 'מעוניין' | 'לא מעוניין' | 'הפך ללקוח' | 'ארכיון';
 export type LeadSource = 'אתר' | 'חברים' | 'פייסבוק' | 'אינסטגרם' | 'גוגל' | 'אחר';
 
 // Enum versions for type safety
@@ -149,8 +149,8 @@ export const calculateTotalAICosts = (lead: Lead): number => {
   const trainingCosts = (lead.ai_trainings_count || 0) * (lead.ai_training_cost_per_unit || 0);
   const promptCosts = (lead.ai_prompts_count || 0) * (lead.ai_prompt_cost_per_unit || 0);
   const training5Costs = (lead.ai_training_5_count || 0) * 5;
-  const training15Costs = (lead.ai_training_15_count || 0) * 15;
-  const training25Costs = (lead.ai_training_25_count || 0) * 25;
+  const training15Costs = (lead.ai_training_15_count || 0) * 1.5;
+  const training25Costs = (lead.ai_training_25_count || 0) * 2.5;
   
   return trainingCosts + promptCosts + training5Costs + training15Costs + training25Costs;
 };

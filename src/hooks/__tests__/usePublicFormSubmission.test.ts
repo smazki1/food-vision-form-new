@@ -169,7 +169,7 @@ describe('usePublicFormSubmission', () => {
       // Assert
       expect(submitResult!).toBe(false);
       expect(mockSetStepErrors).toHaveBeenCalledWith({
-        referenceImages: 'יש להעלות לפחות תמונה אחת.',
+        referenceImages: 'יש להעלות לפחות 4 תמונות',
       });
     });
   });

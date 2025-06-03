@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 
 interface FormData {
@@ -38,8 +37,8 @@ export const useFormValidation = () => {
         }
         break;
       case 3:
-        if (formData.referenceImages.length === 0) {
-          newErrors.referenceImages = 'יש להעלות לפחות תמונה אחת';
+        if (formData.referenceImages.length < 4) {
+          newErrors.referenceImages = 'יש להעלות לפחות 4 תמונות';
         }
         break;
     }

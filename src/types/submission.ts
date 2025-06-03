@@ -35,6 +35,7 @@ export type EnhancedSubmission = CustomerSubmission & {
   lora_name?: string | null;
   fixed_prompt?: string | null;
   created_lead_id?: string | null;
+  lead_id?: string | null;
   clients?: { 
     restaurant_name: string; 
     contact_name: string; 

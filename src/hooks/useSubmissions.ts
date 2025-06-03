@@ -10,6 +10,7 @@ import {
   SubmissionCommentType,
   SubmissionStatusKey 
 } from '@/types/submission';
+import { leadsAPI } from '@/api/leadsApi';
 
 export interface ClientPackageInfo {
   packageName: string | null;
@@ -464,23 +465,23 @@ export const useDeleteSubmissionComment = () => {
 
 // Get submissions for a specific lead (for lead panel integration)
 export const useLeadSubmissions = (leadId: string) => {
-  return useQuery<EnhancedSubmission[]>({
-    queryKey: ['lead-submissions', leadId],
+  return useQuery({
+    queryKey: ['submissions', leadId],
     queryFn: async () => {
+      // Direct query: get submissions linked to this lead
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
           *,
-          clients(restaurant_name, contact_name, email, phone),
-          leads(restaurant_name, contact_name, email, phone)
+          clients(restaurant_name, contact_name, email, phone)
         `)
-        .eq('created_lead_id', leadId)
+        .eq('lead_id', leadId)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
-      return data as EnhancedSubmission[];
+      return (data || []) as EnhancedSubmission[];
     },
-    enabled: !!leadId,
+    enabled: !!leadId
   });
 };
 
@@ -530,5 +531,131 @@ export const useSubmissionsWithFilters = (filters: {
       if (error) throw error;
       return data as EnhancedSubmission[];
     },
+  });
+};
+
+// New hook to link submission to lead
+export const useLinkSubmissionToLead = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ submissionId, leadId }: { submissionId: string; leadId: string }) => {
+      // Use the new manual linking function
+      const { data, error } = await supabase.rpc('manually_link_submission_to_lead', {
+        p_submission_id: submissionId,
+        p_lead_id: leadId
+      });
+
+      if (error) throw error;
+
+      return { submissionId, leadId };
+    },
+    onSuccess: (data) => {
+      // Invalidate related queries
+      queryClient.invalidateQueries({ queryKey: ['submissions', data.leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead-activity', data.leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead', data.leadId] });
+      toast.success('ההגשה קושרה לליד בהצלחה');
+    },
+    onError: (error) => {
+      console.error('Error linking submission to lead:', error);
+      toast.error('שגיאה בקישור ההגשה לליד');
+    }
+  });
+};
+
+// Hook to automatically enable free sample package for leads with submissions
+export const useActivateFreeSamplePackage = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (leadId: string) => {
+      // Check if lead already has free sample package active
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('free_sample_package_active')
+        .eq('lead_id', leadId)
+        .single();
+
+      if (lead?.free_sample_package_active) {
+        return { leadId, alreadyActive: true };
+      }
+
+      // Activate free sample package
+      const { error } = await supabase
+        .from('leads')
+        .update({ 
+          free_sample_package_active: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('lead_id', leadId);
+
+      if (error) throw error;
+
+      // Log activity
+      await leadsAPI.addLeadActivityLog(
+        leadId,
+        'חבילת טעימות הופעלה',
+        'חבילת טעימות הופעלה אוטומטית בעקבות הגשה חדשה'
+      );
+
+      return { leadId, activated: true };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['lead', data.leadId] });
+      queryClient.invalidateQueries({ queryKey: ['lead-activity', data.leadId] });
+      if (data.activated) {
+        toast.success('חבילת טעימות הופעלה אוטומטית');
+      }
+    }
+  });
+};
+
+// Hook to get submissions that are not linked to any lead or client
+export const useUnlinkedSubmissions = () => {
+  return useQuery<EnhancedSubmission[]>({
+    queryKey: ['unlinked-submissions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select(`
+          *,
+          clients(restaurant_name, contact_name, email, phone)
+        `)
+        .is('lead_id', null)
+        .is('client_id', null)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) throw error;
+      return data as EnhancedSubmission[];
+    },
+  });
+};
+
+// Hook to search submissions by ID for manual linking
+export const useSearchSubmissionById = (submissionId: string) => {
+  return useQuery<EnhancedSubmission | null>({
+    queryKey: ['submission-search', submissionId],
+    queryFn: async () => {
+      if (!submissionId || submissionId.length < 8) return null;
+
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select(`
+          *,
+          clients(restaurant_name, contact_name, email, phone),
+          leads(restaurant_name, contact_name, email, phone)
+        `)
+        .eq('submission_id', submissionId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null; // Not found
+        throw error;
+      }
+      return data as EnhancedSubmission;
+    },
+    enabled: !!submissionId && submissionId.length >= 8,
+    retry: false
   });
 };

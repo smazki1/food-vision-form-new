@@ -95,7 +95,7 @@ describe('ImageUploadStep', () => {
   });
 
   it('displays error message for referenceImages when passed in props', () => {
-    const errors = { referenceImages: 'יש להעלות לפחות תמונה אחת' };
+    const errors = { referenceImages: 'יש להעלות לפחות 4 תמונות' };
     renderWithFormProvider(<ImageUploadStep setExternalErrors={mockSetExternalErrors} clearExternalErrors={mockClearExternalErrors} errors={errors} />);
     expect(screen.getByText(errors.referenceImages)).toBeInTheDocument();
   });

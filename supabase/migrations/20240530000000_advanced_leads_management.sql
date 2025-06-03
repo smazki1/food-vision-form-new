@@ -106,7 +106,15 @@ CREATE TABLE IF NOT EXISTS public.leads (
   next_follow_up_date DATE,
   notes TEXT,
   client_id UUID REFERENCES public.clients(client_id) ON DELETE SET NULL,
-  previous_status TEXT
+  previous_status TEXT,
+  lead_status TEXT DEFAULT 'ליד חדש',
+  free_sample_package_active BOOLEAN DEFAULT false,
+  business_type TEXT,
+  reminder_details TEXT,
+  reminder_at TIMESTAMPTZ,
+  ai_training_5_count INTEGER DEFAULT 0,
+  ai_training_15_count INTEGER DEFAULT 0,
+  ai_training_25_count INTEGER DEFAULT 0
 );
 
 COMMENT ON COLUMN public.leads.total_ai_costs IS 'Calculated: (ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit)';
@@ -432,4 +440,136 @@ CREATE POLICY "Allow authenticated users to read ai_pricing_settings"
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION public.log_lead_activity(UUID, TEXT, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.convert_lead_to_client(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.handle_new_submission_for_lead_creation(TEXT, TEXT, TEXT, TEXT) TO authenticated; 
+GRANT EXECUTE ON FUNCTION public.handle_new_submission_for_lead_creation(TEXT, TEXT, TEXT, TEXT) TO authenticated;
+
+-- Add lead_id field to customer_submissions table if it doesn't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'customer_submissions' 
+    AND column_name = 'lead_id'
+  ) THEN
+    ALTER TABLE public.customer_submissions 
+    ADD COLUMN lead_id UUID REFERENCES public.leads(lead_id) ON DELETE SET NULL;
+    
+    CREATE INDEX IF NOT EXISTS idx_customer_submissions_lead_id 
+    ON public.customer_submissions(lead_id);
+  END IF;
+END $$;
+
+-- Enhanced function to automatically link submissions to leads
+CREATE OR REPLACE FUNCTION public.link_submission_to_lead_auto()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_lead_id UUID;
+  v_client_id UUID;
+BEGIN
+  -- Skip if lead_id is already set
+  IF NEW.lead_id IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- First check if there's a matching client (existing client)
+  SELECT client_id INTO v_client_id
+  FROM public.clients
+  WHERE lower(email) = lower(NEW.email)
+     OR lower(restaurant_name) = lower(NEW.restaurant_name);
+
+  -- If client exists, don't create lead (this is an existing client)
+  IF v_client_id IS NOT NULL THEN
+    NEW.client_id := v_client_id;
+    RETURN NEW;
+  END IF;
+
+  -- Look for existing lead
+  SELECT lead_id INTO v_lead_id
+  FROM public.leads
+  WHERE lower(email) = lower(NEW.email)
+     OR lower(restaurant_name) = lower(NEW.restaurant_name);
+
+  IF v_lead_id IS NULL THEN
+    -- Create new lead
+    INSERT INTO public.leads (
+      restaurant_name,
+      contact_name,
+      email,
+      phone,
+      lead_status,
+      lead_source,
+      free_sample_package_active,
+      notes
+    ) VALUES (
+      NEW.restaurant_name,
+      NEW.contact_name,
+      NEW.email,
+      NEW.phone,
+      'ליד חדש',
+      'אתר',
+      true, -- Auto-activate free sample package
+      'ליד נוצר אוטומטית מהגשה פומבית'
+    ) RETURNING lead_id INTO v_lead_id;
+
+    -- Log the lead creation
+    IF v_lead_id IS NOT NULL THEN
+      PERFORM public.log_lead_activity(
+        v_lead_id, 
+        'ליד נוצר אוטומטית מהגשה פומבית - ' || NEW.item_name_at_submission || ' (' || NEW.item_type || ')'
+      );
+    END IF;
+  ELSE
+    -- Update existing lead to activate free sample package if not already active
+    UPDATE public.leads 
+    SET free_sample_package_active = true,
+        updated_at = NOW()
+    WHERE lead_id = v_lead_id 
+      AND free_sample_package_active = false;
+
+    -- Log submission to existing lead
+    PERFORM public.log_lead_activity(
+      v_lead_id, 
+      'הגשה חדשה התקבלה - ' || NEW.item_name_at_submission || ' (' || NEW.item_type || ')'
+    );
+  END IF;
+
+  -- Link submission to lead
+  NEW.lead_id := v_lead_id;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger for automatic lead linking
+DROP TRIGGER IF EXISTS trigger_link_submission_to_lead ON public.customer_submissions;
+CREATE TRIGGER trigger_link_submission_to_lead
+  BEFORE INSERT ON public.customer_submissions
+  FOR EACH ROW
+  EXECUTE FUNCTION public.link_submission_to_lead_auto();
+
+-- Create new lead_status_type enum with Hebrew values
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'lead_status_type') THEN
+    CREATE TYPE lead_status_type AS ENUM (
+      'ליד חדש',
+      'פנייה ראשונית בוצעה', 
+      'בטיפול',
+      'מעוניין',
+      'לא מעוניין',
+      'הפך ללקוח',
+      'ארכיון'
+    );
+  ELSE
+    -- Add new status if it doesn't exist
+    ALTER TYPE lead_status_type ADD VALUE IF NOT EXISTS 'בטיפול';
+  END IF;
+END $$;
+
+-- Update the status column to use the proper field name if needed
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'status') 
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'lead_status') THEN
+    ALTER TABLE public.leads RENAME COLUMN status TO lead_status;
+  END IF;
+END $$; 

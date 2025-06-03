@@ -48,7 +48,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-bold text-[#333333] mb-4">
-          העלאת תמונות איכותיות (2-10 תמונות)
+          העלאת תמונות איכותיות (4-10 תמונות)
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
           ככל שהתמונות ברורות יותר, כך התוצאות יהיו מדויקות יותר
@@ -80,7 +80,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
               <img 
                 src="https://zjjzqsgflplzdamanhqj.supabase.co/storage/v1/object/public/food-vision-images//jjcmut3409b.jpeg"
                 alt="צילום טוב"
-                className="w-full h-32 object-cover rounded-lg border-2 border-green-400"
+                className="w-full aspect-square object-cover rounded-lg border-2 border-green-400"
               />
               <p className="text-sm text-green-600 font-semibold mt-2">✓ צילום טוב</p>
               <p className="text-xs text-gray-600">תאורה טובה, מיקום מרכזי</p>
@@ -89,7 +89,7 @@ const ImageUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
               <img 
                 src="https://zjjzqsgflplzdamanhqj.supabase.co/storage/v1/object/public/food-vision-images//304f6d67-4abd-4ab3-844d-eeccf21a2130.jpeg"
                 alt="צילום לא טוב"
-                className="w-full h-32 object-cover rounded-lg border-2 border-red-400"
+                className="w-full aspect-square object-cover rounded-lg border-2 border-red-400"
               />
               <p className="text-sm text-red-600 font-semibold mt-2">✗ צילום לא טוב</p>
               <p className="text-xs text-gray-600">תאורה חלשה, לא ברור</p>
