@@ -77,7 +77,7 @@ export function LeadDetailsSheet({ lead, isOpen, onClose, onSave }: LeadDetailsS
         <SheetHeader>
           <SheetTitle>פרטי ליד</SheetTitle>
         </SheetHeader>
-
+        
         <div className="mt-6">
           {isEditing ? (
             <Form {...form}>
@@ -99,13 +99,13 @@ export function LeadDetailsSheet({ lead, isOpen, onClose, onSave }: LeadDetailsS
                 <p>איש קשר: {lead.contact_name}</p>
                 <p>טלפון: {lead.phone}</p>
                 <p>אימייל: {lead.email}</p>
-              </div>
-              
+        </div>
+
               <Button onClick={() => setIsEditing(true)}>
                 ערוך
-              </Button>
-            </div>
-          )}
+                </Button>
+          </div>
+        )}
         </div>
       </SheetContent>
     </Sheet>

@@ -62,6 +62,11 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
           submission_contact_phone,
           lead_id,
           created_at,
+          "status_ממתינה_לעיבוד_at",
+          "status_בעיבוד_at",
+          "status_מוכנה_להצגה_at",
+          "status_הערות_התקבלו_at",
+          "status_הושלמה_ואושרה_at",
           clients(restaurant_name, contact_name, email, phone),
           leads(restaurant_name, contact_name, email, phone)
         `)
@@ -69,7 +74,15 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
         .single();
 
       if (error) throw error;
-      return data as EnhancedSubmission;
+      
+      // Handle joined data that comes as arrays
+      const processedData = {
+        ...data,
+        clients: Array.isArray(data.clients) && data.clients.length > 0 ? data.clients[0] : undefined,
+        leads: Array.isArray(data.leads) && data.leads.length > 0 ? data.leads[0] : undefined
+      };
+      
+      return processedData as unknown as EnhancedSubmission;
     },
     enabled: !!submissionId
   });
