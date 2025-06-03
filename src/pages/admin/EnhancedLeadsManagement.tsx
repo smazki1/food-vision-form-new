@@ -1,17 +1,23 @@
 import React, { useState } from 'react';
-import { useEnhancedLeads } from '@/hooks/useEnhancedLeads';
-import { EnhancedLeadsFilter } from '@/types/filters';
-import { LeadStatusEnum, Lead } from '@/types/lead';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EnhancedLeadsTable } from '@/components/admin/leads/EnhancedLeadsTable';
-import { EnhancedLeadsFilters } from '@/components/admin/leads/EnhancedLeadsFilters';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Archive, BarChart2, Settings, Trash2, X } from 'lucide-react';
-import { Spinner } from '@/components/ui/spinner';
-import { CreateLeadModal } from '@/components/admin/leads/CreateLeadModal';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Archive, Trash2, X, PlusCircle, BarChart2, Settings } from 'lucide-react';
+import { 
+  useEnhancedLeads,
+  useBulkDeleteLeads,
+  useBulkArchiveLeads 
+} from '@/hooks/useEnhancedLeads';
+import { EnhancedLeadsFilter } from '@/types/filters';
+import { EnhancedLeadsTable } from '@/components/admin/leads/EnhancedLeadsTable';
 import { LeadDetailPanel } from '@/components/admin/leads/LeadDetailPanel';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import { Spinner } from '@/components/ui/spinner';
+import { CreateLeadModal } from '@/components/admin/leads/CreateLeadModal';
+import { EnhancedLeadsFilters } from '@/components/admin/leads/EnhancedLeadsFilters';
+import { Badge } from '@/components/admin/leads/Badge';
+import { LeadsFilters } from '@/components/admin/leads/filters/LeadsFilters';
+import { CreateLeadDialog } from '@/components/admin/leads/CreateLeadDialog';
 
 const EnhancedLeadsManagement: React.FC = () => {
   const [filters, setFilters] = useState<EnhancedLeadsFilter>({
@@ -28,6 +34,10 @@ const EnhancedLeadsManagement: React.FC = () => {
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   
   const { data: leadsData, isLoading, error } = useEnhancedLeads(filters);
+  
+  // Bulk operations hooks
+  const bulkDeleteMutation = useBulkDeleteLeads();
+  const bulkArchiveMutation = useBulkArchiveLeads();
   
   const handleFilterChange = (newFilters: EnhancedLeadsFilter) => {
     setFilters({ ...filters, ...newFilters });
@@ -79,10 +89,11 @@ const EnhancedLeadsManagement: React.FC = () => {
     
     if (window.confirm(`האם אתה בטוח שברצונך למחוק ${selectedLeads.size} לידים?`)) {
       try {
-        // TODO: Implement bulk delete mutation
+        await bulkDeleteMutation.mutateAsync(Array.from(selectedLeads));
         toast.success(`${selectedLeads.size} לידים נמחקו בהצלחה`);
         setSelectedLeads(new Set());
       } catch (error) {
+        console.error('Error deleting leads:', error);
         toast.error('שגיאה במחיקת לידים');
       }
     }
@@ -92,10 +103,11 @@ const EnhancedLeadsManagement: React.FC = () => {
     if (selectedLeads.size === 0) return;
     
     try {
-      // TODO: Implement bulk archive mutation
+      await bulkArchiveMutation.mutateAsync(Array.from(selectedLeads));
       toast.success(`${selectedLeads.size} לידים הועברו לארכיון`);
       setSelectedLeads(new Set());
     } catch (error) {
+      console.error('Error archiving leads:', error);
       toast.error('שגיאה בהעברת לידים לארכיון');
     }
   };

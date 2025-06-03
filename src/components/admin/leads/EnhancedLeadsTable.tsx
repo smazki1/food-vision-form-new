@@ -45,7 +45,7 @@ import {
   useRestoreLead, 
   useDeleteLead,
   useUpdateLead,
-  useConvertLeadToClient
+  useDirectConvertLeadToClient
 } from '@/hooks/useEnhancedLeads';
 import { FollowUpScheduler } from './FollowUpScheduler';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -83,14 +83,12 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
-  const [convertConfirmOpen, setConvertConfirmOpen] = useState(false);
-  const [leadToConvert, setLeadToConvert] = useState<string | null>(null);
-
+  
   const archiveLeadMutation = useArchiveLead();
   const restoreLeadMutation = useRestoreLead();
   const deleteLeadMutation = useDeleteLead();
   const updateLeadMutation = useUpdateLead();
-  const convertLeadMutation = useConvertLeadToClient();
+  const convertLeadMutation = useDirectConvertLeadToClient();
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatusEnum) => {
     try {
@@ -135,19 +133,6 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
     }
   };
 
-  const handleConvertToClient = async () => {
-    if (!leadToConvert) return;
-    
-    try {
-      await convertLeadMutation.mutateAsync(leadToConvert);
-      setConvertConfirmOpen(false);
-      setLeadToConvert(null);
-      toast.success('הליד הומר ללקוח בהצלחה');
-    } catch (error) {
-      toast.error('שגיאה בהמרת הליד ללקוח');
-    }
-  };
-
   const openFollowUpScheduler = (lead: Lead) => {
     setFollowUpLead(lead);
     setIsFollowUpOpen(true);
@@ -161,11 +146,6 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
   const confirmDelete = (leadId: string) => {
     setLeadToDelete(leadId);
     setDeleteConfirmOpen(true);
-  };
-
-  const confirmConvert = (leadId: string) => {
-    setLeadToConvert(leadId);
-    setConvertConfirmOpen(true);
   };
 
   if (leads.length === 0) {
@@ -301,11 +281,17 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>פעולות</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => onLeadSelect(lead.lead_id)}>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          onLeadSelect(lead.lead_id);
+                        }}>
                           <Eye className="mr-2 h-4 w-4" />
                           צפה בפרטים
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openFollowUpScheduler(lead)}>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          openFollowUpScheduler(lead);
+                        }}>
                           <Bell className="mr-2 h-4 w-4" />
                           קבע תזכורת
                         </DropdownMenuItem>
@@ -319,7 +305,10 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                               .map(status => (
                                 <DropdownMenuItem 
                                   key={status}
-                                  onClick={() => handleStatusChange(lead.lead_id, status)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStatusChange(lead.lead_id, status);
+                                  }}
                                 >
                                   <Badge className={`${statusColorMap[status]} mr-2`}>
                                     {LEAD_STATUS_DISPLAY[status]}
@@ -329,19 +318,28 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                             }
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
-                              onClick={() => confirmConvert(lead.lead_id)}
-                              disabled={lead.lead_status === LeadStatusEnum.CONVERTED_TO_CLIENT}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                convertLeadMutation.mutate(lead.lead_id);
+                              }}
+                              disabled={lead.lead_status === LeadStatusEnum.CONVERTED_TO_CLIENT || convertLeadMutation.isPending}
                             >
                               <User className="mr-2 h-4 w-4" />
-                              המר ללקוח
+                              {convertLeadMutation.isPending ? 'המרה...' : 'המר ללקוח'}
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleArchiveLead(lead.lead_id)}>
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation();
+                              handleArchiveLead(lead.lead_id);
+                            }}>
                               <Archive className="mr-2 h-4 w-4" />
                               העבר לארכיון
                             </DropdownMenuItem>
                           </>
                         ) : (
-                          <DropdownMenuItem onClick={() => handleRestoreLead(lead.lead_id)}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleRestoreLead(lead.lead_id);
+                          }}>
                             <RefreshCw className="mr-2 h-4 w-4" />
                             שחזר מארכיון
                           </DropdownMenuItem>
@@ -349,7 +347,10 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                         
                         <DropdownMenuSeparator />
                         <DropdownMenuItem 
-                          onClick={() => confirmDelete(lead.lead_id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDelete(lead.lead_id);
+                          }}
                           className="text-red-600"
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -387,24 +388,6 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
             <AlertDialogCancel>ביטול</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteLead} className="bg-red-600">
               מחק
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Convert to Client Confirmation Dialog */}
-      <AlertDialog open={convertConfirmOpen} onOpenChange={setConvertConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>המרת ליד ללקוח</AlertDialogTitle>
-            <AlertDialogDescription>
-              האם אתה בטוח שברצונך להמיר את הליד ללקוח? פעולה זו תיצור לקוח חדש במערכת.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConvertToClient} className="bg-green-600">
-              המר ללקוח
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

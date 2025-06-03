@@ -5,7 +5,7 @@ import { LeadDetailPanel } from '@/components/admin/leads/LeadDetailPanel';
 import { CreateLeadModal } from '@/components/admin/leads/CreateLeadModal';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { useEnhancedLeads } from '@/hooks/useEnhancedLeads';
+import { useEnhancedLeads, useCreateLead, useUpdateLead, useDeleteLead, useBulkDeleteLeads, useBulkArchiveLeads } from '@/hooks/useEnhancedLeads';
 import { EnhancedLeadsFilter } from '@/types/filters';
 import { Lead } from '@/types/lead';
 import { 
@@ -109,6 +109,10 @@ const AdminLeadsPage = () => {
   // Fetch leads data
   const { data: leadsData, isLoading, error } = useEnhancedLeads(filters);
   
+  // Bulk operations hooks
+  const bulkDeleteMutation = useBulkDeleteLeads();
+  const bulkArchiveMutation = useBulkArchiveLeads();
+  
   // Handle error state
   if (error) {
     toast.error('Error loading leads: ' + (error as Error).message);
@@ -129,10 +133,11 @@ const AdminLeadsPage = () => {
     
     if (window.confirm(`האם אתה בטוח שברצונך למחוק ${selectedLeads.size} לידים?`)) {
       try {
-        // TODO: Implement bulk delete mutation
+        await bulkDeleteMutation.mutateAsync(Array.from(selectedLeads));
         toast.success(`${selectedLeads.size} לידים נמחקו בהצלחה`);
         setSelectedLeads(new Set());
       } catch (error) {
+        console.error('Error deleting leads:', error);
         toast.error('שגיאה במחיקת לידים');
       }
     }
@@ -142,10 +147,11 @@ const AdminLeadsPage = () => {
     if (selectedLeads.size === 0) return;
     
     try {
-      // TODO: Implement bulk archive mutation
+      await bulkArchiveMutation.mutateAsync(Array.from(selectedLeads));
       toast.success(`${selectedLeads.size} לידים הועברו לארכיון`);
       setSelectedLeads(new Set());
     } catch (error) {
+      console.error('Error archiving leads:', error);
       toast.error('שגיאה בהעברת לידים לארכיון');
     }
   };
