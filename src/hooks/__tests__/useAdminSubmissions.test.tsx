@@ -1,12 +1,18 @@
 /// <reference types="vitest/globals" />
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactNode } from 'react';
-import { useAdminSubmission, useAdminSubmissionComments, useAdminUpdateSubmissionStatus } from '../useAdminSubmissions';
+import React, { ReactNode } from 'react';
+
+// Import the hooks we're testing
+import { 
+  useAdminSubmission, 
+  useAdminSubmissionComments, 
+  useAdminUpdateSubmissionStatus 
+} from '../useAdminSubmissions';
 
 // Mock Supabase client
-vi.mock('@/integrations/supabase/client', () => ({
+vi.mock('../../integrations/supabase/client', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -39,9 +45,7 @@ const createWrapper = () => {
   });
   
   return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
+    React.createElement(QueryClientProvider, { client: queryClient }, children)
   );
 };
 
@@ -74,7 +78,7 @@ describe('useAdminSubmissions hooks', () => {
         phone: '987654321'
       };
 
-      const { supabase } = await import('@/integrations/supabase/client');
+      const { supabase } = await import('../../integrations/supabase/client');
       const fromMock = supabase.from as any;
       
       // Mock submission query
@@ -136,7 +140,7 @@ describe('useAdminSubmissions hooks', () => {
         submission_status: 'ממתינה לעיבוד'
       };
 
-      const { supabase } = await import('@/integrations/supabase/client');
+      const { supabase } = await import('../../integrations/supabase/client');
       const fromMock = supabase.from as any;
       
       fromMock.mockReturnValueOnce({
@@ -165,7 +169,7 @@ describe('useAdminSubmissions hooks', () => {
     });
 
     test('should handle submission query error', async () => {
-      const { supabase } = await import('@/integrations/supabase/client');
+      const { supabase } = await import('../../integrations/supabase/client');
       const fromMock = supabase.from as any;
       
       fromMock.mockReturnValueOnce({
@@ -205,7 +209,7 @@ describe('useAdminSubmissions hooks', () => {
 
   describe('useAdminUpdateSubmissionStatus', () => {
     test('should update submission status successfully', async () => {
-      const { supabase } = await import('@/integrations/supabase/client');
+      const { supabase } = await import('../../integrations/supabase/client');
       const { toast } = await import('sonner');
       const fromMock = supabase.from as any;
       
@@ -237,7 +241,7 @@ describe('useAdminSubmissions hooks', () => {
     });
 
     test('should handle update error', async () => {
-      const { supabase } = await import('@/integrations/supabase/client');
+      const { supabase } = await import('../../integrations/supabase/client');
       const { toast } = await import('sonner');
       const fromMock = supabase.from as any;
       
