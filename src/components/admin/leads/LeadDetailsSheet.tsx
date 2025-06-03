@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -7,13 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { 
-  Lead, 
-  LeadStatusEnum, 
-  LeadSourceEnum, 
-  LEAD_STATUS_DISPLAY,
-  LEAD_SOURCE_DISPLAY,
-  mapHebrewToLeadSourceEnum,
-  mapLeadSourceToHebrew
+  Lead
 } from "@/types/lead";
 
 const leadFormSchema = z.object({
@@ -23,8 +16,8 @@ const leadFormSchema = z.object({
   email: z.string().email("כתובת אימייל לא תקינה"),
   website_url: z.string().optional(),
   address: z.string().optional(),
-  lead_status: z.nativeEnum(LeadStatusEnum),
-  lead_source: z.nativeEnum(LeadSourceEnum).optional(),
+  lead_status: z.string(),
+  lead_source: z.string().optional(),
   notes: z.string().optional(),
   next_follow_up_date: z.string().optional(),
   free_sample_package_active: z.boolean(),
@@ -57,8 +50,8 @@ export function LeadDetailsSheet({ lead, isOpen, onClose, onSave }: LeadDetailsS
       email: lead?.email || "",
       website_url: lead?.website_url || "",
       address: lead?.address || "",
-      lead_status: lead?.lead_status || LeadStatusEnum.NEW,
-      lead_source: lead?.lead_source || undefined,
+      lead_status: lead?.lead_status || "ליד חדש",
+      lead_source: lead?.lead_source || "",
       notes: lead?.notes || "",
       next_follow_up_date: lead?.next_follow_up_date ? new Date(lead.next_follow_up_date).toISOString().split('T')[0] : "",
       free_sample_package_active: lead?.free_sample_package_active || false,

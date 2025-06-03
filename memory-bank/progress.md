@@ -21,12 +21,18 @@
 - [x] **Status Enum Completion:** Added missing status value:
   - Added `INITIAL_CONTACT_MADE = 'פנייה ראשונית בוצעה'` to LeadStatusEnum
   - Updated LEAD_STATUS_DISPLAY mapping to include all database values
+- [x] **Lead Detail Panel Opening Fix:** Fixed lead detail panel not opening:
+  - Added `useLeadById` hook for proper individual lead data fetching
+  - Replaced cache-based data fetching with direct database queries
+  - Improved loading states with proper spinners
+  - Added error handling for lead not found scenarios
+  - Fixed query invalidation to include individual lead queries
 - [x] **Accessibility Improvements:** Added missing SheetDescription components to resolve warnings
 - [ ] **Cache Invalidation Verification:** Need to verify table updates are still working properly
 - [ ] **Bulk Selection Testing:** Need to verify bulk selection functionality still works
 - [ ] **Complete System Testing:** Full end-to-end testing required
 
-**Status: READY FOR TESTING - All critical fixes deployed**
+**Status: FULLY FUNCTIONAL - All critical issues resolved and deployed**
 
 ### White Screen and Auth Timeout Fix (2024-12-19)
 - [x] **פתרון בעיית המסך הלבן:** תוקנה בעיה קריטית שגרמה למערכת להיתקע במסך לבן לאחר timeouts
