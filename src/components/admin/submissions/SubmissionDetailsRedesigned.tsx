@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -39,7 +38,30 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
-          *,
+          submission_id,
+          client_id,
+          original_item_id,
+          item_type,
+          item_name_at_submission,
+          assigned_package_id_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls,
+          processed_image_urls,
+          main_processed_image_url,
+          edit_history,
+          edit_count,
+          final_approval_timestamp,
+          internal_team_notes,
+          assigned_editor_id,
+          target_completion_date,
+          priority,
+          created_lead_id,
+          submission_contact_name,
+          submission_contact_email,
+          submission_contact_phone,
+          lead_id,
+          created_at,
           clients(restaurant_name, contact_name, email, phone),
           leads(restaurant_name, contact_name, email, phone)
         `)
