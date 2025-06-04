@@ -4,7 +4,7 @@ import PackagesHeader from "@/components/admin/packages/components/PackagesHeade
 import PackagesTable from "@/components/admin/packages/components/PackagesTable";
 import PackagesLoadingState from "@/components/admin/packages/components/PackagesLoadingState";
 import PackageFormDialog from "@/components/admin/packages/PackageFormDialog";
-import { usePackages } from "@/hooks/usePackages";
+import { usePackages_Simplified } from "@/hooks/usePackages";
 import { AlertTriangle, Info } from "lucide-react";
 
 const PackagesManagementPage: React.FC = () => {
@@ -12,7 +12,15 @@ const PackagesManagementPage: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editPackage, setEditPackage] = useState<Package | null>(null);
   
-  const { packages, isLoading, isError, error } = usePackages();
+  const { 
+    packages, 
+    isLoading, 
+    error, 
+    hasAdminAccess, 
+    isQueryEnabled,
+    queryStatus,
+    isFetching 
+  } = usePackages_Simplified();
   
   const handleAddClick = () => {
     setIsAddDialogOpen(true);
@@ -27,11 +35,32 @@ const PackagesManagementPage: React.FC = () => {
     setEditPackage(null);
   };
 
-  if (isLoading) {
+  console.log('[PackagesManagementPage] State:', {
+    packagesCount: packages?.length || 0,
+    isLoading,
+    error: error?.message,
+    hasAdminAccess,
+    isQueryEnabled,
+    queryStatus
+  });
+
+  // Show loading if we don't have admin access yet
+  if (!hasAdminAccess) {
+    return (
+      <div className="container max-w-7xl mx-auto py-8 px-4 text-center">
+        <PackagesLoadingState />
+        <p className="mt-4 text-gray-600">מאמת הרשאות אדמין...</p>
+      </div>
+    );
+  }
+
+  // Show loading for packages
+  if (isLoading || (isFetching && queryStatus !== 'success')) {
     return <PackagesLoadingState />;
   }
 
-  if (isError) {
+  // Show error state
+  if (error) {
     console.error("Error loading packages:", error);
     return (
       <div className="container max-w-7xl mx-auto py-8 px-4 text-center">
@@ -49,6 +78,7 @@ const PackagesManagementPage: React.FC = () => {
     );
   }
   
+  // Show empty state
   if (!packages || packages.length === 0) {
     return (
       <div className="container max-w-7xl mx-auto py-8 px-4">
@@ -73,6 +103,7 @@ const PackagesManagementPage: React.FC = () => {
     );
   }
   
+  // Show packages table
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
       <div className="space-y-6">

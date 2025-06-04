@@ -57,6 +57,7 @@ import {
   MessageSquare,
   Clock,
   Wand2,
+  ArrowRight,
 } from 'lucide-react';
 
 interface SubmissionViewerProps {
@@ -80,7 +81,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   const [loraData, setLoraData] = useState({
     lora_link: '',
     lora_name: '',
-    fixed_prompt: ''
+    fixed_prompt: '',
+    lora_id: ''
   });
 
   // Custom hooks - conditionally use admin hooks for admin/editor views
@@ -100,9 +102,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   useEffect(() => {
     if (submission) {
       setLoraData({
-        lora_link: '',
-        lora_name: '',
-        fixed_prompt: ''
+        lora_link: submission.lora_link || '',
+        lora_name: submission.lora_name || '',
+        fixed_prompt: submission.fixed_prompt || '',
+        lora_id: submission.lora_id || ''
       });
     }
   }, [submission]);
@@ -171,6 +174,17 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
+              {onClose && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onClose}
+                  className="flex items-center gap-2 hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  <ArrowRight className="h-5 w-5" />
+                  <span className="hidden sm:inline">חזרה</span>
+                </Button>
+              )}
               <h1 className="text-2xl font-bold text-gray-900">
                 {submission.item_name_at_submission}
               </h1>
@@ -217,12 +231,6 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                 <Save className="h-4 w-4 ml-2" />
                 שמור
               </Button>
-              {onClose && (
-                <Button variant="ghost" onClick={onClose}>
-                  <span className="sr-only">סגור</span>
-                  ×
-                </Button>
-              )}
             </div>
           </div>
         </div>
@@ -479,6 +487,20 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       setEditingLoraFields(true);
                     }}
                     placeholder="שם תיאורי של LoRA"
+                    className="mt-1"
+                    disabled={viewMode !== 'admin'}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="lora-id" className="text-xs text-gray-500">מזהה LoRA</Label>
+                  <Input
+                    id="lora-id"
+                    value={loraData.lora_id}
+                    onChange={(e) => {
+                      setLoraData(prev => ({ ...prev, lora_id: e.target.value }));
+                      setEditingLoraFields(true);
+                    }}
+                    placeholder="מזהה LoRA (טקסט חופשי)"
                     className="mt-1"
                     disabled={viewMode !== 'admin'}
                   />

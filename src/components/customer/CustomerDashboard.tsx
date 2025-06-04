@@ -14,8 +14,22 @@ import { PackageSummaryCard } from "./dashboard/PackageSummaryCard";
 import { SubmissionsStatusOverview } from "./dashboard/SubmissionsStatusOverview";
 import { QuickActions } from "./dashboard/QuickActions";
 
-export function CustomerDashboard() {
-  const { user } = useUnifiedAuth();
+export const CustomerDashboard: React.FC = () => {
+  console.log('[CustomerDashboard] RENDERING - current path:', window.location.pathname);
+  
+  const { 
+    clientId: unifiedClientId,
+    user,
+    role 
+  } = useUnifiedAuth();
+  
+  // Redirect admin users to admin dashboard
+  if (role === 'admin') {
+    console.log('[CustomerDashboard] Admin user detected - redirecting to admin dashboard');
+    window.location.href = '/admin';
+    return null;
+  }
+
   const { clientId, hasLinkedClientRecord, clientRecordStatus, errorState, refreshClientAuth } = useClientAuth();
   const { clientProfile, loading: profileLoading, error: profileError } = useClientProfile(user?.id);
   const { statusCounts, loading: statsLoading, error: statsError } = useClientDashboardStats(clientProfile?.client_id);

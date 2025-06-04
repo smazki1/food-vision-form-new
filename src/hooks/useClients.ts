@@ -82,9 +82,13 @@ interface UseClientsSimplifiedV2Options {
 export function useClients_Simplified_V2({ enabled, userId }: UseClientsSimplifiedV2Options) {
   const queryClient = useQueryClient();
 
-  const queryKey = ["clients_list_for_admin", userId];
+  // Use a more stable query key approach
+  const queryKey = ["clients_list_for_admin", userId || "no-user"];
 
   console.log(`[useClients_Simplified_V2] Hook called. enabled: ${enabled}, userId: ${userId}, queryKey: ${JSON.stringify(queryKey)}`);
+
+  // Make the query more resilient - enable if we have the enabled flag, regardless of userId changes
+  const shouldEnableQuery = enabled && userId !== null;
 
   const {
     data: clients = [],
@@ -97,6 +101,12 @@ export function useClients_Simplified_V2({ enabled, userId }: UseClientsSimplifi
     queryKey: queryKey,
     queryFn: async () => {
       console.log('[useClients_Simplified_V2] queryFn START.');
+
+      // Add additional check in queryFn for safety
+      if (!userId) {
+        console.warn('[useClients_Simplified_V2] queryFn: No userId provided, returning empty array');
+        return [];
+      }
 
       const queryBuilder = supabase
         .from("clients")
@@ -115,7 +125,11 @@ export function useClients_Simplified_V2({ enabled, userId }: UseClientsSimplifi
       console.log('[useClients_Simplified_V2] queryFn: Supabase query successful. Returning data count:', rawData?.length);
       return rawData || [];
     },
-    enabled: enabled,
+    enabled: shouldEnableQuery,
+    // Add some stability options
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    retry: 3, // Retry failed queries
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   useEffect(() => {
@@ -123,8 +137,8 @@ export function useClients_Simplified_V2({ enabled, userId }: UseClientsSimplifi
     if (error) {
       errorMessage = error.message;
     }
-    console.log(`[useClients_Simplified_V2] Query state updated: isLoading: ${isLoading}, isFetching: ${isFetching}, status: ${queryStatus}, enabled: ${enabled}, error: ${errorMessage}, clients count: ${clients.length}`);
-  }, [isLoading, isFetching, queryStatus, enabled, error, clients]);
+    console.log(`[useClients_Simplified_V2] Query state updated: isLoading: ${isLoading}, isFetching: ${isFetching}, status: ${queryStatus}, enabled: ${shouldEnableQuery}, error: ${errorMessage}, clients count: ${clients.length}`);
+  }, [isLoading, isFetching, queryStatus, shouldEnableQuery, error, clients]);
 
   const refreshClients = () => {
     console.log('[useClients_Simplified_V2] refreshClients called. Invalidating queries for:', queryKey);

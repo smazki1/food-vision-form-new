@@ -69,6 +69,13 @@ const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({
     }
     
     console.log(`[PUBLIC_ROUTE] Authenticated ${role} user, redirecting to`, dashboardPath);
+    
+    // Force navigation for admin users
+    if (role === 'admin' && dashboardPath === '/admin') {
+      window.location.href = dashboardPath;
+      return null;
+    }
+    
     return <Navigate to={dashboardPath} replace />;
   }
   

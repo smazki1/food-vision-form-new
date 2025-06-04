@@ -60,6 +60,32 @@ const statusColorMap: Record<LeadStatusEnum, string> = {
   [LeadStatusEnum.ARCHIVED]: 'bg-gray-100 text-gray-800',
 };
 
+// Helper function to get status badge color for free text statuses
+const getStatusBadgeColor = (status: string): string => {
+  // Check if it's a known enum status
+  const enumStatus = Object.values(LeadStatusEnum).find(enumVal => enumVal === status) as LeadStatusEnum;
+  
+  if (enumStatus && statusColorMap[enumStatus]) {
+    return statusColorMap[enumStatus];
+  }
+  
+  // Default color for custom statuses
+  return 'bg-blue-100 text-blue-800';
+};
+
+// Helper function to get status display text
+const getStatusDisplayText = (status: string): string => {
+  // Check if it's a known enum status
+  const enumStatus = Object.values(LeadStatusEnum).find(enumVal => enumVal === status) as LeadStatusEnum;
+  
+  if (enumStatus && LEAD_STATUS_DISPLAY[enumStatus]) {
+    return LEAD_STATUS_DISPLAY[enumStatus];
+  }
+  
+  // Return the status as is for custom statuses
+  return status;
+};
+
 interface EnhancedLeadsTableProps {
   leads: Lead[];
   onLeadSelect: (leadId: string) => void;
@@ -175,6 +201,7 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
               <TableHead>איש קשר</TableHead>
               <TableHead>סטטוס</TableHead>
               <TableHead>מקור</TableHead>
+              <TableHead>סוג עסק</TableHead>
               <TableHead>תאריך יצירה</TableHead>
               <TableHead>תזכורת</TableHead>
               <TableHead className="text-left">עלויות AI</TableHead>
@@ -221,13 +248,20 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={`${statusColorMap[lead.lead_status]} rounded-none`}>
-                      {LEAD_STATUS_DISPLAY[lead.lead_status]}
+                    <Badge className={`${getStatusBadgeColor(lead.lead_status)} rounded-none`}>
+                      {getStatusDisplayText(lead.lead_status)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     {lead.lead_source ? (
                       <span className="text-sm">{lead.lead_source}</span>
+                    ) : (
+                      <span className="text-sm text-gray-400">לא צוין</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {lead.business_type ? (
+                      <span className="text-sm">{lead.business_type}</span>
                     ) : (
                       <span className="text-sm text-gray-400">לא צוין</span>
                     )}

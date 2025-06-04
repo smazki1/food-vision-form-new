@@ -8,6 +8,7 @@ import {
 } from '@/hooks/useSubmissions';
 import { SubmissionViewer } from '@/components/admin/submissions/SubmissionViewer';
 import { SUBMISSION_STATUSES } from '@/types/submission';
+import { LeadSubmissionModal } from './LeadSubmissionModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,14 +36,17 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Lead } from '@/types/lead';
 
 interface SubmissionsSectionProps {
   leadId: string;
+  lead?: Lead;
   viewMode?: 'compact' | 'detailed';
 }
 
 export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
   leadId,
+  lead,
   viewMode = 'compact'
 }) => {
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null);
@@ -68,8 +72,6 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
   };
 
   const handleUploadSubmission = () => {
-    // TODO: Implement upload submission modal
-    toast.info('פיצ\'ר העלאת הגשה ידנית בהקמה');
     setIsUploadModalOpen(true);
   };
 
@@ -318,21 +320,13 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
       {/* Submission Viewer Modal */}
       {selectedSubmissionId && (
         <Sheet open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-          <SheetContent className="w-full max-w-[95vw] sm:max-w-[90vw]">
-            <SheetHeader>
-              <SheetTitle>פרטי הגשה</SheetTitle>
-              <SheetDescription>
-                צפייה ועריכה של פרטי ההגשה
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6">
-              <SubmissionViewer
-                submissionId={selectedSubmissionId}
-                viewMode="admin"
-                context="full-page"
-                onClose={handleCloseViewer}
-              />
-            </div>
+          <SheetContent className="max-w-[95vw] sm:max-w-[90vw] p-0 h-full overflow-y-auto">
+            <SubmissionViewer
+              submissionId={selectedSubmissionId}
+              viewMode="admin"
+              context="full-page"
+              onClose={handleCloseViewer}
+            />
           </SheetContent>
         </Sheet>
       )}
@@ -442,6 +436,15 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
           </Tabs>
         </SheetContent>
       </Sheet>
+
+      {/* Lead Submission Upload Modal */}
+      {lead && (
+        <LeadSubmissionModal
+          lead={lead}
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+        />
+      )}
     </>
   );
 }; 

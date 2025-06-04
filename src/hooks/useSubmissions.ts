@@ -92,27 +92,14 @@ export function useSubmissions() {
           .select(`
             submission_id,
             client_id,
-            original_item_id,
             item_type,
             item_name_at_submission,
-            assigned_package_id_at_submission,
             submission_status,
             uploaded_at,
             original_image_urls,
             processed_image_urls,
             main_processed_image_url,
             edit_history,
-            edit_count,
-            final_approval_timestamp,
-            internal_team_notes,
-            assigned_editor_id,
-            target_completion_date,
-            priority,
-            created_lead_id,
-            submission_contact_name,
-            submission_contact_email,
-            submission_contact_phone,
-            lead_id,
             created_at
           `)
           .eq("client_id", effectiveClientId)
@@ -123,7 +110,33 @@ export function useSubmissions() {
           throw new Error(`Failed to fetch submissions: ${queryError.message}`);
         }
         
-        const submissions = data as ProcessedItem[];
+        // Transform data to match expected interface with default values for missing fields
+        const submissions = (data || []).map((item: any) => ({
+          submission_id: item.submission_id,
+          client_id: item.client_id,
+          original_item_id: '', // Default empty
+          item_type: item.item_type,
+          item_name_at_submission: item.item_name_at_submission,
+          assigned_package_id_at_submission: undefined,
+          submission_status: item.submission_status,
+          uploaded_at: item.uploaded_at,
+          original_image_urls: item.original_image_urls,
+          processed_image_urls: item.processed_image_urls,
+          main_processed_image_url: item.main_processed_image_url,
+          edit_history: item.edit_history,
+          edit_count: 0,
+          final_approval_timestamp: null,
+          internal_team_notes: null,
+          assigned_editor_id: null,
+          target_completion_date: null,
+          priority: null,
+          created_lead_id: null,
+          lead_id: null,
+          created_at: item.created_at,
+          submission_contact_name: null,
+          submission_contact_email: null,
+          submission_contact_phone: null
+        })) as ProcessedItem[];
         console.log("[useSubmissions] queryFn: Successfully fetched data for effectiveClientId:", effectiveClientId, "Data count:", submissions?.length);
         return submissions;
         
@@ -301,51 +314,57 @@ export const useSubmission = (submissionId: string) => {
   return useQuery<EnhancedSubmission>({
     queryKey: ['submission', submissionId],
     queryFn: async () => {
+      // Use only columns that actually exist in the database
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
           submission_id,
           client_id,
-          original_item_id,
           item_type,
           item_name_at_submission,
-          assigned_package_id_at_submission,
           submission_status,
           uploaded_at,
+          processed_at,
           original_image_urls,
           processed_image_urls,
           main_processed_image_url,
           edit_history,
-          edit_count,
           final_approval_timestamp,
-          internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
-          priority,
-          created_lead_id,
-          submission_contact_name,
-          submission_contact_email,
-          submission_contact_phone,
           lead_id,
-          created_at,
-          "status_ממתינה_לעיבוד_at",
-          "status_בעיבוד_at",
-          "status_מוכנה_להצגה_at",
-          "status_הערות_התקבלו_at",
-          "status_הושלמה_ואושרה_at",
-          clients(restaurant_name, contact_name, email, phone),
-          leads(restaurant_name, contact_name, email, phone)
+          original_item_id,
+          lora_link,
+          lora_name,
+          lora_id,
+          fixed_prompt,
+          created_lead_id
         `)
         .eq('submission_id', submissionId)
         .single();
 
       if (error) throw error;
       
-      // Handle joined data that comes as arrays
+      // Transform data to match expected interface with defaults for missing fields
       const processedData = {
         ...data,
-        clients: Array.isArray(data.clients) && data.clients.length > 0 ? data.clients[0] : undefined,
-        leads: Array.isArray(data.leads) && data.leads.length > 0 ? data.leads[0] : undefined
+        // Add compatibility fields with defaults
+        created_at: data.uploaded_at, // Use uploaded_at as created_at
+        edit_count: Array.isArray(data.edit_history) ? data.edit_history.length : 0,
+        internal_team_notes: '',
+        target_completion_date: null,
+        priority: 'Medium',
+        submission_contact_name: '',
+        submission_contact_email: '',
+        submission_contact_phone: '',
+        assigned_package_id_at_submission: null,
+        // Add missing status timestamp fields
+        "status_ממתינה_לעיבוד_at": null,
+        "status_בעיבוד_at": null,
+        "status_מוכנה_להצגה_at": null,
+        "status_הערות_התקבלו_at": null,
+        "status_הושלמה_ואושרה_at": null,
+        clients: undefined, // Will be fetched separately if needed
+        leads: undefined
       };
       
       return processedData as unknown as EnhancedSubmission;
@@ -359,9 +378,29 @@ export const useSubmissionComments = (submissionId: string) => {
   return useQuery<SubmissionComment[]>({
     queryKey: ['submission-comments', submissionId],
     queryFn: async () => {
-      // TODO: submission_comments table doesn't exist yet - returning empty array
-      console.warn('submission_comments table does not exist - returning empty comments');
-      return [];
+      console.log('[useSubmissionComments] Fetching comments for submission:', submissionId);
+      
+      const { data, error } = await supabase
+        .from('submission_comments')
+        .select(`
+          *,
+          created_by_user:created_by(email)
+        `)
+        .eq('submission_id', submissionId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[useSubmissionComments] Database error:', error);
+        // If table doesn't exist, return empty array instead of throwing
+        if (error.code === '42P01') { // relation does not exist
+          console.warn('submission_comments table does not exist - returning empty comments');
+          return [];
+        }
+        throw error;
+      }
+
+      console.log('[useSubmissionComments] Got comments:', data);
+      return data as SubmissionComment[] || [];
     },
     enabled: !!submissionId,
   });
@@ -405,17 +444,37 @@ export const useUpdateSubmissionLora = () => {
         lora_link?: string; 
         lora_name?: string; 
         fixed_prompt?: string; 
+        lora_id?: string;
       } 
     }) => {
-      // TODO: LoRA columns don't exist in database yet
-      console.warn('LoRA columns do not exist in database - data not saved');
-      return;
+      console.log('[useUpdateSubmissionLora] Updating LoRA data:', { submissionId, loraData });
+      
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .update({
+          lora_link: loraData.lora_link,
+          lora_name: loraData.lora_name,
+          fixed_prompt: loraData.fixed_prompt,
+          lora_id: loraData.lora_id
+        })
+        .eq('submission_id', submissionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useUpdateSubmissionLora] Database error:', error);
+        throw error;
+      }
+
+      console.log('[useUpdateSubmissionLora] Successfully updated LoRA data:', data);
+      return data;
     },
     onSuccess: (_, { submissionId }) => {
       queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
-      toast.success('נתוני LoRA עודכנו בהצלחה (זמנית - עמודות לא קיימות)');
+      toast.success('נתוני LoRA עודכנו בהצלחה');
     },
     onError: (error: any) => {
+      console.error('[useUpdateSubmissionLora] Mutation error:', error);
       toast.error(`שגיאה בעדכון נתוני LoRA: ${error.message}`);
     }
   });
@@ -437,15 +496,39 @@ export const useAddSubmissionComment = () => {
       commentText: string;
       visibility: string;
     }) => {
-      // TODO: submission_comments table doesn't exist yet
-      console.warn('submission_comments table does not exist - comment not saved');
-      return;
+      console.log('[useAddSubmissionComment] Adding comment:', { submissionId, commentType, commentText, visibility });
+      
+      const { data, error } = await supabase
+        .from('submission_comments')
+        .insert({
+          submission_id: submissionId,
+          comment_type: commentType,
+          comment_text: commentText,
+          visibility: visibility,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useAddSubmissionComment] Database error:', error);
+        // If table doesn't exist, show warning but don't fail completely
+        if (error.code === '42P01') { // relation does not exist
+          console.warn('submission_comments table does not exist - comment not saved');
+          throw new Error('מערכת ההערות עדיין לא מוכנה - אנא נסה שוב מאוחר יותר');
+        }
+        throw error;
+      }
+
+      console.log('[useAddSubmissionComment] Comment added successfully:', data);
+      return data;
     },
     onSuccess: (_, { submissionId }) => {
       queryClient.invalidateQueries({ queryKey: ['submission-comments', submissionId] });
-      toast.success('הערה נוספה בהצלחה (זמנית - טבלה לא קיימת)');
+      toast.success('הערה נוספה בהצלחה');
     },
     onError: (error: any) => {
+      console.error('[useAddSubmissionComment] Mutation error:', error);
       toast.error(`שגיאה בהוספת הערה: ${error.message}`);
     }
   });
@@ -512,47 +595,60 @@ export const useLeadSubmissions = (leadId: string) => {
     queryKey: ['submissions', leadId],
     queryFn: async () => {
       // Direct query: get submissions linked to this lead
+      // Use only columns that actually exist in the database
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
           submission_id,
           client_id,
-          original_item_id,
           item_type,
           item_name_at_submission,
-          assigned_package_id_at_submission,
           submission_status,
           uploaded_at,
+          processed_at,
           original_image_urls,
           processed_image_urls,
           main_processed_image_url,
           edit_history,
-          edit_count,
           final_approval_timestamp,
-          internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
-          priority,
-          created_lead_id,
-          submission_contact_name,
-          submission_contact_email,
-          submission_contact_phone,
           lead_id,
-          created_at,
-          clients(restaurant_name, contact_name, email, phone)
+          original_item_id,
+          lora_link,
+          lora_name,
+          lora_id,
+          fixed_prompt,
+          created_lead_id
         `)
         .eq('lead_id', leadId)
         .order('uploaded_at', { ascending: false });
 
       if (error) throw error;
       
-      // Handle joined data that comes as arrays
+      // Transform data to match expected interface with defaults for missing fields
       const processedData = data?.map(item => ({
         ...item,
-        clients: Array.isArray(item.clients) && item.clients.length > 0 ? item.clients[0] : undefined
+        // Add compatibility fields with defaults
+        created_at: item.uploaded_at, // Use uploaded_at as created_at
+        edit_count: Array.isArray(item.edit_history) ? item.edit_history.length : 0,
+        internal_team_notes: '',
+        target_completion_date: null,
+        priority: 'Medium',
+        submission_contact_name: '',
+        submission_contact_email: '',
+        submission_contact_phone: '',
+        assigned_package_id_at_submission: null,
+        // Add missing status timestamp fields
+        "status_ממתינה_לעיבוד_at": null,
+        "status_בעיבוד_at": null,
+        "status_מוכנה_להצגה_at": null,
+        "status_הערות_התקבלו_at": null,
+        "status_הושלמה_ואושרה_at": null,
+        clients: undefined, // Will be fetched separately if needed
+        leads: undefined
       }));
       
-      return (processedData || []) as EnhancedSubmission[];
+      return (processedData || []) as unknown as EnhancedSubmission[];
     },
     enabled: !!leadId
   });
@@ -646,6 +742,7 @@ export const useSubmissionsWithFilters = (filters: {
 // New hook to link submission to lead
 export const useLinkSubmissionToLead = () => {
   const queryClient = useQueryClient();
+  const activatePackageMutation = useActivateFreeSamplePackage();
   
   return useMutation({
     mutationFn: async ({ submissionId, leadId }: { submissionId: string; leadId: string }) => {
@@ -657,6 +754,15 @@ export const useLinkSubmissionToLead = () => {
 
       if (error) throw error;
 
+      // Automatically activate free sample package when linking submission to lead
+      try {
+        await activatePackageMutation.mutateAsync(leadId);
+        console.log('[useLinkSubmissionToLead] Free sample package activated for lead:', leadId);
+      } catch (activateError) {
+        console.warn('[useLinkSubmissionToLead] Failed to activate free sample package:', activateError);
+        // Don't throw error - the main linking succeeded
+      }
+
       return { submissionId, leadId };
     },
     onSuccess: (data) => {
@@ -664,7 +770,7 @@ export const useLinkSubmissionToLead = () => {
       queryClient.invalidateQueries({ queryKey: ['submissions', data.leadId] });
       queryClient.invalidateQueries({ queryKey: ['lead-activity', data.leadId] });
       queryClient.invalidateQueries({ queryKey: ['lead', data.leadId] });
-      toast.success('ההגשה קושרה לליד בהצלחה');
+      toast.success('ההגשה קושרה לליד בהצלחה וחבילת טעימות הופעלה');
     },
     onError: (error) => {
       console.error('Error linking submission to lead:', error);
@@ -725,39 +831,30 @@ export const useUnlinkedSubmissions = () => {
   return useQuery<EnhancedSubmission[]>({
     queryKey: ['unlinked-submissions'],
     queryFn: async () => {
+      // Use only columns that actually exist in the database
       const { data, error } = await supabase
         .from('customer_submissions')
         .select(`
           submission_id,
           client_id,
-          original_item_id,
           item_type,
           item_name_at_submission,
-          assigned_package_id_at_submission,
           submission_status,
           uploaded_at,
+          processed_at,
           original_image_urls,
           processed_image_urls,
           main_processed_image_url,
           edit_history,
-          edit_count,
           final_approval_timestamp,
-          internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
-          priority,
-          created_lead_id,
-          submission_contact_name,
-          submission_contact_email,
-          submission_contact_phone,
           lead_id,
-          created_at,
-          "status_ממתינה_לעיבוד_at",
-          "status_בעיבוד_at",
-          "status_מוכנה_להצגה_at",
-          "status_הערות_התקבלו_at",
-          "status_הושלמה_ואושרה_at",
-          clients(restaurant_name, contact_name, email, phone)
+          original_item_id,
+          lora_link,
+          lora_name,
+          lora_id,
+          fixed_prompt,
+          created_lead_id
         `)
         .is('lead_id', null)
         .is('client_id', null)
@@ -765,13 +862,30 @@ export const useUnlinkedSubmissions = () => {
 
       if (error) throw error;
       
-      // Handle joined data that comes as arrays
+      // Transform data to match expected interface with defaults for missing fields
       const processedData = data?.map(item => ({
         ...item,
-        clients: Array.isArray(item.clients) && item.clients.length > 0 ? item.clients[0] : undefined
+        // Add compatibility fields with defaults
+        created_at: item.uploaded_at, // Use uploaded_at as created_at
+        edit_count: Array.isArray(item.edit_history) ? item.edit_history.length : 0,
+        internal_team_notes: '',
+        target_completion_date: null,
+        priority: 'Medium',
+        submission_contact_name: '',
+        submission_contact_email: '',
+        submission_contact_phone: '',
+        assigned_package_id_at_submission: null,
+        // Add missing status timestamp fields
+        "status_ממתינה_לעיבוד_at": null,
+        "status_בעיבוד_at": null,
+        "status_מוכנה_להצגה_at": null,
+        "status_הערות_התקבלו_at": null,
+        "status_הושלמה_ואושרה_at": null,
+        clients: undefined, // Will be fetched separately if needed
+        leads: undefined
       }));
       
-      return (processedData || []) as EnhancedSubmission[];
+      return (processedData || []) as unknown as EnhancedSubmission[];
     },
   });
 };

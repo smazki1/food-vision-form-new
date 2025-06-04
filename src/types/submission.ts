@@ -34,6 +34,7 @@ export type EnhancedSubmission = CustomerSubmission & {
   lora_link?: string | null;
   lora_name?: string | null;
   fixed_prompt?: string | null;
+  lora_id?: string | null;
   created_lead_id?: string | null;
   lead_id?: string | null;
   clients?: { 

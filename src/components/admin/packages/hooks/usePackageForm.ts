@@ -1,7 +1,6 @@
-
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createPackage, updatePackage } from "@/api/packageApi";
+import { createPackage, updatePackageViaRPC } from "@/api/packageApi";
 import { Package } from "@/types/package";
 import { toast } from "sonner";
 
@@ -50,12 +49,12 @@ export const packageToDefaultValues = (packageToEdit: Package | null): PackageFo
   }
 
   return {
-    package_name: packageToEdit.package_name,
+    package_name: packageToEdit.package_name || "",
     description: packageToEdit.description || "",
-    total_servings: packageToEdit.total_servings,
-    price: packageToEdit.price,
-    is_active: packageToEdit.is_active,
-    max_edits_per_serving: packageToEdit.max_edits_per_serving,
+    total_servings: packageToEdit.total_servings || 0,
+    price: packageToEdit.price || 0,
+    is_active: packageToEdit.is_active ?? true,
+    max_edits_per_serving: packageToEdit.max_edits_per_serving || 1,
     max_processing_time_days: packageToEdit.max_processing_time_days || null,
     features_tags: packageToEdit.features_tags ? packageToEdit.features_tags.join(", ") : ""
   };
@@ -66,35 +65,81 @@ export const usePackageForm = (packageToEdit: Package | null, onSuccess: () => v
   const isEditMode = !!packageToEdit;
 
   const createMutation = useMutation({
-    mutationFn: (data: PackageFormValues) => createPackage(formValuesToApiData(data)),
-    onSuccess: () => {
+    mutationFn: (data: PackageFormValues) => {
+      console.log('[usePackageForm] Creating package with data:', data);
+      const apiData = formValuesToApiData(data);
+      console.log('[usePackageForm] Transformed API data:', apiData);
+      return createPackage(apiData);
+    },
+    onSuccess: (result) => {
+      console.log('[usePackageForm] Package created successfully:', result);
+      // Invalidate all package-related queries
       queryClient.invalidateQueries({ queryKey: ["packages"] });
+      queryClient.invalidateQueries({ queryKey: ["packages_simplified"] });
+      // Force refetch of the cached query as well
+      queryClient.refetchQueries({ queryKey: ["packages"] });
+      queryClient.refetchQueries({ queryKey: ["packages_simplified"] });
       toast.success("החבילה נוצרה בהצלחה");
       onSuccess();
     },
     onError: (error) => {
+      console.error('[usePackageForm] Error creating package:', error);
       toast.error("שגיאה ביצירת החבילה");
-      console.error(error);
     }
   });
   
   const updateMutation = useMutation({
     mutationFn: (data: PackageFormValues) => {
       if (!packageToEdit) throw new Error("No package to edit");
-      return updatePackage(packageToEdit.package_id, formValuesToApiData(data));
+      console.log('[usePackageForm] Updating package with data:', data);
+      console.log('[usePackageForm] Package ID:', packageToEdit.package_id);
+      const apiData = formValuesToApiData(data);
+      console.log('[usePackageForm] Transformed API data for update:', apiData);
+      return updatePackageViaRPC(packageToEdit.package_id, apiData);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log('[usePackageForm] Package updated successfully:', result);
+      // Comprehensive cache invalidation strategy
+      
+      // Method 1: Invalidate specific query keys
       queryClient.invalidateQueries({ queryKey: ["packages"] });
+      queryClient.invalidateQueries({ queryKey: ["packages_simplified"] });
+      
+      // Method 2: Invalidate queries with predicate to catch all variations
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return key === "packages" || key === "packages_simplified";
+        }
+      });
+      
+      // Method 3: Force refetch to ensure UI updates immediately
+      queryClient.refetchQueries({ queryKey: ["packages"] });
+      queryClient.refetchQueries({ queryKey: ["packages_simplified"] });
+      
+      // Method 4: Clear all package-related cache and force fresh data
+      queryClient.removeQueries({ queryKey: ["packages"] });
+      queryClient.removeQueries({ queryKey: ["packages_simplified"] });
+      
+      console.log('[usePackageForm] Cache invalidation completed - all methods applied');
+      
       toast.success("החבילה עודכנה בהצלחה");
       onSuccess();
     },
     onError: (error) => {
+      console.error('[usePackageForm] Error updating package:', error);
+      console.error('[usePackageForm] Error details:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack
+      });
       toast.error("שגיאה בעדכון החבילה");
-      console.error(error);
     }
   });
 
   const handleSubmit = (data: PackageFormValues) => {
+    console.log('[usePackageForm] handleSubmit called with data:', data);
+    console.log('[usePackageForm] isEditMode:', isEditMode);
     if (isEditMode) {
       updateMutation.mutate(data);
     } else {

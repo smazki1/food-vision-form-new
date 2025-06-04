@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
@@ -18,15 +17,18 @@ export interface Notification {
 export function useNotifications() {
   const { role } = useCurrentUserRole();
   const queryClient = useQueryClient();
-  const [notificationsPollingInterval, setNotificationsPollingInterval] = useState(30000);
+  // Increased polling interval from 30 seconds to 5 minutes to reduce system load
+  const [notificationsPollingInterval, setNotificationsPollingInterval] = useState(300000);
   
   // Fetch user ID from auth session
   const { data: userId } = useQuery({
     queryKey: ['user-id'],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      return session?.user?.id;
+      // Return null instead of undefined to avoid React Query warnings
+      return session?.user?.id || null;
     },
+    staleTime: 1000 * 60 * 10, // Cache user ID for 10 minutes
   });
 
   // Fetch notifications for the current user
@@ -51,7 +53,8 @@ export function useNotifications() {
       return data as Notification[];
     },
     enabled: !!userId,
-    refetchInterval: notificationsPollingInterval,
+    refetchInterval: false, // Disabled automatic polling to reduce system load
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   // Listen for real-time updates to notifications

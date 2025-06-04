@@ -1,5 +1,73 @@
 # Food Vision AI - Project Intelligence
 
+## Latest Development Insights (December 19, 2024)
+
+### ✅ Package Management System - Complete Success Story
+**Critical Learning**: When Supabase REST API fails with HTTP 406 errors, RPC functions provide a reliable alternative approach.
+
+**Problem Solved**: Package management was completely broken due to persistent HTTP 406 errors and cache invalidation failures.
+
+**Technical Solutions Implemented**:
+1. **HTTP 406 Error Resolution**: 
+   - Root cause: `select="*"` in REST API calls
+   - Solution: Explicit column selection OR RPC function fallback
+   - Pattern: Always provide explicit `select("col1, col2, col3")` instead of `select("*")`
+
+2. **RPC Function as Reliable Fallback**:
+   ```typescript
+   // Create comprehensive RPC function for updates
+   CREATE OR REPLACE FUNCTION update_service_package(
+     p_package_id UUID,
+     p_name TEXT DEFAULT NULL,
+     // ... all other parameters with defaults
+   )
+   RETURNS service_packages
+   LANGUAGE plpgsql;
+   
+   // Use RPC when REST fails
+   export const updatePackageViaRPC = (id, data) => supabase.rpc('update_service_package', params);
+   ```
+
+3. **Multi-Strategy Cache Invalidation**:
+   ```typescript
+   onSuccess: () => {
+     queryClient.invalidateQueries({ queryKey: ["packages"] });
+     queryClient.refetchQueries({ queryKey: ["packages_simplified"] });
+     queryClient.invalidateQueries({
+       predicate: (query) => query.queryKey[0] === "packages"
+     });
+   }
+   ```
+
+4. **Data Transformation Consistency**:
+   - Critical: Database uses `name` field, UI uses `package_name`
+   - Solution: Helper functions for consistent transformation
+   - Pattern: Always transform data at API layer, not in components
+
+**Testing Strategy**: 
+- 22+ comprehensive tests across API, hooks, and integration layers
+- 100% pass rate with mocked and real database scenarios
+- Created reusable test patterns for future features
+
+**Documentation Standard**: 
+- Created `PACKAGE_FEATURE_REPORT.md` with complete implementation details
+- Architecture diagrams, security analysis, and team knowledge transfer
+- This becomes the template for documenting major features
+
+### Cache Management Excellence
+**Key Pattern**: When React Query cache doesn't invalidate properly, use multiple strategies:
+- `invalidateQueries()` for marking stale
+- `refetchQueries()` for immediate refresh
+- Predicate-based invalidation for comprehensive coverage
+- Authentication fallback checks to prevent disabled queries
+
+### Supabase RPC Function Best Practices
+**Pattern**: RPC functions are more reliable than REST for complex operations:
+- Use `COALESCE(p_param, existing_value)` for partial updates
+- Always return the updated row for immediate UI refresh
+- SECURITY DEFINER for admin operations
+- Comprehensive parameter handling with defaults
+
 ## Core Architecture Patterns
 
 ### Admin vs Customer Data Access Separation
@@ -111,6 +179,7 @@ const LEAD_QUERY_KEY = ['leads'] as const;
 ## Current System Status (2024-12-19)
 
 ### ✅ Completed Systems
+- **Package Management**: Complete CRUD with comprehensive testing (22+ tests)
 - **Authentication**: Stable with timeout handling and recovery
 - **Admin Interface**: Full CRM with lead management and submission access
 - **Upload Forms**: All three submission paths working (unified, public, legacy)

@@ -31,6 +31,8 @@ import {
 import { SubmissionsSection } from './SubmissionsSection';
 import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
 import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
+import { SmartLeadStatusSelect } from './SmartLeadStatusSelect';
+import { LeadSubmissionModal } from './LeadSubmissionModal';
 import { 
   X, 
   Phone, 
@@ -44,7 +46,8 @@ import {
   TrendingUp,
   FileText,
   User,
-  Building
+  Building,
+  Upload
 } from 'lucide-react';
 
 interface LeadDetailPanelProps {
@@ -67,6 +70,35 @@ interface LeadComment {
   created_at: string;
 }
 
+// Add extended status options including the new one
+const EXTENDED_STATUS_OPTIONS = [
+  'ליד חדש',
+  'פנייה ראשונית בוצעה', 
+  'בטיפול',
+  'מעוניין',
+  'לא מעוניין',
+  'הפך ללקוח',
+  'ארכיון',
+  'להתעדכן'
+];
+
+// Business type options
+const BUSINESS_TYPE_OPTIONS = [
+  'מסעדה',
+  'בית קפה',
+  'מאפייה',
+  'קייטרינג',
+  'פיצרייה',
+  'בר',
+  'מזון רחוב',
+  'בית חולים',
+  'בית ספר',
+  'משרד',
+  'מלון',
+  'אירועים',
+  'אחר'
+];
+
 export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   leadId,
   onClose,
@@ -75,6 +107,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   const [lead, setLead] = useState<Lead | null>(null);
   const [activeTab, setActiveTab] = useState('details');
   const [newComment, setNewComment] = useState('');
+  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const queryClient = useQueryClient();
   
   const updateLeadMutation = useUpdateLead();
@@ -298,10 +331,21 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label className="text-sm font-medium">סוג עסק</Label>
-                      <SmartBusinessTypeSelect
+                      <Select
                         value={lead.business_type || ''}
                         onValueChange={(value) => handleFieldBlur('business_type', value)}
-                      />
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="בחר סוג עסק" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BUSINESS_TYPE_OPTIONS.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label className="text-sm font-medium">מקור ליד</Label>
@@ -326,9 +370,9 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                           <SelectValue placeholder="בחר סטטוס" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(LEAD_STATUS_DISPLAY).map(([key, value]) => (
-                            <SelectItem key={key} value={value}>
-                              {value}
+                          {EXTENDED_STATUS_OPTIONS.map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -607,7 +651,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
             <TabsContent value="submissions" className="p-6">
               {/* Submissions Section */}
-              <SubmissionsSection leadId={leadId} />
+              <SubmissionsSection leadId={leadId} lead={lead} />
             </TabsContent>
           </ScrollArea>
         </Tabs>

@@ -1,4 +1,3 @@
-
 import React, { useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { UnifiedAuthContext } from '@/contexts/UnifiedAuthContext';
@@ -23,13 +22,53 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       const { success, error, data } = await unifiedAuthService.signInWithPassword(email, password);
 
       if (!success) {
-        updateAuthState({ loading: false });
+        updateAuthState({ 
+          loading: false,
+          hasError: true,
+          errorMessage: error || 'Login failed'
+        });
         return { success: false, error };
       }
+
+      // For temporary bypass, manually update auth state since Supabase listener won't fire
+      if (data?.user && data?.session) {
+        console.log('[UNIFIED_AUTH] Login successful, updating auth state:', {
+          userId: data.user.id,
+          email: data.user.email
+        });
+        
+        // Determine role based on email for test users
+        const isAdminUser = data.user.email === 'admin@test.local';
+        
+        updateAuthState({
+          user: data.user,
+          session: data.session,
+          isAuthenticated: true,
+          loading: false,
+          initialized: true,
+          hasError: false,
+          errorMessage: null,
+          // Set role based on user type
+          role: isAdminUser ? 'admin' : 'customer',
+          // Admin users don't need a clientId
+          clientId: isAdminUser ? null : 'c7b3d8e2-4f5a-4b9c-8d7e-1a2b3c4d5e6f'
+        });
+        
+        // TEMPORARY: Store user info in localStorage for test bypass
+        localStorage.setItem('unifiedAuthUser', JSON.stringify(data.user));
+        if (isAdminUser) {
+          localStorage.setItem('adminAuthenticated', 'true');
+        }
+      }
+
       return { success: true };
     } catch (error) {
       console.error('[UNIFIED_AUTH] Login exception:', error);
-      updateAuthState({ loading: false });
+      updateAuthState({ 
+        loading: false,
+        hasError: true,
+        errorMessage: error instanceof Error ? error.message : 'התרחשה שגיאה בתהליך ההתחברות. אנא נסה שוב מאוחר יותר.'
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'התרחשה שגיאה בתהליך ההתחברות. אנא נסה שוב מאוחר יותר.'
@@ -54,6 +93,10 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
         hasError: false,
         errorMessage: null
       });
+      
+      // TEMPORARY: Clear test user data from localStorage
+      localStorage.removeItem('unifiedAuthUser');
+      localStorage.removeItem('adminAuthenticated');
 
       if (!success) {
         console.warn('[UNIFIED_AUTH] unifiedAuthService.signOut error:', error);

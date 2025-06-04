@@ -40,45 +40,101 @@ export type Submission = {
   submission_contact_phone?: string | null;
 };
 
-// Get all submissions for a client
-export async function getClientSubmissions(clientId: string): Promise<Submission[]> {
-  const { data, error } = await supabase
-    .from("customer_submissions")
-    .select(`
-      submission_id,
-      client_id,
-      original_item_id,
-      item_type,
-      item_name_at_submission,
-      assigned_package_id_at_submission,
-      submission_status,
-      uploaded_at,
-      original_image_urls,
-      processed_image_urls,
-      main_processed_image_url,
-      edit_history,
-      edit_count,
-      final_approval_timestamp,
-      internal_team_notes,
-      assigned_editor_id,
-      target_completion_date,
-      priority,
-      created_lead_id,
-      submission_contact_name,
-      submission_contact_email,
-      submission_contact_phone,
-      lead_id,
-      created_at
-    `)
-    .eq("client_id", clientId)
-    .order("uploaded_at", { ascending: false });
+// Get all submissions for a client - fallback version with basic columns only
+export async function getClientSubmissionsBasic(clientId: string): Promise<Submission[]> {
+  console.log('[getClientSubmissionsBasic] Fetching basic submissions for client:', clientId);
+  
+  try {
+    const { data, error } = await supabase
+      .from("customer_submissions")
+      .select(`
+        submission_id,
+        client_id,
+        item_type,
+        item_name_at_submission,
+        submission_status,
+        uploaded_at,
+        original_image_urls,
+        processed_image_urls,
+        main_processed_image_url,
+        edit_history,
+        created_at
+      `)
+      .eq("client_id", clientId)
+      .order("uploaded_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching client submissions:", error);
+    if (error) {
+      console.error("Error fetching basic client submissions:", error);
+      throw error;
+    }
+
+    console.log('[getClientSubmissionsBasic] Successfully fetched', data?.length || 0, 'basic submissions');
+    
+    // Fill in missing fields with defaults
+    const submissions = data.map((item: any) => ({
+      submission_id: item.submission_id,
+      client_id: item.client_id,
+      original_item_id: '', // Default empty
+      item_type: item.item_type,
+      item_name_at_submission: item.item_name_at_submission,
+      assigned_package_id_at_submission: undefined,
+      submission_status: item.submission_status,
+      uploaded_at: item.uploaded_at,
+      original_image_urls: item.original_image_urls,
+      processed_image_urls: item.processed_image_urls,
+      main_processed_image_url: item.main_processed_image_url,
+      edit_history: item.edit_history,
+      edit_count: 0,
+      final_approval_timestamp: null,
+      internal_team_notes: null,
+      assigned_editor_id: null,
+      target_completion_date: null,
+      priority: null,
+      created_lead_id: null,
+      lead_id: null,
+      created_at: item.created_at,
+      submission_contact_name: null,
+      submission_contact_email: null,
+      submission_contact_phone: null
+    }));
+    
+    return submissions as Submission[];
+  } catch (error) {
+    console.error('[getClientSubmissionsBasic] Exception:', error);
     throw error;
   }
+}
 
-  return data as Submission[];
+// Get all submissions for a client
+export async function getClientSubmissions(clientId: string): Promise<Submission[]> {
+  console.log('[getClientSubmissions] Fetching submissions for client:', clientId);
+  
+  try {
+    // Try the full version first, fallback to basic if it fails
+    const { data, error } = await supabase
+      .from("customer_submissions")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("uploaded_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching client submissions, trying basic version:", error);
+      // Fallback to basic version
+      return await getClientSubmissionsBasic(clientId);
+    }
+
+    console.log('[getClientSubmissions] Successfully fetched', data?.length || 0, 'submissions');
+    return data as Submission[];
+  } catch (error) {
+    console.error('[getClientSubmissions] Exception, trying basic version:', error);
+    // Fallback to basic version
+    try {
+      return await getClientSubmissionsBasic(clientId);
+    } catch (fallbackError) {
+      console.error('[getClientSubmissions] Both versions failed:', fallbackError);
+      throw fallbackError;
+    }
+  }
 }
 
 // Create a new submission for a dish, cocktail, or drink
@@ -157,11 +213,11 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
   // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
 
-  // 2. Filter for dish submissions and get unique dish IDs
+  // 2. Filter for dish submissions and get unique dish IDs, excluding empty/null values
   const dishIds = [
     ...new Set(
       submissions
-        .filter(sub => sub.item_type === 'dish')
+        .filter(sub => sub.item_type === 'dish' && sub.original_item_id && sub.original_item_id.trim() !== '')
         .map(sub => sub.original_item_id)
     ),
   ];
@@ -189,11 +245,11 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
   // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
 
-  // 2. Filter for cocktail submissions and get unique cocktail IDs
+  // 2. Filter for cocktail submissions and get unique cocktail IDs, excluding empty/null values
   const cocktailIds = [
     ...new Set(
       submissions
-        .filter(sub => sub.item_type === 'cocktail')
+        .filter(sub => sub.item_type === 'cocktail' && sub.original_item_id && sub.original_item_id.trim() !== '')
         .map(sub => sub.original_item_id)
     ),
   ];
@@ -221,11 +277,11 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
   // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
 
-  // 2. Filter for drink submissions and get unique drink IDs
+  // 2. Filter for drink submissions and get unique drink IDs, excluding empty/null values
   const drinkIds = [
     ...new Set(
       submissions
-        .filter(sub => sub.item_type === 'drink')
+        .filter(sub => sub.item_type === 'drink' && sub.original_item_id && sub.original_item_id.trim() !== '')
         .map(sub => sub.original_item_id)
     ),
   ];

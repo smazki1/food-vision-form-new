@@ -179,3 +179,213 @@
    - Custom hook testing
    - Mocked API responses
    - State management testing 
+
+## Package Management Patterns (Latest - December 2024)
+
+### API Layer Patterns
+1. **Dual Approach Pattern** - Critical for Supabase HTTP 406 Error Resolution
+   ```typescript
+   // REST API approach (primary)
+   export async function updatePackage(packageId: string, data: Partial<Package>): Promise<Package> {
+     const { data, error } = await supabase
+       .from("service_packages")
+       .update(transformedData)
+       .eq("package_id", packageId)
+       .select("package_id, name, description, ...") // Explicit columns to avoid 406
+       .single();
+   }
+
+   // RPC approach (fallback for reliability)
+   export async function updatePackageViaRPC(packageId: string, data: Partial<Package>): Promise<Package> {
+     const { data, error } = await supabase
+       .rpc('update_service_package', rpcParams);
+   }
+   ```
+
+2. **Data Transformation Pattern** - Database ↔ Interface Mapping
+   ```typescript
+   // Helper functions for consistent data transformation
+   const transformDbRowToPackage = (row: any): Package => ({
+     package_id: row.package_id,
+     package_name: row.name, // Map 'name' from DB to 'package_name' for interface
+     description: row.description,
+     // ... other fields
+   });
+
+   const transformPackageToDbRow = (packageData: Omit<Package, "package_id">) => ({
+     name: packageData.package_name, // Map 'package_name' from interface to 'name' for DB
+     description: packageData.description,
+     // ... other fields
+   });
+   ```
+
+3. **Enhanced Error Logging Pattern**
+   ```typescript
+   try {
+     const { data, error } = await supabaseOperation;
+     if (error) {
+       console.error(`[packageApi] Supabase error:`, {
+         code: error.code,
+         details: error.details,
+         hint: error.hint,
+         message: error.message
+       });
+       throw error;
+     }
+   } catch (error) {
+     console.error(`[packageApi] Exception:`, error);
+     throw error;
+   }
+   ```
+
+### Cache Management Patterns
+1. **Multi-Strategy Cache Invalidation** - Ensures UI Refresh
+   ```typescript
+   const mutation = useMutation({
+     mutationFn: updatePackageViaRPC,
+     onSuccess: () => {
+       // Strategy 1: Invalidate specific query keys
+       queryClient.invalidateQueries({ queryKey: ["packages"] });
+       queryClient.invalidateQueries({ queryKey: ["packages_simplified"] });
+       
+       // Strategy 2: Force refetch for immediate update
+       queryClient.refetchQueries({ queryKey: ["packages"] });
+       
+       // Strategy 3: Predicate-based clearing (catches all variations)
+       queryClient.invalidateQueries({
+         predicate: (query) => 
+           query.queryKey[0] === "packages" || 
+           query.queryKey[0] === "packages_simplified"
+       });
+     }
+   });
+   ```
+
+2. **Authentication-Stable Query Pattern**
+   ```typescript
+   const { data: packages, isLoading } = useQuery({
+     queryKey: ["packages_simplified"],
+     queryFn: getPackages,
+     enabled: !!user || !!localStorage.getItem('auth-fallback'), // Multiple auth checks
+     staleTime: 1000 * 60 * 5, // 5 minutes cache
+   });
+   ```
+
+### Form Management Patterns
+1. **Comprehensive Form Hook Pattern**
+   ```typescript
+   export const usePackageForm = (existingPackage: Package | null, onSuccess: () => void) => {
+     const isEditMode = !!existingPackage;
+     
+     const mutation = useMutation({
+       mutationFn: isEditMode ? 
+         (data) => updatePackageViaRPC(existingPackage.package_id, data) :
+         (data) => createPackage(data),
+       onSuccess: () => {
+         toast.success(isEditMode ? 'החבילה עודכנה בהצלחה' : 'החבילה נוצרה בהצלחה');
+         // Multi-strategy cache invalidation
+         onSuccess();
+       },
+       onError: () => {
+         toast.error(isEditMode ? 'שגיאה בעדכון החבילה' : 'שגיאה ביצירת החבילה');
+       }
+     });
+   };
+   ```
+
+### Database RPC Pattern
+1. **Comprehensive RPC Function** - Handles All Package Updates
+   ```sql
+   CREATE OR REPLACE FUNCTION update_service_package(
+     p_package_id UUID,
+     p_name TEXT DEFAULT NULL,
+     p_description TEXT DEFAULT NULL,
+     p_total_servings INTEGER DEFAULT NULL,
+     p_price NUMERIC DEFAULT NULL,
+     p_is_active BOOLEAN DEFAULT NULL,
+     p_features_tags TEXT[] DEFAULT NULL,
+     p_max_processing_time_days INTEGER DEFAULT NULL,
+     p_max_edits_per_serving INTEGER DEFAULT NULL
+   )
+   RETURNS service_packages
+   LANGUAGE plpgsql
+   SECURITY DEFINER
+   AS $$
+   BEGIN
+     UPDATE service_packages SET
+       name = COALESCE(p_name, name),
+       description = COALESCE(p_description, description),
+       total_servings = COALESCE(p_total_servings, total_servings),
+       price = COALESCE(p_price, price),
+       is_active = COALESCE(p_is_active, is_active),
+       features_tags = COALESCE(p_features_tags, features_tags),
+       max_processing_time_days = COALESCE(p_max_processing_time_days, max_processing_time_days),
+       max_edits_per_serving = COALESCE(p_max_edits_per_serving, max_edits_per_serving),
+       updated_at = NOW()
+     WHERE package_id = p_package_id;
+     
+     RETURN (SELECT * FROM service_packages WHERE package_id = p_package_id);
+   END;
+   $$;
+   ```
+
+### Testing Patterns
+1. **Comprehensive API Testing Pattern**
+   ```typescript
+   describe('Package API', () => {
+     beforeEach(() => {
+       vi.clearAllMocks();
+     });
+
+     it('should handle RPC errors', async () => {
+       const mockError = new Error('RPC error');
+       mockSupabase.rpc.mockResolvedValue({ data: null, error: mockError });
+       
+       await expect(updatePackageViaRPC('123', {})).rejects.toThrow(mockError);
+     });
+   });
+   ```
+
+2. **React Hook Testing Pattern**
+   ```typescript
+   describe('usePackageForm hook', () => {
+     const createWrapper = () => {
+       const queryClient = new QueryClient({
+         defaultOptions: {
+           queries: { retry: false },
+           mutations: { retry: false }
+         }
+       });
+       return ({ children }) => (
+         <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+       );
+     };
+
+     it('should handle successful package creation', async () => {
+       vi.mocked(packageApi.createPackage).mockResolvedValue(mockCreatedPackage);
+       // ... test implementation
+     });
+   });
+   ```
+
+3. **Integration Testing Pattern**
+   ```typescript
+   describe('Package RPC Integration Tests', () => {
+     let testPackageId: string;
+
+     beforeEach(async () => {
+       // Create test data
+       const { data } = await supabase.from('service_packages').insert(testData).select().single();
+       testPackageId = data.package_id;
+     });
+
+     afterEach(async () => {
+       // Clean up test data
+       await supabase.from('service_packages').delete().eq('package_id', testPackageId);
+     });
+   });
+   ```
+
+---
+
+## Architecture Overview 

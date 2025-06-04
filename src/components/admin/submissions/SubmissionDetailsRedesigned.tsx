@@ -332,6 +332,12 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
                 </p>
               </div>
               <div>
+                <p className="text-xs text-gray-500 mb-1">מזהה LoRA</p>
+                <p className="text-sm font-medium">
+                  {submission.lora_id || 'לא הוגדר'}
+                </p>
+              </div>
+              <div>
                 <p className="text-xs text-gray-500 mb-1">קישור LoRA</p>
                 <p className="text-sm font-medium break-all">
                   {submission.lora_link || 'לא הוגדר'}

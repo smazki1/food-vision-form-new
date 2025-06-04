@@ -81,9 +81,29 @@ export const useAdminSubmissionComments = (submissionId: string) => {
   return useQuery<SubmissionComment[]>({
     queryKey: ['admin-submission-comments', submissionId],
     queryFn: async () => {
-      // TODO: submission_comments table doesn't exist yet - returning empty array
-      console.warn('submission_comments table does not exist - returning empty comments');
-      return [];
+      console.log('[useAdminSubmissionComments] Fetching comments for submission:', submissionId);
+      
+      const { data, error } = await supabase
+        .from('submission_comments')
+        .select(`
+          *,
+          created_by_user:created_by(email)
+        `)
+        .eq('submission_id', submissionId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[useAdminSubmissionComments] Database error:', error);
+        // If table doesn't exist, return empty array instead of throwing
+        if (error.code === '42P01') { // relation does not exist
+          console.warn('submission_comments table does not exist - returning empty comments');
+          return [];
+        }
+        throw error;
+      }
+
+      console.log('[useAdminSubmissionComments] Got comments:', data);
+      return data as SubmissionComment[] || [];
     },
     enabled: !!submissionId,
   });
@@ -127,17 +147,37 @@ export const useAdminUpdateSubmissionLora = () => {
         lora_link?: string; 
         lora_name?: string; 
         fixed_prompt?: string; 
+        lora_id?: string;
       } 
     }) => {
-      // TODO: LoRA columns don't exist in database yet
-      console.warn('LoRA columns do not exist in database - data not saved');
-      return;
+      console.log('[useAdminUpdateSubmissionLora] Updating LoRA data:', { submissionId, loraData });
+      
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .update({
+          lora_link: loraData.lora_link,
+          lora_name: loraData.lora_name,
+          fixed_prompt: loraData.fixed_prompt,
+          lora_id: loraData.lora_id
+        })
+        .eq('submission_id', submissionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useAdminUpdateSubmissionLora] Database error:', error);
+        throw error;
+      }
+
+      console.log('[useAdminUpdateSubmissionLora] Successfully updated LoRA data:', data);
+      return data;
     },
     onSuccess: (_, { submissionId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-submission', submissionId] });
-      toast.success('נתוני LoRA עודכנו בהצלחה (זמנית - עמודות לא קיימות)');
+      toast.success('נתוני LoRA עודכנו בהצלחה');
     },
     onError: (error: any) => {
+      console.error('[useAdminUpdateSubmissionLora] Mutation error:', error);
       toast.error(`שגיאה בעדכון נתוני LoRA: ${error.message}`);
     }
   });
@@ -159,15 +199,39 @@ export const useAdminAddSubmissionComment = () => {
       commentText: string;
       visibility: string;
     }) => {
-      // TODO: submission_comments table doesn't exist yet
-      console.warn('submission_comments table does not exist - comment not saved');
-      return;
+      console.log('[useAdminAddSubmissionComment] Adding comment:', { submissionId, commentType, commentText, visibility });
+      
+      const { data, error } = await supabase
+        .from('submission_comments')
+        .insert({
+          submission_id: submissionId,
+          comment_type: commentType,
+          comment_text: commentText,
+          visibility: visibility,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('[useAdminAddSubmissionComment] Database error:', error);
+        // If table doesn't exist, show warning but don't fail completely
+        if (error.code === '42P01') { // relation does not exist
+          console.warn('submission_comments table does not exist - comment not saved');
+          throw new Error('מערכת ההערות עדיין לא מוכנה - אנא נסה שוב מאוחר יותר');
+        }
+        throw error;
+      }
+
+      console.log('[useAdminAddSubmissionComment] Comment added successfully:', data);
+      return data;
     },
     onSuccess: (_, { submissionId }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-submission-comments', submissionId] });
-      toast.success('הערה נוספה בהצלחה (זמנית - טבלה לא קיימת)');
+      toast.success('הערה נוספה בהצלחה');
     },
     onError: (error: any) => {
+      console.error('[useAdminAddSubmissionComment] Mutation error:', error);
       toast.error(`שגיאה בהוספת הערה: ${error.message}`);
     }
   });

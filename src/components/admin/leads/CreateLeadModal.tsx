@@ -19,6 +19,35 @@ import {
   LEAD_SOURCE_OPTIONS
 } from '@/types/lead';
 
+// Status options including the new one
+const EXTENDED_STATUS_OPTIONS = [
+  'ליד חדש',
+  'פנייה ראשונית בוצעה', 
+  'בטיפול',
+  'מעוניין',
+  'לא מעוניין',
+  'הפך ללקוח',
+  'ארכיון',
+  'להתעדכן'
+];
+
+// Business type options
+const BUSINESS_TYPE_OPTIONS = [
+  'מסעדה',
+  'בית קפה',
+  'מאפייה',
+  'קייטרינג',
+  'פיצרייה',
+  'בר',
+  'מזון רחוב',
+  'בית חולים',
+  'בית ספר',
+  'משרד',
+  'מלון',
+  'אירועים',
+  'אחר'
+];
+
 interface CreateLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -30,8 +59,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
     contact_name: '',
     phone: '',
     email: '',
-    lead_status: LeadStatusEnum.NEW,
-    lead_source: LeadSourceEnum.WEBSITE,
+    lead_status: 'ליד חדש',
+    lead_source: 'אתר',
     website_url: '',
     address: '',
     business_type: '',
@@ -69,8 +98,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
       contact_name: '',
       phone: '',
       email: '',
-      lead_status: LeadStatusEnum.NEW,
-      lead_source: LeadSourceEnum.WEBSITE,
+      lead_status: 'ליד חדש',
+      lead_source: 'אתר',
       website_url: '',
       address: '',
       business_type: '',
@@ -88,8 +117,8 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
         contact_name: formData.contact_name,
         phone: formData.phone,
         email: formData.email,
-        lead_status: formData.lead_status || LeadStatusEnum.NEW,
-        lead_source: formData.lead_source as LeadSourceEnum,
+        lead_status: formData.lead_status || 'ליד חדש',
+        lead_source: formData.lead_source,
         website_url: formData.website_url || '',
         address: formData.address || '',
         business_type: formData.business_type || '',
@@ -188,18 +217,18 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
             <div>
               <Label htmlFor="lead_status">סטטוס ליד</Label>
               <Select
+                value={formData.lead_status}
                 onValueChange={(value) => handleSelectChange('lead_status', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר סטטוס" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={LeadStatusEnum.NEW}>{LeadStatusEnum.NEW}</SelectItem>
-                  <SelectItem value={LeadStatusEnum.IN_TREATMENT}>{LeadStatusEnum.IN_TREATMENT}</SelectItem>
-                  <SelectItem value={LeadStatusEnum.INTERESTED}>{LeadStatusEnum.INTERESTED}</SelectItem>
-                  <SelectItem value={LeadStatusEnum.NOT_INTERESTED}>{LeadStatusEnum.NOT_INTERESTED}</SelectItem>
-                  <SelectItem value={LeadStatusEnum.CONVERTED_TO_CLIENT}>{LeadStatusEnum.CONVERTED_TO_CLIENT}</SelectItem>
-                  <SelectItem value={LeadStatusEnum.ARCHIVED}>{LeadStatusEnum.ARCHIVED}</SelectItem>
+                  {EXTENDED_STATUS_OPTIONS.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -207,17 +236,22 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
             <div>
               <Label htmlFor="lead_source">מקור ליד</Label>
               <Select
+                value={formData.lead_source}
                 onValueChange={(value) => handleSelectChange('lead_source', value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="בחר מקור" />
                 </SelectTrigger>
                 <SelectContent>
-                  {LEAD_SOURCE_OPTIONS.map((source) => (
-                    <SelectItem key={source.value} value={source.value}>
-                      {source.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="אתר">אתר</SelectItem>
+                  <SelectItem value="הפניה">הפניה</SelectItem>
+                  <SelectItem value="פייסבוק">פייסבוק</SelectItem>
+                  <SelectItem value="אינסטגרם">אינסטגרם</SelectItem>
+                  <SelectItem value="גוגל">גוגל</SelectItem>
+                  <SelectItem value="לינקדאין">לינקדאין</SelectItem>
+                  <SelectItem value="טלמרקטינג">טלמרקטינג</SelectItem>
+                  <SelectItem value="פה לאוזן">פה לאוזן</SelectItem>
+                  <SelectItem value="אחר">אחר</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -225,13 +259,21 @@ export const CreateLeadModal: React.FC<CreateLeadModalProps> = ({ isOpen, onClos
 
           <div>
             <Label htmlFor="business_type">סוג עסק</Label>
-            <Input
-              type="text"
-              id="business_type"
-              name="business_type"
+            <Select
               value={formData.business_type}
-              onChange={handleChange}
-            />
+              onValueChange={(value) => handleSelectChange('business_type', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="בחר סוג עסק" />
+              </SelectTrigger>
+              <SelectContent>
+                {BUSINESS_TYPE_OPTIONS.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
