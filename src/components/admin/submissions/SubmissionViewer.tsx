@@ -62,6 +62,8 @@ import {
   Eye,
   FileImage,
   FileText,
+  Tag,
+  Beaker,
 } from 'lucide-react';
 
 interface SubmissionViewerProps {
@@ -473,6 +475,62 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
           </Card>
         )}
 
+        {/* Submission Details Section - NEW */}
+        {(submission.description || submission.category || (submission.ingredients && submission.ingredients.length > 0)) && (
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                פרטי התוכן
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                
+                {/* Description */}
+                {submission.description && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-4 w-4 text-blue-600" />
+                      <h4 className="font-medium text-blue-800">תיאור/מרכיבים</h4>
+                    </div>
+                    <p className="text-sm text-blue-900 whitespace-pre-wrap">{submission.description}</p>
+                  </div>
+                )}
+
+                {/* Category */}
+                {submission.category && (
+                  <div className="bg-amber-50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="h-4 w-4 text-amber-600" />
+                      <h4 className="font-medium text-amber-800">קטגוריה</h4>
+                    </div>
+                    <p className="text-sm text-amber-900">{submission.category}</p>
+                  </div>
+                )}
+
+                {/* Ingredients Array (for cocktails) */}
+                {submission.ingredients && submission.ingredients.length > 0 && (
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Beaker className="h-4 w-4 text-green-600" />
+                      <h4 className="font-medium text-green-800">מרכיבים</h4>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {submission.ingredients.map((ingredient, index) => (
+                        <Badge key={index} variant="outline" className="text-green-700 border-green-300">
+                          {ingredient}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Info Grid - Responsive Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           
@@ -559,7 +617,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
           </Card>
 
           {/* Original Submission Contact Info (if available) */}
-          {(submission.submission_contact_name || submission.submission_contact_email || submission.submission_contact_phone) && (
+          {(submission.contact_name || submission.email || submission.phone) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -568,22 +626,22 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {submission.submission_contact_name && (
+                {submission.contact_name && (
                   <div>
                     <Label className="text-xs text-gray-500">שם איש קשר</Label>
-                    <p className="text-sm font-medium">{submission.submission_contact_name}</p>
+                    <p className="text-sm font-medium">{submission.contact_name}</p>
                   </div>
                 )}
-                {submission.submission_contact_email && (
+                {submission.email && (
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.submission_contact_email}</p>
+                    <p className="text-sm">{submission.email}</p>
                   </div>
                 )}
-                {submission.submission_contact_phone && (
+                {submission.phone && (
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.submission_contact_phone}</p>
+                    <p className="text-sm">{submission.phone}</p>
                   </div>
                 )}
               </CardContent>

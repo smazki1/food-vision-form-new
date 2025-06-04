@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       ai_pricing_settings: {
@@ -36,40 +61,15 @@ export type Database = {
         }
         Relationships: []
       }
-      backups: {
-        Row: {
-          backup_data: Json
-          backup_type: string
-          created_at: string | null
-          id: string
-        }
-        Insert: {
-          backup_data: Json
-          backup_type: string
-          created_at?: string | null
-          id?: string
-        }
-        Update: {
-          backup_data?: Json
-          backup_type?: string
-          created_at?: string | null
-          id?: string
-        }
-        Relationships: []
-      }
       clients: {
         Row: {
           app_notifications: boolean | null
           client_id: string
-          client_status: string | null
           contact_name: string
           created_at: string
           current_package_id: string | null
           email: string
           email_notifications: boolean | null
-          internal_notes: string | null
-          last_activity_at: string | null
-          original_lead_id: string | null
           phone: string | null
           remaining_servings: number | null
           restaurant_name: string
@@ -79,15 +79,11 @@ export type Database = {
         Insert: {
           app_notifications?: boolean | null
           client_id?: string
-          client_status?: string | null
           contact_name: string
           created_at?: string
           current_package_id?: string | null
           email: string
           email_notifications?: boolean | null
-          internal_notes?: string | null
-          last_activity_at?: string | null
-          original_lead_id?: string | null
           phone?: string | null
           remaining_servings?: number | null
           restaurant_name: string
@@ -97,15 +93,11 @@ export type Database = {
         Update: {
           app_notifications?: boolean | null
           client_id?: string
-          client_status?: string | null
           contact_name?: string
           created_at?: string
           current_package_id?: string | null
           email?: string
           email_notifications?: boolean | null
-          internal_notes?: string | null
-          last_activity_at?: string | null
-          original_lead_id?: string | null
           phone?: string | null
           remaining_servings?: number | null
           restaurant_name?: string
@@ -158,14 +150,16 @@ export type Database = {
       customer_submissions: {
         Row: {
           assigned_editor_id: string | null
-          branding_material_urls: string[] | null
+          category: string | null
           client_id: string | null
-          contact_name: string | null
           created_lead_id: string | null
+          description: string | null
+          edit_count: number | null
           edit_history: Json | null
-          email: string | null
           final_approval_timestamp: string | null
           fixed_prompt: string | null
+          ingredients: string[] | null
+          internal_team_notes: string | null
           item_name_at_submission: string
           item_type: string
           lead_id: string | null
@@ -175,25 +169,34 @@ export type Database = {
           main_processed_image_url: string | null
           original_image_urls: string[] | null
           original_item_id: string | null
-          phone: string | null
+          priority: string | null
           processed_at: string | null
           processed_image_urls: string[] | null
-          reference_example_urls: string[] | null
-          restaurant_name: string | null
+          status_בעיבוד_at: string | null
+          status_הושלמה_ואושרה_at: string | null
+          status_הערות_התקבלו_at: string | null
+          status_מוכנה_להצגה_at: string | null
+          status_ממתינה_לעיבוד_at: string | null
+          submission_contact_email: string | null
+          submission_contact_name: string | null
+          submission_contact_phone: string | null
           submission_id: string
           submission_status: string
+          target_completion_date: string | null
           uploaded_at: string
         }
         Insert: {
           assigned_editor_id?: string | null
-          branding_material_urls?: string[] | null
+          category?: string | null
           client_id?: string | null
-          contact_name?: string | null
           created_lead_id?: string | null
+          description?: string | null
+          edit_count?: number | null
           edit_history?: Json | null
-          email?: string | null
           final_approval_timestamp?: string | null
           fixed_prompt?: string | null
+          ingredients?: string[] | null
+          internal_team_notes?: string | null
           item_name_at_submission: string
           item_type: string
           lead_id?: string | null
@@ -203,25 +206,34 @@ export type Database = {
           main_processed_image_url?: string | null
           original_image_urls?: string[] | null
           original_item_id?: string | null
-          phone?: string | null
+          priority?: string | null
           processed_at?: string | null
           processed_image_urls?: string[] | null
-          reference_example_urls?: string[] | null
-          restaurant_name?: string | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
+          submission_contact_email?: string | null
+          submission_contact_name?: string | null
+          submission_contact_phone?: string | null
           submission_id?: string
           submission_status?: string
+          target_completion_date?: string | null
           uploaded_at?: string
         }
         Update: {
           assigned_editor_id?: string | null
-          branding_material_urls?: string[] | null
+          category?: string | null
           client_id?: string | null
-          contact_name?: string | null
           created_lead_id?: string | null
+          description?: string | null
+          edit_count?: number | null
           edit_history?: Json | null
-          email?: string | null
           final_approval_timestamp?: string | null
           fixed_prompt?: string | null
+          ingredients?: string[] | null
+          internal_team_notes?: string | null
           item_name_at_submission?: string
           item_type?: string
           lead_id?: string | null
@@ -231,13 +243,20 @@ export type Database = {
           main_processed_image_url?: string | null
           original_image_urls?: string[] | null
           original_item_id?: string | null
-          phone?: string | null
+          priority?: string | null
           processed_at?: string | null
           processed_image_urls?: string[] | null
-          reference_example_urls?: string[] | null
-          restaurant_name?: string | null
+          status_בעיבוד_at?: string | null
+          status_הושלמה_ואושרה_at?: string | null
+          status_הערות_התקבלו_at?: string | null
+          status_מוכנה_להצגה_at?: string | null
+          status_ממתינה_לעיבוד_at?: string | null
+          submission_contact_email?: string | null
+          submission_contact_name?: string | null
+          submission_contact_phone?: string | null
           submission_id?: string
           submission_status?: string
+          target_completion_date?: string | null
           uploaded_at?: string
         }
         Relationships: [
@@ -547,10 +566,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          features_tags: string[] | null
           is_active: boolean | null
-          max_edits_per_serving: number
-          max_processing_time_days: number | null
           name: string
           package_id: string
           price: number
@@ -560,10 +576,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
-          features_tags?: string[] | null
           is_active?: boolean | null
-          max_edits_per_serving?: number
-          max_processing_time_days?: number | null
           name: string
           package_id?: string
           price: number
@@ -573,10 +586,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
-          features_tags?: string[] | null
           is_active?: boolean | null
-          max_edits_per_serving?: number
-          max_processing_time_days?: number | null
           name?: string
           package_id?: string
           price?: number
@@ -629,137 +639,22 @@ export type Database = {
           },
         ]
       }
-      submissions: {
-        Row: {
-          business_name: string
-          created_at: string | null
-          description: string
-          id: number
-          image_urls: string[] | null
-          item_name: string
-          item_type: string
-          special_notes: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          business_name: string
-          created_at?: string | null
-          description: string
-          id?: number
-          image_urls?: string[] | null
-          item_name: string
-          item_type: string
-          special_notes?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          business_name?: string
-          created_at?: string | null
-          description?: string
-          id?: number
-          image_urls?: string[] | null
-          item_name?: string
-          item_type?: string
-          special_notes?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      auth_health_check: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      backup_critical_data: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      bytea_to_text: {
-        Args: { data: string }
-        Returns: string
-      }
-      check_auth_config: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       check_client_ownership: {
         Args: { client_id: string }
         Returns: boolean
-      }
-      check_system_health: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          check_name: string
-          status: string
-          details: Json
-        }[]
       }
       convert_lead_to_client: {
         Args: { p_lead_id: string }
         Returns: string
       }
-      create_supabase_user: {
-        Args: { user_email: string; user_password: string }
-        Returns: Json
-      }
-      debug_user_auth: {
-        Args: { user_email: string }
-        Returns: {
-          property: string
-          value: string
-        }[]
-      }
-      fix_user_auth_issues: {
-        Args: { user_email: string }
-        Returns: Json
-      }
-      generate_password_reset_for_user: {
-        Args: { user_email: string }
-        Returns: Json
-      }
-      generate_system_diagnostic_report: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
       get_my_role: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      get_user_auth_data: {
-        Args: { user_uid: string }
-        Returns: Json
-      }
-      get_user_auth_info: {
-        Args: { p_email: string }
-        Returns: Json
       }
       get_user_client_id: {
         Args: Record<PropertyKey, never>
@@ -773,57 +668,6 @@ export type Database = {
           p_submission_phone: string
         }
         Returns: string
-      }
-      http: {
-        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_delete: {
-        Args:
-          | { uri: string }
-          | { uri: string; content: string; content_type: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_get: {
-        Args: { uri: string } | { uri: string; data: Json }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_head: {
-        Args: { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_header: {
-        Args: { field: string; value: string }
-        Returns: Database["public"]["CompositeTypes"]["http_header"]
-      }
-      http_list_curlopt: {
-        Args: Record<PropertyKey, never>
-        Returns: {
-          curlopt: string
-          value: string
-        }[]
-      }
-      http_patch: {
-        Args: { uri: string; content: string; content_type: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_post: {
-        Args:
-          | { uri: string; content: string; content_type: string }
-          | { uri: string; data: Json }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_put: {
-        Args: { uri: string; content: string; content_type: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-      }
-      http_reset_curlopt: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      http_set_curlopt: {
-        Args: { curlopt: string; value: string }
-        Returns: boolean
       }
       is_admin: {
         Args: Record<PropertyKey, never>
@@ -880,76 +724,6 @@ export type Database = {
             }
         Returns: string
       }
-      reset_user_password: {
-        Args: { user_email: string; new_password: string }
-        Returns: Json
-      }
-      reset_user_password_secure: {
-        Args: { p_email: string; p_new_password: string }
-        Returns: Json
-      }
-      simulate_auth_success: {
-        Args: { user_email: string }
-        Returns: Json
-      }
-      test_auth_connection: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      test_auth_settings: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      test_manual_auth: {
-        Args: { user_email: string; test_password: string }
-        Returns: Json
-      }
-      text_to_bytea: {
-        Args: { data: string }
-        Returns: string
-      }
-      update_service_package: {
-        Args: {
-          p_package_id: string
-          p_name?: string
-          p_description?: string
-          p_total_servings?: number
-          p_price?: number
-          p_is_active?: boolean
-          p_features_tags?: string[]
-          p_max_processing_time_days?: number
-          p_max_edits_per_serving?: number
-        }
-        Returns: {
-          created_at: string
-          description: string | null
-          features_tags: string[] | null
-          is_active: boolean | null
-          max_edits_per_serving: number
-          max_processing_time_days: number | null
-          name: string
-          package_id: string
-          price: number
-          total_servings: number
-          updated_at: string
-        }
-      }
-      urlencode: {
-        Args: { data: Json } | { string: string } | { string: string }
-        Returns: string
-      }
-      verify_auth_system_health: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      verify_password: {
-        Args: { user_email: string; test_password: string }
-        Returns: boolean
-      }
-      verify_user_password: {
-        Args: { p_email: string; p_password: string }
-        Returns: Json
-      }
     }
     Enums: {
       lead_source_enum:
@@ -981,23 +755,7 @@ export type Database = {
         | "ארכיון"
     }
     CompositeTypes: {
-      http_header: {
-        field: string | null
-        value: string | null
-      }
-      http_request: {
-        method: unknown | null
-        uri: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content_type: string | null
-        content: string | null
-      }
-      http_response: {
-        status: number | null
-        content_type: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content: string | null
-      }
+      [_ in never]: never
     }
   }
 }
@@ -1108,6 +866,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       lead_source_enum: [
@@ -1143,3 +904,4 @@ export const Constants = {
     },
   },
 } as const
+
