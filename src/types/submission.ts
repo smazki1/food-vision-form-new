@@ -41,6 +41,11 @@ export type EnhancedSubmission = CustomerSubmission & {
   category?: string | null;
   ingredients?: string[] | null;
   priority?: string | null;
+  branding_material_urls?: string[] | null;
+  reference_example_urls?: string[] | null;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
   clients?: { 
     restaurant_name: string; 
     contact_name: string; 
