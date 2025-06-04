@@ -9,6 +9,8 @@ export interface AuthenticatedSubmissionData {
   description?: string;
   specialNotes?: string;
   referenceImages: File[];
+  brandingMaterials?: File[];
+  referenceExamples?: File[];
 }
 
 interface FormData {
@@ -20,14 +22,22 @@ interface FormData {
   description: string;
   specialNotes: string;
   referenceImages: File[];
+  brandingMaterials?: File[];
+  referenceExamples?: File[];
 }
 
 export const handleAuthenticatedSubmission = async (
   formData: FormData,
   clientId: string,
-  uploadedImageUrls: string[]
+  uploadedImageUrls: string[],
+  brandingMaterialUrls: string[] = [],
+  referenceExampleUrls: string[] = []
 ) => {
   console.log('[AuthenticatedSubmission] Submitting for authenticated user with clientId:', clientId);
+  console.log('[AuthenticatedSubmission] Additional files:', { 
+    brandingMaterials: brandingMaterialUrls.length, 
+    referenceExamples: referenceExampleUrls.length 
+  });
   
   const newItemId = uuidv4();
   
@@ -69,7 +79,9 @@ export const handleAuthenticatedSubmission = async (
     item_type: formData.itemType,
     item_name_at_submission: formData.itemName,
     submission_status: 'ממתינה לעיבוד' as const,
-    original_image_urls: uploadedImageUrls
+    original_image_urls: uploadedImageUrls,
+    branding_material_urls: brandingMaterialUrls,
+    reference_example_urls: referenceExampleUrls
   };
 
   const { error: submitError } = await supabase

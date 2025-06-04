@@ -58,6 +58,10 @@ import {
   Clock,
   Wand2,
   ArrowRight,
+  Palette,
+  Eye,
+  FileImage,
+  FileText,
 } from 'lucide-react';
 
 interface SubmissionViewerProps {
@@ -335,6 +339,139 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
             </div>
           </CardContent>
         </Card>
+
+        {/* Additional Materials Section */}
+        {((submission.branding_material_urls && submission.branding_material_urls.length > 0) || 
+          (submission.reference_example_urls && submission.reference_example_urls.length > 0)) && (
+          <Card className="overflow-hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                פרטים נוספים
+                <Badge variant="outline">
+                  {(submission.branding_material_urls?.length || 0) + (submission.reference_example_urls?.length || 0)} קבצים
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                
+                {/* Branding Materials */}
+                {submission.branding_material_urls && submission.branding_material_urls.length > 0 && (
+                  <div className="bg-purple-50 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Palette className="h-5 w-5 text-purple-600" />
+                      <h3 className="font-semibold text-purple-800">חומרי מיתוג</h3>
+                      <Badge variant="outline" className="text-purple-600 border-purple-300">
+                        {submission.branding_material_urls.length} קבצים
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4">
+                      {submission.branding_material_urls.map((url, index) => {
+                        const fileName = url.split('/').pop() || `קובץ ${index + 1}`;
+                        const isImage = url.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/);
+                        const isPdf = url.toLowerCase().endsWith('.pdf');
+                        
+                        return (
+                          <div key={index} className="bg-white rounded-lg border border-purple-200 overflow-hidden hover:scale-105 transition-transform">
+                            {isImage ? (
+                              <div className="aspect-square">
+                                <img 
+                                  src={url} 
+                                  alt={`חומר מיתוג ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-square flex flex-col items-center justify-center bg-purple-100">
+                                {isPdf ? (
+                                  <FileText className="h-8 w-8 text-purple-600 mb-2" />
+                                ) : (
+                                  <FileImage className="h-8 w-8 text-purple-600 mb-2" />
+                                )}
+                                <span className="text-xs text-purple-700 text-center px-2 truncate">
+                                  {fileName}
+                                </span>
+                              </div>
+                            )}
+                            <div className="p-2 bg-purple-50">
+                              <a 
+                                href={url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-purple-700 hover:text-purple-900 transition-colors"
+                              >
+                                <Download className="h-3 w-3" />
+                                <span className="truncate">{fileName}</span>
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Reference Examples */}
+                {submission.reference_example_urls && submission.reference_example_urls.length > 0 && (
+                  <div className="bg-green-50 rounded-lg p-6">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Eye className="h-5 w-5 text-green-600" />
+                      <h3 className="font-semibold text-green-800">דוגמאות להתייחסות</h3>
+                      <Badge variant="outline" className="text-green-600 border-green-300">
+                        {submission.reference_example_urls.length} קבצים
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4">
+                      {submission.reference_example_urls.map((url, index) => {
+                        const fileName = url.split('/').pop() || `קובץ ${index + 1}`;
+                        const isImage = url.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/);
+                        const isPdf = url.toLowerCase().endsWith('.pdf');
+                        
+                        return (
+                          <div key={index} className="bg-white rounded-lg border border-green-200 overflow-hidden hover:scale-105 transition-transform">
+                            {isImage ? (
+                              <div className="aspect-square">
+                                <img 
+                                  src={url} 
+                                  alt={`דוגמת התייחסות ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className="aspect-square flex flex-col items-center justify-center bg-green-100">
+                                {isPdf ? (
+                                  <FileText className="h-8 w-8 text-green-600 mb-2" />
+                                ) : (
+                                  <FileImage className="h-8 w-8 text-green-600 mb-2" />
+                                )}
+                                <span className="text-xs text-green-700 text-center px-2 truncate">
+                                  {fileName}
+                                </span>
+                              </div>
+                            )}
+                            <div className="p-2 bg-green-50">
+                              <a 
+                                href={url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 text-xs text-green-700 hover:text-green-900 transition-colors"
+                              >
+                                <Download className="h-3 w-3" />
+                                <span className="truncate">{fileName}</span>
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Info Grid - Responsive Columns */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

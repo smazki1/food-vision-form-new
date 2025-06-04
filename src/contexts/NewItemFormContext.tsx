@@ -10,6 +10,8 @@ export interface NewItemFormData {
   description: string;
   specialNotes: string;
   referenceImages: File[];
+  brandingMaterials: File[];
+  referenceExamples: File[];
 }
 
 interface NewItemFormContextType {
@@ -41,7 +43,9 @@ const initialFormData: NewItemFormData = {
   itemType: '',
   description: '',
   specialNotes: '',
-  referenceImages: []
+  referenceImages: [],
+  brandingMaterials: [],
+  referenceExamples: []
 };
 
 export const NewItemFormProvider: React.FC<NewItemFormProviderProps> = ({ children }) => {

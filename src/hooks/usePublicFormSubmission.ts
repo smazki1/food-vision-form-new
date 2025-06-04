@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 import { triggerMakeWebhook, MakeWebhookPayload } from '@/lib/triggerMakeWebhook';
+import { uploadImages, uploadAdditionalFiles } from '@/components/unified-upload/utils/imageUploadUtils';
 
 export const usePublicFormSubmission = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,38 +56,46 @@ export const usePublicFormSubmission = () => {
 
     let rpcSuccessful = false;
     let uploadedImageUrls: string[] = [];
+    let brandingMaterialUrls: string[] = [];
+    let referenceExampleUrls: string[] = [];
 
     try {
       console.log('[PublicFormSubmission] Uploading images...');
       
-      // Upload images
-      for (let i = 0; i < formData.referenceImages.length; i++) {
-        const file = formData.referenceImages[i];
-        if (file instanceof File) {
-          const fileExt = file.name.split('.').pop() || 'jpg';
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `public-submissions/${fileName}`;
-          
-          console.log(`[PublicFormSubmission] Uploading file ${i + 1}/${formData.referenceImages.length} to: ${filePath}`);
-
-          const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('food-vision-images')
-            .upload(filePath, file);
-
-          if (uploadError) {
-            console.error(`[PublicFormSubmission] Upload error for file ${i + 1}:`, uploadError);
-            throw new Error(`שגיאה בהעלאת תמונה ${i + 1}: ${uploadError.message}`);
-          }
-          
-          const { data: publicUrlData } = supabase.storage
-            .from('food-vision-images')
-            .getPublicUrl(filePath);
-          
-          uploadedImageUrls.push(publicUrlData.publicUrl);
-        }
-      }
+      // Upload main reference images
+      uploadedImageUrls = await uploadImages(
+        formData.referenceImages,
+        false, // isAuthenticated
+        null, // clientId
+        formData.itemType
+      );
       
       console.log('[PublicFormSubmission] All images uploaded successfully');
+
+      // Upload additional files if they exist
+      if (formData.brandingMaterials && formData.brandingMaterials.length > 0) {
+        console.log('[PublicFormSubmission] Uploading branding materials...');
+        brandingMaterialUrls = await uploadAdditionalFiles(
+          formData.brandingMaterials,
+          'branding',
+          false, // isAuthenticated
+          null, // clientId
+          formData.itemType
+        );
+        console.log('[PublicFormSubmission] Branding materials uploaded successfully');
+      }
+
+      if (formData.referenceExamples && formData.referenceExamples.length > 0) {
+        console.log('[PublicFormSubmission] Uploading reference examples...');
+        referenceExampleUrls = await uploadAdditionalFiles(
+          formData.referenceExamples,
+          'reference',
+          false, // isAuthenticated
+          null, // clientId
+          formData.itemType
+        );
+        console.log('[PublicFormSubmission] Reference examples uploaded successfully');
+      }
       
       // Prepare parameters for RPC including contact information
       let category = null;
@@ -109,6 +118,8 @@ export const usePublicFormSubmission = () => {
         p_category: category || null,
         p_ingredients: ingredients || null,
         p_reference_image_urls: uploadedImageUrls,
+        p_branding_material_urls: brandingMaterialUrls,
+        p_reference_example_urls: referenceExampleUrls,
         p_contact_name: formData.submitterName?.trim() || null,
         p_contact_email: formData.contactEmail?.trim() || null,
         p_contact_phone: formData.contactPhone?.trim() || null,

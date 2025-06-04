@@ -6,6 +6,7 @@ import { usePublicFormHandlers } from './hooks/usePublicFormHandlers';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
 import ItemDetailsStep from './steps/ItemDetailsStep';
 import ImageUploadStep from './steps/ImageUploadStep';
+import AdditionalDetailsStep from './steps/AdditionalDetailsStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import ProgressBar from './components/ProgressBar';
 import SuccessModal from './components/SuccessModal';
@@ -37,6 +38,11 @@ const publicFormSteps = [
   },
   {
     id: 4,
+    name: 'פרטים נוספים',
+    component: AdditionalDetailsStep
+  },
+  {
+    id: 5,
     name: 'סקירה ואישור',
     component: ReviewSubmitStep
   }
@@ -85,7 +91,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   }, [showSuccessModal]);
 
   const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
-  const isReviewStep = currentStepId === 4;
+  const isReviewStep = currentStepId === 5;
 
   console.log('[PublicFoodVisionUploadForm] Current navigation state:', {
     currentStepId,
@@ -110,7 +116,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         {/* Progress Bar */}
         <ProgressBar 
           currentStep={currentStepId} 
-          totalSteps={4}
+          totalSteps={5}
           steps={publicFormSteps}
         />
 
@@ -127,7 +133,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
             />
 
             {/* Navigation Buttons - Centered and Mobile Responsive */}
-            {currentStepId !== 4 && (
+            {currentStepId !== 5 && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-12 pt-8 border-t border-gray-100">
                 {!isFirstStep && (
                   <button

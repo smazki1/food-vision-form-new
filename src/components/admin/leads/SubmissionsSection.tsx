@@ -221,10 +221,18 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                             {submission.original_image_urls?.length || 0} תמונות מקוריות
                           </span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Package className="h-3 w-3" />
-                          <span>מזהה: {submission.submission_id.slice(-8)}</span>
-                        </div>
+                        {((submission.branding_material_urls && submission.branding_material_urls.length > 0) || 
+                          (submission.reference_example_urls && submission.reference_example_urls.length > 0)) ? (
+                          <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            <span>פרטים נוספים: {(submission.branding_material_urls?.length || 0) + (submission.reference_example_urls?.length || 0)} קבצים</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <Package className="h-3 w-3" />
+                            <span>מזהה: {submission.submission_id.slice(-8)}</span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Contact Information if available */}

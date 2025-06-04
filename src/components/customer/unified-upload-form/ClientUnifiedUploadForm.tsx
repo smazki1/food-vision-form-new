@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import ClientRestaurantDetailsStep from './steps/ClientRestaurantDetailsStep';
 import ClientItemDetailsStep, { ClientItemDetailsFormData } from './steps/ClientItemDetailsStep';
 import ClientImageUploadStep from './steps/ClientImageUploadStep';
+import ClientAdditionalDetailsStep from './steps/ClientAdditionalDetailsStep';
 import ClientReviewStep from './steps/ClientReviewStep';
 import { useClientUnifiedFormSubmission } from './hooks/useClientUnifiedFormSubmission';
 import { useClientFormValidation } from './hooks/useClientFormValidation';
@@ -15,7 +16,8 @@ const STEPS = [
   { id: 1, name: 'פרטי מסעדה' },
   { id: 2, name: 'פרטי פריט' },
   { id: 3, name: 'העלאת תמונות' },
-  { id: 4, name: 'סקירה ואישור' }
+  { id: 4, name: 'פרטים נוספים' },
+  { id: 5, name: 'סקירה ואישור' }
 ];
 
 const ClientUnifiedUploadForm: React.FC = () => {
@@ -116,6 +118,16 @@ const ClientUnifiedUploadForm: React.FC = () => {
     clearClientErrors();
   }, [formData.referenceImages, updateFormData, clearClientErrors]);
 
+  const handleBrandingMaterialsChange = useCallback((files: File[]) => {
+    updateFormData({ brandingMaterials: files });
+    clearClientErrors();
+  }, [updateFormData, clearClientErrors]);
+
+  const handleReferenceExamplesChange = useCallback((files: File[]) => {
+    updateFormData({ referenceExamples: files });
+    clearClientErrors();
+  }, [updateFormData, clearClientErrors]);
+
   const handleNext = () => {
     if (validateClientStep(currentStep, formData)) {
       setCurrentStep(prev => Math.min(prev + 1, STEPS.length));
@@ -179,6 +191,15 @@ const ClientUnifiedUploadForm: React.FC = () => {
           />
         );
       case 4:
+        return (
+          <ClientAdditionalDetailsStep
+            formData={formData}
+            errors={clientErrors}
+            onBrandingMaterialsChange={handleBrandingMaterialsChange}
+            onReferenceExamplesChange={handleReferenceExamplesChange}
+          />
+        );
+      case 5:
         return (
           <ClientReviewStep
             formData={formData}

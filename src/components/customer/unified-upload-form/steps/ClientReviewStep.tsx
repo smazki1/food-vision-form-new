@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
+import { Palette, Eye, FileText, FileImage } from 'lucide-react';
 
 export type ClientReviewFormData = NewItemFormData;
 
@@ -76,6 +77,59 @@ const ClientReviewStep: React.FC<ClientReviewStepProps> = ({
             <CardContent>
                 <p className="text-sm text-gray-500">לא הועלו תמונות לפריט זה.</p>
             </CardContent>
+        </Card>
+      )}
+
+      {/* Additional Details Section */}
+      {((formData.brandingMaterials && formData.brandingMaterials.length > 0) || 
+        (formData.referenceExamples && formData.referenceExamples.length > 0)) && (
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="text-lg">פרטים נוספים</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.brandingMaterials && formData.brandingMaterials.length > 0 && (
+              <div>
+                <div className="flex items-center mb-2">
+                  <Palette className="w-5 h-5 text-purple-500 ml-2" />
+                  <strong>חומרי מיתוג ({formData.brandingMaterials.length} קבצים):</strong>
+                </div>
+                <div className="space-y-1">
+                  {formData.brandingMaterials.map((file, index) => (
+                    <div key={index} className="flex items-center text-sm text-gray-600">
+                      {file.type.startsWith('image/') ? (
+                        <FileImage className="w-4 h-4 text-blue-500 ml-2" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-red-500 ml-2" />
+                      )}
+                      {file.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {formData.referenceExamples && formData.referenceExamples.length > 0 && (
+              <div>
+                <div className="flex items-center mb-2">
+                  <Eye className="w-5 h-5 text-green-500 ml-2" />
+                  <strong>דוגמאות להתייחסות ({formData.referenceExamples.length} קבצים):</strong>
+                </div>
+                <div className="space-y-1">
+                  {formData.referenceExamples.map((file, index) => (
+                    <div key={index} className="flex items-center text-sm text-gray-600">
+                      {file.type.startsWith('image/') ? (
+                        <FileImage className="w-4 h-4 text-blue-500 ml-2" />
+                      ) : (
+                        <FileText className="w-4 h-4 text-red-500 ml-2" />
+                      )}
+                      {file.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
         </Card>
       )}
     </div>

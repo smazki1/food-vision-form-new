@@ -87,6 +87,8 @@ const SubmissionsPage = () => {
             original_image_urls,
             processed_image_urls,
             main_processed_image_url,
+            branding_material_urls,
+            reference_example_urls,
             edit_history,
             final_approval_timestamp,
             assigned_editor_id,
@@ -242,6 +244,10 @@ const SubmissionsPage = () => {
                   <div className="text-sm text-gray-600">
                     <p>תמונות מקוריות: {submission.original_image_urls?.length || 0}</p>
                     <p>תמונות מעובדות: {submission.processed_image_urls?.length || 0}</p>
+                    {((submission.branding_material_urls && submission.branding_material_urls.length > 0) || 
+                      (submission.reference_example_urls && submission.reference_example_urls.length > 0)) && (
+                      <p>פרטים נוספים: {(submission.branding_material_urls?.length || 0) + (submission.reference_example_urls?.length || 0)} קבצים</p>
+                    )}
                     <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
                   </div>
                   <Button onClick={() => handleViewSubmission(submission.submission_id)}>

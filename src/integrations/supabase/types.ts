@@ -9,41 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      additional_details: {
-        Row: {
-          brand_colors: string | null
-          branding_materials_url: string | null
-          client_id: string
-          created_at: string
-          general_notes: string | null
-          visual_style: string | null
-        }
-        Insert: {
-          brand_colors?: string | null
-          branding_materials_url?: string | null
-          client_id: string
-          created_at?: string
-          general_notes?: string | null
-          visual_style?: string | null
-        }
-        Update: {
-          brand_colors?: string | null
-          branding_materials_url?: string | null
-          client_id?: string
-          created_at?: string
-          general_notes?: string | null
-          visual_style?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "additional_details_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: true
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-        ]
-      }
       ai_pricing_settings: {
         Row: {
           description: string | null
@@ -71,135 +36,81 @@ export type Database = {
         }
         Relationships: []
       }
-      business_types: {
+      backups: {
         Row: {
+          backup_data: Json
+          backup_type: string
           created_at: string | null
-          created_by: string | null
           id: string
-          type_name: string
         }
         Insert: {
+          backup_data: Json
+          backup_type: string
           created_at?: string | null
-          created_by?: string | null
           id?: string
-          type_name: string
         }
         Update: {
+          backup_data?: Json
+          backup_type?: string
           created_at?: string | null
-          created_by?: string | null
           id?: string
-          type_name?: string
         }
         Relationships: []
-      }
-      client_packages: {
-        Row: {
-          client_id: string
-          created_at: string
-          end_date: string | null
-          id: string
-          is_active: boolean | null
-          package_id: string | null
-          package_name: string
-          remaining_dishes: number
-          start_date: string | null
-          total_dishes: number
-          updated_at: string
-        }
-        Insert: {
-          client_id: string
-          created_at?: string
-          end_date?: string | null
-          id?: string
-          is_active?: boolean | null
-          package_id?: string | null
-          package_name: string
-          remaining_dishes: number
-          start_date?: string | null
-          total_dishes: number
-          updated_at?: string
-        }
-        Update: {
-          client_id?: string
-          created_at?: string
-          end_date?: string | null
-          id?: string
-          is_active?: boolean | null
-          package_id?: string | null
-          package_name?: string
-          remaining_dishes?: number
-          start_date?: string | null
-          total_dishes?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "client_packages_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-          {
-            foreignKeyName: "fk_client_packages_service_packages"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "service_packages"
-            referencedColumns: ["package_id"]
-          },
-        ]
       }
       clients: {
         Row: {
           app_notifications: boolean | null
           client_id: string
-          client_status: Database["public"]["Enums"]["client_status_type"]
+          client_status: string | null
           contact_name: string
           created_at: string
           current_package_id: string | null
           email: string
           email_notifications: boolean | null
           internal_notes: string | null
-          last_activity_at: string
+          last_activity_at: string | null
           original_lead_id: string | null
-          phone: string
-          remaining_servings: number
+          phone: string | null
+          remaining_servings: number | null
           restaurant_name: string
-          user_auth_id: string | null
+          updated_at: string
+          user_auth_id: string
         }
         Insert: {
           app_notifications?: boolean | null
           client_id?: string
-          client_status?: Database["public"]["Enums"]["client_status_type"]
+          client_status?: string | null
           contact_name: string
           created_at?: string
           current_package_id?: string | null
           email: string
           email_notifications?: boolean | null
           internal_notes?: string | null
-          last_activity_at?: string
+          last_activity_at?: string | null
           original_lead_id?: string | null
-          phone: string
-          remaining_servings?: number
+          phone?: string | null
+          remaining_servings?: number | null
           restaurant_name: string
-          user_auth_id?: string | null
+          updated_at?: string
+          user_auth_id: string
         }
         Update: {
           app_notifications?: boolean | null
           client_id?: string
-          client_status?: Database["public"]["Enums"]["client_status_type"]
+          client_status?: string | null
           contact_name?: string
           created_at?: string
           current_package_id?: string | null
           email?: string
           email_notifications?: boolean | null
           internal_notes?: string | null
-          last_activity_at?: string
+          last_activity_at?: string | null
           original_lead_id?: string | null
-          phone?: string
-          remaining_servings?: number
+          phone?: string | null
+          remaining_servings?: number | null
           restaurant_name?: string
-          user_auth_id?: string | null
+          updated_at?: string
+          user_auth_id?: string
         }
         Relationships: [
           {
@@ -214,155 +125,122 @@ export type Database = {
       cocktails: {
         Row: {
           client_id: string | null
-          cocktail_id: string
           created_at: string
           description: string | null
-          id: string | null
-          image_urls: string[] | null
-          ingredients: string | null
-          ingredients_array: string[] | null
+          id: string
           name: string
           notes: string | null
-          price: number | null
           reference_image_urls: string[] | null
+          updated_at: string
         }
         Insert: {
           client_id?: string | null
-          cocktail_id?: string
           created_at?: string
           description?: string | null
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
-          ingredients_array?: string[] | null
+          id?: string
           name: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
         Update: {
           client_id?: string | null
-          cocktail_id?: string
           created_at?: string
           description?: string | null
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
-          ingredients_array?: string[] | null
+          id?: string
           name?: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "cocktails_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-        ]
+        Relationships: []
       }
       customer_submissions: {
         Row: {
           assigned_editor_id: string | null
-          assigned_package_id_at_submission: string | null
+          branding_material_urls: string[] | null
           client_id: string | null
-          created_at: string
+          contact_name: string | null
           created_lead_id: string | null
-          edit_count: number | null
           edit_history: Json | null
+          email: string | null
           final_approval_timestamp: string | null
-          internal_team_notes: string | null
+          fixed_prompt: string | null
           item_name_at_submission: string
           item_type: string
+          lead_id: string | null
+          lora_id: string | null
+          lora_link: string | null
+          lora_name: string | null
           main_processed_image_url: string | null
           original_image_urls: string[] | null
-          original_item_id: string
-          priority: string | null
+          original_item_id: string | null
+          phone: string | null
+          processed_at: string | null
           processed_image_urls: string[] | null
-          status_בעיבוד_at: string | null
-          status_הושלמה_ואושרה_at: string | null
-          status_הערות_התקבלו_at: string | null
-          status_מוכנה_להצגה_at: string | null
-          status_ממתינה_לעיבוד_at: string | null
-          submission_contact_email: string | null
-          submission_contact_name: string | null
-          submission_contact_phone: string | null
+          reference_example_urls: string[] | null
+          restaurant_name: string | null
           submission_id: string
           submission_status: string
-          target_completion_date: string | null
           uploaded_at: string
         }
         Insert: {
           assigned_editor_id?: string | null
-          assigned_package_id_at_submission?: string | null
+          branding_material_urls?: string[] | null
           client_id?: string | null
-          created_at?: string
+          contact_name?: string | null
           created_lead_id?: string | null
-          edit_count?: number | null
           edit_history?: Json | null
+          email?: string | null
           final_approval_timestamp?: string | null
-          internal_team_notes?: string | null
+          fixed_prompt?: string | null
           item_name_at_submission: string
           item_type: string
+          lead_id?: string | null
+          lora_id?: string | null
+          lora_link?: string | null
+          lora_name?: string | null
           main_processed_image_url?: string | null
           original_image_urls?: string[] | null
-          original_item_id: string
-          priority?: string | null
+          original_item_id?: string | null
+          phone?: string | null
+          processed_at?: string | null
           processed_image_urls?: string[] | null
-          status_בעיבוד_at?: string | null
-          status_הושלמה_ואושרה_at?: string | null
-          status_הערות_התקבלו_at?: string | null
-          status_מוכנה_להצגה_at?: string | null
-          status_ממתינה_לעיבוד_at?: string | null
-          submission_contact_email?: string | null
-          submission_contact_name?: string | null
-          submission_contact_phone?: string | null
+          reference_example_urls?: string[] | null
+          restaurant_name?: string | null
           submission_id?: string
           submission_status?: string
-          target_completion_date?: string | null
           uploaded_at?: string
         }
         Update: {
           assigned_editor_id?: string | null
-          assigned_package_id_at_submission?: string | null
+          branding_material_urls?: string[] | null
           client_id?: string | null
-          created_at?: string
+          contact_name?: string | null
           created_lead_id?: string | null
-          edit_count?: number | null
           edit_history?: Json | null
+          email?: string | null
           final_approval_timestamp?: string | null
-          internal_team_notes?: string | null
+          fixed_prompt?: string | null
           item_name_at_submission?: string
           item_type?: string
+          lead_id?: string | null
+          lora_id?: string | null
+          lora_link?: string | null
+          lora_name?: string | null
           main_processed_image_url?: string | null
           original_image_urls?: string[] | null
-          original_item_id?: string
-          priority?: string | null
+          original_item_id?: string | null
+          phone?: string | null
+          processed_at?: string | null
           processed_image_urls?: string[] | null
-          status_בעיבוד_at?: string | null
-          status_הושלמה_ואושרה_at?: string | null
-          status_הערות_התקבלו_at?: string | null
-          status_מוכנה_להצגה_at?: string | null
-          status_ממתינה_לעיבוד_at?: string | null
-          submission_contact_email?: string | null
-          submission_contact_name?: string | null
-          submission_contact_phone?: string | null
+          reference_example_urls?: string[] | null
+          restaurant_name?: string | null
           submission_id?: string
           submission_status?: string
-          target_completion_date?: string | null
           uploaded_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "customer_submissions_assigned_package_id_at_submission_fkey"
-            columns: ["assigned_package_id_at_submission"]
-            isOneToOne: false
-            referencedRelation: "service_packages"
-            referencedColumns: ["package_id"]
-          },
           {
             foreignKeyName: "customer_submissions_client_id_fkey"
             columns: ["client_id"]
@@ -377,113 +255,80 @@ export type Database = {
             referencedRelation: "leads"
             referencedColumns: ["lead_id"]
           },
+          {
+            foreignKeyName: "customer_submissions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["lead_id"]
+          },
         ]
       }
       dishes: {
         Row: {
-          category: string | null
           client_id: string | null
           created_at: string
           description: string | null
-          dish_id: string
-          id: string | null
-          image_urls: string[] | null
-          ingredients: string | null
+          id: string
           name: string
           notes: string | null
-          price: number | null
           reference_image_urls: string[] | null
+          updated_at: string
         }
         Insert: {
-          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null
-          dish_id?: string
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
+          id?: string
           name: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
         Update: {
-          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null
-          dish_id?: string
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
+          id?: string
           name?: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "dishes_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-        ]
+        Relationships: []
       }
       drinks: {
         Row: {
-          category: string | null
           client_id: string | null
           created_at: string
           description: string | null
-          drink_id: string
-          id: string | null
-          image_urls: string[] | null
-          ingredients: string | null
+          id: string
           name: string
           notes: string | null
-          price: number | null
           reference_image_urls: string[] | null
+          updated_at: string
         }
         Insert: {
-          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null
-          drink_id?: string
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
+          id?: string
           name: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
         Update: {
-          category?: string | null
           client_id?: string | null
           created_at?: string
           description?: string | null
-          drink_id?: string
-          id?: string | null
-          image_urls?: string[] | null
-          ingredients?: string | null
+          id?: string
           name?: string
           notes?: string | null
-          price?: number | null
           reference_image_urls?: string[] | null
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "drinks_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["client_id"]
-          },
-        ]
+        Relationships: []
       }
       lead_activity_log: {
         Row: {
@@ -549,89 +394,6 @@ export type Database = {
           },
         ]
       }
-      lead_reminders: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          id: string
-          is_completed: boolean | null
-          lead_id: string
-          reminder_date: string
-          reminder_type: string | null
-          title: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_completed?: boolean | null
-          lead_id: string
-          reminder_date: string
-          reminder_type?: string | null
-          title: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          is_completed?: boolean | null
-          lead_id?: string
-          reminder_date?: string
-          reminder_type?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_reminders_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
-          },
-        ]
-      }
-      lead_submissions: {
-        Row: {
-          created_at: string | null
-          id: string
-          lead_id: string
-          submission_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          lead_id: string
-          submission_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          lead_id?: string
-          submission_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "lead_submissions_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
-          },
-          {
-            foreignKeyName: "lead_submissions_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "customer_submissions"
-            referencedColumns: ["submission_id"]
-          },
-        ]
-      }
       leads: {
         Row: {
           address: string | null
@@ -642,32 +404,27 @@ export type Database = {
           ai_training_5_count: number | null
           ai_training_cost_per_unit: number | null
           ai_trainings_count: number
-          archived_at: string | null
           business_type: string | null
           client_id: string | null
           contact_name: string
-          conversion_reason: string | null
           created_at: string
-          custom_prompt: string | null
           email: string
           exchange_rate_at_conversion: number | null
-          free_sample_package_active: boolean
-          is_archived: boolean | null
+          free_sample_package_active: boolean | null
           lead_id: string
-          lead_source: Database["public"]["Enums"]["lead_source_type"] | null
-          lead_status: Database["public"]["Enums"]["lead_status_type"]
-          lora_page_url: string | null
+          lead_source: string | null
+          lead_status: string | null
           next_follow_up_date: string | null
-          next_follow_up_notes: string | null
           notes: string | null
           phone: string
-          rejection_reason: string | null
-          reminder_notes: string | null
+          previous_status: string | null
+          reminder_at: string | null
+          reminder_details: string | null
           restaurant_name: string
           revenue_from_lead_local: number | null
           revenue_from_lead_usd: number | null
           roi: number | null
-          style_description: string | null
+          status: string
           total_ai_costs: number | null
           updated_at: string
           website_url: string | null
@@ -681,32 +438,27 @@ export type Database = {
           ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
-          archived_at?: string | null
           business_type?: string | null
           client_id?: string | null
           contact_name: string
-          conversion_reason?: string | null
           created_at?: string
-          custom_prompt?: string | null
           email: string
           exchange_rate_at_conversion?: number | null
-          free_sample_package_active?: boolean
-          is_archived?: boolean | null
+          free_sample_package_active?: boolean | null
           lead_id?: string
-          lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
-          lead_status?: Database["public"]["Enums"]["lead_status_type"]
-          lora_page_url?: string | null
+          lead_source?: string | null
+          lead_status?: string | null
           next_follow_up_date?: string | null
-          next_follow_up_notes?: string | null
           notes?: string | null
           phone: string
-          rejection_reason?: string | null
-          reminder_notes?: string | null
+          previous_status?: string | null
+          reminder_at?: string | null
+          reminder_details?: string | null
           restaurant_name: string
           revenue_from_lead_local?: number | null
           revenue_from_lead_usd?: number | null
           roi?: number | null
-          style_description?: string | null
+          status?: string
           total_ai_costs?: number | null
           updated_at?: string
           website_url?: string | null
@@ -720,39 +472,34 @@ export type Database = {
           ai_training_5_count?: number | null
           ai_training_cost_per_unit?: number | null
           ai_trainings_count?: number
-          archived_at?: string | null
           business_type?: string | null
           client_id?: string | null
           contact_name?: string
-          conversion_reason?: string | null
           created_at?: string
-          custom_prompt?: string | null
           email?: string
           exchange_rate_at_conversion?: number | null
-          free_sample_package_active?: boolean
-          is_archived?: boolean | null
+          free_sample_package_active?: boolean | null
           lead_id?: string
-          lead_source?: Database["public"]["Enums"]["lead_source_type"] | null
-          lead_status?: Database["public"]["Enums"]["lead_status_type"]
-          lora_page_url?: string | null
+          lead_source?: string | null
+          lead_status?: string | null
           next_follow_up_date?: string | null
-          next_follow_up_notes?: string | null
           notes?: string | null
           phone?: string
-          rejection_reason?: string | null
-          reminder_notes?: string | null
+          previous_status?: string | null
+          reminder_at?: string | null
+          reminder_details?: string | null
           restaurant_name?: string
           revenue_from_lead_local?: number | null
           revenue_from_lead_usd?: number | null
           roi?: number | null
-          style_description?: string | null
+          status?: string
           total_ai_costs?: number | null
           updated_at?: string
           website_url?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_client"
+            foreignKeyName: "leads_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
@@ -760,74 +507,39 @@ export type Database = {
           },
         ]
       }
-      messages: {
+      leads_old: {
         Row: {
-          content: string
-          message_id: string
-          read_status: boolean
-          sender_id: string
-          sender_type: string
-          submission_id: string
-          timestamp: string
-        }
-        Insert: {
-          content: string
-          message_id?: string
-          read_status?: boolean
-          sender_id: string
-          sender_type: string
-          submission_id: string
-          timestamp?: string
-        }
-        Update: {
-          content?: string
-          message_id?: string
-          read_status?: boolean
-          sender_id?: string
-          sender_type?: string
-          submission_id?: string
-          timestamp?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_submission_id_fkey"
-            columns: ["submission_id"]
-            isOneToOne: false
-            referencedRelation: "customer_submissions"
-            referencedColumns: ["submission_id"]
-          },
-        ]
-      }
-      notifications: {
-        Row: {
+          contact_name: string
           created_at: string
-          link: string | null
-          message: string
-          notification_id: string
-          read_status: boolean
-          related_entity_id: string | null
-          related_entity_type: string | null
-          user_id: string
+          email: string
+          lead_id: string
+          message: string | null
+          phone: string | null
+          restaurant_name: string
+          status: string | null
+          updated_at: string
         }
         Insert: {
+          contact_name: string
           created_at?: string
-          link?: string | null
-          message: string
-          notification_id?: string
-          read_status?: boolean
-          related_entity_id?: string | null
-          related_entity_type?: string | null
-          user_id: string
+          email: string
+          lead_id?: string
+          message?: string | null
+          phone?: string | null
+          restaurant_name: string
+          status?: string | null
+          updated_at?: string
         }
         Update: {
+          contact_name?: string
           created_at?: string
-          link?: string | null
-          message?: string
-          notification_id?: string
-          read_status?: boolean
-          related_entity_id?: string | null
-          related_entity_type?: string | null
-          user_id?: string
+          email?: string
+          lead_id?: string
+          message?: string | null
+          phone?: string | null
+          restaurant_name?: string
+          status?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -836,11 +548,11 @@ export type Database = {
           created_at: string
           description: string | null
           features_tags: string[] | null
-          is_active: boolean
+          is_active: boolean | null
           max_edits_per_serving: number
           max_processing_time_days: number | null
+          name: string
           package_id: string
-          package_name: string
           price: number
           total_servings: number
           updated_at: string
@@ -849,63 +561,110 @@ export type Database = {
           created_at?: string
           description?: string | null
           features_tags?: string[] | null
-          is_active?: boolean
+          is_active?: boolean | null
           max_edits_per_serving?: number
           max_processing_time_days?: number | null
+          name: string
           package_id?: string
-          package_name: string
-          price?: number
-          total_servings?: number
+          price: number
+          total_servings: number
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
           features_tags?: string[] | null
-          is_active?: boolean
+          is_active?: boolean | null
           max_edits_per_serving?: number
           max_processing_time_days?: number | null
+          name?: string
           package_id?: string
-          package_name?: string
           price?: number
           total_servings?: number
           updated_at?: string
         }
         Relationships: []
       }
+      submission_comments: {
+        Row: {
+          comment_id: string
+          comment_text: string
+          comment_type: string
+          created_at: string
+          created_by: string | null
+          submission_id: string
+          tagged_users: string[] | null
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          comment_id?: string
+          comment_text: string
+          comment_type: string
+          created_at?: string
+          created_by?: string | null
+          submission_id: string
+          tagged_users?: string[] | null
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          comment_id?: string
+          comment_text?: string
+          comment_type?: string
+          created_at?: string
+          created_by?: string | null
+          submission_id?: string
+          tagged_users?: string[] | null
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submission_comments_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "customer_submissions"
+            referencedColumns: ["submission_id"]
+          },
+        ]
+      }
       submissions: {
         Row: {
           business_name: string
-          created_at: string
+          created_at: string | null
           description: string
-          id: string
-          image_urls: Json | null
+          id: number
+          image_urls: string[] | null
           item_name: string
           item_type: string
           special_notes: string | null
-          status: string
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           business_name: string
-          created_at?: string
+          created_at?: string | null
           description: string
-          id?: string
-          image_urls?: Json | null
+          id?: number
+          image_urls?: string[] | null
           item_name: string
           item_type: string
           special_notes?: string | null
-          status?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           business_name?: string
-          created_at?: string
+          created_at?: string | null
           description?: string
-          id?: string
-          image_urls?: Json | null
+          id?: number
+          image_urls?: string[] | null
           item_name?: string
           item_type?: string
           special_notes?: string | null
-          status?: string
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -930,55 +689,65 @@ export type Database = {
         }
         Relationships: []
       }
-      visual_styles: {
-        Row: {
-          created_at: string
-          image_url: string
-          style_id: string
-          style_name: string
-        }
-        Insert: {
-          created_at?: string
-          image_url: string
-          style_id?: string
-          style_name: string
-        }
-        Update: {
-          created_at?: string
-          image_url?: string
-          style_id?: string
-          style_name?: string
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      add_business_type: {
-        Args: { type_name: string }
+      auth_health_check: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      backup_critical_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      bytea_to_text: {
+        Args: { data: string }
         Returns: string
+      }
+      check_auth_config: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      check_client_ownership: {
+        Args: { client_id: string }
+        Returns: boolean
+      }
+      check_system_health: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          check_name: string
+          status: string
+          details: Json
+        }[]
       }
       convert_lead_to_client: {
         Args: { p_lead_id: string }
         Returns: string
       }
-      get_business_types: {
-        Args: Record<PropertyKey, never>
+      create_supabase_user: {
+        Args: { user_email: string; user_password: string }
+        Returns: Json
+      }
+      debug_user_auth: {
+        Args: { user_email: string }
         Returns: {
-          id: string
-          type_name: string
-          created_at: string
+          property: string
+          value: string
         }[]
       }
-      get_client_for_user: {
-        Args: { user_auth_id: string }
-        Returns: string
+      fix_user_auth_issues: {
+        Args: { user_email: string }
+        Returns: Json
       }
-      get_client_id: {
-        Args: { p_user_id: string }
-        Returns: string
+      generate_password_reset_for_user: {
+        Args: { user_email: string }
+        Returns: Json
+      }
+      generate_system_diagnostic_report: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       get_my_role: {
         Args: Record<PropertyKey, never>
@@ -986,82 +755,249 @@ export type Database = {
       }
       get_user_auth_data: {
         Args: { user_uid: string }
-        Returns: {
-          user_role: string
-          client_id: string
-          restaurant_name: string
-          has_client_record: boolean
-        }[]
+        Returns: Json
+      }
+      get_user_auth_info: {
+        Args: { p_email: string }
+        Returns: Json
       }
       get_user_client_id: {
-        Args: { user_uid: string }
+        Args: Record<PropertyKey, never>
         Returns: string
       }
-      has_role: {
-        Args: { user_id: string; role_name: string }
+      handle_new_submission_for_lead_creation: {
+        Args: {
+          p_submission_restaurant_name: string
+          p_submission_contact_name: string
+          p_submission_email: string
+          p_submission_phone: string
+        }
+        Returns: string
+      }
+      http: {
+        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_delete: {
+        Args:
+          | { uri: string }
+          | { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_get: {
+        Args: { uri: string } | { uri: string; data: Json }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_head: {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_header: {
+        Args: { field: string; value: string }
+        Returns: Database["public"]["CompositeTypes"]["http_header"]
+      }
+      http_list_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          curlopt: string
+          value: string
+        }[]
+      }
+      http_patch: {
+        Args: { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_post: {
+        Args:
+          | { uri: string; content: string; content_type: string }
+          | { uri: string; data: Json }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_put: {
+        Args: { uri: string; content: string; content_type: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_reset_curlopt: {
+        Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_account_manager: {
-        Args: Record<PropertyKey, never>
+      http_set_curlopt: {
+        Args: { curlopt: string; value: string }
         Returns: boolean
       }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      is_admin_or_account_manager: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_client_owner: {
-        Args: { client_id: string }
-        Returns: boolean
-      }
       is_editor: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
-      public_submit_item_by_restaurant_name: {
+      log_lead_activity: {
         Args: {
-          p_restaurant_name: string
-          p_item_type: string
-          p_item_name: string
-          p_contact_name: string
-          p_contact_phone: string
-          p_contact_email: string
-          p_description?: string
-          p_category?: string
-          p_ingredients?: string[]
-          p_reference_image_urls?: string[]
+          p_lead_id: string
+          p_activity_description: string
+          p_user_id?: string
         }
+        Returns: undefined
+      }
+      migrate_leads_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      public_submit_item_by_restaurant_name: {
+        Args:
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+            }
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_category?: string
+              p_ingredients?: string[]
+              p_reference_image_urls?: string[]
+              p_branding_material_urls?: string[]
+              p_reference_example_urls?: string[]
+              p_contact_name?: string
+              p_contact_email?: string
+              p_contact_phone?: string
+            }
+          | {
+              p_restaurant_name: string
+              p_item_type: string
+              p_item_name: string
+              p_description?: string
+              p_notes?: string
+              p_reference_image_urls?: string[]
+            }
+        Returns: string
+      }
+      reset_user_password: {
+        Args: { user_email: string; new_password: string }
+        Returns: Json
+      }
+      reset_user_password_secure: {
+        Args: { p_email: string; p_new_password: string }
+        Returns: Json
+      }
+      simulate_auth_success: {
+        Args: { user_email: string }
+        Returns: Json
+      }
+      test_auth_connection: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      test_auth_settings: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      test_manual_auth: {
+        Args: { user_email: string; test_password: string }
+        Returns: Json
+      }
+      text_to_bytea: {
+        Args: { data: string }
+        Returns: string
+      }
+      update_service_package: {
+        Args: {
+          p_package_id: string
+          p_name?: string
+          p_description?: string
+          p_total_servings?: number
+          p_price?: number
+          p_is_active?: boolean
+          p_features_tags?: string[]
+          p_max_processing_time_days?: number
+          p_max_edits_per_serving?: number
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          features_tags: string[] | null
+          is_active: boolean | null
+          max_edits_per_serving: number
+          max_processing_time_days: number | null
+          name: string
+          package_id: string
+          price: number
+          total_servings: number
+          updated_at: string
+        }
+      }
+      urlencode: {
+        Args: { data: Json } | { string: string } | { string: string }
+        Returns: string
+      }
+      verify_auth_system_health: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      verify_password: {
+        Args: { user_email: string; test_password: string }
+        Returns: boolean
+      }
+      verify_user_password: {
+        Args: { p_email: string; p_password: string }
         Returns: Json
       }
     }
     Enums: {
-      client_status_type: "פעיל" | "לא פעיל" | "בהמתנה"
-      lead_source_type:
-        | "אתר"
-        | "הפניה"
-        | "פייסבוק"
-        | "אינסטגרם"
-        | "אחר"
-        | "קמפיין"
-        | "טלמרקטינג"
+      lead_source_enum:
+        | "website"
+        | "referral"
+        | "facebook"
+        | "instagram"
+        | "auto_submission"
+        | "other"
+      lead_status_enum:
+        | "new"
+        | "contacted"
+        | "interested_sent_pics"
+        | "waiting_reply"
+        | "meeting_scheduled"
+        | "demo_done"
+        | "quote_sent"
+        | "cold_follow_up"
+        | "not_interested"
+        | "converted_to_client"
+        | "archived"
       lead_status_type:
         | "ליד חדש"
         | "פנייה ראשונית בוצעה"
         | "בטיפול"
         | "מעוניין"
         | "לא מעוניין"
-        | "נקבעה פגישה/שיחה"
-        | "הדגמה בוצעה"
-        | "הצעת מחיר נשלחה"
-        | "ממתין לתשובה"
         | "הפך ללקוח"
         | "ארכיון"
     }
     CompositeTypes: {
-      [_ in never]: never
+      http_header: {
+        field: string | null
+        value: string | null
+      }
+      http_request: {
+        method: unknown | null
+        uri: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content_type: string | null
+        content: string | null
+      }
+      http_response: {
+        status: number | null
+        content_type: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content: string | null
+      }
     }
   }
 }
@@ -1174,15 +1110,26 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      client_status_type: ["פעיל", "לא פעיל", "בהמתנה"],
-      lead_source_type: [
-        "אתר",
-        "הפניה",
-        "פייסבוק",
-        "אינסטגרם",
-        "אחר",
-        "קמפיין",
-        "טלמרקטינג",
+      lead_source_enum: [
+        "website",
+        "referral",
+        "facebook",
+        "instagram",
+        "auto_submission",
+        "other",
+      ],
+      lead_status_enum: [
+        "new",
+        "contacted",
+        "interested_sent_pics",
+        "waiting_reply",
+        "meeting_scheduled",
+        "demo_done",
+        "quote_sent",
+        "cold_follow_up",
+        "not_interested",
+        "converted_to_client",
+        "archived",
       ],
       lead_status_type: [
         "ליד חדש",
@@ -1190,10 +1137,6 @@ export const Constants = {
         "בטיפול",
         "מעוניין",
         "לא מעוניין",
-        "נקבעה פגישה/שיחה",
-        "הדגמה בוצעה",
-        "הצעת מחיר נשלחה",
-        "ממתין לתשובה",
         "הפך ללקוח",
         "ארכיון",
       ],

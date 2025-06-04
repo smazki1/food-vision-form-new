@@ -10,14 +10,22 @@ interface FormData {
   description: string;
   specialNotes: string;
   referenceImages: File[];
-  submitterName?: string; // Add submitter name
+  brandingMaterials?: File[];
+  referenceExamples?: File[];
+  submitterName?: string;
 }
 
 export const handlePublicSubmission = async (
   formData: FormData,
-  uploadedImageUrls: string[]
+  uploadedImageUrls: string[],
+  brandingMaterialUrls: string[] = [],
+  referenceExampleUrls: string[] = []
 ) => {
   console.log('[PublicSubmission] Submitting for public user');
+  console.log('[PublicSubmission] Additional files:', { 
+    brandingMaterials: brandingMaterialUrls.length, 
+    referenceExamples: referenceExampleUrls.length 
+  });
   
   let category = null;
   let ingredients = null;
@@ -37,6 +45,8 @@ export const handlePublicSubmission = async (
     p_category: category || null,
     p_ingredients: ingredients || null,
     p_reference_image_urls: uploadedImageUrls,
+    p_branding_material_urls: brandingMaterialUrls,
+    p_reference_example_urls: referenceExampleUrls,
     p_contact_name: formData.submitterName?.trim() || null,
     p_contact_email: formData.contactEmail?.trim() || null,
     p_contact_phone: formData.contactPhone?.trim() || null,

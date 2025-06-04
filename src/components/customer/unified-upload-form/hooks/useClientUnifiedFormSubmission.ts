@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { uploadImages } from '@/components/unified-upload/utils/imageUploadUtils'; // Using alias path
-// import { handleAuthenticatedSubmission } from '@/components/unified-upload/services/authenticatedSubmissionService'; // Old service
-import { handleClientAuthenticatedSubmission } from '../services/clientAuthenticatedSubmissionService'; // New service
+import { uploadImages, uploadAdditionalFiles } from '@/components/unified-upload/utils/imageUploadUtils';
+import { handleClientAuthenticatedSubmission } from '../services/clientAuthenticatedSubmissionService';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 
 export const useClientUnifiedFormSubmission = () => {
@@ -20,6 +19,7 @@ export const useClientUnifiedFormSubmission = () => {
     toast.info("מעלה תמונות ושומר הגשה...");
 
     try {
+      // Upload main reference images
       const uploadedImageUrls = await uploadImages(
         formData.referenceImages,
         true, // isAuthenticated is always true for this hook
@@ -27,7 +27,42 @@ export const useClientUnifiedFormSubmission = () => {
         formData.itemType
       );
 
-      await handleClientAuthenticatedSubmission(formData, clientId, uploadedImageUrls); // Use new service
+      // Upload additional files if they exist
+      let brandingMaterialUrls: string[] = [];
+      let referenceExampleUrls: string[] = [];
+
+      if (formData.brandingMaterials && formData.brandingMaterials.length > 0) {
+        console.log('[ClientUnifiedFormSubmission] Uploading branding materials...');
+        brandingMaterialUrls = await uploadAdditionalFiles(
+          formData.brandingMaterials,
+          'branding',
+          true, // isAuthenticated
+          clientId,
+          formData.itemType
+        );
+        console.log('[ClientUnifiedFormSubmission] Branding materials uploaded successfully');
+      }
+
+      if (formData.referenceExamples && formData.referenceExamples.length > 0) {
+        console.log('[ClientUnifiedFormSubmission] Uploading reference examples...');
+        referenceExampleUrls = await uploadAdditionalFiles(
+          formData.referenceExamples,
+          'reference',
+          true, // isAuthenticated
+          clientId,
+          formData.itemType
+        );
+        console.log('[ClientUnifiedFormSubmission] Reference examples uploaded successfully');
+      }
+
+      await handleClientAuthenticatedSubmission(
+        formData, 
+        clientId, 
+        uploadedImageUrls,
+        brandingMaterialUrls,
+        referenceExampleUrls
+      );
+      
       toast.success("הפריט הוגש בהצלחה!");
       navigate('/customer/home');
       return true;

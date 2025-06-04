@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle, Loader2 } from 'lucide-react';
+import { Building2, User, UtensilsCrossed, FileText, Camera, CheckCircle, Loader2, Palette, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface ReviewSubmitStepProps extends PublicStepProps {
@@ -18,7 +18,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
     itemType,
     description,
     specialNotes,
-    referenceImages
+    referenceImages,
+    brandingMaterials,
+    referenceExamples
   } = formData;
 
   return (
@@ -99,6 +101,43 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
           </div>
           <p className="text-lg text-gray-700 mr-9">{referenceImages.length} תמונות</p>
         </div>
+
+        {/* Additional Details */}
+        {(brandingMaterials.length > 0 || referenceExamples.length > 0) && (
+          <div className="border-t border-gray-200 pt-6 space-y-6">
+            <h3 className="text-xl font-bold text-[#333333] text-center">פרטים נוספים</h3>
+            
+            {brandingMaterials.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <Palette className="w-6 h-6 text-purple-500" />
+                  <span className="font-semibold text-lg text-[#333333]">חומרי מיתוג:</span>
+                </div>
+                <p className="text-lg text-gray-700 mr-9">{brandingMaterials.length} קבצים</p>
+                <div className="mr-9 space-y-1">
+                  {brandingMaterials.map((file, index) => (
+                    <p key={index} className="text-sm text-gray-600">• {file.name}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {referenceExamples.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <Eye className="w-6 h-6 text-green-500" />
+                  <span className="font-semibold text-lg text-[#333333]">דוגמאות להתייחסות:</span>
+                </div>
+                <p className="text-lg text-gray-700 mr-9">{referenceExamples.length} קבצים</p>
+                <div className="mr-9 space-y-1">
+                  {referenceExamples.map((file, index) => (
+                    <p key={index} className="text-sm text-gray-600">• {file.name}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Info Message */}
