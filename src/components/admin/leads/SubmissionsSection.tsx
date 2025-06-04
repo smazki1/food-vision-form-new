@@ -236,17 +236,17 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                       </div>
 
                       {/* Contact Information if available */}
-                      {(submission.submission_contact_name || submission.submission_contact_email || submission.submission_contact_phone) && (
+                      {(submission.contact_name || submission.email || submission.phone) && (
                         <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
                           <div className="font-medium text-gray-700 mb-1">פרטי יצירת קשר:</div>
-                          {submission.submission_contact_name && (
-                            <div>שם: {submission.submission_contact_name}</div>
+                          {submission.contact_name && (
+                            <div>שם: {submission.contact_name}</div>
                           )}
-                          {submission.submission_contact_email && (
-                            <div>אימייל: {submission.submission_contact_email}</div>
+                          {submission.email && (
+                            <div>אימייל: {submission.email}</div>
                           )}
-                          {submission.submission_contact_phone && (
-                            <div>טלפון: {submission.submission_contact_phone}</div>
+                          {submission.phone && (
+                            <div>טלפון: {submission.phone}</div>
                           )}
                         </div>
                       )}
