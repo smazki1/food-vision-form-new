@@ -111,7 +111,7 @@ describe('submissionsAPI', () => {
     contactName: 'Test Contact',
     phone: '1234567890',
     email: 'test@example.com',
-    itemType: 'dish' as 'dish' | 'cocktail' | 'drink',
+    itemType: 'dish', // itemType can now be any string
     itemName: 'Test Item',
     description: 'Test Description',
   };

@@ -8,7 +8,7 @@ export const submissionsAPI = {
     contactName: string;
     phone: string;
     email: string;
-    itemType: 'dish' | 'cocktail' | 'drink';
+    itemType: string;
     itemName: string;
     description: string;
     specialNotes?: string;

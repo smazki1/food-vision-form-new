@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { UtensilsCrossed, FileText, Coffee, Utensils, Wine } from 'lucide-react';
+import { UtensilsCrossed, FileText, Coffee, Utensils, Wine, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData } = useNewItemForm();
   const errors = externalErrors || {};
+  
+  // State for autocomplete
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Popular item type suggestions
+  const itemTypeSuggestions = [
+    'מנה', 'שתיה', 'קוקטייל', 'צמיד', 'שרשרת', 'כוסות', 'צלחות', 
+    'תכשיטים', 'קאפקייק', 'עוגיות', 'לחם', 'פיצה', 'סלט', 'מרק',
+    'קינוח', 'רוטב', 'דגים', 'בשר', 'עוף', 'ממתקים'
+  ];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -16,18 +28,58 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
     }
   };
 
-  const handleItemTypeChange = (itemType: 'dish' | 'cocktail' | 'drink') => {
-    updateFormData({ itemType });
+  const handleItemTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    
+    // Update form data
+    updateFormData({ itemType: value });
+    
+    // Filter suggestions
+    if (value.trim()) {
+      const filtered = itemTypeSuggestions.filter(suggestion =>
+        suggestion.includes(value) || value.includes(suggestion)
+      );
+      setFilteredSuggestions(filtered);
+      setShowSuggestions(filtered.length > 0);
+    } else {
+      setFilteredSuggestions(itemTypeSuggestions);
+      setShowSuggestions(true);
+    }
+    
     if (errors && errors.itemType && clearExternalErrors) {
       clearExternalErrors();
     }
   };
 
-  const itemTypes = [
-    { value: 'dish', label: 'מנה/מוצר', icon: Utensils },
-    { value: 'drink', label: 'שתיה', icon: Coffee },
-    { value: 'cocktail', label: 'קוקטייל', icon: Wine }
-  ];
+  const handleSuggestionClick = (suggestion: string) => {
+    updateFormData({ itemType: suggestion });
+    setShowSuggestions(false);
+    if (errors && errors.itemType && clearExternalErrors) {
+      clearExternalErrors();
+    }
+  };
+
+  const handleInputFocus = () => {
+    setFilteredSuggestions(itemTypeSuggestions);
+    setShowSuggestions(true);
+  };
+
+  const handleInputBlur = () => {
+    // Delay hiding suggestions to allow clicking
+    setTimeout(() => setShowSuggestions(false), 150);
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (inputRef.current && !inputRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -72,41 +124,71 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
           )}
         </div>
 
-        {/* Item Type Selection - Compact horizontal layout */}
-        <div className="space-y-4">
-          <label className="block text-lg font-semibold text-[#333333] flex items-center">
+        {/* Item Type Selection - Free text with autocomplete */}
+        <div className="space-y-4 relative">
+          <label htmlFor="itemType" className="block text-lg font-semibold text-[#333333] flex items-center">
             <UtensilsCrossed className="w-6 h-6 text-[#F3752B] ml-3" />
             סוג הפריט
             <span className="text-red-500 mr-1">*</span>
           </label>
-          <div className="flex flex-wrap gap-3 justify-center">
-            {itemTypes.map((type) => {
-              const IconComponent = type.icon;
-              const isSelected = formData.itemType === type.value;
-              return (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => handleItemTypeChange(type.value as 'dish' | 'cocktail' | 'drink')}
-                  className={cn(
-                    "px-6 py-3 rounded-lg border-2 transition-all duration-200 hover:shadow-md flex items-center gap-2 min-w-[120px] justify-center",
-                    isSelected
-                      ? "border-[#F3752B] bg-orange-50 text-[#F3752B] shadow-sm"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                  )}
-                >
-                  <IconComponent className={cn("w-4 h-4", isSelected ? "text-[#F3752B]" : "text-gray-400")} />
-                  <span className="font-medium">{type.label}</span>
-                </button>
-              );
-            })}
+          <div className="relative" ref={inputRef}>
+            <input
+              id="itemType"
+              name="itemType"
+              type="text"
+              value={formData.itemType || ''}
+              onChange={handleItemTypeChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              placeholder="לדוגמה: מנה, שתיה, צמיד, כוסות..."
+              maxLength={50}
+              className={cn(
+                "w-full px-6 py-4 text-lg border-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#F3752B]/20",
+                errors?.itemType 
+                  ? "border-red-500 bg-red-50" 
+                  : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+              )}
+            />
+            <ChevronDown 
+              className={cn(
+                "absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform duration-200",
+                showSuggestions ? "rotate-180" : ""
+              )}
+            />
+            
+            {/* Suggestions Dropdown */}
+            {showSuggestions && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                {filteredSuggestions.length > 0 ? (
+                  <div className="py-2">
+                    {filteredSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full text-right px-4 py-2 text-lg hover:bg-gray-50 focus:bg-gray-50 transition-colors duration-150"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-4 px-4 text-gray-500 text-center">
+                    לא נמצאו הצעות מתאימות
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           {errors?.itemType && (
-            <p className="text-red-500 text-sm mt-2 flex items-center justify-center">
+            <p className="text-red-500 text-sm mt-2 flex items-center">
               <span className="w-2 h-2 bg-red-500 rounded-full ml-2"></span>
               {errors.itemType}
             </p>
           )}
+          <p className="text-sm text-gray-500">
+            הזינו תיאור קצר של סוג הפריט (עד 50 תווים)
+          </p>
         </div>
 
         {/* Description - simplified without visual examples */}

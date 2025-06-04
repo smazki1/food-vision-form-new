@@ -15,6 +15,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
     restaurantName,
     submitterName,
     itemName,
+    itemType,
     description,
     specialNotes,
     referenceImages
@@ -62,6 +63,14 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
             <span className="font-semibold text-lg text-[#333333]">שם המנה:</span>
           </div>
           <p className="text-lg text-gray-700 mr-9">{itemName}</p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3 rtl:space-x-reverse">
+            <UtensilsCrossed className="w-6 h-6 text-emerald-500" />
+            <span className="font-semibold text-lg text-[#333333]">סוג הפריט:</span>
+          </div>
+          <p className="text-lg text-gray-700 mr-9">{itemType}</p>
         </div>
 
         <div className="space-y-4">

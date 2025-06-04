@@ -1,8 +1,8 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 
-export type SubmissionItemType = 'dish' | 'cocktail' | 'drink';
+export type SubmissionItemType = string;
 
 interface OriginalImage {
   image_id: string;

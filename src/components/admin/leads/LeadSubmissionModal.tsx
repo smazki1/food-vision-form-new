@@ -36,16 +36,16 @@ interface LeadSubmissionModalProps {
 
 interface SubmissionFormData {
   itemName: string;
-  itemType: 'dish' | 'cocktail' | 'drink';
+  itemType: string;
   description: string;
   specialNotes: string;
   referenceImages: File[];
 }
 
 const ITEM_TYPES = [
-  { value: 'dish', label: 'מנה/מוצר', icon: UtensilsCrossed },
-  { value: 'drink', label: 'שתיה', icon: Coffee },
-  { value: 'cocktail', label: 'קוקטייל', icon: Wine }
+  { value: 'מנה', label: 'מנה/מוצר', icon: UtensilsCrossed },
+  { value: 'שתיה', label: 'שתיה', icon: Coffee },
+  { value: 'קוקטייל', label: 'קוקטייל', icon: Wine }
 ];
 
 export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
@@ -55,7 +55,7 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<SubmissionFormData>({
     itemName: '',
-    itemType: 'dish',
+    itemType: '',
     description: '',
     specialNotes: '',
     referenceImages: []
@@ -71,7 +71,7 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     if (isOpen) {
       setFormData({
         itemName: '',
-        itemType: 'dish',
+        itemType: '',
         description: '',
         specialNotes: '',
         referenceImages: []
@@ -298,8 +298,6 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     }
   };
 
-  const selectedItemType = ITEM_TYPES.find(type => type.value === formData.itemType);
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -407,38 +405,24 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
 
               {/* Item Type */}
               <div className="space-y-2">
-                <Label>סוג הפריט *</Label>
-                <Select 
-                  value={formData.itemType} 
-                  onValueChange={(value) => handleSelectChange('itemType', value)}
-                >
-                  <SelectTrigger className={errors.itemType ? 'border-red-500' : ''}>
-                    <SelectValue>
-                      {selectedItemType && (
-                        <div className="flex items-center gap-2">
-                          <selectedItemType.icon className="h-4 w-4" />
-                          {selectedItemType.label}
-                        </div>
-                      )}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ITEM_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div className="flex items-center gap-2">
-                          <type.icon className="h-4 w-4" />
-                          {type.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="itemType">סוג הפריט *</Label>
+                <Input
+                  id="itemType"
+                  value={formData.itemType}
+                  onChange={(e) => handleInputChange('itemType', e.target.value)}
+                  placeholder="לדוגמה: מנה, שתיה, צמיד, כוסות..."
+                  maxLength={50}
+                  className={errors.itemType ? 'border-red-500' : ''}
+                />
                 {errors.itemType && (
                   <p className="text-red-500 text-sm flex items-center gap-1">
                     <AlertTriangle className="h-4 w-4" />
                     {errors.itemType}
                   </p>
                 )}
+                <p className="text-sm text-gray-500">
+                  הזינו תיאור קצר של סוג הפריט (עד 50 תווים)
+                </p>
               </div>
 
               {/* Description */}

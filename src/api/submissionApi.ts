@@ -10,11 +10,49 @@ export type SubmissionStatus =
   | "הערות התקבלו" 
   | "הושלמה ואושרה";
 
+export interface SubmissionData {
+  submission_id: string;
+  client_id: string;
+  item_type: string;
+  item_name_at_submission: string;
+  submission_status: string;
+  uploaded_at: string;
+  processed_at?: string;
+  final_approval_timestamp?: string;
+  assigned_editor_id?: string;
+  original_image_urls: string[];
+  processed_image_urls?: string[];
+  main_processed_image_url?: string;
+  edit_history: Record<string, any>;
+}
+
+export interface SubmissionFormData {
+  restaurantName: string;
+  itemName: string;
+  itemType: string;
+  description?: string;
+  specialNotes?: string;
+  referenceImages: File[];
+  submitterName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+}
+
+export interface CreateSubmissionResponse {
+  submission_id: string;
+  client_id: string;
+  itemType: string;
+  itemName: string;
+  submissionStatus: string;
+  uploadedAt: string;
+  originalImageUrls: string[];
+}
+
 export type Submission = {
   submission_id: string;
   client_id: string;
   original_item_id: string;
-  item_type: "dish" | "cocktail" | "drink";
+  item_type: string;
   item_name_at_submission: string;
   assigned_package_id_at_submission?: string;
   submission_status: SubmissionStatus;
@@ -141,7 +179,7 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
 export async function createSubmission(
   clientId: string,
   originalItemId: string,
-  itemType: "dish" | "cocktail" | "drink",
+  itemType: string,
   itemName: string,
   packageId?: string
 ): Promise<Submission> {
@@ -170,7 +208,7 @@ export async function createBatchSubmissions(
   clientId: string,
   items: Array<{
     originalItemId: string;
-    itemType: "dish" | "cocktail" | "drink";
+    itemType: string;
     itemName: string;
   }>,
   packageId?: string

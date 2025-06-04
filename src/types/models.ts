@@ -49,7 +49,7 @@ export interface Submission {
   contact_name?: string;
   phone?: string;
   email?: string;
-  item_type: 'dish' | 'cocktail' | 'drink';
+  item_type: string; // Changed from 'dish' | 'cocktail' | 'drink' to string
   item_name: string;
   description?: string;
   special_notes?: string;
@@ -57,6 +57,22 @@ export interface Submission {
   status: SubmissionStatus;
   created_at: string;
   created_lead_id?: string; // קישור לליד שנוצר אם יש
+}
+
+export interface CustomerSubmission {
+  submission_id: string;
+  client_id: string;
+  item_type: string; // Changed from 'dish' | 'cocktail' | 'drink' to string
+  item_name_at_submission: string;
+  submission_status: string;
+  uploaded_at: string;
+  processed_at?: string;
+  final_approval_timestamp?: string;
+  assigned_editor_id?: string;
+  original_image_urls: string[];
+  processed_image_urls?: string[];
+  main_processed_image_url?: string;
+  edit_history: Record<string, any>;
 }
 
 // וכן הלאה עבור מודלים נוספים

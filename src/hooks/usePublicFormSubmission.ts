@@ -92,7 +92,9 @@ export const usePublicFormSubmission = () => {
       let category = null;
       let ingredients = null;
       
-      if (formData.itemType === 'cocktail') {
+      // More flexible cocktail detection for ingredients vs category
+      const itemTypeLower = formData.itemType.toLowerCase().trim();
+      if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
         ingredients = formData.description?.trim() ? 
           formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
       } else {
@@ -101,7 +103,7 @@ export const usePublicFormSubmission = () => {
 
       const rpcParams = {
         p_restaurant_name: formData.restaurantName.trim(),
-        p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
+        p_item_type: formData.itemType.toLowerCase(),
         p_item_name: formData.itemName.trim(),
         p_description: formData.description?.trim() || null,
         p_category: category || null,
@@ -125,22 +127,37 @@ export const usePublicFormSubmission = () => {
       }
 
       console.log('[PublicFormSubmission] RPC response:', submissionData);
+      console.log('[PublicFormSubmission] RPC response type:', typeof submissionData);
+      console.log('[PublicFormSubmission] RPC response keys:', submissionData ? Object.keys(submissionData) : 'null/undefined');
+      console.log('[PublicFormSubmission] RPC response.success:', submissionData?.success);
+      console.log('[PublicFormSubmission] RPC response.message:', submissionData?.message);
+      console.log('[PublicFormSubmission] RPC response.error:', submissionData?.error);
+      console.log('[PublicFormSubmission] Full RPC response details:', JSON.stringify(submissionData, null, 2));
 
-      if (submissionData && typeof submissionData === 'object' && submissionData.success) {
-        if (submissionData.client_found) {
-          toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
-        } else if (submissionData.lead_created) {
-          toast.success('הפריט הוגש בהצלחה! נוצר ליד חדש למסעדה במערכת.');
+      if (submissionData && typeof submissionData === 'object') {
+        if (submissionData.success) {
+          // Success case
+          if (submissionData.client_found) {
+            toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
+          } else if (submissionData.lead_created) {
+            toast.success('הפריט הוגש בהצלחה! נוצר ליד חדש למסעדה במערכת.');
+          } else {
+            toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
+          }
+          
+          console.log('[PublicFormSubmission] Setting showSuccessModal to true');
+          setShowSuccessModal(true);
+          rpcSuccessful = true;
+          return true;
         } else {
-          toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
+          // Failed case - extract the actual error message
+          const errorMessage = submissionData.message || submissionData.error || 'הגשה נכשלה מסיבה לא ידועה';
+          console.error('[PublicFormSubmission] RPC operation failed:', errorMessage);
+          throw new Error(errorMessage);
         }
-        
-        console.log('[PublicFormSubmission] Setting showSuccessModal to true');
-        setShowSuccessModal(true);
-        rpcSuccessful = true;
-        return true;
       } else {
-        throw new Error(submissionData?.message || 'הגשה נכשלה - אנא נסו שוב');
+        console.error('[PublicFormSubmission] Invalid RPC response structure:', submissionData);
+        throw new Error('הגשה נכשלה - תגובה לא תקינה מהשרת');
       }
     } catch (error: any) {
       console.error("[PublicFormSubmission] Error in submission process:", error);
@@ -154,7 +171,10 @@ export const usePublicFormSubmission = () => {
       if (rpcSuccessful) {
         let categoryWebhook: string | null = null;
         let ingredientsWebhook: string[] | null = null;
-        if (formData.itemType === 'cocktail') {
+        
+        // Use same flexible logic for webhook
+        const itemTypeLower = formData.itemType.toLowerCase().trim();
+        if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
           ingredientsWebhook = formData.description?.trim()
             ? formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0)
             : null;

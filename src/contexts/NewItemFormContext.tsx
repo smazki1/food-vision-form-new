@@ -6,7 +6,7 @@ export interface NewItemFormData {
   contactEmail?: string;
   contactPhone?: string;
   itemName: string;
-  itemType: 'dish' | 'cocktail' | 'drink';
+  itemType: string;
   description: string;
   specialNotes: string;
   referenceImages: File[];
@@ -38,7 +38,7 @@ const initialFormData: NewItemFormData = {
   contactEmail: '',
   contactPhone: '',
   itemName: '',
-  itemType: 'dish',
+  itemType: '',
   description: '',
   specialNotes: '',
   referenceImages: []

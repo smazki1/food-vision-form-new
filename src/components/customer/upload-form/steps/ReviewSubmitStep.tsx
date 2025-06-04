@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm';
@@ -43,10 +42,17 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
     itemName, itemType, description, specialNotes, referenceImages 
   } = formData;
 
-  const itemTypeDisplay: Record<string, string> = {
-    dish: "מנה",
-    cocktail: "קוקטייל",
-    drink: "משקה"
+  // Function to display item type - handles any string value gracefully
+  const getItemTypeDisplay = (type: string | undefined): string => {
+    if (!type) return '';
+    
+    // Check for known types first, then return the actual value for custom types
+    switch (type.toLowerCase()) {
+      case 'dish': return 'מנה';
+      case 'cocktail': return 'קוקטייל';
+      case 'drink': return 'משקה';
+      default: return type; // Return the actual value for custom types like "צמיד"
+    }
   };
 
   const canSubmit = remainingDishes === undefined || remainingDishes > 0;
@@ -82,7 +88,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
         </div>
         <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
           <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
-          <ReviewItem label="סוג הפריט" value={itemType ? itemTypeDisplay[itemType] : undefined} isMissing={!itemType} />
+          <ReviewItem label="סוג הפריט" value={getItemTypeDisplay(itemType)} isMissing={!itemType} />
           <ReviewItem label="תיאור/מרכיבים" value={description} />
           <ReviewItem label="הערות מיוחדות" value={specialNotes} />
         </dl>

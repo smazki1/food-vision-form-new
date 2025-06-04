@@ -5,7 +5,7 @@ interface FormData {
   contactEmail: string;
   contactPhone: string;
   itemName: string;
-  itemType: 'dish' | 'cocktail' | 'drink';
+  itemType: string;
   description: string;
   specialNotes: string;
   referenceImages: File[];

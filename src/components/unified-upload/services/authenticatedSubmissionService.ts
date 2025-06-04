@@ -1,14 +1,22 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+export interface AuthenticatedSubmissionData {
+  restaurantName: string;
+  itemName: string;
+  itemType: string;
+  description?: string;
+  specialNotes?: string;
+  referenceImages: File[];
+}
 
 interface FormData {
   restaurantName: string;
   contactEmail: string;
   contactPhone: string;
   itemName: string;
-  itemType: 'dish' | 'cocktail' | 'drink';
+  itemType: string;
   description: string;
   specialNotes: string;
   referenceImages: File[];
@@ -23,6 +31,8 @@ export const handleAuthenticatedSubmission = async (
   
   const newItemId = uuidv4();
   
+  // Only create item records for known types (dish, cocktail, drink)
+  // For custom types (jewelry, etc.), we'll only create submission records
   const tableNameMap: Record<string, string> = {
     dish: 'dishes',
     cocktail: 'cocktails',
@@ -30,24 +40,29 @@ export const handleAuthenticatedSubmission = async (
   };
   
   const itemTable = tableNameMap[formData.itemType];
-  const itemIdColumn = `${formData.itemType}_id`;
+  
+  // Only insert into specific item table if it's a known type
+  if (itemTable) {
+    const itemIdColumn = `${formData.itemType}_id`;
 
-  const itemData = {
-    client_id: clientId,
-    name: formData.itemName,
-    description: formData.description,
-    notes: formData.specialNotes,
-    reference_image_urls: uploadedImageUrls,
-    [itemIdColumn]: newItemId,
-  };
+    const itemData = {
+      client_id: clientId,
+      name: formData.itemName,
+      description: formData.description,
+      notes: formData.specialNotes,
+      reference_image_urls: uploadedImageUrls,
+      [itemIdColumn]: newItemId,
+    };
 
-  const { error: itemInsertError } = await supabase.from(itemTable as any).insert(itemData);
+    const { error: itemInsertError } = await supabase.from(itemTable as any).insert(itemData);
 
-  if (itemInsertError) {
-    console.error('[AuthenticatedSubmission] Item insert error:', itemInsertError);
-    throw new Error(`שגיאה ביצירת הפריט: ${itemInsertError.message}`);
+    if (itemInsertError) {
+      console.error('[AuthenticatedSubmission] Item insert error:', itemInsertError);
+      throw new Error(`שגיאה ביצירת הפריט: ${itemInsertError.message}`);
+    }
   }
 
+  // Always create submission record for all item types
   const submissionData = {
     client_id: clientId,
     original_item_id: newItemId,
@@ -63,7 +78,11 @@ export const handleAuthenticatedSubmission = async (
 
   if (submitError) {
     console.error('[AuthenticatedSubmission] Submission error:', submitError);
-    await supabase.from(itemTable as any).delete().eq(itemIdColumn, newItemId);
+    // Only rollback item creation if we created one
+    if (itemTable) {
+      const itemIdColumn = `${formData.itemType}_id`;
+      await supabase.from(itemTable as any).delete().eq(itemIdColumn, newItemId);
+    }
     throw new Error(`שגיאה בשמירת ההגשה: ${submitError.message}`);
   }
 

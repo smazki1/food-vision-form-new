@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -7,7 +6,7 @@ interface FormData {
   contactEmail: string;
   contactPhone: string;
   itemName: string;
-  itemType: 'dish' | 'cocktail' | 'drink';
+  itemType: string;
   description: string;
   specialNotes: string;
   referenceImages: File[];
@@ -32,16 +31,15 @@ export const handlePublicSubmission = async (
 
   const rpcParams = {
     p_restaurant_name: formData.restaurantName.trim(),
-    p_item_type: formData.itemType.toLowerCase() as 'dish' | 'cocktail' | 'drink',
+    p_item_type: formData.itemType,
     p_item_name: formData.itemName.trim(),
-    p_description: formData.description?.trim() || undefined,
-    p_category: category || undefined,
-    p_ingredients: ingredients,
+    p_description: formData.description?.trim() || null,
+    p_category: category || null,
+    p_ingredients: ingredients || null,
     p_reference_image_urls: uploadedImageUrls,
-    // Add contact information for automatic lead creation
-    p_contact_name: formData.submitterName?.trim() || undefined,
-    p_contact_email: formData.contactEmail?.trim() || undefined,
-    p_contact_phone: formData.contactPhone?.trim() || undefined,
+    p_contact_name: formData.submitterName?.trim() || null,
+    p_contact_email: formData.contactEmail?.trim() || null,
+    p_contact_phone: formData.contactPhone?.trim() || null,
   };
 
   console.log('[PublicSubmission] Calling RPC with params:', rpcParams);

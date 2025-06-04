@@ -21,6 +21,14 @@ export interface ClientPackageInfo {
   isActive: boolean;
 }
 
+export interface UpdateSubmissionParams {
+  submissionId: string;
+  itemType?: string;
+  itemName?: string;
+  description?: string;
+  specialNotes?: string;
+}
+
 export function useSubmissions() {
   const { clientId: clientAuthClientId, isAuthenticated: clientAuthIsAuthenticated, clientRecordStatus } = useClientAuth();
   const { user, clientId: unifiedClientId, isAuthenticated: unifiedIsAuthenticated, loading: unifiedLoading, initialized } = useUnifiedAuth();
@@ -661,7 +669,7 @@ export const useSubmissionsWithFilters = (filters: {
   editorId?: string;
   dateFrom?: string;
   dateTo?: string;
-  itemType?: 'dish' | 'cocktail' | 'drink';
+  itemType?: string;
 }) => {
   return useQuery<EnhancedSubmission[]>({
     queryKey: ['submissions-filtered', filters],
