@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { usePackageForm, formValuesToApiData, packageToDefaultValues } from '../usePackageForm';
 import * as packageApi from '@/api/packageApi';
+import { Package } from '@/types/package';
 
 // Mock dependencies
 vi.mock('sonner', () => ({
@@ -38,16 +39,17 @@ describe('usePackageForm', () => {
     vi.clearAllMocks();
   });
 
-  const mockPackage = {
+  const mockPackage: Package = {
     package_id: '123e4567-e89b-12d3-a456-426614174000',
     package_name: 'Test Package',
     description: 'Test Description',
     total_servings: 10,
     price: 500,
     is_active: true,
-    features_tags: ['feature1', 'feature2'],
     max_processing_time_days: 7,
     max_edits_per_serving: 2,
+    special_notes: 'Special notes for testing',
+    total_images: 25,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   };
@@ -62,7 +64,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 2,
         max_processing_time_days: 7,
-        features_tags: 'feature1, feature2, feature3'
+        special_notes: 'Special notes for testing',
+        total_images: 25,
       };
 
       const result = formValuesToApiData(formData);
@@ -75,24 +78,27 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 2,
         max_processing_time_days: 7,
-        features_tags: ['feature1', 'feature2', 'feature3']
+        special_notes: 'Special notes for testing',
+        total_images: 25,
       });
     });
 
-    it('should handle empty features_tags', () => {
+    it('should handle empty special_notes and total_images', () => {
       const formData = {
         package_name: 'Test Package',
-        description: '',
+        description: 'Test Description',
         total_servings: 10,
         price: 500,
         is_active: true,
         max_edits_per_serving: 2,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       };
 
       const result = formValuesToApiData(formData);
-      expect(result.features_tags).toEqual([]);
+      expect(result.special_notes).toBe('');
+      expect(result.total_images).toBeUndefined();
     });
   });
 
@@ -108,7 +114,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 2,
         max_processing_time_days: 7,
-        features_tags: 'feature1, feature2'
+        special_notes: 'Special notes for testing',
+        total_images: 25,
       });
     });
 
@@ -123,22 +130,25 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 1,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       });
     });
 
     it('should handle packages with missing optional fields', () => {
-      const packageWithNulls = {
+      const packageWithMissingFields = {
         ...mockPackage,
-        description: null,
-        features_tags: null,
-        max_processing_time_days: null
+        description: undefined,
+        special_notes: undefined,
+        total_images: undefined,
+        max_processing_time_days: undefined,
       };
 
-      const result = packageToDefaultValues(packageWithNulls as any);
+      const result = packageToDefaultValues(packageWithMissingFields);
 
       expect(result.description).toBe('');
-      expect(result.features_tags).toBe('');
+      expect(result.special_notes).toBe('');
+      expect(result.total_images).toBeNull();
       expect(result.max_processing_time_days).toBeNull();
     });
   });
@@ -160,7 +170,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 1,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       });
     });
 
@@ -171,6 +182,7 @@ describe('usePackageForm', () => {
       );
 
       expect(result.current.isEditMode).toBe(true);
+      expect(result.current.isPending).toBe(false);
       expect(result.current.defaultValues.package_name).toBe('Test Package');
     });
 
@@ -191,7 +203,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 1,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       };
 
       await act(async () => {
@@ -204,7 +217,9 @@ describe('usePackageForm', () => {
           description: 'New Description',
           total_servings: 5,
           price: 300,
-          features_tags: []
+          is_active: true,
+          max_edits_per_serving: 1,
+          special_notes: '',
         })
       );
       expect(toast.success).toHaveBeenCalledWith('החבילה נוצרה בהצלחה');
@@ -228,7 +243,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 3,
         max_processing_time_days: 10,
-        features_tags: 'new-feature'
+        special_notes: 'Updated notes',
+        total_images: 30,
       };
 
       await act(async () => {
@@ -242,7 +258,11 @@ describe('usePackageForm', () => {
           description: 'Updated Description',
           total_servings: 15,
           price: 600,
-          features_tags: ['new-feature']
+          is_active: true,
+          max_edits_per_serving: 3,
+          max_processing_time_days: 10,
+          special_notes: 'Updated notes',
+          total_images: 30,
         })
       );
       expect(toast.success).toHaveBeenCalledWith('החבילה עודכנה בהצלחה');
@@ -266,7 +286,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 1,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       };
 
       await act(async () => {
@@ -294,7 +315,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 3,
         max_processing_time_days: 10,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       };
 
       await act(async () => {
@@ -325,7 +347,8 @@ describe('usePackageForm', () => {
         is_active: true,
         max_edits_per_serving: 1,
         max_processing_time_days: null,
-        features_tags: ''
+        special_notes: '',
+        total_images: null,
       };
 
       await act(async () => {

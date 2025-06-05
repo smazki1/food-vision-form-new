@@ -12,8 +12,9 @@ export const packageFormSchema = z.object({
   price: z.coerce.number().min(0, { message: "מחיר חייב להיות 0 או יותר" }),
   is_active: z.boolean().default(true),
   max_processing_time_days: z.coerce.number().int().min(1).optional().nullable(),
-  features_tags: z.string().optional(),
-  max_edits_per_serving: z.coerce.number().int().min(1, { message: "מספר עריכות מקסימלי חייב להיות 1 או יותר" })
+  max_edits_per_serving: z.coerce.number().int().min(1, { message: "מספר עריכות מקסימלי חייב להיות 1 או יותר" }),
+  special_notes: z.string().optional(),
+  total_images: z.coerce.number().int().min(0, { message: "מספר תמונות חייב להיות 0 או יותר" }).optional().nullable(),
 });
 
 export type PackageFormValues = z.infer<typeof packageFormSchema>;
@@ -28,8 +29,8 @@ export const formValuesToApiData = (data: PackageFormValues) => {
     is_active: data.is_active,
     max_edits_per_serving: data.max_edits_per_serving,
     max_processing_time_days: data.max_processing_time_days || undefined,
-    features_tags: data.features_tags ? 
-      data.features_tags.split(",").map(tag => tag.trim()).filter(Boolean) : []
+    special_notes: data.special_notes,
+    total_images: data.total_images || undefined,
   };
 };
 
@@ -44,7 +45,8 @@ export const packageToDefaultValues = (packageToEdit: Package | null): PackageFo
       is_active: true,
       max_edits_per_serving: 1,
       max_processing_time_days: null,
-      features_tags: ""
+      special_notes: "",
+      total_images: null,
     };
   }
 
@@ -56,7 +58,8 @@ export const packageToDefaultValues = (packageToEdit: Package | null): PackageFo
     is_active: packageToEdit.is_active ?? true,
     max_edits_per_serving: packageToEdit.max_edits_per_serving || 1,
     max_processing_time_days: packageToEdit.max_processing_time_days || null,
-    features_tags: packageToEdit.features_tags ? packageToEdit.features_tags.join(", ") : ""
+    special_notes: packageToEdit.special_notes || "",
+    total_images: packageToEdit.total_images || null,
   };
 };
 

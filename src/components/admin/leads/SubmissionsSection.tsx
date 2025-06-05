@@ -41,12 +41,14 @@ import {
   Mail,
   Phone,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Lead } from '@/types/lead';
 import LightboxDialog from '@/components/editor/submission/LightboxDialog';
 import { useLightbox } from '@/components/editor/submission-processing/hooks/useLightbox';
+import { downloadLeadSubmissionsAsZip } from '@/utils/downloadUtils';
 
 interface SubmissionsSectionProps {
   leadId: string;
@@ -86,6 +88,39 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
 
   const handleUploadSubmission = () => {
     setIsUploadModalOpen(true);
+  };
+
+  const handleDownloadAllSubmissions = async () => {
+    try {
+      // Count total images first
+      const totalImages = submissions.reduce((count, submission) => {
+        return count + (submission.original_image_urls?.length || 0);
+      }, 0);
+
+      if (totalImages === 0) {
+        toast.error('אין תמונות מקור להורדה');
+        return;
+      }
+
+      // Show loading toast
+      toast.info(`מתחיל הורדת ${totalImages} תמונות מ-${submissions.length} הגשות...`);
+
+      // Get lead info for filename
+      const leadInfo = {
+        restaurant_name: lead?.restaurant_name,
+        contact_name: lead?.contact_name
+      };
+
+      // Download all submissions
+      const result = await downloadLeadSubmissionsAsZip(submissions, leadInfo);
+      
+      if (result.success) {
+        toast.success(`הורדת ${result.totalImages} תמונות מ-${result.submissionsCount} הגשות הושלמה בהצלחה`);
+      }
+    } catch (error) {
+      console.error('Error downloading submissions:', error);
+      toast.error((error as Error).message || 'שגיאה בהורדת ההגשות');
+    }
   };
 
   const handleLinkExistingSubmission = async () => {
@@ -172,6 +207,17 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
               </Badge>
             </div>
             <div className="flex gap-2">
+              {submissions.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadAllSubmissions}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  הורד הכל
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

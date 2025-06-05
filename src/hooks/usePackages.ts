@@ -97,7 +97,7 @@ export const usePackages_Simplified = ({ enabled = true }: UsePackagesSimplified
 
       const { data, error } = await supabase
         .from("service_packages")
-        .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
+        .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
         .order("price", { ascending: true });
 
       console.log('[usePackages_Simplified] queryFn: Supabase query FINISHED.');
@@ -142,17 +142,18 @@ export const usePackages_Simplified = ({ enabled = true }: UsePackagesSimplified
   };
 };
 
-// Helper function to transform database rows to Package interface - match the API
+// Helper function to transform database rows to Package interface - updated for new schema
 const transformDbRowToPackage = (row: any): Package => ({
   package_id: row.package_id,
-  package_name: row.name, // Map 'name' from DB to 'package_name' for interface
+  package_name: row.package_name, // Now using package_name directly from DB
   description: row.description,
   total_servings: row.total_servings,
   price: row.price,
   is_active: row.is_active,
-  features_tags: row.features_tags,
   max_processing_time_days: row.max_processing_time_days,
   max_edits_per_serving: row.max_edits_per_serving,
+  special_notes: row.special_notes,
+  total_images: row.total_images,
   created_at: row.created_at,
   updated_at: row.updated_at,
 });

@@ -1,4 +1,3 @@
-
 import { Database } from "@/integrations/supabase/types";
 
 export interface Package {
@@ -8,9 +7,10 @@ export interface Package {
   total_servings: number;
   price: number;
   is_active: boolean;
-  features_tags?: string[];
   max_processing_time_days?: number;
   max_edits_per_serving: number;
+  special_notes?: string;
+  total_images?: number;
   created_at: string;
   updated_at: string;
 }

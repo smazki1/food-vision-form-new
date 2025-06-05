@@ -1,23 +1,29 @@
-
 import React from "react";
 import { useFormContext } from "react-hook-form";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { PackageFormValues } from "../hooks/usePackageForm";
+import type { PackageFormValues } from "../hooks/usePackageForm";
 
 export const BasicPackageFields = () => {
   const { control } = useFormContext<PackageFormValues>();
 
   return (
-    <>
+    <div className="space-y-4">
       <FormField
         control={control}
         name="package_name"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>שם חבילה</FormLabel>
+            <FormLabel>שם החבילה</FormLabel>
             <FormControl>
               <Input {...field} />
             </FormControl>
@@ -33,13 +39,14 @@ export const BasicPackageFields = () => {
           <FormItem>
             <FormLabel>תיאור</FormLabel>
             <FormControl>
-              <Textarea {...field} value={field.value || ""} />
+              <Textarea {...field} />
             </FormControl>
+            <FormDescription>תיאור קצר של החבילה</FormDescription>
             <FormMessage />
           </FormItem>
         )}
       />
-    </>
+    </div>
   );
 };
 
@@ -55,7 +62,11 @@ export const NumericPackageFields = () => {
           <FormItem>
             <FormLabel>מספר מנות</FormLabel>
             <FormControl>
-              <Input type="number" {...field} />
+              <Input
+                type="number"
+                {...field}
+                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -67,9 +78,14 @@ export const NumericPackageFields = () => {
         name="price"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>מחיר</FormLabel>
+            <FormLabel>מחיר (₪)</FormLabel>
             <FormControl>
-              <Input type="number" step="0.01" {...field} />
+              <Input
+                type="number"
+                step="0.01"
+                {...field}
+                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -91,7 +107,11 @@ export const LimitsPackageFields = () => {
           <FormItem>
             <FormLabel>מספר עריכות מקסימלי למנה</FormLabel>
             <FormControl>
-              <Input type="number" {...field} />
+              <Input
+                type="number"
+                {...field}
+                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -103,9 +123,9 @@ export const LimitsPackageFields = () => {
         name="max_processing_time_days"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>זמן טיפול מקסימלי (ימים)</FormLabel>
+            <FormLabel>זמן עיבוד מקסימלי (ימים)</FormLabel>
             <FormControl>
-              <Input 
+              <Input
                 type="number"
                 {...field}
                 value={field.value === null ? "" : field.value}
@@ -120,20 +140,46 @@ export const LimitsPackageFields = () => {
   );
 };
 
-export const FeaturesTagsField = () => {
+export const SpecialNotesField = () => {
   const { control } = useFormContext<PackageFormValues>();
 
   return (
     <FormField
       control={control}
-      name="features_tags"
+      name="special_notes"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>תגי תכונות</FormLabel>
+          <FormLabel>הערות מיוחדות</FormLabel>
           <FormControl>
-            <Input {...field} />
+            <Textarea {...field} />
           </FormControl>
-          <FormDescription>הפרד תגים באמצעות פסיקים (לדוגמא: "מהירות, איכות גבוהה, עדיפות")</FormDescription>
+          <FormDescription>הערות מיוחדות לגבי החבילה (אופציונלי)</FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+};
+
+export const TotalImagesField = () => {
+  const { control } = useFormContext<PackageFormValues>();
+
+  return (
+    <FormField
+      control={control}
+      name="total_images"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>מספר תמונות</FormLabel>
+          <FormControl>
+            <Input
+              type="number"
+              {...field}
+              value={field.value === null ? "" : field.value}
+              onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
+            />
+          </FormControl>
+          <FormDescription>מספר תמונות עבור חבילות מבוססות תמונות (אופציונלי)</FormDescription>
           <FormMessage />
         </FormItem>
       )}
@@ -151,9 +197,9 @@ export const StatusField = () => {
       render={({ field }) => (
         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
           <div className="space-y-0.5">
-            <FormLabel className="text-base">סטטוס פעיל</FormLabel>
+            <FormLabel className="text-base">חבילה פעילה</FormLabel>
             <FormDescription>
-              חבילה פעילה זמינה להצעה ללקוחות חדשים
+              האם החבילה זמינה ללקוחות חדשים
             </FormDescription>
           </div>
           <FormControl>

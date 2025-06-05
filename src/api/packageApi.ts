@@ -4,28 +4,30 @@ import { Package } from "@/types/package";
 // Helper function to transform database rows to Package interface
 const transformDbRowToPackage = (row: any): Package => ({
   package_id: row.package_id,
-  package_name: row.name, // Map 'name' from DB to 'package_name' for interface
+  package_name: row.package_name, // Now using package_name directly from DB
   description: row.description,
   total_servings: row.total_servings,
   price: row.price,
   is_active: row.is_active,
-  features_tags: row.features_tags,
   max_processing_time_days: row.max_processing_time_days,
   max_edits_per_serving: row.max_edits_per_serving,
+  special_notes: row.special_notes,
+  total_images: row.total_images,
   created_at: row.created_at,
   updated_at: row.updated_at,
 });
 
 // Helper function to transform Package interface to database format
 const transformPackageToDbRow = (packageData: Omit<Package, "package_id" | "created_at" | "updated_at">) => ({
-  name: packageData.package_name, // Map 'package_name' from interface to 'name' for DB
+  package_name: packageData.package_name, // Now using package_name directly for DB
   description: packageData.description,
   total_servings: packageData.total_servings,
   price: packageData.price,
   is_active: packageData.is_active,
-  features_tags: packageData.features_tags,
   max_processing_time_days: packageData.max_processing_time_days,
   max_edits_per_serving: packageData.max_edits_per_serving,
+  special_notes: packageData.special_notes,
+  total_images: packageData.total_images,
 });
 
 export async function getPackages(): Promise<Package[]> {
@@ -33,7 +35,7 @@ export async function getPackages(): Promise<Package[]> {
   
   const { data, error } = await supabase
     .from("service_packages")
-    .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
+    .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
     .order("price", { ascending: true });
 
   if (error) {
@@ -53,7 +55,7 @@ export async function getPackageById(packageId: string): Promise<Package | null>
   
   const { data, error } = await supabase
     .from("service_packages")
-    .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
+    .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
     .eq("package_id", packageId)
     .single();
 
@@ -72,32 +74,28 @@ export async function getPackageById(packageId: string): Promise<Package | null>
 export async function createPackage(packageData: Omit<Package, "package_id" | "created_at" | "updated_at">): Promise<Package> {
   console.log('[packageApi] createPackage called with data:', packageData);
   
-  const dbData = {
-    ...transformPackageToDbRow(packageData),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+  // Prepare RPC parameters
+  const rpcParams: any = {
+    p_package_name: packageData.package_name,
+    p_description: packageData.description || null,
+    p_total_servings: packageData.total_servings ? Number(packageData.total_servings) : null,
+    p_price: packageData.price ? Number(packageData.price) : null,
+    p_is_active: packageData.is_active !== undefined ? packageData.is_active : true,
+    p_max_processing_time_days: packageData.max_processing_time_days ? Number(packageData.max_processing_time_days) : null,
+    p_max_edits_per_serving: packageData.max_edits_per_serving ? Number(packageData.max_edits_per_serving) : null,
+    p_special_notes: packageData.special_notes || null,
+    p_total_images: packageData.total_images ? Number(packageData.total_images) : null
   };
   
-  // Ensure numeric fields are properly typed
-  if (dbData.price !== undefined) dbData.price = Number(dbData.price);
-  if (dbData.total_servings !== undefined) dbData.total_servings = Number(dbData.total_servings);
-  if (dbData.max_edits_per_serving !== undefined) dbData.max_edits_per_serving = Number(dbData.max_edits_per_serving);
-  if (dbData.max_processing_time_days !== undefined && dbData.max_processing_time_days !== null) {
-    dbData.max_processing_time_days = Number(dbData.max_processing_time_days);
-  }
-  
-  console.log('[packageApi] createPackage transformed data for DB:', dbData);
+  console.log('[packageApi] createPackage RPC params:', rpcParams);
   
   try {
     const { data, error } = await supabase
-      .from("service_packages")
-      .insert(dbData)
-      .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
-      .single();
+      .rpc('create_service_package', rpcParams);
 
     if (error) {
-      console.error("[packageApi] Supabase error creating package:", error);
-      console.error(`[packageApi] Error details:`, {
+      console.error("[packageApi] Supabase RPC error creating package:", error);
+      console.error(`[packageApi] RPC Error details:`, {
         code: error.code,
         details: error.details,
         hint: error.hint,
@@ -107,13 +105,13 @@ export async function createPackage(packageData: Omit<Package, "package_id" | "c
     }
 
     if (!data) {
-      console.error(`[packageApi] No data returned when creating package`);
+      console.error(`[packageApi] No data returned from RPC when creating package`);
       throw new Error(`Package creation failed - no data returned`);
     }
 
-    console.log('[packageApi] createPackage success, raw data:', data);
+    console.log('[packageApi] createPackage RPC success, raw data:', data);
     const transformedData = transformDbRowToPackage(data);
-    console.log('[packageApi] createPackage success, transformed data:', transformedData);
+    console.log('[packageApi] createPackage RPC success, transformed data:', transformedData);
 
     return transformedData;
   } catch (error) {
@@ -130,25 +128,19 @@ export async function updatePackage(packageId: string, packageData: Partial<Pack
     updated_at: new Date().toISOString() // Always update the timestamp
   };
   
-  if (packageData.package_name !== undefined) dbData.name = packageData.package_name;
+  if (packageData.package_name !== undefined) dbData.package_name = packageData.package_name;
   if (packageData.description !== undefined) dbData.description = packageData.description;
   if (packageData.total_servings !== undefined) dbData.total_servings = Number(packageData.total_servings);
   if (packageData.price !== undefined) dbData.price = Number(packageData.price);
   if (packageData.is_active !== undefined) dbData.is_active = packageData.is_active;
-  if (packageData.features_tags !== undefined) {
-    // Ensure features_tags is properly formatted as an array
-    if (Array.isArray(packageData.features_tags)) {
-      dbData.features_tags = packageData.features_tags;
-    } else if (packageData.features_tags === null) {
-      dbData.features_tags = null;
-    } else {
-      dbData.features_tags = [];
-    }
-  }
   if (packageData.max_processing_time_days !== undefined) {
     dbData.max_processing_time_days = packageData.max_processing_time_days === null ? null : Number(packageData.max_processing_time_days);
   }
   if (packageData.max_edits_per_serving !== undefined) dbData.max_edits_per_serving = Number(packageData.max_edits_per_serving);
+  if (packageData.special_notes !== undefined) dbData.special_notes = packageData.special_notes;
+  if (packageData.total_images !== undefined) {
+    dbData.total_images = packageData.total_images === null ? null : Number(packageData.total_images);
+  }
   
   console.log('[packageApi] updatePackage transformed data for DB:', dbData);
 
@@ -157,7 +149,7 @@ export async function updatePackage(packageId: string, packageData: Partial<Pack
       .from("service_packages")
       .update(dbData)
       .eq("package_id", packageId)
-      .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
+      .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
       .single();
 
     if (error) {
@@ -195,24 +187,19 @@ export async function updatePackageViaRPC(packageId: string, packageData: Partia
     p_package_id: packageId
   };
   
-  if (packageData.package_name !== undefined) rpcParams.p_name = packageData.package_name;
+  if (packageData.package_name !== undefined) rpcParams.p_package_name = packageData.package_name;
   if (packageData.description !== undefined) rpcParams.p_description = packageData.description;
   if (packageData.total_servings !== undefined) rpcParams.p_total_servings = Number(packageData.total_servings);
   if (packageData.price !== undefined) rpcParams.p_price = Number(packageData.price);
   if (packageData.is_active !== undefined) rpcParams.p_is_active = packageData.is_active;
-  if (packageData.features_tags !== undefined) {
-    if (Array.isArray(packageData.features_tags)) {
-      rpcParams.p_features_tags = packageData.features_tags;
-    } else if (packageData.features_tags === null) {
-      rpcParams.p_features_tags = null;
-    } else {
-      rpcParams.p_features_tags = [];
-    }
-  }
   if (packageData.max_processing_time_days !== undefined) {
     rpcParams.p_max_processing_time_days = packageData.max_processing_time_days === null ? null : Number(packageData.max_processing_time_days);
   }
   if (packageData.max_edits_per_serving !== undefined) rpcParams.p_max_edits_per_serving = Number(packageData.max_edits_per_serving);
+  if (packageData.special_notes !== undefined) rpcParams.p_special_notes = packageData.special_notes;
+  if (packageData.total_images !== undefined) {
+    rpcParams.p_total_images = packageData.total_images === null ? null : Number(packageData.total_images);
+  }
   
   console.log('[packageApi] updatePackageViaRPC RPC params:', rpcParams);
 
@@ -279,7 +266,7 @@ export async function testUpdatePackage(packageId: string): Promise<Package> {
       .from("service_packages")
       .update(testData)
       .eq("package_id", packageId)
-      .select("package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving")
+      .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
       .single();
 
     if (error) {

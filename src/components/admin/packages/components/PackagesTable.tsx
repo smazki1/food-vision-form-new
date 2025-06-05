@@ -11,7 +11,6 @@ import {
 import { Package } from "@/types/package";
 import PackageActions from "./PackageActions";
 import PackageStatusToggle from "./PackageStatusToggle";
-import PackageFeaturesTags from "./PackageFeaturesTags";
 
 interface PackagesTableProps {
   packages: Package[];
@@ -43,7 +42,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({ packages, onEditPackage }
             <TableHead>שם חבילה</TableHead>
             <TableHead className="text-center">מספר מנות</TableHead>
             <TableHead className="text-center">מחיר</TableHead>
-            <TableHead className="text-center">תכונות</TableHead>
+            <TableHead className="text-center">מספר תמונות</TableHead>
+            <TableHead className="text-center">הערות מיוחדות</TableHead>
             <TableHead className="text-center">סטטוס</TableHead>
             <TableHead className="text-center">פעולות</TableHead>
           </TableRow>
@@ -54,9 +54,8 @@ const PackagesTable: React.FC<PackagesTableProps> = ({ packages, onEditPackage }
               <TableCell className="font-medium">{pkg.package_name}</TableCell>
               <TableCell className="text-center">{pkg.total_servings}</TableCell>
               <TableCell className="text-center">{formatPrice(pkg.price)}</TableCell>
-              <TableCell className="text-center">
-                <PackageFeaturesTags tags={pkg.features_tags} />
-              </TableCell>
+              <TableCell className="text-center">{pkg.total_images || '-'}</TableCell>
+              <TableCell className="text-center">{pkg.special_notes ? (pkg.special_notes.length > 30 ? pkg.special_notes.substring(0, 30) + '...' : pkg.special_notes) : '-'}</TableCell>
               <TableCell className="text-center">
                 <PackageStatusToggle 
                   packageId={pkg.package_id} 

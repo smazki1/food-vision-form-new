@@ -43,6 +43,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import LightboxDialog from '@/components/editor/submission/LightboxDialog';
 import { useLightbox } from '@/components/editor/submission-processing/hooks/useLightbox';
+import { downloadImagesAsZip } from '@/utils/downloadUtils';
 
 // Icons
 import {
@@ -150,6 +151,24 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   // Get comments by type
   const getCommentsByType = (type: SubmissionCommentType) => {
     return comments.filter(comment => comment.comment_type === type);
+  };
+
+  // Handle download all original images
+  const handleDownloadAllOriginalImages = async () => {
+    if (!submission.original_image_urls || submission.original_image_urls.length === 0) {
+      toast.error("אין תמונות מקור להורדה");
+      return;
+    }
+
+    try {
+      toast("מתחיל הורדת התמונות...", { duration: 2000 });
+      const fileName = `${submission.item_name_at_submission || 'submission'}_original_images.zip`;
+      await downloadImagesAsZip(submission.original_image_urls, fileName);
+      toast.success(`הורדת ${submission.original_image_urls.length} תמונות הושלמה בהצלחה`);
+    } catch (error) {
+      console.error('Error downloading images:', error);
+      toast.error("שגיאה בהורדת התמונות");
+    }
   };
 
   // Loading state
@@ -289,9 +308,25 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
               
               {/* Original Images Column */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Camera className="h-5 w-5 text-gray-600" />
-                  <h3 className="font-semibold">תמונות מקור</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-gray-600" />
+                    <h3 className="font-semibold">תמונות מקור</h3>
+                    {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                      <Badge variant="outline">{submission.original_image_urls.length}</Badge>
+                    )}
+                  </div>
+                  {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadAllOriginalImages}
+                      className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">הורד הכל</span>
+                    </Button>
+                  )}
                 </div>
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
                   {submission.original_image_urls?.map((url, index) => (
