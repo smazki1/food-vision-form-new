@@ -1,0 +1,528 @@
+-- =================================================================
+-- FOOD VISION AI - COMPREHENSIVE SUPABASE DATABASE BACKUP COMMAND
+-- =================================================================
+-- Generated on: (use CURRENT_TIMESTAMP)
+-- Purpose: Complete system backup for disaster recovery
+-- Database: zjjzqsgflplzdamanhqj
+-- =================================================================
+
+WITH backup_data AS (
+  SELECT json_build_object(
+    -- BACKUP METADATA
+    'backup_metadata', json_build_object(
+      'backup_timestamp', CURRENT_TIMESTAMP,
+      'database_id', 'zjjzqsgflplzdamanhqj',
+      'database_url', 'https://zjjzqsgflplzdamanhqj.supabase.co',
+      'backup_type', 'FULL_SYSTEM_BACKUP',
+      'version', '2.0',
+      'purpose', 'Food Vision AI Complete Database Backup with Functions'
+    ),
+
+    -- =================================================================
+    -- CORE BUSINESS DATA (CRITICAL)
+    -- =================================================================
+    
+    -- CLIENTS TABLE (Restaurant customers)
+    'clients', COALESCE(
+      (SELECT json_agg(row_to_json(c.*)) 
+       FROM public.clients c),
+      '[]'::json
+    ),
+
+    -- CUSTOMER_SUBMISSIONS TABLE (Food image processing requests)
+    'customer_submissions', COALESCE(
+      (SELECT json_agg(row_to_json(cs.*)) 
+       FROM public.customer_submissions cs),
+      '[]'::json
+    ),
+
+    -- LEADS TABLE (Potential customers and sales pipeline)
+    'leads', COALESCE(
+      (SELECT json_agg(row_to_json(l.*)) 
+       FROM public.leads l),
+      '[]'::json
+    ),
+
+    -- SERVICE_PACKAGES TABLE (Service plans and pricing)
+    'service_packages', COALESCE(
+      (SELECT json_agg(row_to_json(sp.*)) 
+       FROM public.service_packages sp),
+      '[]'::json
+    ),
+
+    -- DISHES TABLE (Menu item catalog - dishes)
+    'dishes', COALESCE(
+      (SELECT json_agg(row_to_json(d.*)) 
+       FROM public.dishes d),
+      '[]'::json
+    ),
+
+    -- COCKTAILS TABLE (Menu item catalog - cocktails)
+    'cocktails', COALESCE(
+      (SELECT json_agg(row_to_json(c.*)) 
+       FROM public.cocktails c),
+      '[]'::json
+    ),
+
+    -- DRINKS TABLE (Menu item catalog - drinks)
+    'drinks', COALESCE(
+      (SELECT json_agg(row_to_json(d.*)) 
+       FROM public.drinks d),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- EXTENDED BUSINESS DATA
+    -- =================================================================
+    
+    -- LEAD_ACTIVITY_LOG TABLE (Sales activity tracking)
+    'lead_activity_log', COALESCE(
+      (SELECT json_agg(row_to_json(lal.*)) 
+       FROM public.lead_activity_log lal),
+      '[]'::json
+    ),
+
+    -- LEAD_COMMENTS TABLE (Notes on leads)
+    'lead_comments', COALESCE(
+      (SELECT json_agg(row_to_json(lc.*)) 
+       FROM public.lead_comments lc),
+      '[]'::json
+    ),
+
+    -- AI_PRICING_SETTINGS TABLE (AI cost configuration)
+    'ai_pricing_settings', COALESCE(
+      (SELECT json_agg(row_to_json(aps.*)) 
+       FROM public.ai_pricing_settings aps),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- COMMUNICATION & SYSTEM
+    -- =================================================================
+    
+    -- SUBMISSION_COMMENTS TABLE (Comments on submissions)
+    'submission_comments', COALESCE(
+      (SELECT json_agg(row_to_json(sc.*)) 
+       FROM public.submission_comments sc),
+      '[]'::json
+    ),
+
+    -- USER_ROLES TABLE (User permission system)
+    'user_roles', COALESCE(
+      (SELECT json_agg(row_to_json(ur.*)) 
+       FROM public.user_roles ur),
+      '[]'::json
+    ),
+
+    -- SUBMISSIONS TABLE (Legacy submission data if exists)
+    'submissions', COALESCE(
+      (SELECT json_agg(row_to_json(s.*)) 
+       FROM public.submissions s),
+      '[]'::json
+    ),
+
+    -- BACKUPS TABLE (Backup history)
+    'backups', COALESCE(
+      (SELECT json_agg(row_to_json(b.*)) 
+       FROM public.backups b),
+      '[]'::json
+    ),
+
+    -- LEADS_OLD TABLE (Historical lead data)
+    'leads_old', COALESCE(
+      (SELECT json_agg(row_to_json(lo.*)) 
+       FROM public.leads_old lo),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- AUTHENTICATION & USERS (Excluding sensitive data)
+    -- =================================================================
+    
+    -- AUTH.USERS TABLE (User account data - excluding passwords)
+    'auth_users', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'id', u.id,
+           'instance_id', u.instance_id,
+           'aud', u.aud,
+           'role', u.role,
+           'email', u.email,
+           'email_confirmed_at', u.email_confirmed_at,
+           'phone', u.phone,
+           'phone_confirmed_at', u.phone_confirmed_at,
+           'created_at', u.created_at,
+           'updated_at', u.updated_at,
+           'last_sign_in_at', u.last_sign_in_at,
+           'raw_app_meta_data', u.raw_app_meta_data,
+           'raw_user_meta_data', u.raw_user_meta_data,
+           'is_super_admin', u.is_super_admin,
+           'is_sso_user', u.is_sso_user,
+           'is_anonymous', u.is_anonymous
+         )
+       ) 
+       FROM auth.users u),
+      '[]'::json
+    ),
+
+    -- AUTH.IDENTITIES TABLE (User identities)
+    'auth_identities', COALESCE(
+      (SELECT json_agg(row_to_json(i.*)) 
+       FROM auth.identities i),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- SYSTEM CONFIGURATION
+    -- =================================================================
+    
+    -- STORAGE.BUCKETS TABLE (File storage configuration)
+    'storage_buckets', COALESCE(
+      (SELECT json_agg(row_to_json(b.*)) 
+       FROM storage.buckets b),
+      '[]'::json
+    ),
+
+    -- STORAGE.OBJECTS TABLE (File metadata - not actual files)
+    'storage_objects', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'id', o.id,
+           'bucket_id', o.bucket_id,
+           'name', o.name,
+           'owner_id', o.owner_id,
+           'created_at', o.created_at,
+           'updated_at', o.updated_at,
+           'last_accessed_at', o.last_accessed_at,
+           'metadata', o.metadata,
+           'version', o.version,
+           'user_metadata', o.user_metadata
+         )
+       ) 
+       FROM storage.objects o),
+      '[]'::json
+    ),
+
+    -- RLS POLICIES (Row Level Security policies)
+    'rls_policies', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schemaname', p.schemaname,
+           'tablename', p.tablename,
+           'policyname', p.policyname,
+           'permissive', p.permissive,
+           'roles', p.roles,
+           'cmd', p.cmd,
+           'qual', p.qual,
+           'with_check', p.with_check
+         )
+       ) 
+       FROM pg_policies p 
+       WHERE p.schemaname IN ('public', 'storage', 'auth')),
+      '[]'::json
+    ),
+
+    -- MIGRATION HISTORY
+    'migration_history', COALESCE(
+      (SELECT json_agg(row_to_json(m.*)) 
+       FROM supabase_migrations.schema_migrations m),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- FUNCTIONS, TRIGGERS & PROCEDURES
+    -- =================================================================
+    
+    -- DATABASE FUNCTIONS (Including custom business logic)
+    'functions', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schema', n.nspname,
+           'name', p.proname,
+           'arguments', pg_get_function_arguments(p.oid),
+           'returns', pg_get_function_result(p.oid),
+           'language', l.lanname,
+           'source', CASE 
+             WHEN l.lanname IN ('plpgsql', 'sql') THEN p.prosrc
+             ELSE 'binary'
+           END,
+           'definition', pg_get_functiondef(p.oid),
+           'is_trigger', p.prorettype = 'trigger'::regtype::oid
+         )
+       )
+       FROM pg_proc p
+       JOIN pg_namespace n ON n.oid = p.pronamespace
+       JOIN pg_language l ON l.oid = p.prolang
+       WHERE n.nspname IN ('public', 'auth', 'storage')
+         AND p.proname NOT IN ('f_unaccent', 'unaccent', 'unaccent_init')
+         AND p.proname NOT LIKE 'pgp_%'
+         AND p.proname NOT LIKE 'armor%'
+         AND p.proname NOT LIKE 'dearmor%'
+         AND p.proname NOT LIKE 'crypt%'
+         AND p.proname NOT LIKE 'gen_salt%'
+       ),
+      '[]'::json
+    ),
+
+    -- DATABASE TRIGGERS
+    'triggers', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schema', schemaname,
+           'table', tablename,
+           'trigger_name', tgname,
+           'trigger_function', tgfoid::regproc,
+           'trigger_type', 
+             CASE tgtype::integer & 1 
+               WHEN 1 THEN 'BEFORE' 
+               ELSE 'AFTER' 
+             END || ' ' ||
+             CASE 
+               WHEN tgtype::integer & 2 = 2 THEN 'INSERT '
+               ELSE ''
+             END ||
+             CASE 
+               WHEN tgtype::integer & 4 = 4 THEN 'DELETE '
+               ELSE ''
+             END ||
+             CASE 
+               WHEN tgtype::integer & 8 = 8 THEN 'UPDATE '
+               ELSE ''
+             END ||
+             CASE 
+               WHEN tgtype::integer & 16 = 16 THEN 'TRUNCATE '
+               ELSE ''
+             END,
+           'enabled', tgenabled,
+           'definition', pg_get_triggerdef(t.oid)
+         )
+       )
+       FROM pg_trigger t
+       JOIN pg_class c ON t.tgrelid = c.oid
+       JOIN pg_namespace n ON c.relnamespace = n.oid
+       JOIN pg_tables pt ON pt.tablename = c.relname AND pt.schemaname = n.nspname
+       WHERE NOT tgisinternal
+         AND schemaname IN ('public', 'auth', 'storage')
+       ),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- SCHEMA INFORMATION
+    -- =================================================================
+    
+    -- TABLE DEFINITIONS
+    'table_definitions', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'table_schema', t.table_schema,
+           'table_name', t.table_name,
+           'table_type', t.table_type,
+           'columns', (
+             SELECT json_agg(
+               json_build_object(
+                 'column_name', c.column_name,
+                 'data_type', c.data_type,
+                 'is_nullable', c.is_nullable,
+                 'column_default', c.column_default,
+                 'ordinal_position', c.ordinal_position,
+                 'character_maximum_length', c.character_maximum_length,
+                 'numeric_precision', c.numeric_precision,
+                 'numeric_scale', c.numeric_scale
+               ) ORDER BY c.ordinal_position
+             )
+             FROM information_schema.columns c
+             WHERE c.table_schema = t.table_schema 
+               AND c.table_name = t.table_name
+           )
+         )
+       )
+       FROM information_schema.tables t
+       WHERE t.table_schema IN ('public', 'auth', 'storage')
+         AND t.table_type = 'BASE TABLE'),
+      '[]'::json
+    ),
+
+    -- PRIMARY KEYS
+    'primary_keys', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'table_schema', tc.table_schema,
+           'table_name', tc.table_name,
+           'constraint_name', tc.constraint_name,
+           'column_name', kcu.column_name
+         )
+       )
+       FROM information_schema.table_constraints tc
+       JOIN information_schema.key_column_usage kcu
+         ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+       WHERE tc.constraint_type = 'PRIMARY KEY'
+         AND tc.table_schema IN ('public', 'auth', 'storage')),
+      '[]'::json
+    ),
+
+    -- FOREIGN KEYS
+    'foreign_keys', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'constraint_name', tc.constraint_name,
+           'table_schema', tc.table_schema,
+           'table_name', tc.table_name,
+           'column_name', kcu.column_name,
+           'foreign_table_schema', ccu.table_schema,
+           'foreign_table_name', ccu.table_name,
+           'foreign_column_name', ccu.column_name,
+           'update_rule', rc.update_rule,
+           'delete_rule', rc.delete_rule
+         )
+       )
+       FROM information_schema.table_constraints tc
+       JOIN information_schema.key_column_usage kcu
+         ON tc.constraint_name = kcu.constraint_name
+         AND tc.table_schema = kcu.table_schema
+       JOIN information_schema.constraint_column_usage ccu
+         ON ccu.constraint_name = tc.constraint_name
+         AND ccu.table_schema = tc.table_schema
+       JOIN information_schema.referential_constraints rc
+         ON rc.constraint_name = tc.constraint_name
+         AND rc.constraint_schema = tc.table_schema
+       WHERE tc.constraint_type = 'FOREIGN KEY'
+         AND tc.table_schema IN ('public', 'auth', 'storage')),
+      '[]'::json
+    ),
+
+    -- INDEXES
+    'indexes', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schemaname', i.schemaname,
+           'tablename', i.tablename,
+           'indexname', i.indexname,
+           'indexdef', i.indexdef
+         )
+       )
+       FROM pg_indexes i
+       WHERE i.schemaname IN ('public', 'auth', 'storage')
+         AND i.indexname NOT LIKE '%_pkey'),
+      '[]'::json
+    ),
+
+    -- SEQUENCES
+    'sequences', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schemaname', sequence_schema,
+           'sequencename', sequence_name,
+           'data_type', data_type,
+           'start_value', start_value,
+           'minimum_value', minimum_value,
+           'maximum_value', maximum_value,
+           'increment', increment,
+           'cycle_option', cycle_option,
+           'last_value', (
+             SELECT last_value 
+             FROM pg_sequences ps 
+             WHERE ps.schemaname = s.sequence_schema 
+               AND ps.sequencename = s.sequence_name
+           )
+         )
+       )
+       FROM information_schema.sequences s
+       WHERE sequence_schema IN ('public', 'auth', 'storage')),
+      '[]'::json
+    ),
+
+    -- TYPES (Custom types)
+    'custom_types', COALESCE(
+      (SELECT json_agg(
+         json_build_object(
+           'schema', n.nspname,
+           'name', t.typname,
+           'type', CASE t.typtype
+             WHEN 'c' THEN 'composite'
+             WHEN 'e' THEN 'enum'
+             WHEN 'd' THEN 'domain'
+             ELSE 'other'
+           END,
+           'values', CASE 
+             WHEN t.typtype = 'e' THEN (
+               SELECT array_agg(e.enumlabel ORDER BY e.enumsortorder)
+               FROM pg_enum e
+               WHERE e.enumtypid = t.oid
+             )
+             ELSE NULL
+           END
+         )
+       )
+       FROM pg_type t
+       JOIN pg_namespace n ON n.oid = t.typnamespace
+       WHERE n.nspname IN ('public', 'auth', 'storage')
+         AND t.typtype IN ('c', 'e', 'd')
+         AND t.typname NOT LIKE '_%'),
+      '[]'::json
+    ),
+
+    -- =================================================================
+    -- DATABASE STATISTICS
+    -- =================================================================
+    
+    'database_stats', json_build_object(
+      'total_clients', (SELECT COUNT(*) FROM public.clients),
+      'total_submissions', (SELECT COUNT(*) FROM public.customer_submissions),
+      'total_leads', (SELECT COUNT(*) FROM public.leads),
+      'total_users', (SELECT COUNT(*) FROM auth.users),
+      'total_storage_objects', (SELECT COUNT(*) FROM storage.objects),
+      'active_packages', (SELECT COUNT(*) FROM public.service_packages WHERE is_active = true),
+      'total_functions', (
+        SELECT COUNT(*) 
+        FROM pg_proc p
+        JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname IN ('public', 'auth', 'storage')
+      ),
+      'total_triggers', (
+        SELECT COUNT(*) 
+        FROM pg_trigger t
+        WHERE NOT tgisinternal
+      ),
+      'backup_date', CURRENT_TIMESTAMP
+    )
+    
+  ) AS backup_json
+)
+SELECT backup_json FROM backup_data;
+
+-- =================================================================
+-- RESTORATION INSTRUCTIONS
+-- =================================================================
+-- 1. Save the JSON output to a file (e.g., foodvision_backup_YYYYMMDD.json)
+-- 2. To restore, parse the JSON and execute in this order:
+--    a) Create custom types
+--    b) Create sequences
+--    c) Create tables with columns
+--    d) Create functions (especially trigger functions first)
+--    e) Insert data into auth tables (users, identities)
+--    f) Insert data into storage configuration (buckets)
+--    g) Insert data into service packages
+--    h) Insert data into clients
+--    i) Insert all other business data
+--    j) Insert storage objects metadata
+--    k) Create triggers
+--    l) Create indexes
+--    m) Create foreign key constraints
+--    n) Apply RLS policies
+--    o) Update sequences to correct values
+-- 3. Verify all relationships and constraints
+-- 4. Test critical functions like:
+--    - public_submit_item_by_restaurant_name
+--    - convert_lead_to_client
+--    - check_client_ownership
+-- 5. Verify triggers are working:
+--    - trigger_link_submission_to_lead
+--    - trigger_set_timestamp
+-- =================================================================
+
+-- Note: Edge Functions need to be backed up separately using:
+-- supabase functions list
+-- supabase functions download <function-name>
+-- =================================================================
