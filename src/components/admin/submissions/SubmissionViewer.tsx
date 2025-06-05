@@ -40,6 +40,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import LightboxDialog from '@/components/editor/submission/LightboxDialog';
+import { useLightbox } from '@/components/editor/submission-processing/hooks/useLightbox';
 
 // Icons
 import {
@@ -90,6 +93,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     fixed_prompt: '',
     lora_id: ''
   });
+
+  // Lightbox state
+  const { lightboxImage, setLightboxImage } = useLightbox();
 
   // Custom hooks - conditionally use admin hooks for admin/editor views
   const useSubmissionHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminSubmission : useSubmission;
@@ -294,6 +300,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                         src={url} 
                         alt={`תמונה מקורית ${index + 1}`}
                         className="w-full h-full object-cover"
+                        onClick={() => setLightboxImage(url)}
                       />
                     </div>
                   ))}
@@ -320,6 +327,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                         src={url} 
                         alt={`תמונה מעובדת ${index + 1}`}
                         className="w-full h-full object-cover"
+                        onClick={() => setLightboxImage(url)}
                       />
                       {url === submission.main_processed_image_url && (
                         <Badge className="absolute top-2 right-2 bg-blue-500">
@@ -381,7 +389,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                                 <img 
                                   src={url} 
                                   alt={`חומר מיתוג ${index + 1}`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => setLightboxImage(url)}
                                 />
                               </div>
                             ) : (
@@ -437,7 +446,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                                 <img 
                                   src={url} 
                                   alt={`דוגמת התייחסות ${index + 1}`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-full object-cover cursor-pointer"
+                                  onClick={() => setLightboxImage(url)}
                                 />
                               </div>
                             ) : (
@@ -836,6 +846,13 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
           </CardContent>
         </Card>
       </div>
+
+      {/* Image Lightbox */}
+      <LightboxDialog
+        imageUrl={lightboxImage}
+        onClose={() => setLightboxImage(null)}
+        open={!!lightboxImage}
+      />
     </div>
   );
 }; 

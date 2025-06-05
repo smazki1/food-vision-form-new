@@ -20,7 +20,8 @@ import {
   SheetContent, 
   SheetHeader, 
   SheetTitle,
-  SheetDescription 
+  SheetDescription,
+  SheetFooter
 } from '@/components/ui/sheet';
 import { 
   FileText, 
@@ -33,10 +34,19 @@ import {
   Package,
   Search,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Upload,
+  Tag,
+  Building2,
+  Mail,
+  Phone,
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Lead } from '@/types/lead';
+import LightboxDialog from '@/components/editor/submission/LightboxDialog';
+import { useLightbox } from '@/components/editor/submission-processing/hooks/useLightbox';
 
 interface SubmissionsSectionProps {
   leadId: string;
@@ -54,6 +64,9 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   const [submissionIdToLink, setSubmissionIdToLink] = useState('');
+
+  // Lightbox state
+  const { lightboxImage, setLightboxImage } = useLightbox();
 
   const { data: submissions = [], isLoading, error } = useLeadSubmissions(leadId);
   const { data: unlinkedSubmissions = [] } = useUnlinkedSubmissions();
@@ -262,7 +275,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                                 src={url}
                                 alt={`תמונה מקורית ${index + 1}`}
                                 className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleViewSubmission(submission.submission_id)}
+                                onClick={() => setLightboxImage(url)}
                               />
                             ))}
                             {submission.original_image_urls.length > 4 && (
@@ -290,7 +303,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                                 src={url}
                                 alt={`תמונה מעובדת ${index + 1}`}
                                 className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-200"
-                                onClick={() => handleViewSubmission(submission.submission_id)}
+                                onClick={() => setLightboxImage(url)}
                               />
                             ))}
                             {submission.processed_image_urls.length > 4 && (
@@ -453,6 +466,13 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
           onClose={() => setIsUploadModalOpen(false)}
         />
       )}
+
+      {/* Image Lightbox */}
+      <LightboxDialog
+        imageUrl={lightboxImage}
+        onClose={() => setLightboxImage(null)}
+        open={!!lightboxImage}
+      />
     </>
   );
 }; 
