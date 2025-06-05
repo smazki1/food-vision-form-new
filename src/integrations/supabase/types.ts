@@ -789,6 +789,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_lead_comments: {
+        Args: {
+          p_lead_id: string
+        }
+        Returns: {
+          comment_id: string
+          lead_id: string
+          comment_text: string
+          comment_timestamp: string
+          user_id: string | null
+        }[]
+      }
       get_my_role: {
         Args: Record<PropertyKey, never>
         Returns: string

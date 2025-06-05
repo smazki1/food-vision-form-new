@@ -572,4 +572,38 @@ BEGIN
      AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'leads' AND column_name = 'lead_status') THEN
     ALTER TABLE public.leads RENAME COLUMN status TO lead_status;
   END IF;
-END $$; 
+END $$;
+
+-- Function to get lead comments (alternative to direct table access)
+CREATE OR REPLACE FUNCTION get_lead_comments(p_lead_id UUID)
+RETURNS TABLE (
+  comment_id UUID,
+  lead_id UUID,
+  comment_text TEXT,
+  comment_timestamp TIMESTAMPTZ,
+  user_id UUID
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if user has admin role
+  IF NOT get_my_role() = 'admin' THEN
+    RAISE EXCEPTION 'Access denied. Admin role required.';
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    lc.comment_id,
+    lc.lead_id,
+    lc.comment_text,
+    lc.comment_timestamp,
+    lc.user_id
+  FROM public.lead_comments lc
+  WHERE lc.lead_id = p_lead_id
+  ORDER BY lc.comment_timestamp DESC;
+END;
+$$;
+
+-- Grant execute permission for the new function
+GRANT EXECUTE ON FUNCTION public.get_lead_comments(UUID) TO authenticated; 

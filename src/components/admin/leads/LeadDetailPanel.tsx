@@ -16,6 +16,7 @@ import {
   useUpdateLeadWithConversion as useUpdateLead, 
   useAddLeadComment, 
   useLeadActivities,
+  useLeadComments,
   useLeadById,
   LEAD_QUERY_KEY 
 } from '@/hooks/useEnhancedLeads';
@@ -113,6 +114,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   const updateLeadMutation = useUpdateLead();
   const addCommentMutation = useAddLeadComment();
   const { data: activities, isLoading: activitiesLoading } = useLeadActivities(leadId);
+  const { data: comments, isLoading: commentsLoading } = useLeadComments(leadId);
 
   const { data: leadData, isLoading: leadLoading, error: leadError } = useLeadById(leadId);
 
@@ -437,18 +439,57 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium">הערות</Label>
-                    <Textarea
-                      value={lead.notes || ''}
-                      onBlur={(e) => handleFieldBlur('notes', e.target.value)}
-                      onChange={(e) => setLead(prev => prev ? {...prev, notes: e.target.value} : null)}
-                      className="mt-1"
-                      placeholder="הזן הערות..."
-                      rows={4}
-                    />
+                  {/* 2-Column Layout: Notes and Activity Comments */}
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Left Column: Notes */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">הערות</Label>
+                        <Textarea
+                          value={lead.notes || ''}
+                          onBlur={(e) => handleFieldBlur('notes', e.target.value)}
+                          onChange={(e) => setLead(prev => prev ? {...prev, notes: e.target.value} : null)}
+                          className="mt-1"
+                          placeholder="הזן הערות..."
+                          rows={6}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Right Column: Activity Comments Sync */}
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4" />
+                          תגובות פעילות (מסונכרן)
+                        </Label>
+                        <div className="mt-1 p-3 bg-gray-50 rounded-md border max-h-48 overflow-y-auto">
+                          {commentsLoading ? (
+                            <p className="text-sm text-gray-500">טוען תגובות...</p>
+                          ) : comments && comments.length > 0 ? (
+                            <div className="space-y-2">
+                              {comments.map((comment) => (
+                                <div key={comment.comment_id} className="p-2 bg-white rounded border">
+                                  <p className="text-sm text-gray-700">{comment.comment_text}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(comment.comment_timestamp).toLocaleString('he-IL')}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 text-center py-4">אין תגובות פעילות</p>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          תגובות אלו מסונכרנות מלשונית הפעילות ומתעדכנות אוטומטית
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+
+                  {/* Follow-up Details */}
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
                       <Label className="text-sm font-medium">תאריך תזכורת הבאה</Label>
                       <Input
@@ -628,12 +669,34 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
                   <div>
                     <h4 className="text-sm font-medium mb-2">תגובות אחרונות</h4>
-                    {activitiesLoading ? (
+                    {commentsLoading ? (
                       <p className="text-sm text-gray-500">טוען תגובות...</p>
+                    ) : comments && comments.length > 0 ? (
+                      <div className="space-y-2">
+                        {comments.map((comment) => (
+                          <div key={comment.comment_id} className="p-3 bg-gray-50 rounded-md">
+                            <p className="text-sm text-gray-700">{comment.comment_text}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {new Date(comment.comment_timestamp).toLocaleString('he-IL')}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">אין תגובות</p>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">היסטוריית פעילות</h4>
+                    {activitiesLoading ? (
+                      <p className="text-sm text-gray-500">טוען פעילות...</p>
                     ) : activities && activities.length > 0 ? (
                       <div className="space-y-2">
                         {activities.map((activity: ActivityLog) => (
-                          <div key={activity.activity_id} className="p-3 bg-gray-50 rounded-md">
+                          <div key={activity.activity_id} className="p-3 bg-blue-50 rounded-md border-l-4 border-blue-200">
                             <p className="text-sm text-gray-700">{activity.activity_description}</p>
                             <p className="text-xs text-gray-500 mt-1">
                               {new Date(activity.activity_timestamp).toLocaleString('he-IL')}
@@ -642,7 +705,7 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-500">אין תגובות</p>
+                      <p className="text-sm text-gray-500">אין היסטוריית פעילות</p>
                     )}
                   </div>
                 </CardContent>

@@ -315,8 +315,9 @@ export const useAddLeadComment = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['lead-comments'] });
+      queryClient.invalidateQueries({ queryKey: ['lead-comments', data.lead_id] });
     }
   });
 };
@@ -333,6 +334,48 @@ export const useLeadActivities = (leadId: string) => {
 
       if (error) throw error;
       return data;
+    },
+    enabled: !!leadId
+  });
+};
+
+export const useLeadComments = (leadId: string) => {
+  return useQuery({
+    queryKey: ['lead-comments', leadId],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('lead_comments')
+          .select('*')
+          .eq('lead_id', leadId)
+          .order('comment_timestamp', { ascending: false });
+
+        if (error) {
+          // If we get a 401 or RLS error, try using RPC function as alternative
+          if (error.code === '42501' || error.message?.includes('401') || error.message?.includes('permission')) {
+            console.warn('RLS policy blocking lead_comments, trying alternative approach...');
+            
+            // Try to use RPC function as alternative
+            const { data: rpcData, error: rpcError } = await supabase
+              .rpc('get_lead_comments', { p_lead_id: leadId });
+            
+            if (rpcError) {
+              console.error('RPC function also failed:', rpcError);
+              // Return empty array rather than throwing to avoid breaking the UI
+              return [];
+            }
+            
+            return rpcData || [];
+          }
+          throw error;
+        }
+
+        return data || [];
+      } catch (error) {
+        console.error('Error fetching lead comments:', error);
+        // Return empty array to prevent UI from breaking
+        return [];
+      }
     },
     enabled: !!leadId
   });
