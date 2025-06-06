@@ -20,17 +20,26 @@ import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
-import Dashboard from "@/pages/admin/Dashboard";
-import ClientsList from "@/pages/admin/ClientsList";
-import ClientDetails from "@/pages/admin/ClientDetails";
-import PackagesManagementPage from "@/pages/admin/PackagesManagementPage";
-import AdminLeadsPage from "@/pages/admin/leads";
-import SubmissionsPage from "@/pages/admin/SubmissionsPage";
-import SubmissionsQueuePage from "@/pages/admin/SubmissionsQueuePage";
-import SubmissionDetailsPage from "@/pages/admin/SubmissionDetailsPage";
-import LeadsTestPage from "@/pages/admin/LeadsTestPage";
-import AlertsDashboard from "@/pages/admin/AlertsDashboard";
-import React from "react";
+import React, { Suspense } from "react";
+
+// Lazy load heavy admin components to reduce initial bundle size
+const Dashboard = React.lazy(() => import("@/pages/admin/Dashboard"));
+const ClientsList = React.lazy(() => import("@/pages/admin/ClientsList"));
+const ClientDetails = React.lazy(() => import("@/pages/admin/ClientDetails"));
+const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesManagementPage"));
+const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
+const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
+const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQueuePage"));
+const SubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
+const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
+const AlertsDashboard = React.lazy(() => import("@/pages/admin/AlertsDashboard"));
+
+// Loading component for lazy-loaded routes
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -142,17 +151,17 @@ const App = () => (
                   </AdminRoute>
                 </CurrentUserRoleProvider>
               }>
-                <Route index element={<Dashboard />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="clients" element={<ClientsList />} />
-                <Route path="clients/:clientId" element={<ClientDetails />} />
-                <Route path="packages" element={<PackagesManagementPage />} />
-                <Route path="leads" element={<AdminLeadsPage />} />
-                <Route path="submissions" element={<SubmissionsPage />} />
-                <Route path="submissions-queue" element={<SubmissionsQueuePage />} />
-                <Route path="submissions/:submissionId" element={<SubmissionDetailsPage />} />
-                <Route path="alerts" element={<AlertsDashboard />} />
-                <Route path="leads-test-page" element={<LeadsTestPage />} />
+                <Route index element={<Suspense fallback={<LoadingSpinner />}><Dashboard /></Suspense>} />
+                <Route path="dashboard" element={<Suspense fallback={<LoadingSpinner />}><Dashboard /></Suspense>} />
+                <Route path="clients" element={<Suspense fallback={<LoadingSpinner />}><ClientsList /></Suspense>} />
+                <Route path="clients/:clientId" element={<Suspense fallback={<LoadingSpinner />}><ClientDetails /></Suspense>} />
+                <Route path="packages" element={<Suspense fallback={<LoadingSpinner />}><PackagesManagementPage /></Suspense>} />
+                <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />
+                <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
+                <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />
+                <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPage /></Suspense>} />
+                <Route path="alerts" element={<Suspense fallback={<LoadingSpinner />}><AlertsDashboard /></Suspense>} />
+                <Route path="leads-test-page" element={<Suspense fallback={<LoadingSpinner />}><LeadsTestPage /></Suspense>} />
               </Route>
             </Routes>
           </BrowserRouter>

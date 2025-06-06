@@ -68,10 +68,10 @@ describe('LeadDetailsSheet', () => {
     expect(screen.getByText(`אימייל: ${mockLead.email}`)).toBeInTheDocument();
   });
 
-  it('opens and closes the sheet', () => {
+  it('opens and closes the sheet', async () => {
     const onClose = vi.fn();
     renderComponent({ onClose });
-    userEvent.click(screen.getByRole('button', { name: 'ערוך' }));
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }));
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -79,12 +79,15 @@ describe('LeadDetailsSheet', () => {
     const onSave = vi.fn();
     renderComponent({ onSave });
 
-    userEvent.click(screen.getByRole('button', { name: 'ערוך' }));
+    // First click edit button to enter edit mode
+    await userEvent.click(screen.getByRole('button', { name: 'ערוך' }));
     
-    const saveButton = screen.getByRole('button', { name: 'שמור' });
+    // Wait for edit mode to appear and find save button
+    const saveButton = await screen.findByRole('button', { name: 'שמור' });
     expect(saveButton).toBeInTheDocument();
 
-    userEvent.click(saveButton);
+    // Click save button
+    await userEvent.click(saveButton);
     expect(onSave).toHaveBeenCalled();
   });
 });

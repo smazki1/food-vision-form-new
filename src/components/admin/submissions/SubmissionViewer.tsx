@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import {
   SubmissionCommentType,
@@ -44,6 +44,7 @@ import { Separator } from '@/components/ui/separator';
 import LightboxDialog from '@/components/editor/submission/LightboxDialog';
 import { useLightbox } from '@/components/editor/submission-processing/hooks/useLightbox';
 import { downloadImagesAsZip } from '@/utils/downloadUtils';
+import { supabase } from '@/integrations/supabase/client';
 
 // Icons
 import {
@@ -95,6 +96,12 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     lora_id: ''
   });
 
+  // Processed images upload state
+  const [showProcessedImageUpload, setShowProcessedImageUpload] = useState(false);
+  const [processedImageUrl, setProcessedImageUrl] = useState('');
+  const [isUploadingProcessed, setIsUploadingProcessed] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Lightbox state
   const { lightboxImage, setLightboxImage } = useLightbox();
 
@@ -105,7 +112,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   const useUpdateLoraHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminUpdateSubmissionLora : useUpdateSubmissionLora;
   const useAddCommentHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminAddSubmissionComment : useAddSubmissionComment;
 
-  const { data: submission, isLoading, error } = useSubmissionHook(submissionId);
+  const { data: submission, isLoading, error, refetch: refetchSubmission } = useSubmissionHook(submissionId);
   const { data: comments = [] } = useCommentsHook(submissionId);
   const updateStatusMutation = useUpdateStatusHook();
   const updateLoraMutation = useUpdateLoraHook();
@@ -168,6 +175,159 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     } catch (error) {
       console.error('Error downloading images:', error);
       toast.error("שגיאה בהורדת התמונות");
+    }
+  };
+
+  // Handle processed image upload via URL
+  const handleProcessedImageUrlUpload = async () => {
+    if (!processedImageUrl.trim()) {
+      toast.error("יש להזין URL של תמונה");
+      return;
+    }
+
+    setIsUploadingProcessed(true);
+    try {
+      // Update the processed images array
+      const currentProcessedImages = submission.processed_image_urls || [];
+      const updatedProcessedImages = [...currentProcessedImages, processedImageUrl];
+
+      const { error } = await supabase
+        .from('customer_submissions')
+        .update({ 
+          processed_image_urls: updatedProcessedImages,
+          main_processed_image_url: updatedProcessedImages[0] // Set first as main if none exists
+        })
+        .eq('submission_id', submissionId);
+
+      if (error) throw error;
+
+      toast.success("תמונה מעובדת נוספה בהצלחה");
+      setProcessedImageUrl('');
+      setShowProcessedImageUpload(false);
+      
+      // Refresh the submission data without reloading the page
+      await refetchSubmission();
+    } catch (error) {
+      console.error('Error adding processed image:', error);
+      toast.error("שגיאה בהוספת התמונה המעובדת");
+    } finally {
+      setIsUploadingProcessed(false);
+    }
+  };
+
+  // Handle processed image file upload
+  const handleProcessedImageFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error("יש לבחור קובץ תמונה");
+      return;
+    }
+
+    if (file.size > 25 * 1024 * 1024) { // 25MB limit
+      toast.error("גודל הקובץ חייב להיות קטן מ-25MB");
+      return;
+    }
+
+    setIsUploadingProcessed(true);
+    try {
+      toast("מעלה תמונה...", { duration: 2000 });
+      
+      // Create unique file name using similar structure to existing uploads
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const timestamp = Date.now();
+      const fileName = `processed_${timestamp}.${fileExt}`;
+      const filePath = `uploads/${submissionId}/${fileName}`;
+
+      console.log('Uploading file:', fileName, 'Path:', filePath, 'Size:', file.size);
+
+      // Upload to Supabase Storage using same structure as original images
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('food-vision-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true // Allow overwrite in case of retry
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('food-vision-images')
+        .getPublicUrl(filePath);
+
+      console.log('Public URL:', publicUrl);
+
+      // Update the processed images array
+      const currentProcessedImages = submission.processed_image_urls || [];
+      const updatedProcessedImages = [...currentProcessedImages, publicUrl];
+      
+      // Set main processed image if this is the first one
+      const mainProcessedImageUrl = submission.main_processed_image_url || publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('customer_submissions')
+        .update({ 
+          processed_image_urls: updatedProcessedImages,
+          main_processed_image_url: mainProcessedImageUrl
+        })
+        .eq('submission_id', submissionId);
+
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw updateError;
+      }
+
+      toast.success("תמונה מעובדת הועלתה בהצלחה");
+      setShowProcessedImageUpload(false);
+      
+      // Clear file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      
+      // Refresh the submission data without reloading the page
+      await refetchSubmission();
+    } catch (error) {
+      console.error('Error uploading processed image:', error);
+      toast.error(`שגיאה בהעלאת התמונה: ${error instanceof Error ? error.message : 'שגיאה לא ידועה'}`);
+    } finally {
+      setIsUploadingProcessed(false);
+    }
+  };
+
+  // Handle download single processed image
+  const handleDownloadProcessedImage = async (imageUrl: string) => {
+    try {
+      toast("מתחיל הורדת תמונה...", { duration: 1000 });
+      
+      // Create a temporary link and trigger download
+      const link = document.createElement('a');
+      link.href = imageUrl;
+      link.download = `processed_image_${Date.now()}.jpg`;
+      link.target = '_blank'; // Open in new tab as fallback
+      link.rel = 'noopener noreferrer';
+      
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("התמונה הורדה בהצלחה");
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast.error("שגיאה בהורדת התמונה");
+      
+      // Fallback: open in new tab
+      try {
+        window.open(imageUrl, '_blank');
+        toast("התמונה נפתחת בחלון חדש");
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+      }
     }
   };
 
@@ -344,15 +504,104 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
 
               {/* Processed Images Column */}
               <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-5 w-5 text-purple-600" />
-                  <h3 className="font-semibold">תמונות מעובדות</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-purple-600" />
+                    <h3 className="font-semibold">תמונות מעובדות</h3>
+                  </div>
+                  {viewMode === 'admin' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowProcessedImageUpload(!showProcessedImageUpload)}
+                      disabled={isUploadingProcessed}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      הוסף תמונה
+                    </Button>
+                  )}
                 </div>
+
+                {/* Upload Controls */}
+                {showProcessedImageUpload && viewMode === 'admin' && (
+                  <div className="mb-4 p-4 bg-white rounded-lg border">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="image-url">הוסף תמונה מ-URL</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="image-url"
+                            placeholder="הכנס URL של תמונה..."
+                            value={processedImageUrl}
+                            onChange={(e) => setProcessedImageUrl(e.target.value)}
+                            disabled={isUploadingProcessed}
+                          />
+                                                     <Button
+                             onClick={handleProcessedImageUrlUpload}
+                             disabled={isUploadingProcessed || !processedImageUrl.trim()}
+                           >
+                             {isUploadingProcessed ? (
+                               <>
+                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                 מוסיף...
+                               </>
+                             ) : (
+                               'הוסף'
+                             )}
+                           </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-px bg-gray-300"></div>
+                        <span className="text-sm text-gray-500">או</span>
+                        <div className="flex-1 h-px bg-gray-300"></div>
+                      </div>
+                      
+                      <div>
+                        <Label>העלה תמונה מהמחשב</Label>
+                                                 <input
+                           ref={fileInputRef}
+                           type="file"
+                           accept="image/*"
+                           onChange={async (e) => {
+                             const file = e.target.files?.[0];
+                             if (file) {
+                               console.log('File selected:', file.name, file.size, file.type);
+                               await handleProcessedImageFileUpload(file);
+                             }
+                           }}
+                           className="hidden"
+                           disabled={isUploadingProcessed}
+                         />
+                                                 <Button
+                           variant="outline"
+                           onClick={() => fileInputRef.current?.click()}
+                           disabled={isUploadingProcessed}
+                           className="w-full"
+                         >
+                           {isUploadingProcessed ? (
+                             <>
+                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                               מעלה תמונה...
+                             </>
+                           ) : (
+                             <>
+                               <Upload className="h-4 w-4 mr-2" />
+                               בחר קובץ תמונה
+                             </>
+                           )}
+                         </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
                   {submission.processed_image_urls?.map((url, index) => (
                     <div 
                       key={index} 
-                      className={`aspect-square bg-white rounded-lg border-2 overflow-hidden hover:scale-105 transition-transform cursor-pointer ${
+                      className={`relative aspect-square bg-white rounded-lg border-2 overflow-hidden hover:scale-105 transition-transform group ${
                         url === submission.main_processed_image_url 
                           ? 'border-blue-500 ring-2 ring-blue-200' 
                           : 'border-gray-200'
@@ -361,9 +610,25 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       <img 
                         src={url} 
                         alt={`תמונה מעובדת ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onClick={() => setLightboxImage(url)}
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => handleDownloadProcessedImage(url)}
                       />
+                      
+                      {/* Download button overlay */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadProcessedImage(url);
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
                       {url === submission.main_processed_image_url && (
                         <Badge className="absolute top-2 right-2 bg-blue-500">
                           ראשית
@@ -372,11 +637,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                     </div>
                   ))}
                   
-                  {/* Upload Area */}
-                  {viewMode === 'admin' && (
-                    <div className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-gray-400 cursor-pointer transition-colors">
+                  {/* Simplified Upload Area for empty state */}
+                  {viewMode === 'admin' && (!submission.processed_image_urls || submission.processed_image_urls.length === 0) && (
+                    <div 
+                      className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-gray-400 cursor-pointer transition-colors"
+                      onClick={() => setShowProcessedImageUpload(true)}
+                    >
                       <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">העלה תמונה</span>
+                      <span className="text-sm text-gray-500">העלה תמונה מעובדת</span>
                     </div>
                   )}
                 </div>

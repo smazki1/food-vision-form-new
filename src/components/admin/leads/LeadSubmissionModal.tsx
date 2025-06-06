@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +24,52 @@ import {
   UtensilsCrossed,
   Coffee,
   Wine,
-  Building
+  Building,
+  Package,
+  Paperclip
 } from 'lucide-react';
 import { Lead } from '@/types/lead';
+
+// Utility function to sanitize path components for storage
+const sanitizePathComponent = (text: string): string => {
+  // First, replace whole Hebrew words with their English equivalents
+  const hebrewToEnglish: Record<string, string> = {
+    'מנה': 'dish',
+    'שתיה': 'drink', 
+    'קוקטייל': 'cocktail',
+    'עוגה': 'cake',
+    'קינוח': 'dessert',
+    'סלט': 'salad',
+    'מרק': 'soup',
+    'פיצה': 'pizza',
+    'המבורגר': 'hamburger',
+    'סטייק': 'steak',
+    'פסטה': 'pasta',
+    'סושי': 'sushi',
+    'כריך': 'sandwich'
+  };
+
+  let result = text;
+  
+  // Replace known Hebrew words
+  Object.entries(hebrewToEnglish).forEach(([hebrew, english]) => {
+    result = result.replace(new RegExp(hebrew, 'g'), english);
+  });
+  
+  // Replace any remaining Hebrew characters with dashes
+  result = result.replace(/[א-ת]/g, '-');
+  
+  // Replace any non-alphanumeric characters (except dash and underscore) with dash
+  result = result.replace(/[^a-zA-Z0-9\-_]/g, '-');
+  
+  // Collapse multiple dashes into single dash
+  result = result.replace(/-+/g, '-');
+  
+  // Remove leading and trailing dashes
+  result = result.replace(/^-|-$/g, '');
+  
+  return result;
+};
 
 interface LeadSubmissionModalProps {
   lead: Lead;
@@ -40,6 +83,8 @@ interface SubmissionFormData {
   description: string;
   specialNotes: string;
   referenceImages: File[];
+  brandingMaterials: File[];
+  referenceExamples: File[];
 }
 
 const ITEM_TYPES = [
@@ -58,9 +103,13 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     itemType: '',
     description: '',
     specialNotes: '',
-    referenceImages: []
+    referenceImages: [],
+    brandingMaterials: [],
+    referenceExamples: []
   });
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [brandingPreviews, setBrandingPreviews] = useState<string[]>([]);
+  const [referencePreviews, setReferencePreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   
@@ -74,14 +123,22 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
         itemType: '',
         description: '',
         specialNotes: '',
-        referenceImages: []
+        referenceImages: [],
+        brandingMaterials: [],
+        referenceExamples: []
       });
       setImagePreviews([]);
+      setBrandingPreviews([]);
+      setReferencePreviews([]);
       setErrors({});
     } else {
       // Cleanup image previews when modal closes
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
+      brandingPreviews.forEach(url => URL.revokeObjectURL(url));
+      referencePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews([]);
+      setBrandingPreviews([]);
+      setReferencePreviews([]);
     }
   }, [isOpen]);
 
@@ -89,6 +146,8 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
   useEffect(() => {
     return () => {
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
+      brandingPreviews.forEach(url => URL.revokeObjectURL(url));
+      referencePreviews.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 
@@ -174,6 +233,116 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     event.target.value = '';
   };
 
+  const handleBrandingUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    const currentTotal = formData.brandingMaterials.length + newFiles.length;
+    
+    if (currentTotal > 5) {
+      toast.error('ניתן להעלות עד 5 קבצי מיתוג');
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    newFiles.forEach(file => {
+      const validTypes = ['image/', 'application/pdf', 'application/vnd.openxmlformats-officedocument'];
+      const isValidType = validTypes.some(type => file.type.startsWith(type));
+      
+      if (!isValidType) {
+        invalidFiles.push(`${file.name} - פורמט לא נתמך (נדרש: תמונה, PDF או מסמך Word)`);
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) { // 25MB limit
+        invalidFiles.push(`${file.name} - קובץ גדול מדי (מעל 25MB)`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.error(`קבצים לא תקינים:\n${invalidFiles.join('\n')}`);
+    }
+
+    if (validFiles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        brandingMaterials: [...prev.brandingMaterials, ...validFiles]
+      }));
+
+      // Create previews for images
+      const newPreviews = validFiles.map(file => {
+        if (file.type.startsWith('image/')) {
+          return URL.createObjectURL(file);
+        }
+        return ''; // No preview for non-images
+      });
+      setBrandingPreviews(prev => [...prev, ...newPreviews]);
+    }
+
+    // Reset input
+    event.target.value = '';
+  };
+
+  const handleReferenceUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    const currentTotal = formData.referenceExamples.length + newFiles.length;
+    
+    if (currentTotal > 5) {
+      toast.error('ניתן להעלות עד 5 קבצי דוגמאות');
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles: File[] = [];
+    const invalidFiles: string[] = [];
+
+    newFiles.forEach(file => {
+      const validTypes = ['image/', 'application/pdf', 'application/vnd.openxmlformats-officedocument'];
+      const isValidType = validTypes.some(type => file.type.startsWith(type));
+      
+      if (!isValidType) {
+        invalidFiles.push(`${file.name} - פורמט לא נתמך (נדרש: תמונה, PDF או מסמך Word)`);
+        return;
+      }
+      if (file.size > 25 * 1024 * 1024) { // 25MB limit
+        invalidFiles.push(`${file.name} - קובץ גדול מדי (מעל 25MB)`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (invalidFiles.length > 0) {
+      toast.error(`קבצים לא תקינים:\n${invalidFiles.join('\n')}`);
+    }
+
+    if (validFiles.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        referenceExamples: [...prev.referenceExamples, ...validFiles]
+      }));
+
+      // Create previews for images
+      const newPreviews = validFiles.map(file => {
+        if (file.type.startsWith('image/')) {
+          return URL.createObjectURL(file);
+        }
+        return ''; // No preview for non-images
+      });
+      setReferencePreviews(prev => [...prev, ...newPreviews]);
+    }
+
+    // Reset input
+    event.target.value = '';
+  };
+
   const removeImage = (index: number) => {
     setFormData(prev => ({
       ...prev,
@@ -183,6 +352,32 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     // Revoke and remove preview
     URL.revokeObjectURL(imagePreviews[index]);
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeBrandingFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      brandingMaterials: prev.brandingMaterials.filter((_, i) => i !== index)
+    }));
+    
+    // Revoke and remove preview if it exists
+    if (brandingPreviews[index]) {
+      URL.revokeObjectURL(brandingPreviews[index]);
+    }
+    setBrandingPreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeReferenceFile = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      referenceExamples: prev.referenceExamples.filter((_, i) => i !== index)
+    }));
+    
+    // Revoke and remove preview if it exists
+    if (referencePreviews[index]) {
+      URL.revokeObjectURL(referencePreviews[index]);
+    }
+    setReferencePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const validateForm = (): boolean => {
@@ -211,17 +406,20 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
     }
 
     setIsSubmitting(true);
-    toast.info('מעלה תמונות ושומר הגשה...');
+    toast.info('מעלה קבצים ושומר הגשה...');
 
     try {
       const newItemId = uuidv4();
       
-      // Upload images to Supabase storage
+      // Sanitize item type for storage path
+      const sanitizedItemType = sanitizePathComponent(formData.itemType) || 'item';
+      
+      // Upload reference images to Supabase storage
       const uploadPromises = formData.referenceImages.map(async (file) => {
         const fileExtension = file.name.split('.').pop();
         const uniqueFileName = `${newItemId}/${uuidv4()}.${fileExtension}`;
-        // Store in lead's folder structure
-        const filePath = `leads/${lead.lead_id}/${formData.itemType}/${uniqueFileName}`;
+        // Store in lead's folder structure with sanitized path
+        const filePath = `leads/${lead.lead_id}/${sanitizedItemType}/${uniqueFileName}`;
         
         const { error: uploadError } = await supabase.storage
           .from('food-vision-images')
@@ -241,22 +439,76 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
         
         return publicUrlData.publicUrl;
       });
+
+      // Upload branding materials if any
+      const brandingUploadPromises = formData.brandingMaterials.map(async (file) => {
+        const fileExtension = file.name.split('.').pop();
+        const uniqueFileName = `${newItemId}/${uuidv4()}.${fileExtension}`;
+        const filePath = `leads/${lead.lead_id}/${sanitizedItemType}/branding/${uniqueFileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('food-vision-images')
+          .upload(filePath, file);
+        
+        if (uploadError) {
+          throw new Error(`שגיאה בהעלאת קובץ מיתוג ${file.name}: ${uploadError.message}`);
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('food-vision-images')
+          .getPublicUrl(filePath);
+        
+        if (!publicUrlData?.publicUrl) {
+          throw new Error(`שגיאה בקבלת URL ציבורי עבור קובץ מיתוג ${file.name}`);
+        }
+        
+        return publicUrlData.publicUrl;
+      });
+
+      // Upload reference examples if any
+      const referenceUploadPromises = formData.referenceExamples.map(async (file) => {
+        const fileExtension = file.name.split('.').pop();
+        const uniqueFileName = `${newItemId}/${uuidv4()}.${fileExtension}`;
+        const filePath = `leads/${lead.lead_id}/${sanitizedItemType}/reference/${uniqueFileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('food-vision-images')
+          .upload(filePath, file);
+        
+        if (uploadError) {
+          throw new Error(`שגיאה בהעלאת קובץ דוגמה ${file.name}: ${uploadError.message}`);
+        }
+        
+        const { data: publicUrlData } = supabase.storage
+          .from('food-vision-images')
+          .getPublicUrl(filePath);
+        
+        if (!publicUrlData?.publicUrl) {
+          throw new Error(`שגיאה בקבלת URL ציבורי עבור קובץ דוגמה ${file.name}`);
+        }
+        
+        return publicUrlData.publicUrl;
+      });
       
+      // Wait for all uploads to complete
       const uploadedImageUrls = await Promise.all(uploadPromises);
+      const uploadedBrandingUrls = formData.brandingMaterials.length > 0 ? await Promise.all(brandingUploadPromises) : [];
+      const uploadedReferenceUrls = formData.referenceExamples.length > 0 ? await Promise.all(referenceUploadPromises) : [];
       
-      // Create submission record linked to the lead
+      // Create submission record linked to the lead with all file types
+      const description = formData.description || '';
+      const specialNotes = formData.specialNotes || '';
+      const combinedDescription = [description, specialNotes].filter(Boolean).join('\n\nהערות: ');
+      
       const submissionData = {
-        created_lead_id: lead.lead_id,
         lead_id: lead.lead_id,
-        submission_contact_name: lead.contact_name || '',
-        submission_contact_phone: lead.phone || '',
-        submission_contact_email: lead.email || '',
-        original_item_id: newItemId,
         item_type: formData.itemType,
         item_name_at_submission: formData.itemName,
         submission_status: 'ממתינה לעיבוד' as const,
         original_image_urls: uploadedImageUrls,
-        internal_team_notes: `${formData.description ? `תיאור: ${formData.description}\n` : ''}${formData.specialNotes || ''}`.trim() || null
+        branding_material_urls: uploadedBrandingUrls.length > 0 ? uploadedBrandingUrls : null,
+        reference_example_urls: uploadedReferenceUrls.length > 0 ? uploadedReferenceUrls : null,
+        description: combinedDescription || null
       };
 
       const { error: submissionError } = await supabase
@@ -269,9 +521,11 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
       }
 
       // Log activity for the lead
+      const additionalFiles = uploadedBrandingUrls.length + uploadedReferenceUrls.length;
+      const additionalFilesText = additionalFiles > 0 ? ` + ${additionalFiles} קבצים נוספים` : '';
       const activityData = {
         lead_id: lead.lead_id,
-        activity_description: `הועלתה הגשה חדשה: ${formData.itemName} (${formData.itemType === 'dish' ? 'מנה' : formData.itemType === 'cocktail' ? 'קוקטייל' : 'שתיה'})`
+        activity_description: `הועלתה הגשה חדשה: ${formData.itemName} (${formData.itemType}) - ${uploadedImageUrls.length} תמונות${additionalFilesText}`
       };
 
       await supabase
@@ -502,6 +756,126 @@ export const LeadSubmissionModal: React.FC<LeadSubmissionModalProps> = ({
                         <div className="absolute bottom-1 left-1 right-1 bg-black/60 text-white text-xs p-1 rounded truncate">
                           {file.name}
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Branding Materials Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  חומרי מיתוג (אופציונלי)
+                </Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                  <Package className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <div className="space-y-2">
+                    <Label htmlFor="brandingUpload" className="cursor-pointer">
+                      <Button variant="outline" size="sm" asChild>
+                        <span>העלה חומרי מיתוג</span>
+                      </Button>
+                    </Label>
+                    <Input
+                      id="brandingUpload"
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={handleBrandingUpload}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-gray-500">
+                      לוגו, מדריך מיתוג, צבעים וכדומה. עד 5 קבצים, 25MB לקובץ.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Branding Files List */}
+                {formData.brandingMaterials.length > 0 && (
+                  <div className="space-y-2 mt-3">
+                    {formData.brandingMaterials.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          {file.type.startsWith('image/') ? (
+                            <img
+                              src={brandingPreviews[index]}
+                              alt={file.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          ) : (
+                            <Paperclip className="h-4 w-4 text-blue-600" />
+                          )}
+                          <span className="text-sm text-blue-800 truncate max-w-[200px]">{file.name}</span>
+                          <span className="text-xs text-blue-600">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeBrandingFile(index)}
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Reference Examples Upload */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Paperclip className="h-4 w-4" />
+                  דוגמאות ורפרנסים (אופציונלי)
+                </Label>
+                <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+                  <Paperclip className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <div className="space-y-2">
+                    <Label htmlFor="referenceUpload" className="cursor-pointer">
+                      <Button variant="outline" size="sm" asChild>
+                        <span>העלה דוגמאות</span>
+                      </Button>
+                    </Label>
+                    <Input
+                      id="referenceUpload"
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx"
+                      onChange={handleReferenceUpload}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-gray-500">
+                      תמונות השראה, סגנונות, דוגמאות מתחרים וכדומה. עד 5 קבצים, 25MB לקובץ.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Reference Files List */}
+                {formData.referenceExamples.length > 0 && (
+                  <div className="space-y-2 mt-3">
+                    {formData.referenceExamples.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-purple-50 rounded border">
+                        <div className="flex items-center gap-2">
+                          {file.type.startsWith('image/') ? (
+                            <img
+                              src={referencePreviews[index]}
+                              alt={file.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          ) : (
+                            <Paperclip className="h-4 w-4 text-purple-600" />
+                          )}
+                          <span className="text-sm text-purple-800 truncate max-w-[200px]">{file.name}</span>
+                          <span className="text-xs text-purple-600">({(file.size / 1024 / 1024).toFixed(1)} MB)</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeReferenceFile(index)}
+                          className="h-6 w-6 p-0 text-red-600 hover:text-red-800"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>

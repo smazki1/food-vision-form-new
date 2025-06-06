@@ -1,72 +1,112 @@
 # Food Vision AI - Project Intelligence
 
-## Latest Development Insights (December 19, 2024)
+## Latest Development Insights (January 2, 2025)
 
-### ✅ Package Management System - Complete Success Story
-**Critical Learning**: When Supabase REST API fails with HTTP 406 errors, RPC functions provide a reliable alternative approach.
+### ✅ Hebrew Character Storage Path Resolution - Critical Success Pattern
+**Breakthrough**: Successfully resolved Supabase Storage "Invalid key" errors for Hebrew characters in file paths.
 
-**Problem Solved**: Package management was completely broken due to persistent HTTP 406 errors and cache invalidation failures.
+**Root Cause Discovered**: Hebrew text like "עוגה" in storage paths causes failures because Supabase Storage requires ASCII-safe paths.
 
-**Technical Solutions Implemented**:
-1. **HTTP 406 Error Resolution**: 
-   - Root cause: `select="*"` in REST API calls
-   - Solution: Explicit column selection OR RPC function fallback
-   - Pattern: Always provide explicit `select("col1, col2, col3")` instead of `select("*")`
+**Proven Solution Pattern**:
+```typescript
+const sanitizePathComponent = (text: string): string => {
+  // 1. Hebrew word mapping for food industry terms
+  const hebrewToEnglish = {
+    'מנה': 'dish', 'שתיה': 'drink', 'קוקטייל': 'cocktail',
+    'עוגה': 'cake', 'מאפה': 'pastry', 'סלט': 'salad',
+    'עוף': 'chicken', 'בשר': 'meat', 'דג': 'fish',
+    'ירקות': 'vegetables', 'פירות': 'fruits'
+  };
+  
+  // 2. Replace whole Hebrew words first
+  // 3. Convert remaining Hebrew chars to dashes
+  // 4. Sanitize special characters
+  // 5. Normalize dashes (collapse multiples, trim)
+};
+```
 
-2. **RPC Function as Reliable Fallback**:
-   ```typescript
-   // Create comprehensive RPC function for updates
-   CREATE OR REPLACE FUNCTION update_service_package(
-     p_package_id UUID,
-     p_name TEXT DEFAULT NULL,
-     // ... all other parameters with defaults
-   )
-   RETURNS service_packages
-   LANGUAGE plpgsql;
-   
-   // Use RPC when REST fails
-   export const updatePackageViaRPC = (id, data) => supabase.rpc('update_service_package', params);
-   ```
+**Critical Storage Pattern**: Always sanitize item types in paths:
+- Before: `leads/{leadId}/{hebrewItemType}/` ❌ FAILS
+- After: `leads/{leadId}/{sanitizedItemType}/` ✅ WORKS
 
-3. **Multi-Strategy Cache Invalidation**:
-   ```typescript
-   onSuccess: () => {
-     queryClient.invalidateQueries({ queryKey: ["packages"] });
-     queryClient.refetchQueries({ queryKey: ["packages_simplified"] });
-     queryClient.invalidateQueries({
-       predicate: (query) => query.queryKey[0] === "packages"
-     });
-   }
-   ```
+### ✅ Processed Images Complete Workflow - Production Success
+**Latest Achievement**: Resolved all user-reported issues with processed images functionality.
 
-4. **Data Transformation Consistency**:
-   - Critical: Database uses `name` field, UI uses `package_name`
-   - Solution: Helper functions for consistent transformation
-   - Pattern: Always transform data at API layer, not in components
+**Issues Resolved**:
+1. **Navigation Problem**: Page reloading after upload → Fixed with React Query refetch()
+2. **Download Failure**: Images not downloading on click → Enhanced with direct download + fallback
+3. **Upload Storage Error**: 400 errors from wrong bucket → Fixed bucket name and path structure
 
-**Testing Strategy**: 
-- 22+ comprehensive tests across API, hooks, and integration layers
-- 100% pass rate with mocked and real database scenarios
-- Created reusable test patterns for future features
+**Critical Storage Configuration**:
+```typescript
+// CORRECT - Use this bucket for all uploads:
+.from('food-vision-images')
 
-**Documentation Standard**: 
-- Created `PACKAGE_FEATURE_REPORT.md` with complete implementation details
-- Architecture diagrams, security analysis, and team knowledge transfer
-- This becomes the template for documenting major features
+// WRONG - This causes 400 errors:
+.from('food-vision-uploads')
+```
 
-### Cache Management Excellence
-**Key Pattern**: When React Query cache doesn't invalidate properly, use multiple strategies:
-- `invalidateQueries()` for marking stale
-- `refetchQueries()` for immediate refresh
-- Predicate-based invalidation for comprehensive coverage
-- Authentication fallback checks to prevent disabled queries
+**Proven Upload Pattern**:
+```typescript
+const filePath = `uploads/${submissionId}/${fileName}`;
+const { data, error } = await supabase.storage
+  .from('food-vision-images')
+  .upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: true
+  });
+```
 
-### Supabase RPC Function Best Practices
-**Pattern**: RPC functions are more reliable than REST for complex operations:
-- Use `COALESCE(p_param, existing_value)` for partial updates
-- Always return the updated row for immediate UI refresh
-- SECURITY DEFINER for admin operations
-- Comprehensive parameter handling with defaults
+**UI/UX Success Pattern**:
+- Click images → Direct download (no lightbox)
+- Loading states with Hebrew feedback
+- File validation (25MB, image types)
+- Error recovery with detailed messages
+
+### ✅ Database Schema Verification via Supabase API
+**Learning**: When database columns are missing, use Supabase Management API to verify actual schema instead of guessing.
+
+**Proven Pattern**:
+```typescript
+// Use mcp_supabase_list_tables to verify column existence
+// Check columns by ordinal_position and name
+// Only use columns that actually exist in production database
+```
+
+**Column Existence Confirmed** (customer_submissions table):
+- ✅ `branding_material_urls` (TEXT[] column 25) - EXISTS
+- ✅ `reference_example_urls` (TEXT[] column 26) - EXISTS
+- ✅ `description` (TEXT column 27) - EXISTS
+- ❌ `internal_team_notes` - MAY NOT EXIST (migration-dependent)
+
+**Safe Database Insert Pattern**:
+```typescript
+const submissionData = {
+  // Always include core existing columns
+  lead_id, item_type, item_name_at_submission, submission_status, original_image_urls,
+  // Conditionally include verified columns
+  ...(columnExists('branding_material_urls') ? { branding_material_urls } : {}),
+  // Combine related fields if needed
+  description: [description, specialNotes].filter(Boolean).join('\n\nהערות: ')
+};
+```
+
+### ✅ Multi-File Upload Architecture Excellence
+**Pattern**: Support multiple file types with unified UI but separate storage organization.
+
+**Proven Implementation**:
+1. **Separate Upload Handlers**: Each file type has its own upload logic
+2. **Parallel Processing**: Use Promise.all() for simultaneous uploads
+3. **Error Isolation**: Individual file failures don't break entire upload
+4. **Memory Management**: Proper cleanup with URL.revokeObjectURL()
+5. **Progress Feedback**: Hebrew toast messages for each stage
+
+**Storage Organization Pattern**:
+```
+leads/{leadId}/{sanitizedItemType}/product/     # Product images
+leads/{leadId}/{sanitizedItemType}/branding/    # Company branding  
+leads/{leadId}/{sanitizedItemType}/reference/   # Reference examples
+```
 
 ## Core Architecture Patterns
 
@@ -176,15 +216,25 @@ const LEAD_QUERY_KEY = ['leads'] as const;
 4. **Integration**: Connect with existing systems
 5. **Testing and deployment**: Comprehensive testing and production deployment
 
-## Current System Status (2024-12-19)
+## Current System Status (2025-01-02)
 
 ### ✅ Completed Systems
+- **Hebrew Submissions**: Complete path sanitization with comprehensive testing (9+ tests)
+- **Processed Images Workflow**: Complete upload/download system with storage fixes
+- **Branding Materials**: Full multi-file upload with database integration
 - **Package Management**: Complete CRUD with comprehensive testing (22+ tests)
 - **Authentication**: Stable with timeout handling and recovery
 - **Admin Interface**: Full CRM with lead management and submission access
 - **Upload Forms**: All three submission paths working (unified, public, legacy)
 - **Database**: Optimized schema with proper RLS policies
 - **Webhook Integration**: Complete Make.com integration deployed
+- **Submissions Management**: Advanced filtering, bulk operations, visual thumbnails
+
+### 🚀 Latest Production Deployment
+- **URL**: https://food-vision-form-5ag87yn2x-avis-projects-a35edf10.vercel.app
+- **Build Time**: 5.25s
+- **Status**: ✅ LIVE AND OPERATIONAL
+- **Features**: All Hebrew fixes and processed images functionality deployed
 
 ### 🎯 Next Development Areas
 - **Enhanced analytics**: Dashboard improvements for business intelligence
@@ -192,14 +242,18 @@ const LEAD_QUERY_KEY = ['leads'] as const;
 - **Performance optimization**: Code splitting for large bundles
 - **Documentation**: User guides and training materials
 
-### ⚠️ Known Considerations
-- **Temporary RLS policies**: Review and formalize temporary admin access policies
-- **Bundle size**: Consider dynamic imports for chunks larger than 500KB
+### ⚠️ Critical Success Patterns
+- **Hebrew Storage Paths**: Always use sanitizePathComponent() for item types in storage paths
+- **Storage Bucket**: Use 'food-vision-images' not 'food-vision-uploads' for all uploads
+- **React Query Refetch**: Use refetch() instead of window.location.reload() for data updates
+- **Database Column Verification**: Verify column existence via Supabase API before using
+- **Multi-File Uploads**: Test all three file types (product, branding, reference) together
 - **Test coverage**: Continue expanding test suite for new features
 
 ## User Feedback Integration
 **Key Learning**: User feedback drives feature priorities:
-- **Always-editable interface**: Strongly preferred over traditional edit modes
+- **Hebrew Language Support**: Critical for Israeli market - always test with Hebrew characters
+- **Multi-File Upload Workflows**: Users need to upload various file types per submission
 - **Visual consistency**: Hebrew language support and RTL layout critical
 - **Performance**: Fast response times more important than feature complexity
 - **Simplicity**: Remove unnecessary steps and buttons from workflows 

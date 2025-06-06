@@ -103,7 +103,7 @@ describe('AdminLeadsPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
-      expect(screen.getByText('jane@test.com')).toBeInTheDocument();
+      expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.getByText('123-456-7890')).toBeInTheDocument();
     });
   });
@@ -111,7 +111,7 @@ describe('AdminLeadsPage', () => {
   it('allows filtering leads', async () => {
     renderWithProviders(<AdminLeadsPage />);
     
-    const searchInput = screen.getByPlaceholderText('חפש לידים...');
+    const searchInput = screen.getByPlaceholderText('חיפוש לפי שם מסעדה, איש קשר, אימייל או טלפון...');
     fireEvent.change(searchInput, { target: { value: 'Test Restaurant 1' } });
     
     expect(searchInput).toHaveValue('Test Restaurant 1');
@@ -120,8 +120,9 @@ describe('AdminLeadsPage', () => {
   it('handles lead creation', async () => {
     renderWithProviders(<AdminLeadsPage />);
     
-    const createButton = screen.getByText('ליד חדש');
-    fireEvent.click(createButton);
+    const createButtons = screen.getAllByText('ליד חדש');
+    // Click the first "ליד חדש" button (the main one, not the badge)
+    fireEvent.click(createButtons[0]);
     
     // Should open the form modal/sheet
     // Additional test logic would go here

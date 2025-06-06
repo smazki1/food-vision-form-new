@@ -21,8 +21,7 @@ import {
   RefreshCw,
   Calendar,
   Phone,
-  Mail,
-  DollarSign
+  Mail
 } from 'lucide-react';
 import { 
   DropdownMenu, 
@@ -38,7 +37,8 @@ import {
   Lead, 
   LeadStatusEnum, 
   LEAD_STATUS_DISPLAY,
-  calculateTotalAICosts
+  calculateTotalAICosts,
+  convertUSDToILS
 } from '@/types/lead';
 import { 
   useArchiveLead, 
@@ -215,6 +215,7 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
               const reminderDate = hasReminder ? new Date(lead.reminder_at!) : null;
               const isReminderDue = reminderDate && reminderDate <= new Date();
               const totalAICosts = calculateTotalAICosts(lead);
+              const totalAICostsILS = convertUSDToILS(totalAICosts, lead.exchange_rate_at_conversion || 3.6);
               
               return (
                 <TableRow 
@@ -295,9 +296,9 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-gray-500" />
+                      <span className="text-gray-500 text-sm">₪</span>
                       <span className="text-sm">
-                        {totalAICosts.toFixed(2)}
+                        {totalAICostsILS.toFixed(2)}
                       </span>
                     </div>
                   </TableCell>

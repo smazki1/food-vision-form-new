@@ -605,5 +605,39 @@ BEGIN
 END;
 $$;
 
--- Grant execute permission for the new function
-GRANT EXECUTE ON FUNCTION public.get_lead_comments(UUID) TO authenticated; 
+-- Function to add a lead comment (alternative to direct table access)
+CREATE OR REPLACE FUNCTION add_lead_comment(
+  p_lead_id UUID,
+  p_comment_text TEXT
+)
+RETURNS TABLE (
+  comment_id UUID,
+  lead_id UUID,
+  comment_text TEXT,
+  comment_timestamp TIMESTAMPTZ,
+  user_id UUID
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check if user has admin role
+  IF NOT get_my_role() = 'admin' THEN
+    RAISE EXCEPTION 'Access denied. Admin role required.';
+  END IF;
+
+  RETURN QUERY
+  INSERT INTO public.lead_comments (lead_id, comment_text, user_id)
+  VALUES (p_lead_id, p_comment_text, auth.uid())
+  RETURNING 
+    lead_comments.comment_id,
+    lead_comments.lead_id,
+    lead_comments.comment_text,
+    lead_comments.comment_timestamp,
+    lead_comments.user_id;
+END;
+$$;
+
+-- Grant execute permissions for the new functions
+GRANT EXECUTE ON FUNCTION public.get_lead_comments(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.add_lead_comment(UUID, TEXT) TO authenticated; 

@@ -9,6 +9,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { formatDate, formatCurrency } from "@/utils/formatters";
+import { convertUSDToILS } from "@/types/lead";
 import { ArrowUpDown } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "./StatusBadge";
@@ -133,7 +134,7 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
               </TableCell>
               <TableCell>{formatDate(lead.updated_at)}</TableCell>
               <TableCell>{formatDate(lead.next_follow_up_date)}</TableCell>
-              <TableCell>{formatCurrency(lead.total_ai_costs)}</TableCell>
+              <TableCell>₪{convertUSDToILS(lead.total_ai_costs || 0, lead.exchange_rate_at_conversion || 3.6).toFixed(2)}</TableCell>
               <TableCell>{lead.roi ? `${lead.roi.toFixed(2)}%` : 'N/A'}</TableCell>
               <TableCell>
                 <Button variant="outline" size="sm" onClick={() => onEditLead(lead)} className="mr-2">

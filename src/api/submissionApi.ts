@@ -70,6 +70,16 @@ export type Submission = {
   created_lead_id?: string | null;
   lead_id?: string | null;
   created_at: string;
+  // Additional file types for enhanced submissions
+  branding_material_urls?: string[] | null;
+  reference_example_urls?: string[] | null;
+  description?: string | null;
+  // Contact information fields
+  restaurant_name?: string | null;
+  contact_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  processed_at?: string | null;
   // Related data
   clients?: { restaurant_name: string; contact_name: string; email: string; phone: string };
   leads?: { restaurant_name: string; contact_name: string; email: string; phone: string };
