@@ -15,13 +15,16 @@ import {
   Calendar,
   User,
   ArrowRight,
-  Clock
+  Clock,
+  RefreshCw,
+  Bug
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClients } from '@/hooks/useClients';
 import { useClientUpdate } from '@/hooks/useClientUpdate';
 import { useRobustClientComments, useRobustNotes } from '@/hooks/useRobustComments';
+import { debugClientComments, forceCommentSync } from '@/utils/testLeadCommentTransfer';
 
 interface ClientComment {
   id: string;
@@ -67,7 +70,8 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     comments: robustComments, 
     isLoading: robustCommentsLoading, 
     addComment: addRobustComment, 
-    isAddingComment 
+    isAddingComment,
+    forceRefresh 
   } = useRobustClientComments(clientId);
   
   const { 
@@ -192,6 +196,29 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     }
   };
 
+  const handleForceRefresh = async () => {
+    console.log('[ClientActivityNotes] Force refreshing comments...');
+    forceRefresh();
+    toast.success('רענון תגובות הופעל');
+  };
+
+  const handleDebugComments = async () => {
+    console.log('[ClientActivityNotes] Running comment debug...');
+    await debugClientComments(clientId);
+    toast.success('בדיקת תגובות הושלמה - בדוק את הקונסול');
+  };
+
+  const handleForceSync = async () => {
+    console.log('[ClientActivityNotes] Force syncing lead comments...');
+    const success = await forceCommentSync(clientId);
+    if (success) {
+      forceRefresh(); // Refresh UI after sync
+      toast.success('סנכרון תגובות הושלם בהצלחה');
+    } else {
+      toast.error('שגיאה בסנכרון תגובות');
+    }
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -212,16 +239,48 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Notes and Comments Section */}
+      {/* Main Notes and Comments Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5" />
-            מעקב והערות
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              הערות ותגובות
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleForceRefresh}
+                className="flex items-center gap-1"
+              >
+                <RefreshCw className="h-4 w-4" />
+                רענן
+              </Button>
+              {linkedLeadId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleForceSync}
+                  className="flex items-center gap-1"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  סנכרן מליד
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDebugComments}
+                className="flex items-center gap-1"
+              >
+                <Bug className="h-4 w-4" />
+                בדיקה
+              </Button>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* 2-Column Layout: Notes and Comments */}
+        <CardContent>
           <div className="grid grid-cols-2 gap-6">
             {/* Left Column: Notes */}
             <div className="space-y-4">
@@ -242,34 +301,27 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
             {/* Right Column: Comments */}
             <div className="space-y-4">
               <div>
-                <Label className="text-sm font-medium flex items-center gap-2">
-                  <Activity className="h-4 w-4" />
-                  תגובות והערות
-                </Label>
+                <Label className="text-sm font-medium mb-2 block">תגובות</Label>
                 
                 {/* Add Comment */}
-                <div className="mt-1 space-y-2">
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="הוסף תגובה או הערה חדשה..."
-                      rows={3}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={handleAddComment}
-                      disabled={!newComment.trim()}
-                      size="sm"
-                    >
-                      שלח
-                    </Button>
-                  </div>
+                <div className="flex gap-2 mb-4">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="הוסף תגובה חדשה..."
+                    className="flex-1"
+                    rows={2}
+                  />
+                  <Button 
+                    onClick={handleAddComment}
+                    disabled={isAddingComment || !newComment.trim()}
+                    className="self-end"
+                  >
+                    {isAddingComment ? 'מוסיף...' : 'הוסף'}
+                  </Button>
                 </div>
 
-                <Separator className="my-3" />
-
-                {/* Comments Display */}
+                {/* Comments List */}
                 <div className="max-h-48 overflow-y-auto">
                   {robustCommentsLoading ? (
                     <p className="text-sm text-gray-500">טוען תגובות...</p>
@@ -281,6 +333,9 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
                             <Badge variant="outline">
                               {comment.source === 'lead' ? 'מליד' : 'לקוח'}
                             </Badge>
+                            <span className="text-xs text-gray-400">
+                              {comment.id}
+                            </span>
                           </div>
                           <p className="text-sm text-gray-700">{comment.text}</p>
                           <p className="text-xs text-gray-500 mt-1">
@@ -290,7 +345,14 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">אין תגובות עדיין</p>
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500 mb-2">אין תגובות עדיין</p>
+                      {linkedLeadId && (
+                        <p className="text-xs text-gray-400">
+                          לקוח זה הומר מליד: {linkedLeadId}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -298,31 +360,29 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
           </div>
 
           {/* Follow-up Details */}
-          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+          <Separator className="my-6" />
+          
+          <div className="grid grid-cols-2 gap-6">
             <div>
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                תאריך תזכורת הבאה
-              </Label>
+              <Label className="text-sm font-medium">תאריך מעקב הבא</Label>
               <Input
                 type="date"
-                value={editingNextFollowUpDate ? editingNextFollowUpDate.split('T')[0] : ''}
+                value={editingNextFollowUpDate}
                 onChange={(e) => setEditingNextFollowUpDate(e.target.value)}
                 onBlur={(e) => handleFieldBlur('next_follow_up_date', e.target.value)}
                 className="mt-1"
               />
             </div>
+            
             <div>
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                פרטי תזכורת
-              </Label>
-              <Input
+              <Label className="text-sm font-medium">פרטי תזכורת</Label>
+              <Textarea
                 value={editingReminderDetails}
                 onChange={(e) => setEditingReminderDetails(e.target.value)}
                 onBlur={(e) => handleFieldBlur('reminder_details', e.target.value)}
+                placeholder="פרטי התזכורת למעקב..."
                 className="mt-1"
-                placeholder="פרטי תזכורת או הנחיות מיוחדות"
+                rows={3}
               />
             </div>
           </div>
@@ -336,6 +396,9 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               היסטוריה מהליד המקורי
+              <Badge variant="secondary" className="mr-2">
+                {linkedLeadId}
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -363,7 +426,7 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
 
               {/* Lead Activities */}
               <div>
-                <Label className="text-sm font-medium mb-2 block">פעילות מהליד</Label>
+                <Label className="text-sm font-medium mb-2 block">פעילויות מהליד</Label>
                 <ScrollArea className="h-48">
                   {leadActivities.length > 0 ? (
                     <div className="space-y-2">
@@ -377,7 +440,7 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">אין פעילות מהליד</p>
+                    <p className="text-sm text-gray-500 text-center py-4">אין פעילויות מהליד</p>
                   )}
                 </ScrollArea>
               </div>

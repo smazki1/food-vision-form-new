@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { ClientListItemCard } from "@/components/admin/clients/ClientListItemCard";
 import { MobileLoading } from "@/components/ui/mobile-loading";
 import { NewClientDialog } from "@/components/admin/clients/NewClientDialog";
-import { RefreshCw, Search, AlertTriangle, UserPlus, Archive, Users } from "lucide-react";
+import { RefreshCw, Search, AlertTriangle, UserPlus, Archive, Users, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 // Basic placeholder for AdminContentLayout
 const AdminContentLayout = ({ children }: { children: React.ReactNode }) => (
@@ -196,13 +197,25 @@ const ClientsList = () => {
             </Button>
           </div>
           
-          <Button
-            onClick={() => setShowNewClientDialog(true)}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <UserPlus className="h-4 w-4" />
-            הוסף לקוח חדש
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Link to="/admin/clients/costs-report">
+                <DollarSign className="h-4 w-4" />
+                דוח עלויות
+              </Link>
+            </Button>
+            <Button
+              onClick={() => setShowNewClientDialog(true)}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <UserPlus className="h-4 w-4" />
+              הוסף לקוח חדש
+            </Button>
+          </div>
         </div>
       </div>
 

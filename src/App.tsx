@@ -29,6 +29,7 @@ import "@/test-comments-debug";
 const Dashboard = React.lazy(() => import("@/pages/admin/Dashboard"));
 const ClientsList = React.lazy(() => import("@/pages/admin/ClientsList"));
 const ClientDetails = React.lazy(() => import("@/pages/admin/ClientDetails"));
+const ClientCostsReportPage = React.lazy(() => import("@/pages/admin/clients/costs-report"));
 const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesManagementPage"));
 const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
 const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
@@ -157,6 +158,7 @@ const App = () => (
                 <Route index element={<Suspense fallback={<LoadingSpinner />}><Dashboard /></Suspense>} />
                 <Route path="dashboard" element={<Suspense fallback={<LoadingSpinner />}><Dashboard /></Suspense>} />
                 <Route path="clients" element={<Suspense fallback={<LoadingSpinner />}><ClientsList /></Suspense>} />
+                <Route path="clients/costs-report" element={<Suspense fallback={<LoadingSpinner />}><ClientCostsReportPage /></Suspense>} />
                 <Route path="clients/:clientId" element={<Suspense fallback={<LoadingSpinner />}><ClientDetails /></Suspense>} />
                 <Route path="packages" element={<Suspense fallback={<LoadingSpinner />}><PackagesManagementPage /></Suspense>} />
                 <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />

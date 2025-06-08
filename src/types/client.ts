@@ -34,12 +34,27 @@ export type Client = {
     package_name: string;
     total_servings: number;
   };
+  
+  // Cost tracking fields - synchronized from leads
+  ai_trainings_count?: number;
+  ai_training_5_count?: number;
+  ai_training_15_count?: number;
+  ai_training_25_count?: number;
+  ai_prompts_count?: number;
+  ai_training_cost_per_unit?: number;
+  ai_prompt_cost_per_unit?: number;
+  revenue_from_client_local?: number;
+  exchange_rate_at_conversion?: number;
+  revenue_from_client_usd?: number; // Calculated field
+  total_ai_costs?: number; // Calculated field
+  roi?: number; // Calculated field
 };
 
 export const CLIENT_STATUS_OPTIONS: string[] = [
   "פעיל",
   "לא פעיל", 
   "בהמתנה",
-  "מושהה",
   "ארכיון"
 ];
+
+export type DatabaseClient = Database["public"]["Tables"]["clients"]["Row"];

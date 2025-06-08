@@ -25,7 +25,8 @@ import {
   Mail,
   Building,
   Calendar,
-  AlertTriangle
+  AlertTriangle,
+  DollarSign
 } from 'lucide-react';
 
 // Import the components we created
@@ -34,6 +35,7 @@ import { ClientDesignSettings } from './ClientDesignSettings';
 import { ClientPackageManagement } from './ClientPackageManagement';
 import { ClientActivityNotes } from './ClientActivityNotes';
 import { ClientPaymentStatus } from './ClientPaymentStatus';
+import { ClientCostTracking } from './ClientCostTracking';
 
 // Import existing hooks
 import { useClients } from '@/hooks/useClients';
@@ -49,7 +51,7 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
   clientId,
   onClose
 }) => {
-  const [activeTab, setActiveTab] = useState('details');
+  const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [editedClient, setEditedClient] = useState<Partial<Client>>({});
   
@@ -243,27 +245,35 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
         </SheetHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="details" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="overview" className="flex items-center gap-1">
               <User className="h-4 w-4" />
-              פרטי הלקוח
+              <span className="hidden sm:inline">פרטים</span>
             </TabsTrigger>
-            <TabsTrigger value="packages" className="flex items-center gap-2">
+            <TabsTrigger value="packages" className="flex items-center gap-1">
               <Package className="h-4 w-4" />
-              חבילות
+              <span className="hidden sm:inline">חבילות</span>
             </TabsTrigger>
-            <TabsTrigger value="submissions" className="flex items-center gap-2">
+            <TabsTrigger value="submissions" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              הגשות
+              <span className="hidden sm:inline">הגשות</span>
             </TabsTrigger>
-            <TabsTrigger value="design" className="flex items-center gap-2">
+            <TabsTrigger value="costs" className="flex items-center gap-1">
+              <DollarSign className="h-4 w-4" />
+              <span className="hidden sm:inline">עלויות</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center gap-1">
+              <Activity className="h-4 w-4" />
+              <span className="hidden sm:inline">פעילות</span>
+            </TabsTrigger>
+            <TabsTrigger value="design" className="flex items-center gap-1">
               <Palette className="h-4 w-4" />
-              עיצוב
+              <span className="hidden sm:inline">עיצוב</span>
             </TabsTrigger>
           </TabsList>
 
           <ScrollArea className="h-[calc(100vh-200px)]">
-            <TabsContent value="details" className="space-y-6">
+            <TabsContent value="overview" className="space-y-6">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -470,6 +480,14 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
 
             <TabsContent value="submissions">
               <ClientSubmissionsSection clientId={clientId} client={client} />
+            </TabsContent>
+
+            <TabsContent value="costs">
+              <ClientCostTracking client={client} clientId={clientId} />
+            </TabsContent>
+
+            <TabsContent value="activity">
+              <ClientActivityNotes clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="design">

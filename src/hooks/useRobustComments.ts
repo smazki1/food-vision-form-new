@@ -182,19 +182,19 @@ export const useRobustLeadComments = (leadId: string) => {
   };
 };
 
-// Client Comments System with JSON Field Protection
+// Enhanced Client Comments System with Lead Synchronization
 export const useRobustClientComments = (clientId: string) => {
   const queryClient = useQueryClient();
 
-  // Fetch comments from client's internal_notes
+  // Fetch comments from client's internal_notes with lead synchronization
   const commentsQuery = useQuery({
     queryKey: ['robust-client-comments', clientId],
     queryFn: async () => {
-      console.log('[RobustComments] Fetching client comments:', clientId);
+      console.log('[RobustComments] Fetching client comments with lead sync check:', clientId);
       
       const { data, error } = await supabase
         .from('clients')
-        .select('internal_notes')
+        .select('internal_notes, original_lead_id')
         .eq('client_id', clientId)
         .single();
 
@@ -204,6 +204,8 @@ export const useRobustClientComments = (clientId: string) => {
       }
 
       let comments: RobustComment[] = [];
+      
+      // Parse existing comments from internal_notes
       if (data?.internal_notes) {
         try {
           const parsed = JSON.parse(data.internal_notes);
@@ -222,6 +224,85 @@ export const useRobustClientComments = (clientId: string) => {
         }
       }
 
+      // If this client was converted from a lead, ensure lead comments are synced
+      if (data?.original_lead_id) {
+        console.log('[RobustComments] Client has original lead, checking sync:', data.original_lead_id);
+        
+        // Get lead comments for comparison
+        const { data: leadActivities, error: leadError } = await supabase
+          .from('lead_activity_log')
+          .select('*')
+          .eq('lead_id', data.original_lead_id)
+          .order('activity_timestamp', { ascending: false });
+
+        if (!leadError && leadActivities) {
+          const leadComments = leadActivities.filter(activity => 
+            activity.activity_description.startsWith('תגובה:')
+          ).map(activity => ({
+            id: activity.activity_id,
+            text: activity.activity_description.replace('תגובה: ', ''),
+            timestamp: activity.activity_timestamp,
+            source: 'lead' as const
+          }));
+
+          // Check if all lead comments are present in client comments
+          const leadCommentsInClient = comments.filter(c => c.source === 'lead');
+          const missingLeadComments = leadComments.filter(leadComment => 
+            !leadCommentsInClient.some(clientComment => clientComment.id === leadComment.id)
+          );
+
+          if (missingLeadComments.length > 0) {
+            console.log('[RobustComments] Found missing lead comments, syncing:', missingLeadComments.length);
+            
+            // Add missing lead comments
+            const allComments = [
+              ...missingLeadComments.map((comment: any) => ({
+                id: comment.id,
+                text: comment.text,
+                timestamp: comment.timestamp,
+                source: 'lead' as const,
+                entity_id: clientId,
+                entity_type: 'client' as const
+              })),
+              ...comments
+            ];
+
+            // Update client internal_notes with synced comments
+            let updatedInternalNotes: any = {};
+            if (data.internal_notes) {
+              try {
+                updatedInternalNotes = JSON.parse(data.internal_notes);
+              } catch (e) {
+                updatedInternalNotes = { originalNotes: data.internal_notes };
+              }
+            }
+
+            updatedInternalNotes.clientComments = allComments;
+            updatedInternalNotes.lastSync = new Date().toISOString();
+
+            // Perform async update (don't wait for it to complete the query)
+            supabase
+              .from('clients')
+              .update({ 
+                internal_notes: JSON.stringify(updatedInternalNotes),
+                updated_at: new Date().toISOString()
+              })
+              .eq('client_id', clientId)
+              .then(({ error: updateError }) => {
+                if (updateError) {
+                  console.error('[RobustComments] Failed to sync lead comments:', updateError);
+                } else {
+                  console.log('[RobustComments] Lead comments synced successfully');
+                  // Invalidate cache to refresh with updated data
+                  queryClient.invalidateQueries({ queryKey: ['robust-client-comments', clientId] });
+                }
+              });
+
+            return allComments;
+          }
+        }
+      }
+
       console.log('[RobustComments] Fetched client comments:', comments);
       return comments;
     },
@@ -229,6 +310,12 @@ export const useRobustClientComments = (clientId: string) => {
     staleTime: 30 * 1000, // 30 seconds
     refetchOnMount: true
   });
+
+  // Force refresh comments (useful for testing and debugging)
+  const forceRefresh = () => {
+    console.log('[RobustComments] Force refreshing client comments');
+    queryClient.invalidateQueries({ queryKey: ['robust-client-comments', clientId] });
+  };
 
   // Add comment with atomic update
   const addCommentMutation = useMutation({
@@ -360,7 +447,8 @@ export const useRobustClientComments = (clientId: string) => {
     comments: commentsQuery.data || [],
     isLoading: commentsQuery.isLoading,
     addComment: (comment: string) => addCommentMutation.mutateAsync({ comment }),
-    isAddingComment: addCommentMutation.isPending
+    isAddingComment: addCommentMutation.isPending,
+    forceRefresh
   };
 };
 
