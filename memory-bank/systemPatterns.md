@@ -31,7 +31,23 @@
    ├── phone
    ├── client_status
    ├── current_package_id
-   └── remaining_servings
+   ├── remaining_servings
+   ├── payment_status (NEW)
+   ├── payment_due_date (NEW)
+   ├── payment_amount_ils (NEW)
+   ├── website_url (NEW)
+   ├── address (NEW)
+   ├── business_type (NEW)
+   └── archive_status (NEW)
+
+   client_design_settings (NEW TABLE)
+   ├── id (PK)
+   ├── client_id (FK to clients)
+   ├── category (TEXT)
+   ├── background_images (TEXT[])
+   ├── style_notes (TEXT)
+   ├── created_at (TIMESTAMPTZ)
+   └── updated_at (TIMESTAMPTZ)
 
    leads
    ├── lead_id (PK, UUID)
@@ -106,6 +122,12 @@
    - Lists for item display
    - Modal dialogs for detailed views
 
+4. **Tabbed Interface Patterns (CLIENT MANAGEMENT)**
+   - Consistent tab structure between leads and clients
+   - Sheet-based UI for detailed views
+   - Inline editing with auto-save functionality
+   - Real-time updates with React Query invalidation
+
 ### Hook Patterns
 1. **Authentication Hooks**
    - useAdminAuth: Admin authentication logic
@@ -121,6 +143,221 @@
    - useToast: Notification management
    - useDialog: Modal dialog control
    - useForm: Form state management
+
+## Client Management System Patterns (Latest - January 2025)
+
+### Tabbed Interface Architecture Pattern
+1. **Unified Tab Structure** - Consistency Between Leads and Clients
+   ```typescript
+   // Common pattern for both LeadDetailPanel and ClientDetailPanel
+   const TabStructure = {
+     Tab1: "Details", // Basic information with inline editing
+     Tab2: "Packages", // Package management and assignment
+     Tab3: "Submissions", // Menu items and submission management
+     Tab4: "Activity", // Activity history and notes
+     Tab5: "Payments" // Payment tracking (clients only)
+   };
+
+   // Implementation pattern:
+   export function ClientDetailPanel({ clientId }: { clientId: string }) {
+     return (
+       <Sheet>
+         <SheetContent className="max-w-6xl">
+           <Tabs>
+             <TabsList>
+               {/* Consistent tab navigation */}
+             </TabsList>
+             <TabsContent value="details">
+               <ClientDetailsTab clientId={clientId} />
+             </TabsContent>
+             {/* Other tabs... */}
+           </Tabs>
+         </SheetContent>
+       </Sheet>
+     );
+   }
+   ```
+
+2. **Inline Editing Pattern** - Direct Field Updates
+   ```typescript
+   // Pattern for auto-save field editing
+   const handleFieldBlur = async (field: string, value: string) => {
+     try {
+       await updateClient.mutateAsync({
+         clientId: client.client_id,
+         updates: { [field]: value }
+       });
+       toast({ title: "עודכן בהצלחה" });
+     } catch (error) {
+       toast({ title: "שגיאה בעדכון", variant: "destructive" });
+     }
+   };
+
+   // Usage in components:
+   <Input
+     onBlur={(e) => handleFieldBlur('restaurant_name', e.target.value)}
+     defaultValue={client.restaurant_name}
+   />
+   ```
+
+3. **Database Enhancement Pattern** - Incremental Schema Evolution
+   ```sql
+   -- Pattern: Add new fields to existing tables without breaking changes
+   ALTER TABLE clients ADD COLUMN payment_status TEXT;
+   ALTER TABLE clients ADD COLUMN payment_due_date TIMESTAMPTZ;
+   ALTER TABLE clients ADD COLUMN payment_amount_ils DECIMAL;
+   
+   -- Pattern: Create related tables for complex data
+   CREATE TABLE client_design_settings (
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     client_id UUID REFERENCES clients(client_id) ON DELETE CASCADE,
+     category TEXT NOT NULL,
+     background_images TEXT[] DEFAULT '{}',
+     style_notes TEXT
+   );
+   ```
+
+### Design Settings Management Pattern
+1. **Category-Based Image Storage**
+   ```typescript
+   // Pattern for managing multiple image categories per client
+   interface ClientDesignSettings {
+     id: string;
+     client_id: string;
+     category: string; // 'dishes', 'drinks', 'jewelry', etc.
+     background_images: string[]; // 2-3 images per category
+     style_notes: string;
+   }
+
+   // Usage pattern:
+   const useClientDesignSettings = (clientId: string) => {
+     return useQuery({
+       queryKey: ['client-design-settings', clientId],
+       queryFn: () => getClientDesignSettings(clientId)
+     });
+   };
+   ```
+
+2. **Dynamic Category System**
+   - Manual category creation based on client needs
+   - Flexible image storage (2-3 per category)
+   - Style notes for each category
+   - Easy expansion for new business types
+
+### Lead-Client Synchronization Pattern
+1. **Data Migration Pattern** - Lead to Client Conversion
+   ```typescript
+   // Pattern for transferring data from leads to clients
+   const convertLeadToClient = async (leadId: string) => {
+     const lead = await getLead(leadId);
+     
+     // Transfer core data
+     const clientData = {
+       restaurant_name: lead.restaurant_name,
+       contact_name: lead.contact_name,
+       email: lead.email,
+       phone: lead.phone,
+       // New client-specific fields
+       payment_status: 'pending',
+       business_type: determineBusinessType(lead),
+       // ... other mappings
+     };
+     
+     // Create client and transfer activities
+     const client = await createClient(clientData);
+     await transferLeadActivities(leadId, client.client_id);
+     
+     return client;
+   };
+   ```
+
+2. **Activity History Preservation**
+   - Lead activities transferred to client history
+   - Notes and communication history maintained
+   - Timeline continuity between lead and client phases
+
+### Payment Management Pattern
+1. **Israeli Shekel (ILS) Support**
+   ```typescript
+   // Pattern for ILS payment tracking
+   interface PaymentInfo {
+     payment_status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+     payment_due_date: Date;
+     payment_amount_ils: number; // Amount in Israeli Shekels
+     payment_notes: string;
+   }
+
+   // Display pattern with Hebrew formatting
+   const formatILS = (amount: number) => {
+     return new Intl.NumberFormat('he-IL', {
+       style: 'currency',
+       currency: 'ILS'
+     }).format(amount);
+   };
+   ```
+
+2. **Manual Payment Tracking**
+   - Admin-controlled payment status updates
+   - Due date management and reminders
+   - Payment history tracking
+   - Integration with client billing workflow
+
+### Component Architecture Pattern
+1. **Modular Tab Components**
+   ```typescript
+   // Pattern: Each tab is a separate component
+   src/components/admin/client-details/
+   ├── ClientDetailPanel.tsx          // Main container
+   ├── tabs/
+   │   ├── ClientDetailsTab.tsx       // Basic info
+   │   ├── ClientPackageManagement.tsx // Package assignment
+   │   ├── ClientSubmissionsSection.tsx // Menu submissions
+   │   ├── ClientActivityNotes.tsx    // Activity tracking
+   │   └── ClientPaymentStatus.tsx    // Payment management
+   ```
+
+2. **Shared Component Pattern** - Reuse Between Leads and Clients
+   ```typescript
+   // Pattern: Create shared components for common functionality
+   const SubmissionCard = ({ submission, context }: { 
+     submission: Submission; 
+     context: 'lead' | 'client' 
+   }) => {
+     // Shared UI with context-specific behavior
+   };
+
+   // Usage in both lead and client contexts
+   <SubmissionCard submission={submission} context="client" />
+   ```
+
+### Integration Points Pattern
+1. **Cross-System Data Flow**
+   ```mermaid
+   flowchart TD
+     Lead[Lead Management] --> Conversion[Lead to Client]
+     Conversion --> Client[Client Management]
+     Client --> Packages[Package System]
+     Client --> Submissions[Submission System]
+     Client --> Payments[Payment Tracking]
+   ```
+
+2. **Unified Query Management**
+   ```typescript
+   // Pattern: Consistent query keys across systems
+   const QUERY_KEYS = {
+     leads: ['leads'],
+     clients: ['clients'],
+     submissions: ['submissions'],
+     packages: ['packages']
+   } as const;
+
+   // Invalidation pattern for cross-system updates
+   const invalidateRelatedData = (clientId: string) => {
+     queryClient.invalidateQueries({ queryKey: ['clients', clientId] });
+     queryClient.invalidateQueries({ queryKey: ['submissions', 'client', clientId] });
+     queryClient.invalidateQueries({ queryKey: ['packages', 'client', clientId] });
+   };
+   ```
 
 ## API Integration Patterns
 
@@ -387,5 +624,324 @@
    ```
 
 ---
+
+## Latest Technical Patterns (January 2025)
+
+### Advanced React Query Patterns
+
+#### 1. **Optimistic Updates with Rollback Pattern**
+```typescript
+// Pattern for immediate UI feedback with error recovery
+const updateMutation = useMutation({
+  mutationFn: ({ newValue, notes }: { newValue: number; notes: string }) => 
+    updateClientServings(clientId, newValue, notes),
+  onMutate: async ({ newValue }) => {
+    // Cancel outgoing refetches
+    await queryClient.cancelQueries({ queryKey: ['client-detail', clientId] });
+
+    // Snapshot previous value
+    const previousClient = queryClient.getQueryData(['client-detail', clientId]);
+
+    // Optimistically update
+    queryClient.setQueryData(['client-detail', clientId], (old: any) => {
+      if (!old) return old;
+      return { ...old, remaining_servings: newValue };
+    });
+
+    return { previousClient };
+  },
+  onSuccess: (updatedClient) => {
+    // Update cache with real data
+    queryClient.setQueryData(['client-detail', clientId], updatedClient);
+    
+    // Update related queries
+    queryClient.setQueryData(['clients'], (oldData: any) => {
+      if (!oldData) return oldData;
+      return oldData.map((client: any) => 
+        client.client_id === clientId ? updatedClient : client
+      );
+    });
+    
+    toast.success(`מנות עודכנו ל-${updatedClient.remaining_servings}`);
+  },
+  onError: (error, variables, context) => {
+    // Rollback on failure
+    queryClient.setQueryData(['client-detail', clientId], context?.previousClient);
+    toast.error('שגיאה בעדכון המנות');
+  },
+});
+```
+
+#### 2. **Fresh Data Queries with Stale Time Zero**
+```typescript
+// Pattern for ensuring immediate data freshness
+const { data: freshClientData } = useQuery({
+  queryKey: ['client-detail', clientId],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('client_id', clientId)
+      .single();
+    
+    if (error) throw error;
+    return data;
+  },
+  staleTime: 0, // Always fetch fresh data
+  enabled: !!clientId
+});
+
+// Use fresh data if available, fallback to prop
+const currentClient = freshClientData || client;
+```
+
+### Automatic Serving Deduction Pattern
+
+#### 3. **Universal Hook Enhancement Pattern**
+```typescript
+// Pattern for adding automatic functionality to existing hooks
+async function handleAutomaticServingDeduction(submissionId: string, submissionData: any) {
+  try {
+    // Validate client existence
+    const clientId = submissionData.client_id;
+    if (!clientId) {
+      console.warn("Cannot deduct servings: submission has no client_id");
+      return;
+    }
+
+    // Get current client state
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select("remaining_servings, restaurant_name")
+      .eq("client_id", clientId)
+      .single();
+
+    if (clientError) {
+      console.error("Error fetching client for serving deduction:", clientError);
+      return;
+    }
+
+    // Validate remaining servings
+    const currentServings = client.remaining_servings || 0;
+    if (currentServings <= 0) {
+      console.warn("Cannot deduct servings: client has no remaining servings");
+      return;
+    }
+
+    // Perform deduction with audit trail
+    const newServingsCount = currentServings - 1;
+    const notes = `ניכוי אוטומטי בעקבות אישור עבודה: ${submissionData.item_name_at_submission}`;
+
+    await updateClientServings(clientId, newServingsCount, notes);
+
+    // User feedback
+    toast.success(`נוכה סרבינג אחד מ${client.restaurant_name}. נותרו: ${newServingsCount} מנות`);
+
+  } catch (error) {
+    console.error("Error in automatic serving deduction:", error);
+    toast.error("שגיאה בניכוי אוטומטי של מנה");
+  }
+}
+
+// Enhanced hook pattern
+export const useUpdateSubmissionStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ submissionId, status }: { submissionId: string; status: SubmissionStatusKey }) => {
+      // Get current submission data before updating
+      const { data: currentSubmission, error: fetchError } = await supabase
+        .from('customer_submissions')
+        .select('*')
+        .eq('submission_id', submissionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update the submission status
+      const { data: updatedSubmission, error: updateError } = await supabase
+        .from('customer_submissions')
+        .update({ submission_status: status })
+        .eq('submission_id', submissionId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Automatic serving deduction when submission is approved
+      if (status === "הושלמה ואושרה") {
+        await handleAutomaticServingDeduction(submissionId, updatedSubmission);
+      }
+
+      return updatedSubmission;
+    },
+    onSuccess: (data, { submissionId }) => {
+      // Comprehensive cache invalidation
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      queryClient.invalidateQueries({ queryKey: ['submissions'] });
+      
+      if (data.client_id) {
+        queryClient.invalidateQueries({ queryKey: ['client', data.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['client-detail', data.client_id] });
+        queryClient.invalidateQueries({ queryKey: ['clients'] });
+      }
+      
+      toast.success('סטטוס עודכן בהצלחה');
+    }
+  });
+};
+```
+
+### Hebrew Path Sanitization Pattern
+
+#### 4. **Storage Path Sanitization for Hebrew Content**
+```typescript
+// Pattern for Hebrew-safe storage paths
+const sanitizePathComponent = (text: string): string => {
+  // 1. Hebrew word mapping for food industry terms
+  const hebrewToEnglish = {
+    'מנה': 'dish', 'שתיה': 'drink', 'קוקטייל': 'cocktail',
+    'עוגה': 'cake', 'מאפה': 'pastry', 'סלט': 'salad',
+    'עוף': 'chicken', 'בשר': 'meat', 'דג': 'fish',
+    'ירקות': 'vegetables', 'פירות': 'fruits',
+    'מרק': 'soup', 'קינוח': 'dessert', 'לחם': 'bread'
+  };
+  
+  // 2. Replace whole Hebrew words first
+  let result = text;
+  Object.entries(hebrewToEnglish).forEach(([hebrew, english]) => {
+    const regex = new RegExp(`\\b${hebrew}\\b`, 'g');
+    result = result.replace(regex, english);
+  });
+  
+  // 3. Convert remaining Hebrew characters to ASCII-safe alternatives
+  result = result.replace(/[\u0590-\u05FF]/g, (char) => {
+    return char.charCodeAt(0).toString(16);
+  });
+  
+  // 4. Sanitize special characters
+  result = result
+    .replace(/[^\w\s-]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  
+  return result || 'item';
+};
+
+// Usage in storage operations
+const filePath = `clients/${clientId}/${sanitizePathComponent(itemType)}/product/${fileName}`;
+```
+
+### Multi-File Upload Pattern
+
+#### 5. **Parallel Upload with Error Isolation**
+```typescript
+// Pattern for handling multiple file uploads with individual error handling
+const handleSubmit = async () => {
+  try {
+    setIsSubmitting(true);
+    
+    const sanitizedItemType = sanitizePathComponent(formData.itemType);
+    const newItemId = uuidv4();
+    
+    // Parallel upload with individual error handling
+    const uploadPromises = formData.referenceImages.map(async (file) => {
+      const fileExtension = file.name.split('.').pop();
+      const uniqueFileName = `${newItemId}/${uuidv4()}.${fileExtension}`;
+      const filePath = `clients/${client.client_id}/${sanitizedItemType}/product/${uniqueFileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('food-vision-images')
+        .upload(filePath, file);
+      
+      if (uploadError) {
+        throw new Error(`שגיאה בהעלאת ${file.name}: ${uploadError.message}`);
+      }
+      
+      const { data: publicUrlData } = supabase.storage
+        .from('food-vision-images')
+        .getPublicUrl(filePath);
+      
+      return publicUrlData.publicUrl;
+    });
+    
+    // Wait for all uploads to complete
+    const uploadedImageUrls = await Promise.all(uploadPromises);
+    
+    // Create submission with uploaded URLs
+    const submissionData = {
+      client_id: client.client_id,
+      original_item_id: newItemId,
+      item_type: formData.itemType,
+      item_name_at_submission: formData.itemName,
+      submission_status: 'ממתינה לעיבוד' as const,
+      original_image_urls: uploadedImageUrls
+    };
+
+    const { error: submissionError } = await supabase
+      .from('customer_submissions')
+      .insert(submissionData);
+
+    if (submissionError) throw submissionError;
+
+    toast.success('ההגשה נוצרה בהצלחה!');
+    onSuccess?.();
+    onClose();
+    
+  } catch (error: any) {
+    toast.error(error.message || 'אירעה שגיאה בעת יצירת ההגשה');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+```
+
+### Component Testing Patterns
+
+#### 6. **Comprehensive Component Testing with Mocks**
+```typescript
+// Pattern for testing React components with external dependencies
+describe('Component Tests', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false }
+      }
+    });
+    vi.clearAllMocks();
+  });
+
+  const createWrapper = () => ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+
+  it('should handle optimistic updates correctly', async () => {
+    // Mock setup
+    const mockUpdate = vi.fn().mockResolvedValue({ data: updatedData });
+    vi.mocked(supabase.from).mockReturnValue({ update: mockUpdate } as any);
+
+    const wrapper = createWrapper();
+    render(<ComponentUnderTest />, { wrapper });
+
+    // User interaction
+    const button = screen.getByRole('button', { name: /update/i });
+    fireEvent.click(button);
+
+    // Verify optimistic update
+    await waitFor(() => {
+      expect(screen.getByText('updated-value')).toBeInTheDocument();
+    });
+
+    // Verify API call
+    expect(mockUpdate).toHaveBeenCalledWith(expectedParams);
+  });
+});
+```
 
 ## Architecture Overview 

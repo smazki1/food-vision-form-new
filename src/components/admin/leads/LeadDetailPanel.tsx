@@ -48,7 +48,8 @@ import {
   FileText,
   User,
   Building,
-  Upload
+  Upload,
+  Clock
 } from 'lucide-react';
 
 interface LeadDetailPanelProps {
@@ -153,6 +154,48 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
         updates.ai_prompt_cost_per_unit = 0.162;
       }
 
+      // If lead status is being changed to "לא מעוניין" (not interested), automatically archive it
+      if (fieldName === 'lead_status' && value === 'לא מעוניין') {
+        updates.lead_status = 'ארכיון';
+        
+        await updateLeadMutation.mutateAsync({
+          leadId: lead.lead_id,
+          updates
+        });
+        
+        console.log('Lead automatically archived after being marked as not interested');
+        toast.success('הליד סומן כ"לא מעוניין" והועבר לארכיון אוטומטית');
+        
+        // Update local state to archived status
+        setLead(prev => prev ? { ...prev, lead_status: 'ארכיון' } : null);
+        
+        return;
+      }
+
+      // If lead status is being changed to "הפך ללקוח" (converted to client), trigger conversion
+      if (fieldName === 'lead_status' && value === 'הפך ללקוח') {
+        console.log('Lead conversion to client initiated');
+        
+        // The mutation will handle the conversion automatically through useUpdateLeadWithConversion
+        await updateLeadMutation.mutateAsync({
+          leadId: lead.lead_id,
+          updates
+        });
+        
+        console.log('Lead successfully converted to client');
+        toast.success('הליד הומר ללקוח בהצלחה והמערכת עודכנה!');
+        
+        // Update local state to converted status
+        setLead(prev => prev ? { ...prev, lead_status: 'הפך ללקוח' } : null);
+        
+        // Close the panel after successful conversion as the lead is now a client
+        setTimeout(() => {
+          onClose();
+        }, 1500);
+        
+        return;
+      }
+
       await updateLeadMutation.mutateAsync({
         leadId: lead.lead_id,
         updates
@@ -172,7 +215,8 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
     } catch (error) {
       console.error(`Error updating ${fieldName}:`, error);
       toast.error(`שגיאה בעדכון השדה ${fieldName === 'lead_status' ? 'סטטוס' : 
-        fieldName === 'ai_prompts_count' ? 'פרומפטים' : ''}`);
+        fieldName === 'ai_prompts_count' ? 'פרומפטים' : 
+        fieldName === 'lead_status' && value === 'הפך ללקוח' ? 'בהמרה ללקוח' : ''}: ${error instanceof Error ? error.message : 'שגיאה לא צפויה'}`);
     }
   };
 
@@ -439,37 +483,61 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* 2-Column Layout: Notes and Activity Comments */}
+                  {/* 2-Column Layout: Notes and Comments */}
                   <div className="grid grid-cols-2 gap-6">
                     {/* Left Column: Notes */}
                     <div className="space-y-4">
                       <div>
-                        <Label className="text-sm font-medium">הערות</Label>
+                        <Label className="text-sm font-medium">הערות כלליות</Label>
                         <Textarea
                           value={lead.notes || ''}
                           onBlur={(e) => handleFieldBlur('notes', e.target.value)}
                           onChange={(e) => setLead(prev => prev ? {...prev, notes: e.target.value} : null)}
                           className="mt-1"
-                          placeholder="הזן הערות..."
+                          placeholder="הערות כלליות על הליד, העדפות, הנחיות מיוחדות..."
                           rows={6}
                         />
                       </div>
                     </div>
 
-                    {/* Right Column: Activity Comments Sync */}
+                    {/* Right Column: Comments - Interactive */}
                     <div className="space-y-4">
                       <div>
                         <Label className="text-sm font-medium flex items-center gap-2">
                           <MessageCircle className="h-4 w-4" />
-                          תגובות פעילות (מסונכרן)
+                          תגובות והערות
                         </Label>
-                        <div className="mt-1 p-3 bg-gray-50 rounded-md border max-h-48 overflow-y-auto">
+                        
+                        {/* Add Comment - Direct input like in client */}
+                        <div className="mt-1 space-y-2">
+                          <div className="flex gap-2">
+                            <Textarea
+                              value={newComment}
+                              onChange={(e) => setNewComment(e.target.value)}
+                              placeholder="הוסף תגובה או הערה חדשה..."
+                              rows={3}
+                              className="flex-1"
+                            />
+                            <Button 
+                              onClick={handleCommentSubmit}
+                              disabled={!newComment.trim()}
+                              size="sm"
+                            >
+                              שלח
+                            </Button>
+                          </div>
+                        </div>
+
+                        <Separator className="my-3" />
+
+                        {/* Comments Display - Exact same as client */}
+                        <div className="max-h-48 overflow-y-auto">
                           {commentsLoading ? (
                             <p className="text-sm text-gray-500">טוען תגובות...</p>
                           ) : comments && comments.length > 0 ? (
                             <div className="space-y-2">
                               {comments.map((comment) => (
-                                <div key={comment.comment_id} className="p-2 bg-white rounded border">
+                                <div key={comment.comment_id} className="p-3 bg-gray-50 rounded-md">
                                   <p className="text-sm text-gray-700">{comment.comment_text}</p>
                                   <p className="text-xs text-gray-500 mt-1">
                                     {new Date(comment.comment_timestamp).toLocaleString('he-IL')}
@@ -478,12 +546,9 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500 text-center py-4">אין תגובות פעילות</p>
+                            <p className="text-sm text-gray-500 text-center py-4">אין תגובות עדיין</p>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">
-                          תגובות אלו מסונכרנות מלשונית הפעילות ומתעדכנות אוטומטית
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -491,7 +556,10 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   {/* Follow-up Details */}
                   <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
-                      <Label className="text-sm font-medium">תאריך תזכורת הבאה</Label>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        תאריך תזכורת הבאה
+                      </Label>
                       <Input
                         type="date"
                         value={lead.next_follow_up_date ? lead.next_follow_up_date.split('T')[0] : ''}
@@ -501,13 +569,16 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                       />
                     </div>
                     <div>
-                      <Label className="text-sm font-medium">פרטי תזכורת</Label>
+                      <Label className="text-sm font-medium flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        פרטי תזכורת
+                      </Label>
                       <Input
                         value={lead.reminder_details || ''}
                         onBlur={(e) => handleFieldBlur('reminder_details', e.target.value)}
                         onChange={(e) => setLead(prev => prev ? {...prev, reminder_details: e.target.value} : null)}
                         className="mt-1"
-                        placeholder="פרטי תזכורת"
+                        placeholder="פרטי תזכורת או הנחיות מיוחדות"
                       />
                     </div>
                   </div>

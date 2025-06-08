@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from '@supabase/supabase-js';
 import { Package } from "@/types/package";
 
 // Helper function to transform database rows to Package interface
@@ -74,22 +75,23 @@ export async function getPackageById(packageId: string): Promise<Package | null>
 export async function createPackage(packageData: Omit<Package, "package_id" | "created_at" | "updated_at">): Promise<Package> {
   console.log('[packageApi] createPackage called with data:', packageData);
   
-  // Prepare RPC parameters
-  const rpcParams: any = {
-    p_package_name: packageData.package_name,
-    p_description: packageData.description || null,
-    p_total_servings: packageData.total_servings ? Number(packageData.total_servings) : null,
-    p_price: packageData.price ? Number(packageData.price) : null,
-    p_is_active: packageData.is_active !== undefined ? packageData.is_active : true,
-    p_max_processing_time_days: packageData.max_processing_time_days ? Number(packageData.max_processing_time_days) : null,
-    p_max_edits_per_serving: packageData.max_edits_per_serving ? Number(packageData.max_edits_per_serving) : null,
-    p_special_notes: packageData.special_notes || null,
-    p_total_images: packageData.total_images ? Number(packageData.total_images) : null
-  };
-  
-  console.log('[packageApi] createPackage RPC params:', rpcParams);
-  
+  // Try RPC first, fallback to direct insert if RPC fails
   try {
+    // Prepare RPC parameters
+    const rpcParams: any = {
+      p_package_name: packageData.package_name,
+      p_description: packageData.description || null,
+      p_total_servings: packageData.total_servings !== undefined ? Number(packageData.total_servings) : null,
+      p_price: packageData.price !== undefined ? Number(packageData.price) : null,
+      p_is_active: packageData.is_active !== undefined ? packageData.is_active : true,
+      p_max_processing_time_days: packageData.max_processing_time_days !== undefined ? Number(packageData.max_processing_time_days) : null,
+      p_max_edits_per_serving: packageData.max_edits_per_serving !== undefined ? Number(packageData.max_edits_per_serving) : null,
+      p_special_notes: packageData.special_notes || null,
+      p_total_images: packageData.total_images !== undefined ? Number(packageData.total_images) : null
+    };
+    
+    console.log('[packageApi] createPackage RPC params:', rpcParams);
+    
     const { data, error } = await supabase
       .rpc('create_service_package', rpcParams);
 
@@ -101,12 +103,16 @@ export async function createPackage(packageData: Omit<Package, "package_id" | "c
         hint: error.hint,
         message: error.message
       });
-      throw error;
+      
+      // Fallback to direct insert
+      console.log('[packageApi] Attempting fallback direct insert');
+      return await createPackageDirectInsert(packageData);
     }
 
     if (!data) {
       console.error(`[packageApi] No data returned from RPC when creating package`);
-      throw new Error(`Package creation failed - no data returned`);
+      console.log('[packageApi] Attempting fallback direct insert');
+      return await createPackageDirectInsert(packageData);
     }
 
     console.log('[packageApi] createPackage RPC success, raw data:', data);
@@ -115,7 +121,59 @@ export async function createPackage(packageData: Omit<Package, "package_id" | "c
 
     return transformedData;
   } catch (error) {
-    console.error(`[packageApi] Exception during createPackage:`, error);
+    console.error(`[packageApi] Exception during createPackage RPC, trying direct insert:`, error);
+    return await createPackageDirectInsert(packageData);
+  }
+}
+
+// Fallback function using direct table insert
+async function createPackageDirectInsert(packageData: Omit<Package, "package_id" | "created_at" | "updated_at">): Promise<Package> {
+  console.log('[packageApi] createPackageDirectInsert called with data:', packageData);
+  
+  const dbData = {
+    package_name: packageData.package_name,
+    description: packageData.description || null,
+    total_servings: packageData.total_servings !== undefined ? Number(packageData.total_servings) : null,
+    price: packageData.price !== undefined ? Number(packageData.price) : null,
+    is_active: packageData.is_active !== undefined ? packageData.is_active : true,
+    max_processing_time_days: packageData.max_processing_time_days !== undefined ? Number(packageData.max_processing_time_days) : null,
+    max_edits_per_serving: packageData.max_edits_per_serving !== undefined ? Number(packageData.max_edits_per_serving) : null,
+    special_notes: packageData.special_notes || null,
+    total_images: packageData.total_images !== undefined ? Number(packageData.total_images) : null
+  };
+  
+  console.log('[packageApi] createPackageDirectInsert DB data:', dbData);
+
+  try {
+    const { data, error } = await supabase
+      .from("service_packages")
+      .insert(dbData)
+      .select("package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images")
+      .single();
+
+    if (error) {
+      console.error(`[packageApi] Supabase error in direct insert:`, error);
+      console.error(`[packageApi] Direct insert error details:`, {
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        message: error.message
+      });
+      throw error;
+    }
+
+    if (!data) {
+      console.error(`[packageApi] No data returned from direct insert`);
+      throw new Error(`Package creation failed - no data returned from direct insert`);
+    }
+
+    console.log('[packageApi] createPackageDirectInsert success, raw data:', data);
+    const transformedData = transformDbRowToPackage(data);
+    console.log('[packageApi] createPackageDirectInsert success, transformed data:', transformedData);
+
+    return transformedData;
+  } catch (error) {
+    console.error(`[packageApi] Exception during createPackageDirectInsert:`, error);
     throw error;
   }
 }
@@ -241,13 +299,78 @@ export async function togglePackageActiveStatus(packageId: string, isActive: boo
 export async function deletePackage(packageId: string): Promise<void> {
   console.log('[packageApi] deletePackage called with ID:', packageId);
   
-  const { error } = await supabase
-    .from("service_packages")
-    .delete()
-    .eq("package_id", packageId);
+  try {
+    // First check if package exists and if any clients are using it
+    console.log('[packageApi] Checking if package exists and is not in use...');
+    
+    const { data: packageData, error: packageError } = await supabase
+      .from("service_packages")
+      .select("package_id, package_name")
+      .eq("package_id", packageId)
+      .single();
 
-  if (error) {
-    console.error(`Error deleting package with ID ${packageId}:`, error);
+    if (packageError) {
+      console.error(`[packageApi] Error checking package existence:`, packageError);
+      if (packageError.code === 'PGRST116') {
+        throw new Error(`Package with ID ${packageId} not found`);
+      }
+      throw packageError;
+    }
+
+    console.log('[packageApi] Package found:', packageData);
+
+    // Check if any clients are using this package
+    const { data: clientsUsingPackage, error: clientsError } = await supabase
+      .from("clients")
+      .select("client_id, restaurant_name")
+      .eq("current_package_id", packageId);
+
+    if (clientsError) {
+      console.error(`[packageApi] Error checking clients using package:`, clientsError);
+      throw clientsError;
+    }
+
+    if (clientsUsingPackage && clientsUsingPackage.length > 0) {
+      console.error(`[packageApi] Cannot delete package - it is currently assigned to ${clientsUsingPackage.length} client(s):`, clientsUsingPackage);
+      throw new Error(`Cannot delete package "${packageData.package_name}" because it is currently assigned to ${clientsUsingPackage.length} client(s). Please unassign the package from all clients first.`);
+    }
+
+    // Now safe to delete
+    console.log('[packageApi] Package is not in use, proceeding with deletion...');
+    
+    // Try using RPC function to bypass RLS restrictions
+    const { data: rpcResult, error: rpcError } = await supabase
+      .rpc('delete_service_package', { p_package_id: packageId });
+
+    if (rpcError) {
+      console.warn('[packageApi] RPC deletion failed, trying direct delete:', rpcError);
+      
+      // Fallback to direct delete
+      const { error, count } = await supabase
+        .from("service_packages")
+        .delete({ count: 'exact' })
+        .eq("package_id", packageId);
+
+      console.log('[packageApi] deletePackage direct response:', { error, count });
+
+      if (error) {
+        console.error(`[packageApi] Error deleting package with ID ${packageId}:`, error);
+        throw error;
+      }
+
+      if (count === 0) {
+        console.warn(`[packageApi] No rows were deleted for package ${packageId}`);
+        throw new Error(`Failed to delete package - no rows affected`);
+      }
+
+      console.log('[packageApi] Package deleted successfully via direct delete, rows affected:', count);
+    } else {
+      console.log('[packageApi] Package deleted successfully via RPC:', rpcResult);
+    }
+
+
+  } catch (error) {
+    console.error(`[packageApi] Exception during deletePackage:`, error);
     throw error;
   }
 }

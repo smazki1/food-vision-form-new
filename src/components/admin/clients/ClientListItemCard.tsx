@@ -1,10 +1,12 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Client } from '@/types/client'; // Assuming this path is correct
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Assuming Avatar components are available
-import { Briefcase, Users, Package, Star, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'; // Example icons
+import { Briefcase, Users, Package, Star, AlertTriangle, CheckCircle2, XCircle, Archive, RotateCcw } from 'lucide-react'; // Example icons
+import { ClientDetailPanel } from '@/components/admin/client-details/ClientDetailPanel';
+import { useClientStatusUpdate } from '@/hooks/useClientUpdate';
+import { toast } from 'sonner';
 
 interface ClientListItemCardProps {
   client: Client;
@@ -45,6 +47,10 @@ const getStatusInfo = (status: string | undefined | null) => {
       case 'בהמתנה':
       case 'pending':
         return { text: 'בהמתנה', Icon: AlertTriangle, color: 'text-yellow-700', bgColor: 'bg-yellow-100' };
+      case 'מושהה':
+        return { text: 'מושהה', Icon: AlertTriangle, color: 'text-orange-700', bgColor: 'bg-orange-100' };
+      case 'ארכיון':
+        return { text: 'ארכיון', Icon: AlertTriangle, color: 'text-gray-700', bgColor: 'bg-gray-100' };
       default:
         return { text: status, Icon: AlertTriangle, color: 'text-gray-500', bgColor: 'bg-gray-100' };
     }
@@ -52,16 +58,40 @@ const getStatusInfo = (status: string | undefined | null) => {
 
 
 export const ClientListItemCard: React.FC<ClientListItemCardProps> = ({ client }) => {
-  const navigate = useNavigate();
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
   const { initials, color } = getAvatarData(client.restaurant_name);
   const statusInfo = getStatusInfo(client.client_status);
+  const clientStatusUpdate = useClientStatusUpdate();
 
-  const handleViewClient = () => {
-    navigate(`/admin/clients/${client.client_id}`);
+  const handleRowClick = () => {
+    setShowDetailPanel(true);
+  };
+
+  const handleArchiveClick = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click when clicking the button
+    
+    try {
+      const newStatus = client.client_status === 'ארכיון' ? 'פעיל' : 'ארכיון';
+      const actionText = newStatus === 'ארכיון' ? 'הועבר לארכיון' : 'הוחזר מהארכיון';
+      
+      await clientStatusUpdate.mutateAsync({
+        clientId: client.client_id,
+        status: newStatus
+      });
+      
+      toast.success(`לקוח "${client.restaurant_name}" ${actionText} בהצלחה`);
+    } catch (error) {
+      console.error('Error updating client status:', error);
+      // Error toast is handled by the hook
+    }
   };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 flex items-center space-x-4 rtl:space-x-reverse hover:shadow-lg transition-shadow duration-200 ease-in-out mb-3 border border-gray-200">
+    <>
+      <div 
+        className="bg-white shadow-md rounded-lg p-4 flex items-center space-x-4 rtl:space-x-reverse hover:shadow-lg transition-shadow duration-200 ease-in-out mb-3 border border-gray-200 cursor-pointer hover:bg-gray-50"
+        onClick={handleRowClick}
+      >
       <Avatar className={`h-16 w-16 text-white text-2xl font-semibold ${color}`}>
         <AvatarFallback className="bg-transparent">{initials}</AvatarFallback>
       </Avatar>
@@ -95,11 +125,37 @@ export const ClientListItemCard: React.FC<ClientListItemCardProps> = ({ client }
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={handleViewClient}
-        className="text-blue-600 border-blue-600 hover:bg-blue-50 hover:text-blue-700 whitespace-nowrap"
+        onClick={handleArchiveClick}
+        disabled={clientStatusUpdate.isPending}
+        className={
+          client.client_status === 'ארכיון' 
+            ? "text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700 whitespace-nowrap"
+            : "text-orange-600 border-orange-600 hover:bg-orange-50 hover:text-orange-700 whitespace-nowrap"
+        }
       >
-        צפייה
+        {clientStatusUpdate.isPending ? (
+          "מעבד..."
+        ) : client.client_status === 'ארכיון' ? (
+          <>
+            <RotateCcw className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+            החזר
+          </>
+        ) : (
+          <>
+            <Archive className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+            ארכיון
+          </>
+        )}
       </Button>
     </div>
+
+      {/* Client Detail Panel */}
+      {showDetailPanel && (
+        <ClientDetailPanel
+          clientId={client.client_id}
+          onClose={() => setShowDetailPanel(false)}
+        />
+      )}
+    </>
   );
 }; 

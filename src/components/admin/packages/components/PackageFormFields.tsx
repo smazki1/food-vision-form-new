@@ -120,10 +120,10 @@ export const LimitsPackageFields = () => {
       
       <FormField
         control={control}
-        name="max_processing_time_days"
+        name="total_images"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>זמן עיבוד מקסימלי (ימים)</FormLabel>
+            <FormLabel>מספר תמונות</FormLabel>
             <FormControl>
               <Input
                 type="number"
@@ -167,10 +167,10 @@ export const TotalImagesField = () => {
   return (
     <FormField
       control={control}
-      name="total_images"
+      name="max_processing_time_days"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>מספר תמונות</FormLabel>
+          <FormLabel>זמן עיבוד מקסימלי (ימים)</FormLabel>
           <FormControl>
             <Input
               type="number"
@@ -179,7 +179,6 @@ export const TotalImagesField = () => {
               onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))}
             />
           </FormControl>
-          <FormDescription>מספר תמונות עבור חבילות מבוססות תמונות (אופציונלי)</FormDescription>
           <FormMessage />
         </FormItem>
       )}

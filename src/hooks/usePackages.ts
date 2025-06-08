@@ -118,8 +118,9 @@ export const usePackages_Simplified = ({ enabled = true }: UsePackagesSimplified
       return transformedData;
     },
     enabled: isQueryEnabled,
-    // Add some stability options
-    staleTime: 1000 * 60 * 10, // Consider data fresh for 10 minutes
+    // Cache settings for immediate updates
+    staleTime: 0, // Always consider data stale to ensure fresh fetches
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
     retry: 3, // Retry failed queries
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });

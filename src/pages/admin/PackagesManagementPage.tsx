@@ -5,12 +5,16 @@ import PackagesTable from "@/components/admin/packages/components/PackagesTable"
 import PackagesLoadingState from "@/components/admin/packages/components/PackagesLoadingState";
 import PackageFormDialog from "@/components/admin/packages/PackageFormDialog";
 import { usePackages_Simplified } from "@/hooks/usePackages";
+import { deletePackage } from "@/api/packageApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { AlertTriangle, Info } from "lucide-react";
 
 const PackagesManagementPage: React.FC = () => {
   console.log("**************** HELLO FROM PackagesManagementPage COMPONENT TOP ****************");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editPackage, setEditPackage] = useState<Package | null>(null);
+  const queryClient = useQueryClient();
   
   const { 
     packages, 
@@ -28,6 +32,29 @@ const PackagesManagementPage: React.FC = () => {
 
   const handleEditClick = (pkg: Package) => {
     setEditPackage(pkg);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: deletePackage,
+    onSuccess: () => {
+      // Clear all package-related data from cache
+      queryClient.removeQueries({ predicate: (query) => 
+        query.queryKey[0] === 'packages' || query.queryKey[0] === 'packages_simplified'
+      });
+      // Force immediate refetch
+      queryClient.refetchQueries({ predicate: (query) => 
+        query.queryKey[0] === 'packages_simplified'
+      });
+      toast.success('החבילה נמחקה בהצלחה');
+    },
+    onError: (error) => {
+      console.error('Error deleting package:', error);
+      toast.error('שגיאה במחיקת החבילה');
+    },
+  });
+
+  const handleDeleteClick = (pkg: Package) => {
+    deleteMutation.mutate(pkg.package_id);
   };
 
   const handleCloseDialog = () => {
@@ -112,6 +139,8 @@ const PackagesManagementPage: React.FC = () => {
         <PackagesTable 
           packages={packages}
           onEditPackage={handleEditClick}
+          onDeletePackage={handleDeleteClick}
+          deletingPackageId={deleteMutation.isPending ? deleteMutation.variables : null}
         />
         
         {(isAddDialogOpen || editPackage) && (

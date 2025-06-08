@@ -118,13 +118,37 @@ export const EnhancedLeadsTable: React.FC<EnhancedLeadsTableProps> = ({
 
   const handleStatusChange = async (leadId: string, newStatus: LeadStatusEnum) => {
     try {
+      let finalStatus = newStatus;
+      
+      // If lead is being marked as "לא מעוניין" (not interested), automatically archive it
+      if (newStatus === LeadStatusEnum.NOT_INTERESTED) {
+        finalStatus = LeadStatusEnum.ARCHIVED;
+        
+        // Show special toast message for auto-archiving
+        toast.success('הליד סומן כ"לא מעוניין" והועבר לארכיון אוטומטית');
+      } else if (newStatus === LeadStatusEnum.CONVERTED_TO_CLIENT) {
+        // For conversion to client, show converting message
+        toast.loading('ממיר ליד ללקוח...');
+        
+        await updateLeadMutation.mutateAsync({
+          leadId,
+          updates: { lead_status: finalStatus }
+        });
+        
+        toast.success('הליד הומר ללקוח בהצלחה והמערכת עודכנה!');
+        return;
+      } else {
+        toast.success('סטטוס הליד עודכן בהצלחה');
+      }
+      
       await updateLeadMutation.mutateAsync({
         leadId,
-        updates: { lead_status: newStatus }
+        updates: { lead_status: finalStatus }
       });
-      toast.success('סטטוס הליד עודכן בהצלחה');
+      
     } catch (error) {
-      toast.error('שגיאה בעדכון סטטוס הליד');
+      console.error('Error updating lead status:', error);
+      toast.error(`שגיאה בעדכון סטטוס הליד: ${error instanceof Error ? error.message : 'שגיאה לא צפויה'}`);
     }
   };
 

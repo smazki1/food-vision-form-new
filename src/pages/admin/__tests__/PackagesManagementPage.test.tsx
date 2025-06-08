@@ -1,31 +1,44 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import PackagesManagementPage from '../PackagesManagementPage';
+import { usePackages } from '@/hooks/usePackages';
 
 // Mock dependencies
-jest.mock('@/hooks/usePackages', () => ({
-  usePackages: jest.fn(),
+vi.mock('@/hooks/usePackages', () => ({
+  usePackages: vi.fn(),
 }));
 // Updated mocks to call the relevant props on click
-jest.mock('@/components/admin/packages/components/PackagesHeader', () => (props) => (
-  <div data-testid="header" onClick={props.onAddPackage} />
-));
-jest.mock('@/components/admin/packages/components/PackagesTable', () => (props) => (
-  <div data-testid="table" onClick={() => props.onEditPackage && props.onEditPackage({ package_id: 'mock', package_name: 'Mock', total_servings: 1, price: 1, is_active: true, max_edits_per_serving: 1, created_at: '', updated_at: '' })} />
-));
-jest.mock('@/components/admin/packages/PackageFormDialog', () => (props) => props.open ? <div data-testid="dialog">Dialog</div> : null);
-jest.mock('@/components/admin/packages/components/PackagesLoadingState', () => () => <div data-testid="loading">Loading...</div>);
-
-const { usePackages } = require('@/hooks/usePackages');
+vi.mock('@/components/admin/packages/components/PackagesHeader', () => ({
+  default: (props: any) => (
+    <div data-testid="header" onClick={props.onAddPackage} />
+  )
+}));
+vi.mock('@/components/admin/packages/components/PackagesTable', () => ({
+  default: (props: any) => (
+    <div data-testid="table" onClick={() => props.onEditPackage && props.onEditPackage({ package_id: 'mock', package_name: 'Mock', total_servings: 1, price: 1, is_active: true, max_edits_per_serving: 1, created_at: '', updated_at: '' })} />
+  )
+}));
+vi.mock('@/components/admin/packages/PackageFormDialog', () => ({
+  default: (props: any) => props.open ? <div data-testid="dialog">Dialog</div> : null
+}));
+vi.mock('@/components/admin/packages/components/PackagesLoadingState', () => ({
+  default: () => <div data-testid="loading">Loading...</div>
+}));
 
 describe('PackagesManagementPage', () => {
+  const mockUsePackages = vi.fn();
+  
+  beforeEach(() => {
+    vi.mocked(usePackages).mockImplementation(mockUsePackages);
+  });
+  
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders loading state', () => {
-    usePackages.mockReturnValue({ isLoading: true });
+    mockUsePackages.mockReturnValue({ isLoading: true });
     render(<PackagesManagementPage />);
     expect(screen.getByTestId('loading')).toBeInTheDocument();
   });

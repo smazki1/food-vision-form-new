@@ -50,14 +50,16 @@ const AdminLayout: React.FC = () => {
         <AdminSidebar onLogout={handleLogout} />
       </div>
       
-      {/* Mobile Navigation */}
-      <div className="md:hidden w-full">
-        <AdminMobileNav onLogout={handleLogout} />
-      </div>
-      
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Mobile Navigation */}
+        <div className="md:hidden">
+          <AdminMobileNav onLogout={handleLogout} />
+        </div>
+        
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 p-2 sm:p-3 md:p-6">
-          <Outlet />
+          <div className="max-w-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

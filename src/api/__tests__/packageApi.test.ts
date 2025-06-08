@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { 
   getPackages, 
   getPackageById, 
@@ -8,6 +8,7 @@ import {
   deletePackage 
 } from '../packageApi';
 import { supabase } from '@/integrations/supabase/client';
+import { Package } from '@/types/package';
 
 // Mock Supabase client
 vi.mock('@/integrations/supabase/client', () => ({
@@ -24,30 +25,36 @@ describe('Package API', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   const mockPackageData = {
     package_id: '123e4567-e89b-12d3-a456-426614174000',
-    name: 'Test Package',
+    package_name: 'Test Package',
     description: 'Test Description',
     total_servings: 10,
     price: '500.00',
     is_active: true,
-    features_tags: ['feature1', 'feature2'],
     max_processing_time_days: 7,
     max_edits_per_serving: 2,
+    special_notes: 'Special notes for testing',
+    total_images: 25,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   };
 
   const expectedTransformedPackage = {
     package_id: '123e4567-e89b-12d3-a456-426614174000',
-    package_name: 'Test Package', // Note: transformed from 'name'
+    package_name: 'Test Package',
     description: 'Test Description',
     total_servings: 10,
     price: '500.00',
     is_active: true,
-    features_tags: ['feature1', 'feature2'],
     max_processing_time_days: 7,
     max_edits_per_serving: 2,
+    special_notes: 'Special notes for testing',
+    total_images: 25,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   };
@@ -69,7 +76,7 @@ describe('Package API', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('service_packages');
       expect(mockSelect).toHaveBeenCalledWith(
-        'package_id, name, description, total_servings, price, is_active, created_at, updated_at, features_tags, max_processing_time_days, max_edits_per_serving'
+        'package_id, package_name, description, total_servings, price, is_active, created_at, updated_at, max_processing_time_days, max_edits_per_serving, special_notes, total_images'
       );
       expect(result).toEqual([expectedTransformedPackage]);
     });
@@ -135,38 +142,146 @@ describe('Package API', () => {
         total_servings: 5,
         price: 300,
         is_active: true,
-        features_tags: ['new-feature'],
         max_processing_time_days: 5,
         max_edits_per_serving: 1
       };
 
-      const mockInsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { ...mockPackageData, name: 'New Package' },
-            error: null
-          })
-        })
-      });
-      
-      mockSupabase.from.mockReturnValue({
-        insert: mockInsert
+      // Mock the RPC response that createPackage actually uses
+      mockSupabase.rpc.mockResolvedValue({
+        data: { ...mockPackageData, package_name: 'New Package' },
+        error: null
       });
 
       const result = await createPackage(newPackageData);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith('service_packages');
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('create_service_package', 
         expect.objectContaining({
-          name: 'New Package', // Should be transformed to 'name'
-          description: 'New Description',
-          total_servings: 5,
-          price: 300
+          p_package_name: 'New Package',
+          p_description: 'New Description',
+          p_total_servings: 5,
+          p_price: 300,
+          p_is_active: true,
+          p_max_processing_time_days: 5,
+          p_max_edits_per_serving: 1
         })
       );
       expect(result).toEqual(expect.objectContaining({
         package_name: 'New Package'
       }));
+    });
+
+    it('should handle zero values correctly', async () => {
+      const zeroValueData = {
+        ...mockPackageData,
+        total_servings: 0,
+        price: 0,
+        max_processing_time_days: 0,
+        max_edits_per_serving: 0,
+        total_images: 0,
+      };
+
+      const mockResponse = {
+        package_id: 'test-id',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        ...zeroValueData,
+      };
+
+      mockSupabase.rpc.mockResolvedValue({
+        data: mockResponse,
+        error: null,
+      });
+
+      await createPackage(zeroValueData);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('create_service_package', {
+        p_package_name: 'Test Package',
+        p_description: 'Test Description',
+        p_total_servings: 0,
+        p_price: 0,
+        p_is_active: true,
+        p_max_processing_time_days: 0,
+        p_max_edits_per_serving: 0,
+        p_special_notes: 'Special notes for testing',
+        p_total_images: 0,
+      });
+    });
+
+    it('should fallback to direct insert when RPC fails', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'RPC failed' },
+      });
+
+      const mockFromChain = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: mockPackageData,
+          error: null,
+        }),
+      };
+
+      mockSupabase.from.mockReturnValue(mockFromChain);
+
+      const result = await createPackage(mockPackageData);
+
+      expect(mockSupabase.from).toHaveBeenCalledWith('service_packages');
+      expect(mockFromChain.insert).toHaveBeenCalled();
+      expect(result.package_name).toBe('Test Package');
+    });
+
+    it('should throw error when both RPC and direct insert fail', async () => {
+      mockSupabase.rpc.mockResolvedValue({
+        data: null,
+        error: { message: 'RPC failed' },
+      });
+
+      const mockFromChain = {
+        insert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'Insert failed' },
+        }),
+      };
+
+      mockSupabase.from.mockReturnValue(mockFromChain);
+
+      await expect(createPackage(mockPackageData)).rejects.toThrow('Insert failed');
+    });
+
+    it('should handle undefined optional fields', async () => {
+      const minimalData = {
+        package_name: 'Minimal Package',
+        description: undefined,
+        total_servings: undefined,
+        price: undefined,
+        is_active: undefined,
+        max_processing_time_days: undefined,
+        max_edits_per_serving: undefined,
+        special_notes: undefined,
+        total_images: undefined,
+      };
+
+      mockSupabase.rpc.mockResolvedValue({
+        data: { ...mockPackageData, ...minimalData },
+        error: null,
+      });
+
+      await createPackage(minimalData as any);
+
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('create_service_package', {
+        p_package_name: 'Minimal Package',
+        p_description: null,
+        p_total_servings: null,
+        p_price: null,
+        p_is_active: true,
+        p_max_processing_time_days: null,
+        p_max_edits_per_serving: null,
+        p_special_notes: null,
+        p_total_images: null,
+      });
     });
   });
 
@@ -179,7 +294,7 @@ describe('Package API', () => {
       };
 
       mockSupabase.rpc.mockResolvedValue({
-        data: { ...mockPackageData, name: 'Updated Package' },
+        data: { ...mockPackageData, package_name: 'Updated Package' },
         error: null
       });
 
@@ -188,7 +303,7 @@ describe('Package API', () => {
       expect(mockSupabase.rpc).toHaveBeenCalledWith('update_service_package', 
         expect.objectContaining({
           p_package_id: '123e4567-e89b-12d3-a456-426614174000',
-          p_name: 'Updated Package',
+          p_package_name: 'Updated Package',
           p_description: 'Updated Description',
           p_price: 600
         })

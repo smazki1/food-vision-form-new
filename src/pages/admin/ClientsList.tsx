@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ClientListItemCard } from "@/components/admin/clients/ClientListItemCard";
 import { MobileLoading } from "@/components/ui/mobile-loading";
-import { RefreshCw, Search, AlertTriangle } from "lucide-react";
+import { NewClientDialog } from "@/components/admin/clients/NewClientDialog";
+import { RefreshCw, Search, AlertTriangle, UserPlus, Archive, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 // Basic placeholder for AdminContentLayout
 const AdminContentLayout = ({ children }: { children: React.ReactNode }) => (
@@ -17,6 +19,8 @@ const ClientsList = () => {
   const { t } = useTranslation();
   const currentUserRoleData = useCurrentUserRole();
   const [searchTerm, setSearchTerm] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
+  const [showNewClientDialog, setShowNewClientDialog] = useState(false);
 
   // Enhanced logic to handle authentication fallback scenarios with more stability
   const adminAuth = localStorage.getItem("adminAuthenticated") === "true";
@@ -67,6 +71,13 @@ const ClientsList = () => {
 
   const filteredClients = clients.filter(client => {
     if (!client) return false;
+    
+    // Filter by archive status
+    const isArchived = client.client_status === 'ארכיון';
+    if (showArchived && !isArchived) return false;
+    if (!showArchived && isArchived) return false;
+    
+    // Filter by search term
     const searchTermLower = searchTerm.toLowerCase();
     return (
       client.restaurant_name?.toLowerCase().includes(searchTermLower) ||
@@ -75,6 +86,10 @@ const ClientsList = () => {
       client.phone?.toLowerCase().includes(searchTermLower)
     );
   });
+
+  const totalClients = clients.length;
+  const activeClients = clients.filter(c => c.client_status !== 'ארכיון').length;
+  const archivedClients = clients.filter(c => c.client_status === 'ארכיון').length;
 
   const handleRefresh = () => {
     refreshClients(); 
@@ -112,27 +127,83 @@ const ClientsList = () => {
         {t("clientsList.pageTitle", "ניהול לקוחות")}
       </h1>
       
-      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
-          <Input
-            placeholder={t("clientsList.searchPlaceholder", "Search by name, contact, email...")}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 sm:pl-10 rtl:pr-9 sm:rtl:pr-10 w-full text-sm sm:text-base"
-          />
+      {/* Stats bar */}
+      <div className="mb-4 grid grid-cols-3 gap-4">
+        <div className="text-center p-3 bg-blue-50 rounded-lg">
+          <div className="text-2xl font-bold text-blue-600">{totalClients}</div>
+          <div className="text-sm text-blue-700">סה״כ לקוחות</div>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          variant="outline" 
-          disabled={isClientsFetching || isClientsLoading} 
-          className="flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto py-2 px-3"
-        >
-          <RefreshCw className={`h-4 w-4 ${isClientsFetching ? 'animate-spin' : ''}`} />
-          <span className="text-sm sm:text-base">
-            {isClientsFetching ? t("common.refreshing", "מרענן...") : t("common.refresh", "רענן")}
-          </span>
-        </Button>
+        <div className="text-center p-3 bg-green-50 rounded-lg">
+          <div className="text-2xl font-bold text-green-600">{activeClients}</div>
+          <div className="text-sm text-green-700">לקוחות פעילים</div>
+        </div>
+        <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-2xl font-bold text-gray-600">{archivedClients}</div>
+          <div className="text-sm text-gray-700">בארכיון</div>
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="mb-4 sm:mb-6 space-y-3">
+        {/* Top row - search and refresh */}
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+            <Input
+              placeholder={t("clientsList.searchPlaceholder", "Search by name, contact, email...")}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9 sm:pl-10 rtl:pr-9 sm:rtl:pr-10 w-full text-sm sm:text-base"
+            />
+          </div>
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            disabled={isClientsFetching || isClientsLoading} 
+            className="flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto py-2 px-3"
+          >
+            <RefreshCw className={`h-4 w-4 ${isClientsFetching ? 'animate-spin' : ''}`} />
+            <span className="text-sm sm:text-base">
+              {isClientsFetching ? t("common.refreshing", "מרענן...") : t("common.refresh", "רענן")}
+            </span>
+          </Button>
+        </div>
+
+        {/* Bottom row - action buttons */}
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              onClick={() => setShowArchived(false)}
+              variant={!showArchived ? "default" : "outline"}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              לקוחות פעילים
+              <Badge variant="secondary" className="ml-2">
+                {activeClients}
+              </Badge>
+            </Button>
+            <Button
+              onClick={() => setShowArchived(true)}
+              variant={showArchived ? "default" : "outline"}
+              className="flex items-center gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              ארכיון
+              <Badge variant="secondary" className="ml-2">
+                {archivedClients}
+              </Badge>
+            </Button>
+          </div>
+          
+          <Button
+            onClick={() => setShowNewClientDialog(true)}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          >
+            <UserPlus className="h-4 w-4" />
+            הוסף לקוח חדש
+          </Button>
+        </div>
       </div>
 
       {(isClientsLoading || isClientsFetching) && clientsQueryStatus !== 'success' && (
@@ -188,6 +259,12 @@ const ClientsList = () => {
           )}
         </>
       )}
+
+      {/* New Client Dialog */}
+      <NewClientDialog 
+        open={showNewClientDialog} 
+        onOpenChange={setShowNewClientDialog} 
+      />
     </AdminContentLayout>
   );
 };

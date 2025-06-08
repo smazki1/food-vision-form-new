@@ -1,8 +1,8 @@
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SubmissionStatus } from "@/api/submissionApi";
 import { toast } from "sonner";
+import { updateClientServings } from "@/api/clientApi";
 
 interface StatusUpdateParams {
   submissionId: string;
@@ -22,6 +22,54 @@ interface EditHistory {
 }
 
 /**
+ * Helper function to automatically deduct servings when submission is approved
+ */
+async function handleAutomaticServingDeduction(submissionId: string, submissionData: any) {
+  try {
+    // Get client_id from the submission data
+    const clientId = submissionData.client_id;
+    if (!clientId) {
+      console.warn("Cannot deduct servings: submission has no client_id");
+      return;
+    }
+
+    // Get current client servings
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select("remaining_servings, restaurant_name")
+      .eq("client_id", clientId)
+      .single();
+
+    if (clientError) {
+      console.error("Error fetching client for serving deduction:", clientError);
+      return;
+    }
+
+    const currentServings = client.remaining_servings || 0;
+    if (currentServings <= 0) {
+      console.warn("Cannot deduct servings: client has no remaining servings");
+      return;
+    }
+
+    // Deduct one serving
+    const newServingsCount = currentServings - 1;
+    const notes = `ניכוי אוטומטי בעקבות אישור עבודה: ${submissionData.item_name_at_submission}`;
+
+    // Update client servings with audit trail
+    await updateClientServings(clientId, newServingsCount, notes);
+
+    console.log(`Successfully deducted 1 serving from client ${client.restaurant_name}. Remaining: ${newServingsCount}`);
+    
+    // Show Hebrew success message
+    toast.success(`נוכה סרבינג אחד מ${client.restaurant_name}. נותרו: ${newServingsCount} מנות`);
+
+  } catch (error) {
+    console.error("Error in automatic serving deduction:", error);
+    toast.error("שגיאה בניכוי אוטומטי של מנה");
+  }
+}
+
+/**
  * Hook for updating and tracking submission status changes
  * This supports performance reporting by logging status changes with timestamps
  */
@@ -36,10 +84,10 @@ export function useSubmissionStatusTracking() {
       // Create a status change log entry in the status history
       let statusHistory: EditHistory = { status_changes: [] };
       
-      // First fetch the current submission to get existing history
+      // First fetch the current submission to get existing history and client_id
       const { data: currentSubmission } = await supabase
         .from("customer_submissions")
-        .select("submission_status, edit_history")
+        .select("submission_status, edit_history, client_id, item_name_at_submission")
         .eq("submission_id", submissionId)
         .single();
       
@@ -99,6 +147,11 @@ export function useSubmissionStatusTracking() {
           status === "ממתינה לעיבוד")) {
         await createEditorNotification(data);
       }
+
+      // Automatic serving deduction when submission is approved
+      if (status === "הושלמה ואושרה") {
+        await handleAutomaticServingDeduction(submissionId, data);
+      }
       
       return data;
     },
@@ -107,6 +160,11 @@ export function useSubmissionStatusTracking() {
       queryClient.invalidateQueries({ queryKey: ["submission", data.submission_id] });
       queryClient.invalidateQueries({ queryKey: ["editor-submissions"] });
       queryClient.invalidateQueries({ queryKey: ["all-submissions"] });
+      // Also invalidate client queries to refresh servings data in UI
+      if (data.client_id) {
+        queryClient.invalidateQueries({ queryKey: ["client", data.client_id] });
+        queryClient.invalidateQueries({ queryKey: ["clients"] });
+      }
     },
     onError: (error) => {
       toast.error(`שגיאה בעדכון סטטוס: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`);

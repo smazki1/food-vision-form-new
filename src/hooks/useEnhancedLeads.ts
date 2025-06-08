@@ -220,6 +220,8 @@ export const useConvertLeadToClient = () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients_simplified'] });
+      queryClient.invalidateQueries({ queryKey: ['clients_list_for_admin'] });
       queryClient.invalidateQueries({ queryKey: ['client-processed-items'] });
       queryClient.invalidateQueries({ queryKey: ['clientPackageDetails'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });
@@ -258,6 +260,8 @@ export const useDirectConvertLeadToClient = () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['clients_simplified'] });
+      queryClient.invalidateQueries({ queryKey: ['clients_list_for_admin'] });
       queryClient.invalidateQueries({ queryKey: ['client-processed-items'] });
       queryClient.invalidateQueries({ queryKey: ['clientPackageDetails'] });
       queryClient.invalidateQueries({ queryKey: ['packages'] });

@@ -28,6 +28,8 @@ export const CLIENT_STATUSES = {
   ACTIVE: 'פעיל',
   INACTIVE: 'לא פעיל',
   PENDING: 'בהמתנה',
+  SUSPENDED: 'מושהה',
+  ARCHIVED: 'ארכיון',
 } as const;
 
 export type ClientStatus = typeof CLIENT_STATUSES[keyof typeof CLIENT_STATUSES];

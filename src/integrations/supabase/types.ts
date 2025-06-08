@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       ai_pricing_settings: {
@@ -82,11 +57,100 @@ export type Database = {
         }
         Relationships: []
       }
+      client_design_settings: {
+        Row: {
+          category: string
+          client_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          reference_images: string[] | null
+          style_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          client_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          reference_images?: string[] | null
+          style_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          client_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          reference_images?: string[] | null
+          style_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_design_settings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      client_image_activity_log: {
+        Row: {
+          activity_id: string
+          activity_type: string
+          change_amount: number
+          client_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          images_after: number
+          images_before: number
+        }
+        Insert: {
+          activity_id?: string
+          activity_type: string
+          change_amount: number
+          client_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          images_after: number
+          images_before: number
+        }
+        Update: {
+          activity_id?: string
+          activity_type?: string
+          change_amount?: number
+          client_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          images_after?: number
+          images_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_image_activity_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       clients: {
         Row: {
+          address: string | null
           app_notifications: boolean | null
+          archive_status: string | null
+          business_type: string | null
           client_id: string
           client_status: string | null
+          consumed_images: number | null
           contact_name: string
           created_at: string
           current_package_id: string | null
@@ -94,17 +158,31 @@ export type Database = {
           email_notifications: boolean | null
           internal_notes: string | null
           last_activity_at: string | null
+          next_follow_up_date: string | null
+          notes: string | null
           original_lead_id: string | null
+          payment_amount_ils: number | null
+          payment_due_date: string | null
+          payment_status: string | null
           phone: string | null
+          remaining_images: number | null
           remaining_servings: number | null
+          reminder_at: string | null
+          reminder_details: string | null
+          reserved_images: number | null
           restaurant_name: string
           updated_at: string
           user_auth_id: string
+          website_url: string | null
         }
         Insert: {
+          address?: string | null
           app_notifications?: boolean | null
+          archive_status?: string | null
+          business_type?: string | null
           client_id?: string
           client_status?: string | null
+          consumed_images?: number | null
           contact_name: string
           created_at?: string
           current_package_id?: string | null
@@ -112,17 +190,31 @@ export type Database = {
           email_notifications?: boolean | null
           internal_notes?: string | null
           last_activity_at?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
           original_lead_id?: string | null
+          payment_amount_ils?: number | null
+          payment_due_date?: string | null
+          payment_status?: string | null
           phone?: string | null
+          remaining_images?: number | null
           remaining_servings?: number | null
+          reminder_at?: string | null
+          reminder_details?: string | null
+          reserved_images?: number | null
           restaurant_name: string
           updated_at?: string
           user_auth_id: string
+          website_url?: string | null
         }
         Update: {
+          address?: string | null
           app_notifications?: boolean | null
+          archive_status?: string | null
+          business_type?: string | null
           client_id?: string
           client_status?: string | null
+          consumed_images?: number | null
           contact_name?: string
           created_at?: string
           current_package_id?: string | null
@@ -130,12 +222,22 @@ export type Database = {
           email_notifications?: boolean | null
           internal_notes?: string | null
           last_activity_at?: string | null
+          next_follow_up_date?: string | null
+          notes?: string | null
           original_lead_id?: string | null
+          payment_amount_ils?: number | null
+          payment_due_date?: string | null
+          payment_status?: string | null
           phone?: string | null
+          remaining_images?: number | null
           remaining_servings?: number | null
+          reminder_at?: string | null
+          reminder_details?: string | null
+          reserved_images?: number | null
           restaurant_name?: string
           updated_at?: string
           user_auth_id?: string
+          website_url?: string | null
         }
         Relationships: [
           {
@@ -193,6 +295,7 @@ export type Database = {
           email: string | null
           final_approval_timestamp: string | null
           fixed_prompt: string | null
+          image_credits_used: number | null
           ingredients: string[] | null
           item_name_at_submission: string
           item_type: string
@@ -205,6 +308,7 @@ export type Database = {
           original_item_id: string | null
           phone: string | null
           processed_at: string | null
+          processed_image_count: number | null
           processed_image_urls: string[] | null
           reference_example_urls: string[] | null
           restaurant_name: string | null
@@ -224,6 +328,7 @@ export type Database = {
           email?: string | null
           final_approval_timestamp?: string | null
           fixed_prompt?: string | null
+          image_credits_used?: number | null
           ingredients?: string[] | null
           item_name_at_submission: string
           item_type: string
@@ -236,6 +341,7 @@ export type Database = {
           original_item_id?: string | null
           phone?: string | null
           processed_at?: string | null
+          processed_image_count?: number | null
           processed_image_urls?: string[] | null
           reference_example_urls?: string[] | null
           restaurant_name?: string | null
@@ -255,6 +361,7 @@ export type Database = {
           email?: string | null
           final_approval_timestamp?: string | null
           fixed_prompt?: string | null
+          image_credits_used?: number | null
           ingredients?: string[] | null
           item_name_at_submission?: string
           item_type?: string
@@ -267,6 +374,7 @@ export type Database = {
           original_item_id?: string | null
           phone?: string | null
           processed_at?: string | null
+          processed_image_count?: number | null
           processed_image_urls?: string[] | null
           reference_example_urls?: string[] | null
           restaurant_name?: string | null
@@ -766,6 +874,34 @@ export type Database = {
         Args: { p_lead_id: string }
         Returns: string
       }
+      create_service_package: {
+        Args: {
+          p_package_name: string
+          p_description?: string
+          p_total_servings?: number
+          p_price?: number
+          p_is_active?: boolean
+          p_max_processing_time_days?: number
+          p_max_edits_per_serving?: number
+          p_special_notes?: string
+          p_total_images?: number
+        }
+        Returns: {
+          created_at: string
+          description: string | null
+          features_tags: string[] | null
+          is_active: boolean | null
+          max_edits_per_serving: number
+          max_processing_time_days: number | null
+          package_id: string
+          package_name: string
+          price: number
+          special_notes: string | null
+          total_images: number | null
+          total_servings: number
+          updated_at: string
+        }
+      }
       create_supabase_user: {
         Args: { user_email: string; user_password: string }
         Returns: Json
@@ -776,6 +912,10 @@ export type Database = {
           property: string
           value: string
         }[]
+      }
+      delete_service_package: {
+        Args: { p_package_id: string }
+        Returns: boolean
       }
       fix_user_auth_issues: {
         Args: { user_email: string }
@@ -788,31 +928,6 @@ export type Database = {
       generate_system_diagnostic_report: {
         Args: Record<PropertyKey, never>
         Returns: Json
-      }
-      add_lead_comment: {
-        Args: {
-          p_lead_id: string
-          p_comment_text: string
-        }
-        Returns: {
-          comment_id: string
-          lead_id: string
-          comment_text: string
-          comment_timestamp: string
-          user_id: string | null
-        }[]
-      }
-      get_lead_comments: {
-        Args: {
-          p_lead_id: string
-        }
-        Returns: {
-          comment_id: string
-          lead_id: string
-          comment_text: string
-          comment_timestamp: string
-          user_id: string | null
-        }[]
       }
       get_my_role: {
         Args: Record<PropertyKey, never>
@@ -976,14 +1091,15 @@ export type Database = {
       update_service_package: {
         Args: {
           p_package_id: string
-          p_name?: string
+          p_package_name?: string
           p_description?: string
           p_total_servings?: number
           p_price?: number
           p_is_active?: boolean
-          p_features_tags?: string[]
           p_max_processing_time_days?: number
           p_max_edits_per_serving?: number
+          p_special_notes?: string
+          p_total_images?: number
         }
         Returns: {
           created_at: string
@@ -1175,9 +1291,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       lead_source_enum: [

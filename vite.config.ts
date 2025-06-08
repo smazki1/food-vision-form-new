@@ -37,6 +37,10 @@ export default defineConfig(({ mode }) => ({
           forms: ['react-hook-form', '@hookform/resolvers', 'zod'],
           // Utilities chunk
           utils: ['date-fns', 'jszip', 'lucide-react', 'uuid'],
+          // Admin heavy components - split into separate chunks
+          'admin-submissions': ['./src/components/admin/submissions/SubmissionViewer'],
+          'admin-leads': ['./src/components/admin/leads/LeadSubmissionModal', './src/components/admin/leads/LeadDetailPanel'],
+          'admin-pages': ['./src/pages/admin/SubmissionsPage'],
         }
       }
     },

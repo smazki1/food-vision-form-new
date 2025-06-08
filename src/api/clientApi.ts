@@ -1,6 +1,6 @@
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { Client, ClientStatus } from "@/types/client";
+import { Client } from "@/types/client";
 
 export async function getClientById(clientId: string): Promise<Client | null> {
   const { data, error } = await supabase
@@ -207,4 +207,188 @@ export async function getPackageName(packageId: string | null): Promise<string |
     console.error("Error fetching package name:", error);
     return null;
   }
+}
+
+export async function updateClientServings(
+  clientId: string,
+  newServingsCount: number,
+  notes?: string
+): Promise<Client> {
+  // Create the updates object
+  const updates: Partial<Client> = {
+    remaining_servings: newServingsCount,
+  };
+
+  // If there are notes, prepend them to the existing internal notes
+  if (notes) {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("internal_notes")
+      .eq("client_id", clientId)
+      .single();
+
+    const currentNotes = currentClient?.internal_notes || "";
+    const timestamp = new Date().toLocaleString("he-IL");
+    const formattedNote = `[${timestamp} - עדכון מנות] ${notes}`;
+    
+    updates.internal_notes = currentNotes 
+      ? `${formattedNote}\n\n${currentNotes}`
+      : formattedNote;
+  }
+
+  // Perform the update
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updates)
+    .eq("client_id", clientId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating client servings:", error);
+    throw error;
+  }
+
+  return data as Client;
+}
+
+export async function updateClientImages(
+  clientId: string,
+  newImagesCount: number,
+  notes?: string
+): Promise<Client> {
+  // Create the updates object
+  const updates: Partial<Client> = {
+    remaining_images: newImagesCount,
+  };
+
+  // If there are notes, prepend them to the existing internal notes
+  if (notes) {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("internal_notes")
+      .eq("client_id", clientId)
+      .single();
+
+    const currentNotes = currentClient?.internal_notes || "";
+    const timestamp = new Date().toLocaleString("he-IL");
+    const formattedNote = `[${timestamp} - עדכון תמונות] ${notes}`;
+    
+    updates.internal_notes = currentNotes 
+      ? `${formattedNote}\n\n${currentNotes}`
+      : formattedNote;
+  }
+
+  // Log the activity for audit trail
+  try {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("remaining_images")
+      .eq("client_id", clientId)
+      .single();
+
+    if (currentClient) {
+      await supabase
+        .from("client_image_activity_log")
+        .insert({
+          client_id: clientId,
+          activity_type: 'manual_adjustment',
+          images_before: currentClient.remaining_images || 0,
+          images_after: newImagesCount,
+          change_amount: newImagesCount - (currentClient.remaining_images || 0),
+          description: notes || 'עדכון ידני של כמות תמונות'
+        });
+    }
+  } catch (error) {
+    console.warn("Could not log image activity:", error);
+    // Continue with the update even if logging fails
+  }
+
+  // Perform the update
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updates)
+    .eq("client_id", clientId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating client images:", error);
+    throw error;
+  }
+
+  return data as Client;
+}
+
+export async function assignPackageToClientWithImages(
+  clientId: string,
+  packageId: string,
+  servingsCount: number,
+  imagesCount: number,
+  notes?: string,
+  expirationDate?: Date
+): Promise<Client> {
+  // Create the updates object with both servings and images
+  const updates: Partial<Client> = {
+    current_package_id: packageId,
+    remaining_servings: servingsCount,
+    remaining_images: imagesCount,
+  };
+
+  // If there are notes, prepend them to the existing internal notes
+  if (notes) {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("internal_notes")
+      .eq("client_id", clientId)
+      .single();
+
+    const currentNotes = currentClient?.internal_notes || "";
+    const timestamp = new Date().toLocaleString("he-IL");
+    const formattedNote = `[${timestamp} - הקצאת חבילה] ${notes} (${servingsCount} מנות, ${imagesCount} תמונות)`;
+    
+    updates.internal_notes = currentNotes 
+      ? `${formattedNote}\n\n${currentNotes}`
+      : formattedNote;
+  }
+
+  // Log the activity for audit trail
+  try {
+    const { data: currentClient } = await supabase
+      .from("clients")
+      .select("remaining_images")
+      .eq("client_id", clientId)
+      .single();
+
+    if (currentClient) {
+      await supabase
+        .from("client_image_activity_log")
+        .insert({
+          client_id: clientId,
+          activity_type: 'package_assigned',
+          images_before: currentClient.remaining_images || 0,
+          images_after: imagesCount,
+          change_amount: imagesCount - (currentClient.remaining_images || 0),
+          description: `הקצאת חבילה: ${notes || 'חבילה חדשה'}`
+        });
+    }
+  } catch (error) {
+    console.warn("Could not log image activity:", error);
+    // Continue with the update even if logging fails
+  }
+
+  // Perform the update
+  const { data, error } = await supabase
+    .from("clients")
+    .update(updates)
+    .eq("client_id", clientId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error assigning package with images to client:", error);
+    throw error;
+  }
+
+  return data as Client;
 }

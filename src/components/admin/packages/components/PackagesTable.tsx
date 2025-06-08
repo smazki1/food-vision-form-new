@@ -15,9 +15,16 @@ import PackageStatusToggle from "./PackageStatusToggle";
 interface PackagesTableProps {
   packages: Package[];
   onEditPackage: (pkg: Package) => void;
+  onDeletePackage: (pkg: Package) => void;
+  deletingPackageId?: string | null;
 }
 
-const PackagesTable: React.FC<PackagesTableProps> = ({ packages, onEditPackage }) => {
+const PackagesTable: React.FC<PackagesTableProps> = ({ 
+  packages, 
+  onEditPackage,
+  onDeletePackage,
+  deletingPackageId = null
+}) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('he-IL', {
       style: 'currency',
@@ -65,7 +72,9 @@ const PackagesTable: React.FC<PackagesTableProps> = ({ packages, onEditPackage }
               <TableCell>
                 <PackageActions 
                   pkg={pkg} 
-                  onEditClick={onEditPackage} 
+                  onEditClick={onEditPackage}
+                  onDeleteClick={onDeletePackage}
+                  isDeleting={deletingPackageId === pkg.package_id}
                 />
               </TableCell>
             </TableRow>
