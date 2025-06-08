@@ -22,6 +22,9 @@ import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import React, { Suspense } from "react";
 
+// Import debug script for testing comments
+import "@/test-comments-debug";
+
 // Lazy load heavy admin components to reduce initial bundle size
 const Dashboard = React.lazy(() => import("@/pages/admin/Dashboard"));
 const ClientsList = React.lazy(() => import("@/pages/admin/ClientsList"));

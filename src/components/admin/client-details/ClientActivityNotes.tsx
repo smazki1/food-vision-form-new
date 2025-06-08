@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClients } from '@/hooks/useClients';
 import { useClientUpdate } from '@/hooks/useClientUpdate';
+import { useRobustClientComments, useRobustNotes } from '@/hooks/useRobustComments';
 
 interface ClientComment {
   id: string;
@@ -49,13 +50,11 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
   clientId
 }) => {
   const [newComment, setNewComment] = useState('');
-  const [comments, setComments] = useState<ClientComment[]>([]);
   const [leadActivities, setLeadActivities] = useState<LeadActivity[]>([]);
   const [leadComments, setLeadComments] = useState<LeadComment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   // Local editing state for input fields
-  const [editingNotes, setEditingNotes] = useState('');
   const [editingNextFollowUpDate, setEditingNextFollowUpDate] = useState('');
   const [editingReminderDetails, setEditingReminderDetails] = useState('');
 
@@ -63,16 +62,29 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
   const client = clients.find(c => c.client_id === clientId);
   const clientUpdateMutation = useClientUpdate();
 
+  // Use robust comments and notes system
+  const { 
+    comments: robustComments, 
+    isLoading: robustCommentsLoading, 
+    addComment: addRobustComment, 
+    isAddingComment 
+  } = useRobustClientComments(clientId);
+  
+  const { 
+    note: robustNote, 
+    isLoading: robustNoteLoading, 
+    updateNotes: updateRobustNotes, 
+    isUpdating: isUpdatingNotes 
+  } = useRobustNotes(clientId, 'client');
+
   // Use client data directly from useClients instead of separate queries
-  const notes = client?.notes || '';
   const nextFollowUpDate = client?.next_follow_up_date || '';
   const reminderDetails = client?.reminder_details || '';
   const linkedLeadId = client?.original_lead_id || null;
 
   useEffect(() => {
     if (client) {
-      // Initialize editing state with current values
-      setEditingNotes(client.notes || '');
+      // Initialize editing state with current values (notes now handled by robust system)
       setEditingNextFollowUpDate(client.next_follow_up_date || '');
       setEditingReminderDetails(client.reminder_details || '');
       
@@ -84,19 +96,8 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     try {
       setIsLoading(true);
       
-      // Parse client comments from internal_notes (using existing client data)
-      let storedComments: ClientComment[] = [];
-      if (client?.internal_notes) {
-        try {
-          const parsed = JSON.parse(client.internal_notes);
-          if (parsed.clientComments && Array.isArray(parsed.clientComments)) {
-            storedComments = parsed.clientComments;
-          }
-        } catch (e) {
-          // Not JSON or no comments
-        }
-      }
-      setComments(storedComments);
+      // Comments now handled by robust system - no need to parse internal_notes
+      console.log('[ClientActivityNotes] Using robust comments system, no manual parsing needed');
 
       // Load lead data if this client was converted from a lead
       if (linkedLeadId) {
@@ -141,17 +142,12 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
 
   const handleNotesUpdate = async (newNotes: string) => {
     try {
-      await clientUpdateMutation.mutateAsync({
-        clientId,
-        updates: { notes: newNotes }
-      });
-      
-      // Update local state on success
-      setEditingNotes(newNotes);
+      console.log('[ClientActivityNotes] Using robust notes system for update');
+      await updateRobustNotes(newNotes);
+      // Success/error messages handled by robust system
     } catch (error) {
-      console.error('Error updating notes:', error);
-      // Reset to original value on error
-      setEditingNotes(notes);
+      console.error('[ClientActivityNotes] Notes update error:', error);
+      // Error handling done by robust system
     }
   };
 
@@ -186,38 +182,13 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     if (!newComment.trim()) return;
 
     try {
-      const newCommentObj: ClientComment = {
-        id: Date.now().toString(),
-        text: newComment.trim(),
-        timestamp: new Date().toISOString(),
-        source: 'client'
-      };
-
-      const updatedComments = [newCommentObj, ...comments];
-      
-      // Save to internal_notes using the hook
-      const existingNotes = client?.internal_notes || '';
-      let notesData: any = {};
-      
-      try {
-        notesData = JSON.parse(existingNotes);
-      } catch (e) {
-        notesData = { originalNotes: existingNotes };
-      }
-      
-      notesData.clientComments = updatedComments;
-      
-      await clientUpdateMutation.mutateAsync({
-        clientId,
-        updates: { internal_notes: JSON.stringify(notesData) }
-      });
-      
-      setComments(updatedComments);
+      console.log('[ClientActivityNotes] Using robust comment system for adding comment');
+      await addRobustComment(newComment.trim());
       setNewComment('');
-      toast.success('התגובה נוספה בהצלחה');
+      // Success/error messages handled by robust system
     } catch (error) {
-      console.error('Error adding comment:', error);
-      toast.error('שגיאה בהוספת התגובה');
+      console.error('[ClientActivityNotes] Comment addition error:', error);
+      // Error handling done by robust system
     }
   };
 
@@ -257,12 +228,13 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
               <div>
                 <Label className="text-sm font-medium">הערות כלליות</Label>
                 <Textarea
-                  value={editingNotes}
-                  onChange={(e) => setEditingNotes(e.target.value)}
+                  value={robustNote?.content || ''}
+                  onChange={(e) => handleNotesUpdate(e.target.value)}
                   onBlur={(e) => handleNotesUpdate(e.target.value)}
                   className="mt-1"
                   placeholder="הערות כלליות על הלקוח, העדפות, הנחיות מיוחדות..."
                   rows={6}
+                  disabled={isUpdatingNotes}
                 />
               </div>
             </div>
@@ -299,15 +271,17 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
 
                 {/* Comments Display */}
                 <div className="max-h-48 overflow-y-auto">
-                  {comments.length > 0 ? (
+                  {robustCommentsLoading ? (
+                    <p className="text-sm text-gray-500">טוען תגובות...</p>
+                  ) : robustComments && robustComments.length > 0 ? (
                     <div className="space-y-2">
-                      {comments.map((comment) => (
+                      {robustComments.map((comment) => (
                         <div key={comment.id} className="p-3 bg-gray-50 rounded-md">
-                                                     <div className="flex items-center justify-between mb-1">
-                             <Badge variant="outline">
-                               {comment.source === 'lead' ? 'מליד' : 'לקוח'}
-                             </Badge>
-                           </div>
+                          <div className="flex items-center justify-between mb-1">
+                            <Badge variant="outline">
+                              {comment.source === 'lead' ? 'מליד' : 'לקוח'}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-gray-700">{comment.text}</p>
                           <p className="text-xs text-gray-500 mt-1">
                             {new Date(comment.timestamp).toLocaleString('he-IL')}

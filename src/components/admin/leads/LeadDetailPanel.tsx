@@ -20,6 +20,7 @@ import {
   useLeadById,
   LEAD_QUERY_KEY 
 } from '@/hooks/useEnhancedLeads';
+import { useRobustLeadComments, useRobustNotes } from '@/hooks/useRobustComments';
 import { 
   Lead, 
   LeadStatusEnum, 
@@ -116,6 +117,21 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
   const addCommentMutation = useAddLeadComment();
   const { data: activities, isLoading: activitiesLoading } = useLeadActivities(leadId);
   const { data: comments, isLoading: commentsLoading } = useLeadComments(leadId);
+  
+  // Use robust comments and notes system
+  const { 
+    comments: robustComments, 
+    isLoading: robustCommentsLoading, 
+    addComment: addRobustComment, 
+    isAddingComment 
+  } = useRobustLeadComments(leadId);
+  
+  const { 
+    note: robustNote, 
+    isLoading: robustNoteLoading, 
+    updateNotes: updateRobustNotes, 
+    isUpdating: isUpdatingNotes 
+  } = useRobustNotes(leadId, 'lead');
 
   const { data: leadData, isLoading: leadLoading, error: leadError } = useLeadById(leadId);
 
@@ -129,14 +145,13 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
     if (!newComment.trim() || !lead) return;
 
     try {
-      await addCommentMutation.mutateAsync({
-        leadId: lead.lead_id,
-        comment: newComment
-      });
+      console.log('[LeadDetailPanel] Using robust comment system for adding comment');
+      await addRobustComment(newComment);
       setNewComment('');
-      toast.success('התגובה נוספה בהצלחה');
+      // Success message handled by the robust system
     } catch (error) {
-      toast.error('שגיאה בהוספת התגובה');
+      console.error('[LeadDetailPanel] Comment submission error:', error);
+      // Error message handled by the robust system
     }
   };
 
@@ -532,15 +547,15 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
                         {/* Comments Display - Exact same as client */}
                         <div className="max-h-48 overflow-y-auto">
-                          {commentsLoading ? (
+                          {robustCommentsLoading ? (
                             <p className="text-sm text-gray-500">טוען תגובות...</p>
-                          ) : comments && comments.length > 0 ? (
+                          ) : robustComments && robustComments.length > 0 ? (
                             <div className="space-y-2">
-                              {comments.map((comment) => (
-                                <div key={comment.comment_id} className="p-3 bg-gray-50 rounded-md">
-                                  <p className="text-sm text-gray-700">{comment.comment_text}</p>
+                              {robustComments.map((comment) => (
+                                <div key={comment.id} className="p-3 bg-gray-50 rounded-md">
+                                  <p className="text-sm text-gray-700">{comment.text}</p>
                                   <p className="text-xs text-gray-500 mt-1">
-                                    {new Date(comment.comment_timestamp).toLocaleString('he-IL')}
+                                    {new Date(comment.timestamp).toLocaleString('he-IL')}
                                   </p>
                                 </div>
                               ))}
