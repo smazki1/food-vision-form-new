@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+
 import { Package, Plus, RefreshCw, Edit, CheckCircle, Trash2, AlertCircle, Minus, FileImage, TrendingUp, Image } from 'lucide-react';
 import { Client } from '@/types/client';
 import { usePackages } from '@/hooks/usePackages';
@@ -43,10 +42,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
   );
   const [isAssigning, setIsAssigning] = useState(false);
   const [isCreatingPackage, setIsCreatingPackage] = useState(false);
-  const [newServingsCount, setNewServingsCount] = useState<number>(0);
-  const [newImagesCount, setNewImagesCount] = useState<number>(0);
   const [deleteDialogPackage, setDeleteDialogPackage] = useState<PackageType | null>(null);
-  const [isPackageDialogOpen, setIsPackageDialogOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<PackageType | null>(null);
   
   const { packages, isLoading, invalidateCache } = usePackages();
@@ -282,8 +278,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
     },
   });
 
-  // Find the currently selected package
-  const selectedPackage = packages?.find(pkg => pkg.package_id === selectedPackageId);
+
 
   // Helper functions for servings adjustment
   const adjustServings = (increment: number) => {
@@ -341,8 +336,6 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
       // If the deleted package was selected, clear selection
       if (deleteDialogPackage && selectedPackageId === deleteDialogPackage.package_id) {
         setSelectedPackageId(currentClient.current_package_id);
-        setNewServingsCount(0);
-        setNewImagesCount(0);
       }
     },
     onError: (error) => {
@@ -361,39 +354,44 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
     }
   };
 
-  // Handle package selection - directly open popup
-  const handlePackageSelection = (packageId: string, defaultServings: number) => {
+  // Direct package assignment - no popup, immediate assignment
+  const handleDirectPackageAssignment = async (packageId: string) => {
     const selectedPkg = packages?.find(pkg => pkg.package_id === packageId);
-    setSelectedPackageId(packageId);
-    setNewServingsCount(defaultServings);
-    setNewImagesCount(selectedPkg?.total_images || 0);
-    setIsPackageDialogOpen(true); // Open popup immediately
-  };
-  
-  // Handle package assignment (after confirmation)
-  const handleConfirmPackageAssignment = async () => {
-    if (!selectedPackageId || !selectedPackage) {
-      toast.error('אנא בחר חבילה לפני ההקצאה');
+    if (!selectedPkg) {
+      toast.error('לא נמצאה החבילה שנבחרה');
       return;
     }
 
+    // Set loading state
+    setIsAssigning(true);
+
     try {
-      setIsAssigning(true);
+      // Calculate assignment values - handle null values properly
+      const servingsToAssign = selectedPkg.total_servings || 0;
+      const imagesToAssign = selectedPkg.total_images ?? 0;
       
-      const servingsToAssign = newServingsCount || selectedPackage.total_servings || 0;
-      const imagesToAssign = newImagesCount || selectedPackage.total_images || 0;
-      
-      // Perform the assignment with both servings and images
+      // Ensure at least one value is non-zero
+      const finalServings = (servingsToAssign === 0 && imagesToAssign === 0) ? 1 : servingsToAssign;
+      const finalImages = imagesToAssign;
+
+      console.log('Direct package assignment:', {
+        packageId,
+        packageName: selectedPkg.package_name,
+        servingsToAssign: finalServings,
+        imagesToAssign: finalImages
+      });
+
+      // Perform the assignment using existing function
       const updatedClient = await assignPackageToClientWithImages(
         clientId,
-        selectedPackageId,
-        servingsToAssign,
-        imagesToAssign,
-        `הוקצתה חבילה: ${selectedPackage.package_name} (${servingsToAssign} מנות, ${imagesToAssign} תמונות)`,
+        packageId,
+        finalServings,
+        finalImages,
+        `הוקצתה חבילה: ${selectedPkg.package_name} (${finalServings} מנות, ${finalImages} תמונות)`,
         undefined
       );
 
-      // Force immediate cache update with the new client data for all client-related queries
+      // Update cache immediately
       queryClient.setQueryData(['clients'], (oldData: any) => {
         if (!oldData) return oldData;
         return oldData.map((client: any) => 
@@ -401,7 +399,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
         );
       });
 
-      // Update all variations of client queries with specific query keys to avoid modal closure
+      // Update all client query variations
       const currentUserRole = queryClient.getQueryData(['currentUserRole']);
       if (currentUserRole) {
         const userId = (currentUserRole as any)?.userId;
@@ -423,38 +421,23 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
         }
       }
 
-      // Gentle invalidation - mark as stale but don't force immediate refetch
-      setTimeout(() => {
-        queryClient.invalidateQueries({ 
-          queryKey: ['clients'],
-          refetchType: 'none' // Don't refetch immediately, just mark as stale
-        });
-        queryClient.invalidateQueries({ 
-          queryKey: ['clients_simplified'],
-          refetchType: 'none'
-        });
-      }, 1000); // Delay to prevent modal closure
-      
-      // Also refresh packages to ensure UI is in sync
+      // Refresh packages cache
       if (invalidateCache) {
         invalidateCache();
       }
-      
-      toast.success(`החבילה "${selectedPackage.package_name}" הוקצתה בהצלחה ללקוח!`);
-      
-      // Reset the selection state to the newly assigned package
-      setSelectedPackageId(selectedPackageId);
-      setNewServingsCount(0);
-      setNewImagesCount(0);
-      setIsPackageDialogOpen(false); // Close the assignment dialog
-      
+
+      // Success message
+      toast.success(`✅ החבילה "${selectedPkg.package_name}" הוקצתה בהצלחה ללקוח ${currentClient.restaurant_name}!\n${finalServings} מנות + ${finalImages} תמונות נוספו ללקוח.`);
+
     } catch (error) {
-      console.error('Error assigning package:', error);
+      console.error('Assignment error:', error);
       toast.error('שגיאה בהקצאת החבילה');
     } finally {
       setIsAssigning(false);
     }
   };
+  
+
 
   // Handle package creation/edit success
   const handlePackageCreated = () => {
@@ -701,45 +684,57 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
                   .map((pkg) => (
                     <div
                       key={pkg.package_id}
-                      className={`p-4 border rounded-lg transition-all ${
-                        selectedPackageId === pkg.package_id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                      className={`relative p-4 border rounded-lg transition-all cursor-pointer group ${
+                        currentClient.current_package_id === pkg.package_id
+                          ? 'border-green-500 bg-green-50'
+                          : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                       }`}
+                      onClick={() => !isAssigning && handleDirectPackageAssignment(pkg.package_id)}
                     >
-                      <div className="flex items-center justify-between">
-                        <div 
-                          className="flex-1 cursor-pointer"
-                          onClick={() => handlePackageSelection(pkg.package_id, pkg.total_servings || 0)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">{pkg.package_name}</h4>
-                            {selectedPackageId === pkg.package_id && (
-                              <CheckCircle className="h-5 w-5 text-blue-500" />
-                            )}
+                      {/* Loading Overlay */}
+                      {isAssigning && (
+                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
+                          <div className="flex items-center gap-2 text-blue-600">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                            <span className="font-medium">מקצה חבילה...</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Package Content */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-lg">{pkg.package_name}</h4>
                             {currentClient.current_package_id === pkg.package_id && (
-                              <Badge variant="outline" className="text-xs">נוכחי</Badge>
+                              <Badge className="bg-green-100 text-green-800 text-xs">חבילה נוכחית</Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                          <div className="flex gap-4 mt-2 text-sm">
-                            {pkg.total_servings && (
-                              <span className="text-blue-600">
-                                {pkg.total_servings} מנות
-                              </span>
-                            )}
-                            {pkg.total_images && (
-                              <span className="text-purple-600">
-                                {pkg.total_images} תמונות
-                              </span>
-                            )}
+                          
+                          {pkg.description && (
+                            <p className="text-sm text-gray-600 mb-3">{pkg.description}</p>
+                          )}
+                          
+                          {/* Package Stats */}
+                          <div className="flex gap-4 text-sm">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                              <span className="font-medium">{pkg.total_servings || 0} מנות</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                              <span className="font-medium">{pkg.total_images || 0} תמונות</span>
+                            </div>
                             {pkg.price && (
-                              <span className="text-green-600">
-                                ₪{pkg.price}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                <span className="font-medium">₪{pkg.price}</span>
+                              </div>
                             )}
                           </div>
                         </div>
+
+                        {/* Delete Button (Admin only) */}
                         <Button
                           variant="ghost"
                           size="sm"
@@ -748,7 +743,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
                             handleDeletePackage(pkg);
                           }}
                           disabled={deleteMutation.isPending && deleteDialogPackage?.package_id === pkg.package_id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 mr-2"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                           {deleteMutation.isPending && deleteDialogPackage?.package_id === pkg.package_id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -756,6 +751,17 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
                             <Trash2 className="h-4 w-4" />
                           )}
                         </Button>
+                      </div>
+
+                      {/* Click to Assign Hint */}
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-500">לחץ להקצאת חבילה</span>
+                          <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700">
+                            <span className="font-medium">הקצה</span>
+                            <CheckCircle className="h-4 w-4" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -780,140 +786,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
         packageToEdit={editingPackage}
       />
 
-      {/* Package Assignment Dialog - Opens directly when clicking a package */}
-      <Dialog open={isPackageDialogOpen} onOpenChange={setIsPackageDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Package className="h-5 w-5" />
-              הקצאת חבילה ללקוח - {currentClient.restaurant_name}
-            </DialogTitle>
-          </DialogHeader>
-          
-          {selectedPackage && (
-            <div className="space-y-6">
-              {/* Current Client Status */}
-              <div className="p-4 bg-gray-50 rounded-lg border">
-                <h4 className="font-semibold text-gray-800 mb-2">מצב נוכחי:</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="font-medium">חבילה נוכחית: </span>
-                    {currentClient.current_package_id ? (
-                      <ClientsPackageName packageId={currentClient.current_package_id} />
-                    ) : (
-                      <span className="text-gray-500">אין חבילה</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-medium">מנות נותרו: </span>
-                    <span className={currentClient.remaining_servings > 0 ? "text-green-600" : "text-red-600"}>
-                      {currentClient.remaining_servings}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium">תמונות נותרו: </span>
-                    <span className={(currentClient.remaining_images || 0) > 0 ? "text-green-600" : "text-red-600"}>
-                      {currentClient.remaining_images || 0}
-                    </span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Selected Package Details */}
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-3">החבילה החדשה:</h4>
-                <h3 className="text-lg font-bold text-blue-600 mb-2">{selectedPackage.package_name}</h3>
-                {selectedPackage.description && (
-                  <p className="text-sm text-gray-600 mb-3">{selectedPackage.description}</p>
-                )}
-                
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">מנות בחבילה: </span>
-                    <span className="text-blue-600 font-semibold">{selectedPackage.total_servings || 'לא מוגדר'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">תמונות בחבילה: </span>
-                    <span className="text-purple-600 font-semibold">{selectedPackage.total_images || 'לא מוגדר'}</span>
-                  </div>
-                  {selectedPackage.price && (
-                    <div>
-                      <span className="font-medium">מחיר: </span>
-                      <span className="text-green-600 font-semibold">₪{selectedPackage.price}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Servings Assignment */}
-              <div className="space-y-2">
-                <Label htmlFor="servings-assignment" className="text-base font-semibold">
-                  מנות להקצאה ללקוח:
-                </Label>
-                <Input
-                  id="servings-assignment"
-                  type="number"
-                  value={newServingsCount}
-                  onChange={(e) => setNewServingsCount(Number(e.target.value))}
-                  className="text-lg text-center"
-                  min="0"
-                  max={selectedPackage.total_servings || undefined}
-                />
-                <p className="text-xs text-gray-500">
-                  הזן את מספר המנות שברצונך להקצות ללקוח זה
-                </p>
-              </div>
-
-              {/* Images Assignment */}
-              <div className="space-y-2">
-                <Label htmlFor="images-assignment" className="text-base font-semibold">
-                  תמונות להקצאה ללקוח:
-                </Label>
-                <Input
-                  id="images-assignment"
-                  type="number"
-                  value={newImagesCount}
-                  onChange={(e) => setNewImagesCount(Number(e.target.value))}
-                  className="text-lg text-center"
-                  min="0"
-                  max={selectedPackage.total_images || undefined}
-                />
-                <p className="text-xs text-gray-500">
-                  הזן את מספר התמונות שברצונך להקצות ללקוח זה
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t">
-                <Button
-                  onClick={handleConfirmPackageAssignment}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                  disabled={isAssigning || (newServingsCount <= 0 && newImagesCount <= 0)}
-                >
-                  {isAssigning ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      מקצה חבילה...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      הקצה חבילה ({newServingsCount} מנות, {newImagesCount} תמונות)
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsPackageDialogOpen(false)}
-                  disabled={isAssigning}
-                >
-                  ביטול
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
 
 

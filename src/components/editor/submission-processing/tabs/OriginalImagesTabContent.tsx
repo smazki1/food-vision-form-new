@@ -7,7 +7,7 @@ import { Loader2, AlertTriangle, Image as ImageIcon } from "lucide-react";
 
 interface OriginalImagesTabContentProps {
   submission: Submission;
-  setLightboxImage: (imageUrl: string | null) => void;
+  setLightboxImage: (imageUrl: string | null, images?: string[]) => void;
 }
 
 const OriginalImagesTabContent: React.FC<OriginalImagesTabContentProps> = ({ 
@@ -60,7 +60,7 @@ const OriginalImagesTabContent: React.FC<OriginalImagesTabContentProps> = ({
               src={url} 
               alt={`תמונה מקורית ${index + 1}`} 
               className="w-full h-full object-cover rounded-md border border-muted hover:opacity-80 transition-opacity"
-              onClick={() => setLightboxImage(url)}
+              onClick={() => setLightboxImage(url, originalImages)}
             />
           </div>
         ))}

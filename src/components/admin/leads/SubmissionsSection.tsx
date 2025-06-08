@@ -68,7 +68,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
   const [submissionIdToLink, setSubmissionIdToLink] = useState('');
 
   // Lightbox state
-  const { lightboxImage, setLightboxImage } = useLightbox();
+  const { lightboxImage, lightboxImages, currentImageIndex, setLightboxImage, navigateToIndex } = useLightbox();
 
   const { data: submissions = [], isLoading, error } = useLeadSubmissions(leadId);
   const { data: unlinkedSubmissions = [] } = useUnlinkedSubmissions();
@@ -167,6 +167,28 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
     } catch (error) {
       console.error('Error linking submission:', error);
     }
+  };
+
+  // Helper function to gather all images from a submission
+  const getSubmissionImages = (submission: any) => {
+    const allImages: string[] = [];
+    
+    // Add original images
+    if (submission.original_image_urls) {
+      allImages.push(...submission.original_image_urls);
+    }
+    
+    // Add processed images
+    if (submission.processed_image_urls) {
+      allImages.push(...submission.processed_image_urls);
+    }
+    
+    return allImages;
+  };
+
+  const handleImageClick = (imageUrl: string, submission: any) => {
+    const allImages = getSubmissionImages(submission);
+    setLightboxImage(imageUrl, allImages);
   };
 
   if (isLoading) {
@@ -321,7 +343,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                                 src={url}
                                 alt={`תמונה מקורית ${index + 1}`}
                                 className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => setLightboxImage(url)}
+                                onClick={() => handleImageClick(url, submission)}
                               />
                             ))}
                             {submission.original_image_urls.length > 4 && (
@@ -349,7 +371,7 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
                                 src={url}
                                 alt={`תמונה מעובדת ${index + 1}`}
                                 className="w-full aspect-square object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity border-2 border-green-200"
-                                onClick={() => setLightboxImage(url)}
+                                onClick={() => handleImageClick(url, submission)}
                               />
                             ))}
                             {submission.processed_image_urls.length > 4 && (
@@ -516,6 +538,9 @@ export const SubmissionsSection: React.FC<SubmissionsSectionProps> = ({
       {/* Image Lightbox */}
       <LightboxDialog
         imageUrl={lightboxImage}
+        images={lightboxImages}
+        currentIndex={currentImageIndex}
+        onNavigate={navigateToIndex}
         onClose={() => setLightboxImage(null)}
         open={!!lightboxImage}
       />

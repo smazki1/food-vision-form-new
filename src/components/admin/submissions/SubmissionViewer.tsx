@@ -69,6 +69,9 @@ import {
   FileText,
   Tag,
   Beaker,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface SubmissionViewerProps {
@@ -102,8 +105,12 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   const [isUploadingProcessed, setIsUploadingProcessed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Comparison mode navigation state
+  const [currentOriginalIndex, setCurrentOriginalIndex] = useState(0);
+  const [currentProcessedIndex, setCurrentProcessedIndex] = useState(0);
+
   // Lightbox state
-  const { lightboxImage, setLightboxImage } = useLightbox();
+  const { lightboxImage, lightboxImages, currentImageIndex, setLightboxImage, navigateToIndex } = useLightbox();
 
   // Custom hooks - conditionally use admin hooks for admin/editor views
   const useSubmissionHook = (viewMode === 'admin' || viewMode === 'editor') ? useAdminSubmission : useSubmission;
@@ -158,6 +165,81 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   // Get comments by type
   const getCommentsByType = (type: SubmissionCommentType) => {
     return comments.filter(comment => comment.comment_type === type);
+  };
+
+  // Navigation functions for comparison mode
+  const navigateOriginalImage = (direction: 'prev' | 'next') => {
+    if (!submission.original_image_urls || submission.original_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setCurrentOriginalIndex(prev => 
+        prev === 0 ? submission.original_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentOriginalIndex(prev => 
+        prev === submission.original_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const navigateProcessedImage = (direction: 'prev' | 'next') => {
+    if (!submission.processed_image_urls || submission.processed_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setCurrentProcessedIndex(prev => 
+        prev === 0 ? submission.processed_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentProcessedIndex(prev => 
+        prev === submission.processed_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  // Reset navigation indices when switching to comparison mode
+  useEffect(() => {
+    if (imageViewMode === 'comparison') {
+      setCurrentOriginalIndex(0);
+      setCurrentProcessedIndex(0);
+    }
+  }, [imageViewMode]);
+
+  // Helper function to gather all images from submission
+  const getAllImages = () => {
+    const allImages: string[] = [];
+    
+    // Add original images
+    if (submission.original_image_urls) {
+      allImages.push(...submission.original_image_urls);
+    }
+    
+    // Add processed images
+    if (submission.processed_image_urls) {
+      allImages.push(...submission.processed_image_urls);
+    }
+    
+    // Add branding material images (only image files)
+    if (submission.branding_material_urls) {
+      const brandingImages = submission.branding_material_urls.filter(url => 
+        url.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/)
+      );
+      allImages.push(...brandingImages);
+    }
+    
+    // Add reference example images (only image files)
+    if (submission.reference_example_urls) {
+      const referenceImages = submission.reference_example_urls.filter(url => 
+        url.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/)
+      );
+      allImages.push(...referenceImages);
+    }
+    
+    return allImages;
+  };
+
+  const handleImageClick = (imageUrl: string) => {
+    const allImages = getAllImages();
+    setLightboxImage(imageUrl, allImages);
   };
 
   // Handle download all original images
@@ -464,192 +546,377 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`grid gap-6 ${imageViewMode === 'comparison' ? 'grid-cols-2' : 'grid-cols-1'}`}>
-              
-              {/* Original Images Column */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Camera className="h-5 w-5 text-gray-600" />
-                    <h3 className="font-semibold">תמונות מקור</h3>
+            {imageViewMode === 'comparison' ? (
+              /* Comparison Mode - Side by Side with Navigation */
+              <div className="grid grid-cols-2 gap-6">
+                
+                {/* Original Images - Before */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-gray-600" />
+                      <h3 className="font-semibold">לפני - תמונות מקור</h3>
+                      {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                        <Badge variant="outline">
+                          {currentOriginalIndex + 1} / {submission.original_image_urls.length}
+                        </Badge>
+                      )}
+                    </div>
                     {submission.original_image_urls && submission.original_image_urls.length > 0 && (
-                      <Badge variant="outline">{submission.original_image_urls.length}</Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadAllOriginalImages}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="hidden sm:inline">הורד הכל</span>
+                      </Button>
                     )}
                   </div>
-                  {submission.original_image_urls && submission.original_image_urls.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDownloadAllOriginalImages}
-                      className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="hidden sm:inline">הורד הכל</span>
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-                  {submission.original_image_urls?.map((url, index) => (
-                    <div key={index} className="aspect-square bg-white rounded-lg border-2 border-gray-200 overflow-hidden hover:scale-105 transition-transform cursor-pointer">
-                      <img 
-                        src={url} 
-                        alt={`תמונה מקורית ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onClick={() => setLightboxImage(url)}
-                      />
+                  
+                  {/* Original Image Display with Navigation */}
+                  {submission.original_image_urls && submission.original_image_urls.length > 0 ? (
+                    <div className="relative">
+                      <div className="aspect-square bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
+                        <img 
+                          src={submission.original_image_urls[currentOriginalIndex]} 
+                          alt={`תמונה מקורית ${currentOriginalIndex + 1}`}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => handleImageClick(submission.original_image_urls![currentOriginalIndex])}
+                        />
+                      </div>
+                      
+                      {/* Navigation arrows for original images */}
+                      {submission.original_image_urls.length > 1 && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-80 hover:opacity-100"
+                            onClick={() => navigateOriginalImage('prev')}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-80 hover:opacity-100"
+                            onClick={() => navigateOriginalImage('next')}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Processed Images Column */}
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-purple-600" />
-                    <h3 className="font-semibold">תמונות מעובדות</h3>
-                  </div>
-                  {viewMode === 'admin' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowProcessedImageUpload(!showProcessedImageUpload)}
-                      disabled={isUploadingProcessed}
-                    >
-                      <Upload className="h-4 w-4 mr-2" />
-                      הוסף תמונה
-                    </Button>
+                  ) : (
+                    <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500">אין תמונות מקור</span>
+                    </div>
                   )}
                 </div>
 
-                {/* Upload Controls */}
-                {showProcessedImageUpload && viewMode === 'admin' && (
-                  <div className="mb-4 p-4 bg-white rounded-lg border">
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="image-url">הוסף תמונה מ-URL</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="image-url"
-                            placeholder="הכנס URL של תמונה..."
-                            value={processedImageUrl}
-                            onChange={(e) => setProcessedImageUrl(e.target.value)}
-                            disabled={isUploadingProcessed}
-                          />
-                                                     <Button
-                             onClick={handleProcessedImageUrlUpload}
-                             disabled={isUploadingProcessed || !processedImageUrl.trim()}
-                           >
-                             {isUploadingProcessed ? (
-                               <>
-                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                                 מוסיף...
-                               </>
-                             ) : (
-                               'הוסף'
-                             )}
-                           </Button>
+                {/* Processed Images - After */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-purple-600" />
+                      <h3 className="font-semibold">אחרי - תמונות מעובדות</h3>
+                      {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
+                        <Badge variant="outline">
+                          {currentProcessedIndex + 1} / {submission.processed_image_urls.length}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {viewMode === 'admin' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowProcessedImageUpload(!showProcessedImageUpload)}
+                          disabled={isUploadingProcessed}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          הוסף תמונה
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Processed Image Display with Navigation */}
+                  {submission.processed_image_urls && submission.processed_image_urls.length > 0 ? (
+                    <div className="relative">
+                      <div className={`aspect-square bg-white rounded-lg border-2 overflow-hidden ${
+                        submission.processed_image_urls[currentProcessedIndex] === submission.main_processed_image_url 
+                          ? 'border-blue-500 ring-2 ring-blue-200' 
+                          : 'border-gray-200'
+                      }`}>
+                        <img 
+                          src={submission.processed_image_urls[currentProcessedIndex]} 
+                          alt={`תמונה מעובדת ${currentProcessedIndex + 1}`}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => handleImageClick(submission.processed_image_urls![currentProcessedIndex])}
+                        />
+                      </div>
+                      
+                      {/* Navigation arrows for processed images */}
+                      {submission.processed_image_urls.length > 1 && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-80 hover:opacity-100"
+                            onClick={() => navigateProcessedImage('prev')}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-80 hover:opacity-100"
+                            onClick={() => navigateProcessedImage('next')}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      
+                      {/* Action buttons overlay for current processed image */}
+                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center pointer-events-none group">
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="pointer-events-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadProcessedImage(submission.processed_image_urls![currentProcessedIndex]);
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-px bg-gray-300"></div>
-                        <span className="text-sm text-gray-500">או</span>
-                        <div className="flex-1 h-px bg-gray-300"></div>
-                      </div>
-                      
-                      <div>
-                        <Label>העלה תמונה מהמחשב</Label>
-                                                 <input
-                           ref={fileInputRef}
-                           type="file"
-                           accept="image/*"
-                           onChange={async (e) => {
-                             const file = e.target.files?.[0];
-                             if (file) {
-                               console.log('File selected:', file.name, file.size, file.type);
-                               await handleProcessedImageFileUpload(file);
-                             }
-                           }}
-                           className="hidden"
-                           disabled={isUploadingProcessed}
-                         />
-                                                 <Button
-                           variant="outline"
-                           onClick={() => fileInputRef.current?.click()}
-                           disabled={isUploadingProcessed}
-                           className="w-full"
-                         >
-                           {isUploadingProcessed ? (
-                             <>
-                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
-                               מעלה תמונה...
-                             </>
-                           ) : (
-                             <>
-                               <Upload className="h-4 w-4 mr-2" />
-                               בחר קובץ תמונה
-                             </>
-                           )}
-                         </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-                  {submission.processed_image_urls?.map((url, index) => (
-                    <div 
-                      key={index} 
-                      className={`relative aspect-square bg-white rounded-lg border-2 overflow-hidden hover:scale-105 transition-transform group ${
-                        url === submission.main_processed_image_url 
-                          ? 'border-blue-500 ring-2 ring-blue-200' 
-                          : 'border-gray-200'
-                      }`}
-                    >
-                      <img 
-                        src={url} 
-                        alt={`תמונה מעובדת ${index + 1}`}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => handleDownloadProcessedImage(url)}
-                      />
-                      
-                      {/* Download button overlay */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDownloadProcessedImage(url);
-                          }}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      {url === submission.main_processed_image_url && (
+                      {/* Main image badge */}
+                      {submission.processed_image_urls[currentProcessedIndex] === submission.main_processed_image_url && (
                         <Badge className="absolute top-2 right-2 bg-blue-500">
                           ראשית
                         </Badge>
                       )}
                     </div>
-                  ))}
-                  
-                  {/* Simplified Upload Area for empty state */}
-                  {viewMode === 'admin' && (!submission.processed_image_urls || submission.processed_image_urls.length === 0) && (
-                    <div 
-                      className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-gray-400 cursor-pointer transition-colors"
-                      onClick={() => setShowProcessedImageUpload(true)}
-                    >
-                      <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                      <span className="text-sm text-gray-500">העלה תמונה מעובדת</span>
+                  ) : (
+                    <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center">
+                      {viewMode === 'admin' ? (
+                        <>
+                          <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                          <span className="text-gray-500 text-center">
+                            אין תמונות מעובדות<br />
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto text-blue-600"
+                              onClick={() => setShowProcessedImageUpload(true)}
+                            >
+                              העלה תמונה מעובדת
+                            </Button>
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-gray-500">אין תמונות מעובדות</span>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Grid/Gallery Mode - Original Layout */
+              <div className="grid gap-6 grid-cols-1">
+                
+                {/* Original Images Column */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-gray-600" />
+                      <h3 className="font-semibold">תמונות מקור</h3>
+                      {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                        <Badge variant="outline">{submission.original_image_urls.length}</Badge>
+                      )}
+                    </div>
+                    {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDownloadAllOriginalImages}
+                        className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="hidden sm:inline">הורד הכל</span>
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+                    {submission.original_image_urls?.map((url, index) => (
+                      <div key={index} className="aspect-square bg-white rounded-lg border-2 border-gray-200 overflow-hidden hover:scale-105 transition-transform cursor-pointer">
+                        <img 
+                          src={url} 
+                          alt={`תמונה מקורית ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onClick={() => handleImageClick(url)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Processed Images Column */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-purple-600" />
+                      <h3 className="font-semibold">תמונות מעובדות</h3>
+                    </div>
+                    {viewMode === 'admin' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowProcessedImageUpload(!showProcessedImageUpload)}
+                        disabled={isUploadingProcessed}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        הוסף תמונה
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Upload Controls */}
+                  {showProcessedImageUpload && viewMode === 'admin' && (
+                    <div className="mb-4 p-4 bg-white rounded-lg border">
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="image-url">הוסף תמונה מ-URL</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="image-url"
+                              placeholder="הכנס URL של תמונה..."
+                              value={processedImageUrl}
+                              onChange={(e) => setProcessedImageUrl(e.target.value)}
+                              disabled={isUploadingProcessed}
+                            />
+                            <Button
+                              onClick={handleProcessedImageUrlUpload}
+                              disabled={isUploadingProcessed || !processedImageUrl.trim()}
+                            >
+                              {isUploadingProcessed ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                  מוסיף...
+                                </>
+                              ) : (
+                                'הוסף'
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                          <span className="text-sm text-gray-500">או</span>
+                          <div className="flex-1 h-px bg-gray-300"></div>
+                        </div>
+                        
+                        <div>
+                          <Label>העלה תמונה מהמחשב</Label>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                console.log('File selected:', file.name, file.size, file.type);
+                                await handleProcessedImageFileUpload(file);
+                              }
+                            }}
+                            className="hidden"
+                            disabled={isUploadingProcessed}
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isUploadingProcessed}
+                            className="w-full"
+                          >
+                            {isUploadingProcessed ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                מעלה תמונה...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="h-4 w-4 mr-2" />
+                                בחר קובץ תמונה
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+                    {submission.processed_image_urls?.map((url, index) => (
+                      <div 
+                        key={index} 
+                        className={`relative aspect-square bg-white rounded-lg border-2 overflow-hidden hover:scale-105 transition-transform group ${
+                          url === submission.main_processed_image_url 
+                            ? 'border-blue-500 ring-2 ring-blue-200' 
+                            : 'border-gray-200'
+                        }`}
+                      >
+                        <img 
+                          src={url} 
+                          alt={`תמונה מעובדת ${index + 1}`}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => handleImageClick(url)}
+                        />
+                        
+                        {/* Download button overlay */}
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center pointer-events-none">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadProcessedImage(url);
+                            }}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        {url === submission.main_processed_image_url && (
+                          <Badge className="absolute top-2 right-2 bg-blue-500">
+                            ראשית
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                    
+                    {/* Simplified Upload Area for empty state */}
+                    {viewMode === 'admin' && (!submission.processed_image_urls || submission.processed_image_urls.length === 0) && (
+                      <div 
+                        className="aspect-square border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-gray-400 cursor-pointer transition-colors"
+                        onClick={() => setShowProcessedImageUpload(true)}
+                      >
+                        <Upload className="h-8 w-8 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-500">העלה תמונה מעובדת</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

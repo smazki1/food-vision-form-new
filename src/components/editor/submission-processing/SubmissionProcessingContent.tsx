@@ -13,7 +13,7 @@ interface SubmissionProcessingContentProps {
   addProcessedImage?: (url: string) => Promise<boolean>;
   addInternalNote?: (note: string) => Promise<boolean>;
   respondToClientFeedback?: (response: string, processedImages: string[]) => Promise<boolean>;
-  setLightboxImage?: (imageUrl: string | null) => void;
+  setLightboxImage?: (imageUrl: string | null, images?: string[]) => void;
 }
 
 const SubmissionProcessingContent: React.FC<SubmissionProcessingContentProps> = ({

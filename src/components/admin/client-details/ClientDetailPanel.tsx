@@ -15,7 +15,6 @@ import {
   User, 
   Package, 
   FileText, 
-  Activity, 
   CreditCard, 
   Palette,
   X,
@@ -245,7 +244,7 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
         </SheetHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center gap-1">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">פרטים</span>
@@ -261,10 +260,6 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
             <TabsTrigger value="costs" className="flex items-center gap-1">
               <DollarSign className="h-4 w-4" />
               <span className="hidden sm:inline">עלויות</span>
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-1">
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">פעילות</span>
             </TabsTrigger>
             <TabsTrigger value="design" className="flex items-center gap-1">
               <Palette className="h-4 w-4" />
@@ -484,10 +479,6 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
 
             <TabsContent value="costs">
               <ClientCostTracking client={client} clientId={clientId} />
-            </TabsContent>
-
-            <TabsContent value="activity">
-              <ClientActivityNotes clientId={clientId} />
             </TabsContent>
 
             <TabsContent value="design">

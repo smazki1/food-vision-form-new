@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { FileText, Eye, Download, ExternalLink, TrendingUp, Activity, Upload, Plus, Link } from 'lucide-react';
 import { SubmissionViewer } from '@/components/admin/submissions/SubmissionViewer';
 import { useClientSubmissions, useClientSubmissionStats } from '@/hooks/useClientSubmissions';
@@ -9,6 +10,7 @@ import { Client } from '@/types/client';
 import { ClientSubmissionUploadModal } from './ClientSubmissionUploadModal';
 import { ClientSubmissionLinkModal } from './ClientSubmissionLinkModal';
 import { useQueryClient } from '@tanstack/react-query';
+import LightboxDialog from '@/components/editor/submission/LightboxDialog';
 
 interface ClientSubmissionsSectionProps {
   clientId: string;
@@ -20,8 +22,12 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
   client
 }) => {
   const [selectedSubmissionId, setSelectedSubmissionId] = React.useState<string | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = React.useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = React.useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = React.useState(false);
+  const [lightboxImage, setLightboxImage] = React.useState<string | null>(null);
+  const [lightboxImages, setLightboxImages] = React.useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
   const queryClient = useQueryClient();
   
   // Use the real hooks
@@ -30,6 +36,25 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
 
   const handleViewSubmission = (submissionId: string) => {
     setSelectedSubmissionId(submissionId);
+    setIsViewerOpen(true);
+  };
+
+  const handleCloseViewer = () => {
+    setIsViewerOpen(false);
+    setSelectedSubmissionId(null);
+  };
+
+  const handleImageClick = (imageUrl: string, images: string[]) => {
+    setLightboxImages(images);
+    setLightboxImage(imageUrl);
+    setCurrentImageIndex(images.indexOf(imageUrl));
+  };
+
+  const navigateToIndex = (newIndex: number) => {
+    if (newIndex >= 0 && newIndex < lightboxImages.length) {
+      setCurrentImageIndex(newIndex);
+      setLightboxImage(lightboxImages[newIndex]);
+    }
   };
 
   const handleDownloadImage = (imageUrl: string, filename: string) => {
@@ -277,7 +302,7 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
                                   src={url}
                                   alt={`תמונה מעובדת ${index + 1}`}
                                   className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 border-2 border-green-200"
-                                  onClick={() => handleDownloadImage(url, `processed-${index + 1}.jpg`)}
+                                  onClick={() => handleImageClick(url, submission.processed_image_urls)}
                                 />
                               </div>
                             ))}
@@ -328,12 +353,16 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
 
       {/* Submission Viewer Modal */}
       {selectedSubmissionId && (
-        <SubmissionViewer
-          submissionId={selectedSubmissionId}
-          viewMode="admin"
-          context="full-page"
-          onClose={() => setSelectedSubmissionId(null)}
-        />
+        <Sheet open={isViewerOpen} onOpenChange={setIsViewerOpen}>
+          <SheetContent className="max-w-[95vw] sm:max-w-[90vw] p-0 h-full overflow-y-auto">
+            <SubmissionViewer
+              submissionId={selectedSubmissionId}
+              viewMode="admin"
+              context="full-page"
+              onClose={handleCloseViewer}
+            />
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* Upload Submission Modal */}
@@ -350,6 +379,16 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
         isOpen={isLinkModalOpen}
         onClose={() => setIsLinkModalOpen(false)}
         onSuccess={handleLinkSuccess}
+      />
+
+      {/* Image Lightbox */}
+      <LightboxDialog
+        imageUrl={lightboxImage}
+        images={lightboxImages}
+        currentIndex={currentImageIndex}
+        onNavigate={navigateToIndex}
+        onClose={() => setLightboxImage(null)}
+        open={!!lightboxImage}
       />
     </>
   );

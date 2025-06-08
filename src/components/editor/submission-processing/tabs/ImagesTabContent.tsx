@@ -16,7 +16,7 @@ interface ImagesTabContentProps {
   handleSelectMainImage: (imageUrl: string) => Promise<boolean>;
   handleRemoveProcessedImage: (imageUrl: string) => Promise<boolean>;
   addProcessedImage: (url: string) => Promise<boolean>;
-  setLightboxImage: (imageUrl: string | null) => void;
+  setLightboxImage: (imageUrl: string | null, images?: string[]) => void;
 }
 
 const ImagesTabContent = ({
@@ -304,7 +304,7 @@ const ImagesTabContent = ({
                       src={submission.main_processed_image_url} 
                       alt="תמונה ראשית" 
                       className="w-full h-full object-contain"
-                      onClick={() => setLightboxImage(submission.main_processed_image_url)}
+                      onClick={() => setLightboxImage(submission.main_processed_image_url, submission.processed_image_urls)}
                     />
                   </div>
                 </div>
@@ -324,7 +324,7 @@ const ImagesTabContent = ({
                           src={url} 
                           alt={`תמונה מעובדת ${index + 1}`} 
                           className="w-full h-full object-cover"
-                          onClick={() => setLightboxImage(url)}
+                          onClick={() => setLightboxImage(url, submission.processed_image_urls)}
                         />
                       </div>
                       

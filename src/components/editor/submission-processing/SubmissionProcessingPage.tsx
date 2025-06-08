@@ -26,7 +26,7 @@ const SubmissionProcessingPage: React.FC = () => {
     isUpdating
   } = useSubmission(submissionId);
 
-  const { lightboxImage, setLightboxImage } = useLightbox();
+  const { lightboxImage, lightboxImages, currentImageIndex, setLightboxImage, navigateToIndex } = useLightbox();
   
   if (loading) {
     return <div className="flex justify-center p-8">טוען פרטי הגשה...</div>;
@@ -82,7 +82,10 @@ const SubmissionProcessingPage: React.FC = () => {
       
       {/* Image lightbox */}
       <LightboxDialog 
-        imageUrl={lightboxImage} 
+        imageUrl={lightboxImage}
+        images={lightboxImages}
+        currentIndex={currentImageIndex}
+        onNavigate={navigateToIndex}
         onClose={() => setLightboxImage(null)}
         open={!!lightboxImage}
       />

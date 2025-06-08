@@ -19,7 +19,7 @@ interface ContentTabsProps {
   handleRemoveProcessedImage?: (imageUrl: string) => Promise<boolean>;
   addProcessedImage?: (url: string) => Promise<boolean>;
   addInternalNote?: (note: string) => Promise<boolean>;
-  setLightboxImage?: (imageUrl: string | null) => void;
+  setLightboxImage?: (imageUrl: string | null, images?: string[]) => void;
   maxEdits: number;
 }
 
