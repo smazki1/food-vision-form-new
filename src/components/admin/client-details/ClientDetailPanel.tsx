@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,18 +58,34 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
   
   // Use the existing clients hook and find our specific client
   const { clients, isLoading, error } = useClients();
-  const client = clients.find(c => c.client_id === clientId);
+  
+  // CRITICAL FIX: Use useMemo to prevent unnecessary re-renders and maintain stable client reference
+  const client = useMemo(() => {
+    return clients.find(c => c.client_id === clientId);
+  }, [clients, clientId]);
   
   // Use the client update hook
   const updateClientMutation = useClientUpdate();
 
-  useEffect(() => {
-    if (client) {
-      setEditedClient(client);
+  // CRITICAL FIX: Use useCallback for stable function references to prevent child re-renders
+  const handleFieldBlur = useCallback(async (fieldName: keyof Client, value: any) => {
+    if (!client) return;
+    
+    // Skip if value hasn't changed
+    if (client[fieldName] === value) return;
+    
+    try {
+      await updateClientMutation.mutateAsync({
+        clientId: client.client_id,
+        updates: { [fieldName]: value }
+      });
+    } catch (error) {
+      console.error(`Error updating ${fieldName}:`, error);
+      // Error handling is done in the hook
     }
-  }, [client]);
+  }, [client, updateClientMutation]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!client || !editedClient) return;
     
     try {
@@ -98,32 +114,21 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
       console.error('Error updating client:', error);
       // Error handling is done in the hook
     }
-  };
+  }, [client, editedClient, updateClientMutation]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setEditedClient(client || {});
     setIsEditing(false);
-  };
+  }, [client]);
 
-  // Function for always-editable fields (blur handler)
-  const handleFieldBlur = async (fieldName: keyof Client, value: any) => {
-    if (!client) return;
-    
-    // Skip if value hasn't changed
-    if (client[fieldName] === value) return;
-    
-    try {
-      await updateClientMutation.mutateAsync({
-        clientId: client.client_id,
-        updates: { [fieldName]: value }
-      });
-    } catch (error) {
-      console.error(`Error updating ${fieldName}:`, error);
-      // Error handling is done in the hook
+  // CRITICAL FIX: Only update editedClient when client actually changes, not on every render
+  useEffect(() => {
+    if (client && (!editedClient.client_id || editedClient.client_id !== client.client_id)) {
+      setEditedClient(client);
     }
-  };
+  }, [client?.client_id, client?.updated_at]); // Only depend on ID and update timestamp
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'פעיל':
       case 'active':
@@ -137,50 +142,57 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
+  }, []);
+
+  // CRITICAL FIX: Memoize loading/error/not found states to prevent unnecessary re-renders
+  const loadingContent = useMemo(() => (
+    <Sheet open={true} onOpenChange={onClose}>
+      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  ), [onClose]);
+
+  const errorContent = useMemo(() => (
+    <Sheet open={true} onOpenChange={onClose}>
+      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+            <h3 className="text-lg font-semibold text-red-600">שגיאה בטעינת נתונים</h3>
+            <p className="text-gray-600 mt-2">{error?.message}</p>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  ), [onClose, error]);
+
+  const notFoundContent = useMemo(() => (
+    <Sheet open={true} onOpenChange={onClose}>
+      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-600">לקוח לא נמצא</h3>
+            <p className="text-gray-500 mt-2">לא נמצא לקוח עם המזהה המבוקש</p>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  ), [onClose]);
 
   if (isLoading) {
-    return (
-      <Sheet open={true} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
+    return loadingContent;
   }
 
   if (error) {
-    return (
-      <Sheet open={true} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-              <h3 className="text-lg font-semibold text-red-600">שגיאה בטעינת נתונים</h3>
-              <p className="text-gray-600 mt-2">{error.message}</p>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
+    return errorContent;
   }
 
   if (!client) {
-    return (
-      <Sheet open={true} onOpenChange={onClose}>
-        <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <h3 className="text-lg font-semibold text-gray-600">לקוח לא נמצא</h3>
-              <p className="text-gray-500 mt-2">לא נמצא לקוח עם המזהה המבוקש</p>
-            </div>
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
+    return notFoundContent;
   }
 
   return (
@@ -188,26 +200,29 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
       <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
         <SheetHeader className="border-b pb-4 mb-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold text-lg">
-                {client.restaurant_name?.charAt(0).toUpperCase() || 'L'}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-lg font-semibold text-primary">
+                  {client.restaurant_name?.charAt(0).toUpperCase() || 'L'}
+                </span>
               </div>
               <div>
                 <SheetTitle className="text-xl font-bold">
-                  {client.restaurant_name || 'שם עסק לא זמין'}
+                  {client.restaurant_name || 'לקוח ללא שם'}
                 </SheetTitle>
                 <div className="flex items-center gap-2 mt-1">
-                  <Badge className={getStatusColor(client.client_status)}>
-                    {client.client_status || 'לא ידוע'}
+                  <Badge className={getStatusColor(client.client_status || 'לא פעיל')}>
+                    {client.client_status || 'לא פעיל'}
                   </Badge>
-                  {client.service_packages && (
-                    <Badge variant="outline">
-                      {client.service_packages.package_name}
-                    </Badge>
+                  {client.contact_name && (
+                    <span className="text-sm text-muted-foreground">
+                      {client.contact_name}
+                    </span>
                   )}
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2">
               {!isEditing ? (
                 <Button
@@ -463,26 +478,26 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
               </Card>
 
               {/* Payment Status Card */}
-              <ClientPaymentStatus clientId={clientId} client={client} />
+              <ClientPaymentStatus clientId={client.client_id} client={client} />
 
               {/* Activity and Notes Section - moved from activity tab */}
-              <ClientActivityNotes clientId={clientId} />
+              <ClientActivityNotes key={client.client_id} clientId={client.client_id} />
             </TabsContent>
 
             <TabsContent value="packages">
-              <ClientPackageManagement clientId={clientId} client={client} />
+              <ClientPackageManagement key={client.client_id} clientId={client.client_id} client={client} />
             </TabsContent>
 
             <TabsContent value="submissions">
-              <ClientSubmissionsSection clientId={clientId} client={client} />
+              <ClientSubmissionsSection key={client.client_id} clientId={client.client_id} client={client} />
             </TabsContent>
 
             <TabsContent value="costs">
-              <ClientCostTracking client={client} clientId={clientId} />
+              <ClientCostTracking key={client.client_id} client={client} clientId={client.client_id} />
             </TabsContent>
 
             <TabsContent value="design">
-              <ClientDesignSettings clientId={clientId} client={client} />
+              <ClientDesignSettings key={client.client_id} clientId={client.client_id} client={client} />
             </TabsContent>
           </ScrollArea>
         </Tabs>

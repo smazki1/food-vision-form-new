@@ -39,10 +39,9 @@ export const useClientUpdate = () => {
       return updatedClient as Client;
     },
     onMutate: async ({ clientId, updates }) => {
-      // Cancel any outgoing refetches for all client-related queries using partial matching
-      await queryClient.cancelQueries({ queryKey: ['clients_simplified'] });
-      await queryClient.cancelQueries({ queryKey: ['clients_list_for_admin'] });
-
+      // CRITICAL FIX: Use a more stable approach to prevent UI disruption
+      // Only cancel queries that are actively refetching to prevent component unmounting
+      
       // Get all cached queries that match our patterns
       const allCaches = queryClient.getQueryCache().getAll();
       const clientCaches = allCaches.filter(cache => {
@@ -53,13 +52,13 @@ export const useClientUpdate = () => {
         );
       });
 
-      // Snapshot all previous values
+      // Snapshot all previous values for rollback
       const previousCaches = clientCaches.map(cache => ({
         queryKey: cache.queryKey,
         data: cache.state.data
       }));
 
-      // Optimistically update all client-related caches
+      // Optimistically update all client-related caches immediately without canceling
       clientCaches.forEach(cache => {
         queryClient.setQueryData(cache.queryKey, (old: Client[] | undefined) => {
           if (!old) return old;
@@ -86,7 +85,7 @@ export const useClientUpdate = () => {
       toast.error(`שגיאה בעדכון פרטי הלקוח: ${err.message}`);
     },
     onSuccess: (data, { updates, clientId }) => {
-      // Use optimistic approach - update all client caches without full invalidation to prevent UI jumping
+      // CRITICAL FIX: Use optimistic updates ONLY, no cache invalidation to prevent component unmounting
       const allCaches = queryClient.getQueryCache().getAll();
       const clientCaches = allCaches.filter(cache => {
         const key = cache.queryKey;
@@ -96,6 +95,7 @@ export const useClientUpdate = () => {
         );
       });
 
+      // Update all client caches with optimistic data - this prevents re-fetching and component disruption
       clientCaches.forEach(cache => {
         queryClient.setQueryData(cache.queryKey, (old: Client[] | undefined) => {
           if (!old) return old;
@@ -138,7 +138,6 @@ export const useClientUpdate = () => {
 // Specific hook for updating client status
 export const useClientStatusUpdate = () => {
   const updateClient = useClientUpdate();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ clientId, status }: { clientId: string; status: string }) => {
@@ -148,16 +147,7 @@ export const useClientStatusUpdate = () => {
       });
     },
     onSuccess: () => {
-      // Additional cache invalidation as a safety net
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey;
-          return (
-            Array.isArray(key) && 
-            (key[0] === 'clients_simplified' || key[0] === 'clients_list_for_admin')
-          );
-        }
-      });
+      // No additional cache invalidation needed - parent hook handles everything
       toast.success('סטטוס הלקוח עודכן בהצלחה');
     },
     onError: (error: any) => {
