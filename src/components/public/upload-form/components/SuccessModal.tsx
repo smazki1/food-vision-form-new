@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CheckCircle, Plus, X } from 'lucide-react';
+import { CheckCircle, CreditCard, X } from 'lucide-react';
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNewSubmission: () => void;
 }
+
+const PAYMENT_URL = "https://app.icount.co.il/m/c2d28/c12db4pa2u68489a290?utm_source=iCount&utm_medium=paypage&utm_campaign=162";
 
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmission }) => {
   // Log when the modal state changes
@@ -20,6 +22,22 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
       console.log('[SuccessModal] Modal should be open');
     }
   }, [isOpen]);
+
+  // Auto-redirect to payment after showing thank you message briefly
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        window.location.href = PAYMENT_URL;
+      }, 4000); // 4 second delay to show thank you message
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const handlePaymentRedirect = () => {
+    console.log('[SuccessModal] Redirecting to payment');
+    window.location.href = PAYMENT_URL;
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -66,21 +84,19 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
           {/* Description */}
           <DialogDescription asChild>
             <p className="text-xl text-gray-600 leading-relaxed max-w-md mx-auto">
-              הפרטים נשלחו בהצלחה. נחזור אליכם בהקדם עם התמונות המעוצבות.
+              הפרטים נשלחו בהצלחה.<br />
+              נעביר אותך לדף התשלום כדי להתחיל בתהליך.
             </p>
           </DialogDescription>
 
           {/* Action Buttons */}
           <div className="space-y-4 pt-6">
             <button
-              onClick={() => {
-                console.log('[SuccessModal] New submission button clicked');
-                onNewSubmission();
-              }}
+              onClick={handlePaymentRedirect}
               className="w-full bg-[#F3752B] hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center space-x-3 rtl:space-x-reverse"
             >
-              <Plus className="w-6 h-6" />
-              <span className="text-lg">העלאת מנה נוספת</span>
+              <CreditCard className="w-6 h-6" />
+              <span className="text-lg">המשך לתשלום</span>
             </button>
             
             <button
@@ -92,6 +108,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
             >
               סגור
             </button>
+            
+            <p className="text-sm text-gray-500 mt-2">
+              מועבר אוטומטית תוך 4 שניות...
+            </p>
           </div>
         </div>
       </DialogContent>

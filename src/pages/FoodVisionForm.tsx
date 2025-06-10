@@ -69,6 +69,7 @@ const FoodVisionForm: React.FC = () => {
     isSubmitting, 
     submitProgressMsg, 
     showThankYou, 
+    isLeadSubmission,
     handleFormSubmit,
     handleCloseThankYou,
     isSubmitDisabled: submissionHookSubmitDisabled
@@ -198,7 +199,11 @@ const FoodVisionForm: React.FC = () => {
       </div>
       
       {/* Thank You Modal - Only shown after successful submission */}
-      <ThankYouModal open={showThankYou} onClose={handleCloseThankYou} />
+      <ThankYouModal 
+        open={showThankYou} 
+        onClose={handleCloseThankYou} 
+        isLeadSubmission={isLeadSubmission}
+      />
     </div>
   );
 };

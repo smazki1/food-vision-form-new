@@ -19,6 +19,7 @@ export const useFoodVisionFormSubmission = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitProgressMsg, setSubmitProgressMsg] = useState<string | null>(null);
   const [showThankYou, setShowThankYou] = useState(false);
+  const [isLeadSubmission, setIsLeadSubmission] = useState(false);
 
   // Update progress message when submission state changes
   useState(() => {
@@ -39,6 +40,9 @@ export const useFoodVisionFormSubmission = ({
       return;
     }
     
+    // Track if this is a lead submission (no clientId)
+    const wasLeadSubmission = !clientId;
+    
     setSubmitProgressMsg("התהליך יכול לקחת מספר שניות. נא לא לצאת מהעמוד.");
     setIsSubmitting(true);
     
@@ -51,6 +55,7 @@ export const useFoodVisionFormSubmission = ({
       
       if (result && result.success) {
         console.log("[FormSubmitDebug] handleSubmit successful, showing thank you.");
+        setIsLeadSubmission(wasLeadSubmission);
         setShowThankYou(true);
       } else if (result && typeof result.success === 'boolean' && !result.success) {
         console.log("[FormSubmitDebug] handleSubmit returned success:false. Error message:", result.message);
@@ -67,12 +72,16 @@ export const useFoodVisionFormSubmission = ({
     }
   }, [clientId, handleSubmit, setSubmitError, validateForm]);
 
-  const handleCloseThankYou = () => setShowThankYou(false);
+  const handleCloseThankYou = () => {
+    setShowThankYou(false);
+    setIsLeadSubmission(false);
+  };
 
   return {
     isSubmitting,
     submitProgressMsg,
     showThankYou,
+    isLeadSubmission,
     handleFormSubmit,
     handleCloseThankYou,
     isSubmitDisabled: !!(clientId && remainingServings <= 0)
