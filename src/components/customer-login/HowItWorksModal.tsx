@@ -16,10 +16,10 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold text-[#8b1e3f] text-center mb-2">
-            כל מה שאתה צריך לדעת
+            מה זה בעצם Food Vision?
           </DialogTitle>
           <DialogDescription className="text-center text-lg text-slate-600 font-medium">
-            במקום שיחה ארוכה - כל הפרטים כאן
+            התחלנו מתסכול פשוט: צילום מקצועי למסעדות יקר, מורכב ולא גמיש
           </DialogDescription>
         </DialogHeader>
         
@@ -34,47 +34,34 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
                 מה זה בעצם Food Vision?
               </h2>
               <p className="text-lg leading-relaxed text-center">
-                פיתחנו מערכת AI מתמחה שלומדת איך נראות המנות שלכם ויוצרת תמונות מקצועיות שנאמנות למקור. 
-                זה לא "פילטר" או עריכה - זה יצירה מחדש של התמונה ברמה מקצועית.
+                החלטנו ליצור מערכת AI מתקדמת שלומדת את המנות שלכם ויוצרת תמונות מקצועיות תוך ימים, במחיר צפוי, כל פעם שאתם צריכים. בעצם יצרנו לכם "צלם דיגיטלי" פנימי שתמיד זמין.
               </p>
             </div>
           </div>
 
-          {/* How it's different from regular photographer */}
+          {/* Why it's different */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-3xl p-8">
             <h3 className="text-2xl font-bold text-blue-800 mb-6 text-center flex items-center justify-center gap-3">
               <Camera className="w-8 h-8" />
-              איך זה שונה מצלם רגיל?
+              למה זה שונה?
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6">
-                <h4 className="text-xl font-bold text-red-700 mb-4">צלם מסורתי:</h4>
-                <ul className="space-y-2 text-red-600">
-                  <li>• תיאום מראש מסובך</li>
-                  <li>• הכנת מנות מיוחד לצילום</li>
-                  <li>• פינוי יום שלם במסעדה</li>
-                  <li>• עלויות נוספות של חומרי גלם</li>
-                  <li>• אם לא מרוצים - אין דרך חזרה</li>
-                </ul>
+                <h4 className="text-xl font-bold text-red-700 mb-4">צלם רגיל:</h4>
+                <p className="text-red-600 text-lg">יום צילום → עריכה → נגמר → צריכים עוד? מתחילים מהתחלה</p>
               </div>
               <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6">
                 <h4 className="text-xl font-bold text-green-700 mb-4">המערכת שלנו:</h4>
-                <ul className="space-y-2 text-green-600">
-                  <li>• תמיד זמינה</li>
-                  <li>• אפשר להוסיף מנות בכל זמן</li>
-                  <li>• מחירים קבועים וצפויים</li>
-                  <li>• ללא הפרעה לפעילות המסעדה</li>
-                  <li>• אפשרות לתיקונים ושיפורים</li>
-                </ul>
+                <p className="text-green-600 text-lg">תמיד זמינה, מחירים קבועים, אפשר להוסיף מנות בכל זמן</p>
               </div>
             </div>
           </div>
 
-          {/* Full Process */}
+          {/* How it works */}
           <div>
             <h3 className="text-2xl font-bold text-[#8b1e3f] mb-6 text-center flex items-center justify-center gap-3">
               <Settings className="w-8 h-8" />
-              התהליך המלא:
+              איך זה עובד:
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
@@ -119,114 +106,74 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
             </div>
           </div>
 
-          {/* How it solves real problems */}
+          {/* What it solves */}
           <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-2 border-yellow-200 rounded-3xl p-8">
             <h3 className="text-2xl font-bold text-orange-800 mb-6 text-center">
-              איך זה פותר בעיות אמיתיות של מסעדות?
+              מה זה פותר לכם:
             </h3>
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl p-6 shadow-md">
-                <h4 className="text-lg font-bold text-orange-700 mb-3">תחשבו על המצב הנוכחי שלכם:</h4>
-                <ul className="space-y-2 text-orange-600">
-                  <li>• יש לכם מנות שהתמונות שלהן לא פשוט לא מוכרות?</li>
-                  <li>• צריכים לעדכן תמונות למנות עונתיות אבל זה יקר מדי?</li>
-                  <li>• תלויים בזמינות ובמחירים משתנים של צלמים?</li>
-                </ul>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-md">
-                <h4 className="text-lg font-bold text-green-700 mb-3">עם המערכת שלנו:</h4>
-                <ul className="space-y-2 text-green-600">
-                  <li>• כל פעם שמוסיפים מנה חדשה - תמונות תוך 72 שעות</li>
-                  <li>• מחיר צפוי וקבוע לכל תמונה</li>
-                  <li>• אפשרות לנסות וריאציות שונות עד שמוצאים את המושלמת</li>
-                </ul>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                "מנות עם תמונות שלא עושות להן צדק",
+                "עדכונים עונתיים יקרים", 
+                "תלות בזמינות צלמים",
+                "מחירים לא צפויים"
+              ].map((problem, index) => (
+                <div key={index} className="bg-white rounded-2xl p-4 shadow-md flex items-center gap-3">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full flex-shrink-0"></div>
+                  <p className="text-orange-700 font-medium">{problem}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Why we created the tasting package */}
+          {/* Tasting package */}
           <div className="bg-gradient-to-r from-[#f3752b]/10 to-[#f3752b]/5 border-2 border-[#f3752b] rounded-3xl p-8">
-            <h3 className="text-2xl font-bold text-[#f3752b] mb-4 text-center">
-              זאת הסיבה שיצרנו את חבילת הטעימה (250₪):
+            <h3 className="text-2xl font-bold text-[#f3752b] mb-6 text-center">
+              חבילת הטעימה (250₪):
             </h3>
             <p className="text-lg text-slate-700 leading-relaxed text-center">
-              במקום לקחת החלטה על חבילה גדולה בעיוורון, אתם בעצם "בודקים" איך המערכת עובדת עם המנות שלכם. 
-              מקבלים 3-5 מנות מעוצבות מקצועית, רואים את התוצאות, ורק אז מחליטים אם להמשיך.
+              במקום להחליט בעיוורון - תבדקו איך המערכת עובדת עם המנות שלכם. 3-5 מנות מעוצבות, תראו תוצאות, תחליטו אם להמשיך. 
               <br /><br />
-              <strong>זה כמו לנסות לפני שקונים - אבל עם זיכוי מלא אם אתם ממשיכים.</strong>
+              <strong>כמו לנסות לפני קנייה + זיכוי מלא.</strong>
             </p>
           </div>
 
-          {/* Long term vision */}
+          {/* Why now */}
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-3xl p-8">
             <h3 className="text-2xl font-bold text-purple-800 mb-6 text-center">
-              איך זה נראה לטווח ארוך:
-            </h3>
-            <p className="text-lg text-purple-700 mb-4 text-center">
-              תחשבו על זה כמו שיש לכם צלם פנימי שתמיד זמין:
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl p-4 text-center shadow-md">
-                <div className="text-2xl mb-2">🍽️</div>
-                <p className="font-semibold text-purple-700">מנה חדשה במתכון מיוחד? תמונות תוך יומיים-שלושה</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 text-center shadow-md">
-                <div className="text-2xl mb-2">🎄</div>
-                <p className="font-semibold text-purple-700">מבצע עונתי? תמונות מותאמות לעונה</p>
-              </div>
-              <div className="bg-white rounded-xl p-4 text-center shadow-md">
-                <div className="text-2xl mb-2">✨</div>
-                <p className="font-semibold text-purple-700">רוצים לשפר תמונה קיימת? וריאציות חדשות בקלות</p>
-              </div>
-            </div>
-            <p className="text-lg text-purple-700 mt-4 text-center">
-              במקום לתאם צלם, לחכות לזמינות, ולשלם כל פעם מחיר אחר - יש לכם מערכת שעובדת כמו צוות פנימי.
-            </p>
-          </div>
-
-          {/* The real question */}
-          <div className="bg-gradient-to-r from-[#8b1e3f] to-[#a91e4f] text-white rounded-3xl p-8 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12"></div>
-            <div className="relative z-10">
-              <h3 className="text-2xl font-bold mb-6">השאלה האמיתית היא:</h3>
-              <div className="space-y-4 text-lg">
-                <p>כמה פעמים השנה אתם צריכים תמונות חדשות או מעודכנות?</p>
-                <p>כמה זה עולה לכם עכשיו בזמן ובכסף?</p>
-                <p className="text-[#f3752b] font-bold text-xl">
-                  אם התשובות הן "הרבה" ו"יקר", אז חבילת הטעימה תראה לכם בדיוק איך זה יכול לחסוך לכם בעתיד.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Why start now */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold text-green-800 mb-6 text-center">
-              למה להתחיל עכשיו?
+              למה עכשיו?
             </h3>
             <div className="text-center space-y-4">
-              <p className="text-lg text-green-700">
-                ב-250₪ אתם בעצם קונים ביטוח נגד הבעיה הבאה שתהיה לכם עם תמונות.
+              <p className="text-lg text-purple-700">
+                כמה פעמים השנה אתם צריכים תמונות חדשות? כמה זה עולה עכשיו?
               </p>
-              <p className="text-lg text-green-700">
-                במקום להיתקע עם אותן תמונות ישנות או לשלם 3,000₪ לצלם בפעם הבאה, יהיה לכם פתרון מוכן.
+              <p className="text-lg text-purple-700">
+                ב-250₪ אתם קונים פתרון לבעיה הבאה שתהיה לכם - במקום לשלם 3,000₪ לצלם או להיתקע עם תמונות ישנות.
               </p>
-              <p className="text-xl font-bold text-green-800">
-                זה לא סתם תמונות - זה שינוי באופן שבו אתם מתמודדים עם התוכן הויזואלי של המקום.
+              <p className="text-xl font-bold text-purple-800">
+                זה לא עוד כלי - זה העתיד של התוכן הויזואלי במסעדות - והוא כבר כאן. מוכנים לטעום?
               </p>
             </div>
           </div>
 
-          {/* Contact Section */}
+          {/* Start now button */}
           <div className="bg-green-50 border-2 border-green-200 rounded-3xl p-8 text-center">
             <h3 className="text-2xl font-bold text-green-800 mb-6">
-              אני מוכן/ה להתחיל
+              מוכנים לטעום?
             </h3>
             <Button
-              onClick={onWhatsAppClick}
-              className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg font-bold rounded-2xl flex items-center gap-3 mx-auto"
+              onClick={() => window.open('https://app.food-vision.co.il/customer-login', '_blank')}
+              className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg font-bold rounded-2xl flex items-center gap-3 mx-auto mb-4"
             >
-              <MessageCircle className="w-6 h-6" />
+              <Sparkles className="w-6 h-6" />
+              מתחילים עכשיו
+            </Button>
+            <Button
+              onClick={onWhatsAppClick}
+              variant="outline"
+              className="border-2 border-green-500 text-green-500 hover:bg-green-500 hover:text-white px-8 py-3 text-base font-semibold rounded-2xl flex items-center gap-3 mx-auto"
+            >
+              <MessageCircle className="w-5 h-5" />
               דבר איתנו ישירות
             </Button>
           </div>
