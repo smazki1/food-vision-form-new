@@ -18,9 +18,6 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
           <DialogTitle className="text-3xl font-bold text-[#8b1e3f] text-center mb-2">
             מה זה בעצם Food Vision?
           </DialogTitle>
-          <DialogDescription className="text-center text-lg text-slate-600 font-medium">
-            התחלנו מתסכול פשוט: צילום מקצועי למסעדות יקר, מורכב ולא גמיש
-          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-8 mt-6">
@@ -29,10 +26,6 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
           <div className="bg-gradient-to-r from-[#8b1e3f] to-[#a91e4f] text-white rounded-3xl p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12"></div>
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold mb-6 flex items-center justify-center gap-3">
-                <Sparkles className="w-8 h-8" />
-                מה זה בעצם Food Vision?
-              </h2>
               <p className="text-lg leading-relaxed text-center">
                 החלטנו ליצור מערכת AI מתקדמת שלומדת את המנות שלכם ויוצרת תמונות מקצועיות תוך ימים, במחיר צפוי, כל פעם שאתם צריכים. בעצם יצרנו לכם "צלם דיגיטלי" פנימי שתמיד זמין.
               </p>
