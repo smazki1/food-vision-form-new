@@ -145,6 +145,13 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          ai_prompt_cost_per_unit: number | null
+          ai_prompts_count: number | null
+          ai_training_15_count: number | null
+          ai_training_25_count: number | null
+          ai_training_5_count: number | null
+          ai_training_cost_per_unit: number | null
+          ai_trainings_count: number | null
           app_notifications: boolean | null
           archive_status: string | null
           business_type: string | null
@@ -156,6 +163,7 @@ export type Database = {
           current_package_id: string | null
           email: string
           email_notifications: boolean | null
+          exchange_rate_at_conversion: number | null
           internal_notes: string | null
           last_activity_at: string | null
           next_follow_up_date: string | null
@@ -171,12 +179,24 @@ export type Database = {
           reminder_details: string | null
           reserved_images: number | null
           restaurant_name: string
+          revenue_from_client_local: number | null
+          revenue_from_client_usd: number | null
+          roi: number | null
+          total_ai_costs: number | null
+          total_work_time_minutes: number | null
           updated_at: string
           user_auth_id: string
           website_url: string | null
         }
         Insert: {
           address?: string | null
+          ai_prompt_cost_per_unit?: number | null
+          ai_prompts_count?: number | null
+          ai_training_15_count?: number | null
+          ai_training_25_count?: number | null
+          ai_training_5_count?: number | null
+          ai_training_cost_per_unit?: number | null
+          ai_trainings_count?: number | null
           app_notifications?: boolean | null
           archive_status?: string | null
           business_type?: string | null
@@ -188,6 +208,7 @@ export type Database = {
           current_package_id?: string | null
           email: string
           email_notifications?: boolean | null
+          exchange_rate_at_conversion?: number | null
           internal_notes?: string | null
           last_activity_at?: string | null
           next_follow_up_date?: string | null
@@ -203,12 +224,24 @@ export type Database = {
           reminder_details?: string | null
           reserved_images?: number | null
           restaurant_name: string
+          revenue_from_client_local?: number | null
+          revenue_from_client_usd?: number | null
+          roi?: number | null
+          total_ai_costs?: number | null
+          total_work_time_minutes?: number | null
           updated_at?: string
           user_auth_id: string
           website_url?: string | null
         }
         Update: {
           address?: string | null
+          ai_prompt_cost_per_unit?: number | null
+          ai_prompts_count?: number | null
+          ai_training_15_count?: number | null
+          ai_training_25_count?: number | null
+          ai_training_5_count?: number | null
+          ai_training_cost_per_unit?: number | null
+          ai_trainings_count?: number | null
           app_notifications?: boolean | null
           archive_status?: string | null
           business_type?: string | null
@@ -220,6 +253,7 @@ export type Database = {
           current_package_id?: string | null
           email?: string
           email_notifications?: boolean | null
+          exchange_rate_at_conversion?: number | null
           internal_notes?: string | null
           last_activity_at?: string | null
           next_follow_up_date?: string | null
@@ -235,6 +269,11 @@ export type Database = {
           reminder_details?: string | null
           reserved_images?: number | null
           restaurant_name?: string
+          revenue_from_client_local?: number | null
+          revenue_from_client_usd?: number | null
+          roi?: number | null
+          total_ai_costs?: number | null
+          total_work_time_minutes?: number | null
           updated_at?: string
           user_auth_id?: string
           website_url?: string | null
@@ -551,8 +590,10 @@ export type Database = {
           contact_name: string
           created_at: string
           email: string
+          estimated_images_needed: string | null
           exchange_rate_at_conversion: number | null
           free_sample_package_active: boolean | null
+          items_quantity_range: string | null
           lead_id: string
           lead_source: string | null
           lead_status: string | null
@@ -560,6 +601,7 @@ export type Database = {
           notes: string | null
           phone: string
           previous_status: string | null
+          primary_image_usage: string | null
           reminder_at: string | null
           reminder_details: string | null
           restaurant_name: string
@@ -568,6 +610,7 @@ export type Database = {
           roi: number | null
           status: string
           total_ai_costs: number | null
+          total_work_time_minutes: number | null
           updated_at: string
           website_url: string | null
         }
@@ -585,8 +628,10 @@ export type Database = {
           contact_name: string
           created_at?: string
           email: string
+          estimated_images_needed?: string | null
           exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean | null
+          items_quantity_range?: string | null
           lead_id?: string
           lead_source?: string | null
           lead_status?: string | null
@@ -594,6 +639,7 @@ export type Database = {
           notes?: string | null
           phone: string
           previous_status?: string | null
+          primary_image_usage?: string | null
           reminder_at?: string | null
           reminder_details?: string | null
           restaurant_name: string
@@ -602,6 +648,7 @@ export type Database = {
           roi?: number | null
           status?: string
           total_ai_costs?: number | null
+          total_work_time_minutes?: number | null
           updated_at?: string
           website_url?: string | null
         }
@@ -619,8 +666,10 @@ export type Database = {
           contact_name?: string
           created_at?: string
           email?: string
+          estimated_images_needed?: string | null
           exchange_rate_at_conversion?: number | null
           free_sample_package_active?: boolean | null
+          items_quantity_range?: string | null
           lead_id?: string
           lead_source?: string | null
           lead_status?: string | null
@@ -628,6 +677,7 @@ export type Database = {
           notes?: string | null
           phone?: string
           previous_status?: string | null
+          primary_image_usage?: string | null
           reminder_at?: string | null
           reminder_details?: string | null
           restaurant_name?: string
@@ -636,6 +686,7 @@ export type Database = {
           roi?: number | null
           status?: string
           total_ai_costs?: number | null
+          total_work_time_minutes?: number | null
           updated_at?: string
           website_url?: string | null
         }
@@ -834,6 +885,45 @@ export type Database = {
           id?: string
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      work_time_sessions: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          end_time: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          end_time?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          start_time?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1049,6 +1139,9 @@ export type Database = {
               p_contact_name?: string
               p_contact_email?: string
               p_contact_phone?: string
+              p_items_quantity_range?: string
+              p_estimated_images_needed?: string
+              p_primary_image_usage?: string
             }
           | {
               p_restaurant_name: string
@@ -1058,7 +1151,7 @@ export type Database = {
               p_notes?: string
               p_reference_image_urls?: string[]
             }
-        Returns: string
+        Returns: Json
       }
       reset_user_password: {
         Args: { user_email: string; new_password: string }
@@ -1326,4 +1419,3 @@ export const Constants = {
     },
   },
 } as const
-
