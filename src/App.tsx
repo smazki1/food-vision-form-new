@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,6 +17,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import PublicUploadPage from "@/pages/PublicUploadPage";
 import FoodVisionForm from "@/pages/FoodVisionForm";
 import SmartUploadPage from "@/pages/SmartUploadPage";
+import ThankYouPage from "@/pages/ThankYouPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
@@ -138,6 +140,7 @@ const App = () => (
               <Route path="/public-upload" element={<PublicUploadPage />} />
               <Route path="/food-vision-form" element={<FoodVisionForm />} />
               <Route path="/smart-upload" element={<SmartUploadPage />} />
+              <Route path="/thank-you" element={<ThankYouPage />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
