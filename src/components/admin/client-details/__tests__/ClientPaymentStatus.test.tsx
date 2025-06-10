@@ -129,6 +129,7 @@ describe('ClientPaymentStatus Component', () => {
 
       const amountInput = screen.getByLabelText('סכום בשקלים');
       fireEvent.change(amountInput, { target: { value: '5000' } });
+      fireEvent.blur(amountInput);
 
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({
@@ -216,6 +217,7 @@ describe('ClientPaymentStatus Component', () => {
 
       const amountInput = screen.getByLabelText('סכום בשקלים');
       fireEvent.change(amountInput, { target: { value: '1234.56' } });
+      fireEvent.blur(amountInput);
 
       await waitFor(() => {
         expect(mockMutateAsync).toHaveBeenCalledWith({

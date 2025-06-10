@@ -43,30 +43,52 @@ const LoginPage = () => {
       const user = authData.user;
 
       // 1. Check user role (Admin/Editor)
+      console.log('Checking user role for:', user.id);
       const { data: roleData, error: roleError } = await supabase.rpc('get_my_role');
+      
+      console.log('Role check result:', { roleData, roleError });
       
       if (roleError) {
         console.error('Role RPC Error:', roleError);
-        // Fallback or generic error, but proceed to check client/lead if role check fails but auth succeeded
-        // This might happen if RLS on rpc is not set up for a new user before role is assigned.
-        // However, get_my_role is security definer, so it should generally work if the user is authenticated.
-        toast.warning('לא ניתן היה לאמת את תפקיד המשתמש. מנסה המשך התחברות...');
-      }
+        // Try direct query as fallback
+        const { data: directRoleData, error: directRoleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+          
+        console.log('Direct role check:', { directRoleData, directRoleError });
+        
+        if (directRoleData?.role === 'admin') {
+          toast.success('התחברות אדמין בוצעה בהצלחה!');
+          navigate('/admin/dashboard');
+          setIsLoading(false);
+          return;
+        }
+        
+        if (directRoleData?.role === 'editor') {
+          toast.success('התחברות עורך בוצעה בהצלחה!');
+          navigate('/editor/dashboard');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        const userRole = roleData as string;
+        console.log('User role from RPC:', userRole);
 
-      const userRole = roleData as string; // Type assertion, ensure your RPC returns a string
+        if (userRole === 'admin') {
+          toast.success('התחברות אדמין בוצעה בהצלחה!');
+          navigate('/admin/dashboard');
+          setIsLoading(false);
+          return;
+        }
 
-      if (userRole === 'admin') {
-        toast.success('התחברות אדמין בוצעה בהצלחה!');
-        navigate('/admin/dashboard');
-        setIsLoading(false);
-        return;
-      }
-
-      if (userRole === 'editor') {
-        toast.success('התחברות עורך בוצעה בהצלחה!');
-        navigate('/editor/dashboard');
-        setIsLoading(false);
-        return;
+        if (userRole === 'editor') {
+          toast.success('התחברות עורך בוצעה בהצלחה!');
+          navigate('/editor/dashboard');
+          setIsLoading(false);
+          return;
+        }
       }
 
       // 2. Check if existing client
@@ -106,7 +128,7 @@ const LoginPage = () => {
 
       if (leadData) {
         toast.info('נמצאת כליד קיים. מועברת לטופס הגשה.');
-        navigate('/submit-dishes');
+        navigate('/public-upload');
       } else {
         // Create new lead record
         const { error: newLeadError } = await supabase
@@ -120,7 +142,7 @@ const LoginPage = () => {
           return;
         }
         toast.success('ברוכה הבאה! נוצרה רשומת ליד חדשה. מועברת לטופס הגשה.');
-        navigate('/submit-dishes');
+        navigate('/public-upload');
       }
 
     } catch (error: any) {
@@ -131,7 +153,7 @@ const LoginPage = () => {
   };
 
   const handleNewRestaurantOwner = () => {
-    navigate('/submit-dishes');
+    navigate('/public-upload');
   };
 
   const handleExistingCustomer = () => {
@@ -166,7 +188,7 @@ const LoginPage = () => {
               ${activeTab === 'demo' ? 'text-primary-FV border-b-[3px] border-primary-FV bg-white' : 'text-gray-500 hover:bg-gray-50'}`}
             onClick={() => setActiveTab('demo')}
           >
-            התחילו עכשיו
+            הגשה למסעדה קיימת
           </button>
         </div>
 
@@ -239,34 +261,13 @@ const LoginPage = () => {
           {/* Demo/Start Now Tab Content */}
           {activeTab === 'demo' && (
             <div className="text-center animate-fadeIn">
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">התחילו את המסע שלכן</h2>
-              <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base">בחרו את סוג החשבון שלכן</p>
-
-              <div className="space-y-4 sm:space-y-5">
-                <button
-                  type="button"
-                  onClick={handleNewRestaurantOwner}
-                  className="w-full p-4 sm:p-5 border-2 border-gray-200 rounded-xl text-right hover:border-primary-FV hover:bg-primary-FV/5 focus:outline-none focus:ring-2 focus:ring-primary-FV/50 transition-all duration-300 group"
-                >
-                  <h4 className="text-md sm:text-lg font-semibold text-gray-700 mb-1 group-hover:text-primary-FV">🍽️ בעלות עסק חדש?</h4>
-                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-primary-FV">קבלו חבילת ניסיון חינמית וגלו איך FoodVision יכול לשדרג את המנות שלכםן.</p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleExistingCustomer}
-                  className="w-full p-4 sm:p-5 border-2 border-gray-200 rounded-xl text-right hover:border-primary-FV hover:bg-primary-FV/5 focus:outline-none focus:ring-2 focus:ring-primary-FV/50 transition-all duration-300 group"
-                >
-                  <h4 className="text-md sm:text-lg font-semibold text-gray-700 mb-1 group-hover:text-primary-FV">👥 לקוחות קיימות?</h4>
-                  <p className="text-xs sm:text-sm text-gray-600 group-hover:text-primary-FV">יש לכן כבר חבילה? היכנסו לחשבונכן.</p>
-                </button>
-              </div>
-              
-              {/* Example: Special Offer Box - uncomment and style if needed */}
-              {/* <div className="mt-6 sm:mt-8 bg-secondary-FV/10 p-5 sm:p-6 rounded-lg text-center border border-secondary-FV/30">
-                <h3 className="text-lg sm:text-xl font-semibold text-secondary-FV mb-2">🎁 מבצע מיוחד!</h3>
-                <p className="text-sm sm:text-base text-secondary-FV/80">הצטרפו עכשיו וקבלו 7 מנות במתנה בחבילה הראשונה!</p>
-              </div> */}
+              <button
+                type="button"
+                onClick={handleNewRestaurantOwner}
+                className="w-full p-6 sm:p-8 border-2 border-primary-FV rounded-xl text-center bg-primary-FV text-white hover:bg-primary-FV-dark focus:outline-none focus:ring-2 focus:ring-primary-FV/50 transition-all duration-300 font-semibold text-lg sm:text-xl"
+              >
+                לחץ/י כאן למעבר לטופס
+              </button>
             </div>
           )}
         </div>

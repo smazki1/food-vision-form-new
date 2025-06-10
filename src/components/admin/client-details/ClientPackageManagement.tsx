@@ -40,7 +40,7 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
     client.current_package_id
   );
-  const [isAssigning, setIsAssigning] = useState(false);
+  const [assigningPackageId, setAssigningPackageId] = useState<string | null>(null);
   const [isCreatingPackage, setIsCreatingPackage] = useState(false);
   const [deleteDialogPackage, setDeleteDialogPackage] = useState<PackageType | null>(null);
   const [editingPackage, setEditingPackage] = useState<PackageType | null>(null);
@@ -82,62 +82,205 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
   // Get submission stats for the client
   const { data: submissionStats, refetch: refetchSubmissionStats } = useClientSubmissionStats(clientId);
   
+  // Optimistic package assignment mutation
+  const packageAssignmentMutation = useMutation({
+    mutationFn: async ({ packageId, selectedPkg }: { packageId: string; selectedPkg: PackageType }) => {
+      // Calculate assignment values - handle null values properly
+      const servingsToAssign = selectedPkg.total_servings || 0;
+      const imagesToAssign = selectedPkg.total_images ?? 0;
+      
+      // Ensure at least one value is non-zero
+      const finalServings = (servingsToAssign === 0 && imagesToAssign === 0) ? 1 : servingsToAssign;
+      const finalImages = imagesToAssign;
+
+      console.log('Optimistic package assignment:', {
+        packageId,
+        packageName: selectedPkg.package_name,
+        servingsToAssign: finalServings,
+        imagesToAssign: finalImages
+      });
+
+      // Perform the assignment using existing function
+      return await assignPackageToClientWithImages(
+        clientId,
+        packageId,
+        finalServings,
+        finalImages,
+        `הוקצתה חבילה: ${selectedPkg.package_name} (${finalServings} מנות, ${finalImages} תמונות)`,
+        undefined
+      );
+    },
+    onMutate: async ({ packageId, selectedPkg }) => {
+      setAssigningPackageId(packageId);
+      
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['client-detail', clientId] });
+      
+      // Snapshot the previous value
+      const previousClient = queryClient.getQueryData(['client-detail', clientId]);
+      
+      // Calculate optimistic values
+      const servingsToAssign = selectedPkg.total_servings || 0;
+      const imagesToAssign = selectedPkg.total_images ?? 0;
+      const finalServings = (servingsToAssign === 0 && imagesToAssign === 0) ? 1 : servingsToAssign;
+      const finalImages = imagesToAssign;
+      
+      // Optimistically update client data
+      const optimisticClient = {
+        ...currentClient,
+        current_package_id: packageId,
+        remaining_servings: (currentClient.remaining_servings || 0) + finalServings,
+        remaining_images: (currentClient.remaining_images || 0) + finalImages,
+        notes: `הוקצתה חבילה: ${selectedPkg.package_name} (${finalServings} מנות, ${finalImages} תמונות)`
+      };
+      
+      // Update the cache optimistically
+      queryClient.setQueryData(['client-detail', clientId], optimisticClient);
+      
+      // Update all related client caches
+      queryClient.setQueryData(['clients'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((client: any) => 
+          client.client_id === clientId ? optimisticClient : client
+        );
+      });
+      
+      // Update simplified caches
+      const currentUserRole = queryClient.getQueryData(['currentUserRole']);
+      if (currentUserRole) {
+        const userId = (currentUserRole as any)?.userId;
+        const status = (currentUserRole as any)?.status;
+        if (userId && status) {
+          queryClient.setQueryData(['clients_simplified', userId, status], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((client: any) => 
+              client.client_id === clientId ? optimisticClient : client
+            );
+          });
+          
+          queryClient.setQueryData(['clients_list_for_admin', userId], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((client: any) => 
+              client.client_id === clientId ? optimisticClient : client
+            );
+          });
+        }
+      }
+      
+      // Show immediate success feedback
+      toast.success(`✅ החבילה "${selectedPkg.package_name}" הוקצתה ללקוח ${currentClient.restaurant_name}!`);
+      
+      return { previousClient, optimisticClient };
+    },
+    onError: (err, { selectedPkg }, context) => {
+      // Rollback optimistic updates
+      if (context?.previousClient) {
+        queryClient.setQueryData(['client-detail', clientId], context.previousClient);
+        
+        // Rollback all related caches
+        queryClient.setQueryData(['clients'], (oldData: any) => {
+          if (!oldData) return oldData;
+          return oldData.map((client: any) => 
+            client.client_id === clientId ? context.previousClient : client
+          );
+        });
+        
+        const currentUserRole = queryClient.getQueryData(['currentUserRole']);
+        if (currentUserRole) {
+          const userId = (currentUserRole as any)?.userId;
+          const status = (currentUserRole as any)?.status;
+          if (userId && status) {
+            queryClient.setQueryData(['clients_simplified', userId, status], (oldData: any) => {
+              if (!oldData) return oldData;
+              return oldData.map((client: any) => 
+                client.client_id === clientId ? context.previousClient : client
+              );
+            });
+            
+            queryClient.setQueryData(['clients_list_for_admin', userId], (oldData: any) => {
+              if (!oldData) return oldData;
+              return oldData.map((client: any) => 
+                client.client_id === clientId ? context.previousClient : client
+              );
+            });
+          }
+        }
+      }
+      
+      console.error('Package assignment error:', err);
+      toast.error(`שגיאה בהקצאת החבילה "${selectedPkg.package_name}": ${err instanceof Error ? err.message : 'Unknown error'}`);
+    },
+    onSuccess: (updatedClient, { selectedPkg }) => {
+      // Update with actual server response
+      queryClient.setQueryData(['client-detail', clientId], updatedClient);
+      
+      // Update all related caches with real data
+      queryClient.setQueryData(['clients'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.map((client: any) => 
+          client.client_id === clientId ? updatedClient : client
+        );
+      });
+      
+      const currentUserRole = queryClient.getQueryData(['currentUserRole']);
+      if (currentUserRole) {
+        const userId = (currentUserRole as any)?.userId;
+        const status = (currentUserRole as any)?.status;
+        if (userId && status) {
+          queryClient.setQueryData(['clients_simplified', userId, status], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((client: any) => 
+              client.client_id === clientId ? updatedClient : client
+            );
+          });
+          
+          queryClient.setQueryData(['clients_list_for_admin', userId], (oldData: any) => {
+            if (!oldData) return oldData;
+            return oldData.map((client: any) => 
+              client.client_id === clientId ? updatedClient : client
+            );
+          });
+        }
+      }
+    },
+    onSettled: () => {
+      setAssigningPackageId(null);
+    }
+  });
+
   // Refresh all data mutation
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
   const handleRefreshData = async () => {
     setIsRefreshing(true);
     try {
-      console.log('[ClientPackageManagement] Starting data refresh for client:', clientId);
+      // Use Promise.all for parallel execution
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['client-detail', clientId] }),
+        queryClient.invalidateQueries({ queryKey: ['clients'] }),
+        queryClient.invalidateQueries({ queryKey: ['packages'] }),
+        refetchSubmissionStats()
+      ]);
       
-      // Refresh packages data
-      if (invalidateCache) {
-        await invalidateCache();
-      }
-      await queryClient.invalidateQueries({ queryKey: ['packages'] });
-      await queryClient.invalidateQueries({ queryKey: ['packages_simplified'] });
-      
-      // Refresh all client data - comprehensive invalidation
-      await queryClient.invalidateQueries({ queryKey: ['clients'] });
-      await queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey;
-          return key.includes('clients_simplified') || 
-                 key.includes('clients_list_for_admin') ||
-                 key.includes('client-submission-stats') ||
-                 key.includes('client-submissions');
-        }
-      });
-      
-      // Force refetch of submission stats
-      if (refetchSubmissionStats) {
-        await refetchSubmissionStats();
-      }
-      
-      // Also invalidate the specific client submission stats
-      await queryClient.invalidateQueries({ queryKey: ['client-submission-stats', clientId] });
-      await queryClient.invalidateQueries({ queryKey: ['client-submissions', clientId] });
-      
-      // Force fresh data by removing cache and refetching
-      queryClient.removeQueries({ queryKey: ['client-submission-stats', clientId] });
-      
-      // Wait a bit for cache clearing then force refetch
-      setTimeout(async () => {
-        if (refetchSubmissionStats) {
-          await refetchSubmissionStats();
-        }
-      }, 100);
-      
-      console.log('[ClientPackageManagement] Data refresh completed successfully');
-      toast.success('הנתונים רועננו בהצלחה');
+      toast.success('הנתונים רוענו בהצלחה');
     } catch (error) {
-      console.error('[ClientPackageManagement] Error refreshing data:', error);
+      console.error('Refresh error:', error);
       toast.error('שגיאה ברענון הנתונים');
     } finally {
       setIsRefreshing(false);
     }
   };
-  
+
+  // Optimistic package assignment handler
+  const handleDirectPackageAssignment = (packageId: string) => {
+    const selectedPkg = packages?.find(pkg => pkg.package_id === packageId);
+    if (!selectedPkg) {
+      toast.error('לא נמצאה החבילה שנבחרה');
+      return;
+    }
+
+    packageAssignmentMutation.mutate({ packageId, selectedPkg });
+  };
+
   // Mutation for updating servings
   const updateServingsMutation = useMutation({
     mutationFn: ({ servings, notes }: { servings: number; notes: string }) => 
@@ -278,8 +421,6 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
     },
   });
 
-
-
   // Helper functions for servings adjustment
   const adjustServings = (increment: number) => {
     const currentServings = currentClient.remaining_servings;
@@ -353,91 +494,6 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
       deleteMutation.mutate(deleteDialogPackage.package_id);
     }
   };
-
-  // Direct package assignment - no popup, immediate assignment
-  const handleDirectPackageAssignment = async (packageId: string) => {
-    const selectedPkg = packages?.find(pkg => pkg.package_id === packageId);
-    if (!selectedPkg) {
-      toast.error('לא נמצאה החבילה שנבחרה');
-      return;
-    }
-
-    // Set loading state
-    setIsAssigning(true);
-
-    try {
-      // Calculate assignment values - handle null values properly
-      const servingsToAssign = selectedPkg.total_servings || 0;
-      const imagesToAssign = selectedPkg.total_images ?? 0;
-      
-      // Ensure at least one value is non-zero
-      const finalServings = (servingsToAssign === 0 && imagesToAssign === 0) ? 1 : servingsToAssign;
-      const finalImages = imagesToAssign;
-
-      console.log('Direct package assignment:', {
-        packageId,
-        packageName: selectedPkg.package_name,
-        servingsToAssign: finalServings,
-        imagesToAssign: finalImages
-      });
-
-      // Perform the assignment using existing function
-      const updatedClient = await assignPackageToClientWithImages(
-        clientId,
-        packageId,
-        finalServings,
-        finalImages,
-        `הוקצתה חבילה: ${selectedPkg.package_name} (${finalServings} מנות, ${finalImages} תמונות)`,
-        undefined
-      );
-
-      // Update cache immediately
-      queryClient.setQueryData(['clients'], (oldData: any) => {
-        if (!oldData) return oldData;
-        return oldData.map((client: any) => 
-          client.client_id === clientId ? updatedClient : client
-        );
-      });
-
-      // Update all client query variations
-      const currentUserRole = queryClient.getQueryData(['currentUserRole']);
-      if (currentUserRole) {
-        const userId = (currentUserRole as any)?.userId;
-        const status = (currentUserRole as any)?.status;
-        if (userId && status) {
-          queryClient.setQueryData(['clients_simplified', userId, status], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((client: any) => 
-              client.client_id === clientId ? updatedClient : client
-            );
-          });
-          
-          queryClient.setQueryData(['clients_list_for_admin', userId], (oldData: any) => {
-            if (!oldData) return oldData;
-            return oldData.map((client: any) => 
-              client.client_id === clientId ? updatedClient : client
-            );
-          });
-        }
-      }
-
-      // Refresh packages cache
-      if (invalidateCache) {
-        invalidateCache();
-      }
-
-      // Success message
-      toast.success(`✅ החבילה "${selectedPkg.package_name}" הוקצתה בהצלחה ללקוח ${currentClient.restaurant_name}!\n${finalServings} מנות + ${finalImages} תמונות נוספו ללקוח.`);
-
-    } catch (error) {
-      console.error('Assignment error:', error);
-      toast.error('שגיאה בהקצאת החבילה');
-    } finally {
-      setIsAssigning(false);
-    }
-  };
-  
-
 
   // Handle package creation/edit success
   const handlePackageCreated = () => {
@@ -689,10 +745,10 @@ export const ClientPackageManagement: React.FC<ClientPackageManagementProps> = (
                           ? 'border-green-500 bg-green-50'
                           : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
                       }`}
-                      onClick={() => !isAssigning && handleDirectPackageAssignment(pkg.package_id)}
+                      onClick={() => !assigningPackageId && handleDirectPackageAssignment(pkg.package_id)}
                     >
                       {/* Loading Overlay */}
-                      {isAssigning && (
+                      {assigningPackageId === pkg.package_id && (
                         <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
                           <div className="flex items-center gap-2 text-blue-600">
                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>

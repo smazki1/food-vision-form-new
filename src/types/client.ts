@@ -48,6 +48,7 @@ export type Client = {
   revenue_from_client_usd?: number; // Calculated field
   total_ai_costs?: number; // Calculated field
   roi?: number; // Calculated field
+  total_work_time_minutes?: number; // Work time tracking field
 };
 
 export const CLIENT_STATUS_OPTIONS: string[] = [

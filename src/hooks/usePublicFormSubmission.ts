@@ -51,6 +51,28 @@ export const usePublicFormSubmission = () => {
       return false;
     }
 
+    // Add validation for new requirement fields (only for new businesses)
+    if (formData.isNewBusiness && !formData.itemsQuantityRange?.trim()) {
+      console.log('[PublicFormSubmission] Missing items quantity range');
+      toast.error("יש לבחור טווח כמות פריטים.");
+      setStepErrors?.({ itemsQuantityRange: "יש לבחור טווח כמות פריטים." });
+      return false;
+    }
+
+    if (formData.isNewBusiness && !formData.estimatedImagesNeeded?.trim()) {
+      console.log('[PublicFormSubmission] Missing estimated images needed');
+      toast.error("יש למלא הערכה של כמות התמונות.");
+      setStepErrors?.({ estimatedImagesNeeded: "יש למלא הערכה של כמות התמונות." });
+      return false;
+    }
+
+    if (formData.isNewBusiness && !formData.primaryImageUsage?.trim()) {
+      console.log('[PublicFormSubmission] Missing primary image usage');
+      toast.error("יש לבחור שימוש עיקרי לתמונות.");
+      setStepErrors?.({ primaryImageUsage: "יש לבחור שימוש עיקרי לתמונות." });
+      return false;
+    }
+
     setIsSubmitting(true);
     toast.info("מעלה תמונות ושומר הגשה...");
 
@@ -123,6 +145,9 @@ export const usePublicFormSubmission = () => {
         p_contact_name: formData.submitterName?.trim() || null,
         p_contact_email: formData.contactEmail?.trim() || null,
         p_contact_phone: formData.contactPhone?.trim() || null,
+        p_items_quantity_range: formData.itemsQuantityRange.trim(),
+        p_estimated_images_needed: formData.estimatedImagesNeeded.trim(),
+        p_primary_image_usage: formData.primaryImageUsage.trim(),
       };
 
       console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
@@ -209,6 +234,9 @@ export const usePublicFormSubmission = () => {
           category: categoryWebhook,
           ingredients: ingredientsWebhook,
           sourceForm: 'public-form-context',
+          itemsQuantityRange: formData.itemsQuantityRange,
+          estimatedImagesNeeded: formData.estimatedImagesNeeded,
+          primaryImageUsage: formData.primaryImageUsage,
         };
         triggerMakeWebhook(webhookPayload);
       }

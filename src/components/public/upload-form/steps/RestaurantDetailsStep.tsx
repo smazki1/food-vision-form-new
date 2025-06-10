@@ -1,7 +1,7 @@
 import React, { useEffect, FC, useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Building2, User, Mail, Phone, CheckCircle } from 'lucide-react';
+import { Building2, User, Mail, Phone, CheckCircle, Package, Image, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,20 +19,33 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const restaurantDetailsSchema = z.object({
   restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
   submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
   contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).optional().or(z.literal('')),
   contactPhone: z.string().optional().or(z.literal('')),
+  itemsQuantityRange: z.string().optional().or(z.literal('')),
+  estimatedImagesNeeded: z.string().optional().or(z.literal('')),
+  primaryImageUsage: z.string().optional().or(z.literal('')),
 });
 
 // סכמה נוספת עבור מצב "עסק חדש" - בו המייל והטלפון הם שדות חובה
 const newBusinessSchema = z.object({
   restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
   submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
-  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).min(1, "אימייל הוא שדה חובה לעסק חדש"),
-  contactPhone: z.string().min(1, "מספר טלפון הוא שדה חובה לעסק חדש"),
+  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).min(1, "כתובת אימייל היא שדה חובה"),
+  contactPhone: z.string().min(1, "טלפון הוא שדה חובה"),
+  itemsQuantityRange: z.string().min(1, "יש לבחור טווח כמות פריטים"),
+  estimatedImagesNeeded: z.string().min(1, "יש למלא הערכה של כמות התמונות"),
+  primaryImageUsage: z.string().min(1, "יש לבחור שימוש עיקרי לתמונות"),
 });
 
 type RestaurantDetailsFormData = z.infer<typeof restaurantDetailsSchema>;
@@ -48,6 +61,9 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
       submitterName: formData.submitterName || '',
       contactEmail: formData.contactEmail || '',
       contactPhone: formData.contactPhone || '',
+      itemsQuantityRange: formData.itemsQuantityRange || '',
+      estimatedImagesNeeded: formData.estimatedImagesNeeded || '',
+      primaryImageUsage: formData.primaryImageUsage || '',
     },
     mode: 'onChange'
   });
@@ -157,6 +173,17 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
   };
 
   const isFieldDisabled = isAuthenticated && (isLoadingClientData || sessionLoading);
+
+  const onSubmit = (data: RestaurantDetailsFormData) => {
+    console.log('[RestaurantDetailsStep] Form submitted with data:', data);
+    
+    updateFormData({
+      ...data,
+      isNewBusiness: isNewBusiness === true
+    });
+    
+    console.log('[RestaurantDetailsStep] Updated form data with isNewBusiness:', isNewBusiness);
+  };
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -373,6 +400,113 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
                 </FormItem>
               )}
             />
+          )}
+
+          {/* Only show requirement questions for new businesses */}
+          {isNewBusiness === true && (
+            <>
+              <FormField
+                control={form.control}
+                name="itemsQuantityRange"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                        <Package className="w-5 h-5 text-[#F3752B]" />
+                      </div>
+                      מספר פריטים (מנות או מוצרים) לצילום?
+                      <span className="text-red-500 mr-1">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className={cn(
+                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
+                          form.formState.errors.itemsQuantityRange ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                        )}>
+                          <SelectValue placeholder="בחרו טווח כמות" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1-10">1-10</SelectItem>
+                          <SelectItem value="11-30">11-30</SelectItem>
+                          <SelectItem value="30+">30+</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormDescription>
+                      זה יעזור לנו להבין את היקף הפרויקט ולהמליץ על החבילה המתאימה
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="estimatedImagesNeeded"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                        <Image className="w-5 h-5 text-[#F3752B]" />
+                      </div>
+                      כמה תמונות אתם צריכים בשלב הנוכחי?
+                      <span className="text-red-500 mr-1">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="לדוגמה: 20 תמונות, או ל-50 תמונות"
+                        className={cn(
+                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
+                          form.formState.errors.estimatedImagesNeeded ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                        )}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      אפשר הערכה גסה – זה יעזור לנו להתאים את החבילה הנכונה
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="primaryImageUsage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
+                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
+                        <Target className="w-5 h-5 text-[#F3752B]" />
+                      </div>
+                      לאיזה שימוש עיקרי התמונות מיועדות?
+                      <span className="text-red-500 mr-1">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className={cn(
+                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
+                          form.formState.errors.primaryImageUsage ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
+                        )}>
+                          <SelectValue placeholder="בחרו שימוש עיקרי" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="instagram">אינסטגרם ורשתות חברתיות</SelectItem>
+                          <SelectItem value="website-menu">אתר / תפריט</SelectItem>
+                          <SelectItem value="delivery">משלוחים</SelectItem>
+                          <SelectItem value="advertising">פרסום</SelectItem>
+                          <SelectItem value="other">אחר</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormDescription>
+                      זה יעזור לנו להתאים את סגנון העיבוד לשימוש המיועד
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
           )}
         </form>
       </Form>

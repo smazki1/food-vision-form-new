@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 // Types for the robust comment system
 export interface RobustComment {
@@ -311,20 +312,15 @@ export const useRobustClientComments = (clientId: string) => {
     refetchOnMount: true
   });
 
-  // Force refresh comments (useful for testing and debugging)
-  const forceRefresh = () => {
-    console.log('[RobustComments] Force refreshing client comments');
-    queryClient.invalidateQueries({ queryKey: ['robust-client-comments', clientId] });
-  };
 
-  // Add comment with atomic update
+
+  // Add comment with optimistic updates
   const addCommentMutation = useMutation({
-    mutationFn: async ({ comment }: { comment: string }) => {
-      console.log('[RobustComments] Adding client comment with atomic update:', { clientId, comment });
+    mutationFn: async (comment: string) => {
+      console.log('[RobustComments] Adding client comment:', comment);
       
-      // Use a transaction-like approach to prevent race conditions
-      let attempts = 0;
       const maxAttempts = 3;
+      let attempts = 0;
       
       while (attempts < maxAttempts) {
         attempts++;
@@ -389,64 +385,68 @@ export const useRobustClientComments = (clientId: string) => {
         if (attempts === maxAttempts) {
           throw updateError;
         }
-
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+        
+        // Wait before retry with exponential backoff
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 100));
       }
-
-      throw new Error('Max retry attempts reached');
     },
-    onMutate: async ({ comment }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['robust-client-comments', clientId] });
-
-      // Snapshot the previous value
-      const previousComments = queryClient.getQueryData(['robust-client-comments', clientId]);
-
-      // Optimistically update to the new value
+    onMutate: async (comment) => {
+      // CRITICAL FIX: Use optimistic update to prevent component unmounting
+      const queryKey = ['robust-client-comments', clientId];
+      
+      // Snapshot previous value for rollback
+      const previousComments = queryClient.getQueryData(queryKey);
+      
+      // Create optimistic comment
       const optimisticComment: RobustComment = {
-        id: `optimistic-${Date.now()}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         text: comment,
         timestamp: new Date().toISOString(),
         source: 'client',
         entity_id: clientId,
         entity_type: 'client'
       };
-
-      queryClient.setQueryData(['robust-client-comments', clientId], (old: RobustComment[] = []) => {
-        return [optimisticComment, ...old];
+      
+      // Optimistically update the comments
+      queryClient.setQueryData(queryKey, (old: RobustComment[] | undefined) => {
+        return old ? [optimisticComment, ...old] : [optimisticComment];
       });
-
+      
       return { previousComments };
     },
-    onSuccess: () => {
-      // Refetch to get the real data from server
-      queryClient.invalidateQueries({ queryKey: ['robust-client-comments', clientId] });
-      // Also invalidate the clients cache so the updated internal_notes is reflected
-      queryClient.invalidateQueries({ 
-        predicate: (query) => {
-          const key = query.queryKey;
-          return Array.isArray(key) && (
-            key[0] === 'clients' || 
-            key[0] === 'clients_simplified' ||
-            key[0] === 'clients_list_for_admin'
-          );
-        }
-      });
-      toast.success('התגובה נוספה בהצלחה');
-    },
-    onError: (error, variables, context) => {
-      // Rollback optimistic update
-      queryClient.setQueryData(['robust-client-comments', clientId], context?.previousComments);
-      console.error('[RobustComments] Add comment error:', error);
+    onError: (err, comment, context) => {
+      // Rollback on error
+      if (context?.previousComments) {
+        queryClient.setQueryData(['robust-client-comments', clientId], context.previousComments);
+      }
+      console.error('[RobustComments] Failed to add comment:', err);
       toast.error('שגיאה בהוספת התגובה');
+    },
+    onSuccess: (newComment) => {
+      // CRITICAL FIX: Use setQueryData instead of invalidateQueries to prevent component unmounting
+      queryClient.setQueryData(['robust-client-comments', clientId], (old: RobustComment[] | undefined) => {
+        if (!old) return [newComment];
+        
+        // Replace the temporary optimistic comment with the real one
+        return old.map(comment => 
+          comment.id.startsWith('temp-') ? newComment : comment
+        );
+      });
+      
+      toast.success('התגובה נוספה בהצלחה');
     }
   });
+
+  // Force refresh function that doesn't cause unmounting
+  const forceRefresh = useCallback(() => {
+    console.log('[RobustComments] Force refreshing comments for client:', clientId);
+    commentsQuery.refetch();
+  }, [commentsQuery]);
 
   return {
     comments: commentsQuery.data || [],
     isLoading: commentsQuery.isLoading,
-    addComment: (comment: string) => addCommentMutation.mutateAsync({ comment }),
+    addComment: (comment: string) => addCommentMutation.mutateAsync(comment),
     isAddingComment: addCommentMutation.isPending,
     forceRefresh
   };
@@ -490,7 +490,7 @@ export const useRobustNotes = (entityId: string, entityType: 'lead' | 'client') 
     refetchOnMount: true
   });
 
-  // Update notes with debouncing protection
+  // Update notes mutation
   const updateNotesMutation = useMutation({
     mutationFn: async ({ content }: { content: string }) => {
       console.log('[RobustNotes] Updating notes:', { entityType, entityId, content });
@@ -519,38 +519,64 @@ export const useRobustNotes = (entityId: string, entityType: 'lead' | 'client') 
         entity_type: entityType
       };
     },
-    onSuccess: () => {
-      // Invalidate related queries
-      queryClient.invalidateQueries({ queryKey: ['robust-notes', entityType, entityId] });
+    onMutate: async ({ content }) => {
+      // PERFORMANCE FIX: Light optimistic update without heavy operations
+      const queryKey = ['robust-notes', entityType, entityId];
+      const previousNote = queryClient.getQueryData(queryKey);
       
-      if (entityType === 'lead') {
-        queryClient.invalidateQueries({ queryKey: ['leads'] });
-        queryClient.invalidateQueries({ queryKey: ['enhanced-leads'] });
-      } else {
-        queryClient.invalidateQueries({ 
-          predicate: (query) => {
-            const key = query.queryKey;
-            return Array.isArray(key) && (
-              key[0] === 'clients' || 
-              key[0] === 'clients_simplified' ||
-              key[0] === 'clients_list_for_admin'
-            );
-          }
-        });
+      queryClient.setQueryData(queryKey, {
+        id: `${entityType}-notes-${entityId}`,
+        content,
+        last_updated: new Date().toISOString(),
+        entity_id: entityId,
+        entity_type: entityType
+      });
+      
+      return { previousNote };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousNote) {
+        queryClient.setQueryData(['robust-notes', entityType, entityId], context.previousNote);
       }
-      
+      console.error('[RobustNotes] Update error:', err);
+      toast.error('שגיאה בשמירת ההערות');
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['robust-notes', entityType, entityId], data);
       toast.success('ההערות נשמרו בהצלחה');
     },
-    onError: (error) => {
-      console.error('[RobustNotes] Update error:', error);
-      toast.error('שגיאה בשמירת ההערות');
-    }
   });
+
+  // PERFORMANCE FIX: Use useRef for debouncing to avoid blocking UI
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const updateNotes = useCallback((content: string) => {
+    // Clear previous timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    // CRITICAL FIX: Set timeout without blocking UI
+    timeoutRef.current = setTimeout(() => {
+      updateNotesMutation.mutate({ content });
+    }, 1000); // Increased to 1 second for better UX
+  }, [updateNotesMutation]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   return {
     note: notesQuery.data,
     isLoading: notesQuery.isLoading,
-    updateNotes: (content: string) => updateNotesMutation.mutateAsync({ content }),
-    isUpdating: updateNotesMutation.isPending
+    error: notesQuery.error,
+    updateNotes,
+    isUpdating: updateNotesMutation.isPending,
+    refetch: notesQuery.refetch
   };
 }; 

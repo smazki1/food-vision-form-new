@@ -25,6 +25,26 @@ export function formatCurrency(
 }
 
 /**
+ * Format a number as Israeli Shekels (ILS) currency
+ * @param value The numeric value to format
+ * @param locale The locale to use for formatting (default: 'he-IL')
+ * @returns Formatted currency string in ILS
+ */
+export function formatCurrencyILS(
+  value: number | null | undefined,
+  locale = 'he-IL'
+): string {
+  if (value === null || value === undefined) return '—';
+  
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: 'ILS',
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+  }).format(value);
+}
+
+/**
  * Format a number as a percentage with appropriate locale
  * @param value The numeric value to format (e.g., 75.5 for 75.5%)
  * @param locale The locale to use for formatting (default: 'he-IL')

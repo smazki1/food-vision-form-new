@@ -152,7 +152,21 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
   const handleAddComment = () => {
     if (!newComment.trim()) return;
 
-    const visibility = activeCommentTab === 'client_visible' ? 'client' : 'admin';
+    // Map comment types to appropriate visibility levels
+    const getVisibilityForCommentType = (commentType: SubmissionCommentType): string => {
+      switch (commentType) {
+        case 'client_visible':
+          return 'client';
+        case 'admin_internal':
+          return 'admin';
+        case 'editor_note':
+          return 'editor';
+        default:
+          return 'admin';
+      }
+    };
+
+    const visibility = getVisibilityForCommentType(activeCommentTab);
     addCommentMutation.mutate({
       submissionId,
       commentType: activeCommentTab,
@@ -413,6 +427,45 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     }
   };
 
+  // Handle delete processed image
+  const handleDeleteProcessedImage = async (imageUrl: string) => {
+    if (!confirm("האם אתה בטוח שברצונך למחוק תמונה זו?")) {
+      return;
+    }
+
+    try {
+      const currentImages = submission.processed_image_urls || [];
+      const updatedImages = currentImages.filter(url => url !== imageUrl);
+      
+      const updateData: any = { processed_image_urls: updatedImages };
+      
+      // Clear main image if we're deleting it
+      if (submission.main_processed_image_url === imageUrl) {
+        updateData.main_processed_image_url = null;
+      }
+
+      const { error } = await supabase
+        .from('customer_submissions')
+        .update(updateData)
+        .eq('submission_id', submissionId);
+
+      if (error) throw error;
+
+      // Adjust current index if needed
+      if (currentProcessedIndex >= updatedImages.length && updatedImages.length > 0) {
+        setCurrentProcessedIndex(updatedImages.length - 1);
+      } else if (updatedImages.length === 0) {
+        setCurrentProcessedIndex(0);
+      }
+
+      toast.success("התמונה נמחקה בהצלחה");
+      await refetchSubmission();
+    } catch (error) {
+      console.error('Error deleting processed image:', error);
+      toast.error("שגיאה במחיקת התמונה");
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -438,7 +491,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
     );
   }
 
-  const statusInfo = SUBMISSION_STATUSES[submission.submission_status as SubmissionStatusKey];
+  const statusInfo = SUBMISSION_STATUSES[submission.submission_status as SubmissionStatusKey] || {
+    color: 'bg-gray-100 text-gray-800',
+    label: submission.submission_status || 'לא ידוע'
+  };
 
   return (
     <div className={`min-h-screen bg-gray-50 ${context === 'lead-panel' ? 'max-h-screen overflow-y-auto' : ''}`}>
@@ -645,7 +701,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                   
                   {/* Processed Image Display with Navigation */}
                   {submission.processed_image_urls && submission.processed_image_urls.length > 0 ? (
-                    <div className="relative">
+                    <div className="relative group">
                       <div className={`aspect-square bg-white rounded-lg border-2 overflow-hidden ${
                         submission.processed_image_urls[currentProcessedIndex] === submission.main_processed_image_url 
                           ? 'border-blue-500 ring-2 ring-blue-200' 
@@ -682,7 +738,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       )}
                       
                       {/* Action buttons overlay for current processed image */}
-                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center pointer-events-none group">
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center pointer-events-none">
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                           <Button
                             variant="secondary"
@@ -695,6 +751,19 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                           >
                             <Download className="h-4 w-4" />
                           </Button>
+                          {viewMode === 'admin' && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="pointer-events-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteProcessedImage(submission.processed_image_urls![currentProcessedIndex]);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                       
@@ -706,21 +775,84 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center">
+                    <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-4">
                       {viewMode === 'admin' ? (
-                        <>
-                          <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                          <span className="text-gray-500 text-center">
-                            אין תמונות מעובדות<br />
-                            <Button 
-                              variant="link" 
-                              className="p-0 h-auto text-blue-600"
-                              onClick={() => setShowProcessedImageUpload(true)}
+                        <div className="w-full max-w-sm space-y-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mb-2 mx-auto" />
+                            <span className="text-gray-500 text-sm">אין תמונות מעובדות</span>
+                          </div>
+                          
+                          {/* Quick Upload Controls */}
+                          <div className="space-y-3">
+                            {/* URL Upload */}
+                            <div className="space-y-2">
+                              <Input
+                                placeholder="הכנס URL של תמונה..."
+                                value={processedImageUrl}
+                                onChange={(e) => setProcessedImageUrl(e.target.value)}
+                                disabled={isUploadingProcessed}
+                                className="text-sm"
+                              />
+                              <Button
+                                onClick={handleProcessedImageUrlUpload}
+                                disabled={isUploadingProcessed || !processedImageUrl.trim()}
+                                size="sm"
+                                className="w-full"
+                              >
+                                {isUploadingProcessed ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                    מוסיף...
+                                  </>
+                                ) : (
+                                  'הוסף מ-URL'
+                                )}
+                              </Button>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-px bg-gray-300"></div>
+                              <span className="text-xs text-gray-500">או</span>
+                              <div className="flex-1 h-px bg-gray-300"></div>
+                            </div>
+                            
+                            {/* File Upload */}
+                            <input
+                              ref={fileInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  console.log('File selected:', file.name, file.size, file.type);
+                                  await handleProcessedImageFileUpload(file);
+                                }
+                              }}
+                              className="hidden"
+                              disabled={isUploadingProcessed}
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={() => fileInputRef.current?.click()}
+                              disabled={isUploadingProcessed}
+                              size="sm"
+                              className="w-full"
                             >
-                              העלה תמונה מעובדת
+                              {isUploadingProcessed ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                  מעלה תמונה...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="h-4 w-4 mr-2" />
+                                  העלה מהמחשב
+                                </>
+                              )}
                             </Button>
-                          </span>
-                        </>
+                          </div>
+                        </div>
                       ) : (
                         <span className="text-gray-500">אין תמונות מעובדות</span>
                       )}
@@ -880,19 +1012,34 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                           onClick={() => handleImageClick(url)}
                         />
                         
-                        {/* Download button overlay */}
+                        {/* Download and Delete buttons overlay */}
                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center pointer-events-none">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-auto"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownloadProcessedImage(url);
-                            }}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="pointer-events-auto"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDownloadProcessedImage(url);
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            {viewMode === 'admin' && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="pointer-events-auto"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteProcessedImage(url);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         
                         {url === submission.main_processed_image_url && (
@@ -1112,162 +1259,166 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
         )}
 
         {/* Info Grid - Responsive Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
-          {/* Submission Details */}
+          {/* Consolidated Details Card - Compact */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                פרטי ההגשה
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <User className="h-4 w-4" />
+                פרטי הגשה ולקוח
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-xs text-gray-500">סוג פריט</Label>
-                <p className="text-sm font-medium">{submission.item_type}</p>
+            <CardContent className="space-y-3">
+              {/* Submission Basic Info */}
+              <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-blue-600 font-medium">פרטי ההגשה</span>
+                  <Badge variant="outline" className="text-xs">{submission.item_type}</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-blue-600">תאריך:</span>
+                    <span className="block font-medium">{new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</span>
+                  </div>
+                  <div>
+                    <span className="text-blue-600">עדיפות:</span>
+                    <span className="block font-medium">{submission.priority || 'רגילה'}</span>
+                  </div>
+                </div>
+                {submission.assigned_editor_id && (
+                  <div className="text-xs">
+                    <span className="text-blue-600">עורך:</span>
+                    <span className="font-medium ml-1">{submission.assigned_editor_id}</span>
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="text-xs text-gray-500">תאריך הגשה</Label>
-                <p className="text-sm font-medium">
-                  {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">עדיפות</Label>
-                <p className="text-sm font-medium">{submission.priority || 'רגילה'}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-gray-500">עורך מוקצה</Label>
-                <p className="text-sm font-medium">{submission.assigned_editor_id || 'לא הוקצה'}</p>
-              </div>
+
+              {/* Client/Lead Info */}
+              {(submission.clients || submission.leads) && (
+                <div className="bg-green-50 rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-green-600 font-medium">
+                      {submission.clients ? 'לקוח' : 'ליד'}
+                    </span>
+                    <Building2 className="h-3 w-3 text-green-600" />
+                  </div>
+                  {submission.clients && (
+                    <div className="space-y-1">
+                      <div className="text-xs">
+                        <span className="text-green-600">מסעדה:</span>
+                        <span className="block font-medium">{submission.clients.restaurant_name}</span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="text-green-600">איש קשר:</span>
+                        <span className="block font-medium">{submission.clients.contact_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Mail className="h-3 w-3 text-green-500" />
+                        <span className="truncate">{submission.clients.email}</span>
+                      </div>
+                      {submission.clients.phone && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <Phone className="h-3 w-3 text-green-500" />
+                          <span>{submission.clients.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {submission.leads && (
+                    <div className="space-y-1">
+                      <div className="text-xs">
+                        <span className="text-green-600">מסעדה:</span>
+                        <span className="block font-medium">{submission.leads.restaurant_name}</span>
+                      </div>
+                      <div className="text-xs">
+                        <span className="text-green-600">איש קשר:</span>
+                        <span className="block font-medium">{submission.leads.contact_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-xs">
+                        <Mail className="h-3 w-3 text-green-500" />
+                        <span className="truncate">{submission.leads.email}</span>
+                      </div>
+                      {submission.leads.phone && (
+                        <div className="flex items-center gap-1 text-xs">
+                          <Phone className="h-3 w-3 text-green-500" />
+                          <span>{submission.leads.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Original Form Contact Info (if different from client/lead) */}
+              {(submission.contact_name || submission.email || submission.phone) && (
+                <div className="bg-amber-50 rounded-lg p-3 space-y-1">
+                  <span className="text-xs text-amber-600 font-medium">פרטי טופס מקורי</span>
+                  {submission.contact_name && (
+                    <div className="text-xs">
+                      <span className="text-amber-600">שם:</span>
+                      <span className="font-medium ml-1">{submission.contact_name}</span>
+                    </div>
+                  )}
+                  {submission.email && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Mail className="h-3 w-3 text-amber-500" />
+                      <span className="truncate">{submission.email}</span>
+                    </div>
+                  )}
+                  {submission.phone && (
+                    <div className="flex items-center gap-1 text-xs">
+                      <Phone className="h-3 w-3 text-amber-500" />
+                      <span>{submission.phone}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Client/Lead Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                פרטי {submission.clients ? 'לקוח' : 'ליד'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {submission.clients && (
-                <>
-                  <div>
-                    <Label className="text-xs text-gray-500">שם מסעדה</Label>
-                    <p className="text-sm font-medium">{submission.clients.restaurant_name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">איש קשר</Label>
-                    <p className="text-sm font-medium">{submission.clients.contact_name}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.clients.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.clients.phone}</p>
-                  </div>
-                </>
-              )}
-              {submission.leads && (
-                <>
-                  <div>
-                    <Label className="text-xs text-gray-500">שם מסעדה</Label>
-                    <p className="text-sm font-medium">{submission.leads.restaurant_name}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-gray-500">איש קשר</Label>
-                    <p className="text-sm font-medium">{submission.leads.contact_name}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.leads.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.leads.phone}</p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Original Submission Contact Info (if available) */}
-          {(submission.contact_name || submission.email || submission.phone) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  פרטי יצירת קשר מהטופס
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {submission.contact_name && (
-                  <div>
-                    <Label className="text-xs text-gray-500">שם איש קשר</Label>
-                    <p className="text-sm font-medium">{submission.contact_name}</p>
-                  </div>
-                )}
-                {submission.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.email}</p>
-                  </div>
-                )}
-                {submission.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <p className="text-sm">{submission.phone}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* AI & LoRA Settings */}
-          <Card>
-            <CardHeader>
+          {/* AI & LoRA Settings - Enhanced Space */}
+          <Card className="md:col-span-2">
+            <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2">
                 <Wand2 className="h-5 w-5" />
                 הגדרות AI & LoRA
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-50 rounded-lg p-4 space-y-4">
-                <div>
-                  <Label htmlFor="lora-link" className="text-xs text-gray-500">קישור LoRA</Label>
-                  <Input
-                    id="lora-link"
-                    value={loraData.lora_link}
-                    onChange={(e) => {
-                      setLoraData(prev => ({ ...prev, lora_link: e.target.value }));
-                      setEditingLoraFields(true);
-                    }}
-                    placeholder="הזן קישור LoRA"
-                    className="mt-1"
-                    disabled={viewMode !== 'admin'}
-                  />
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="lora-link" className="text-sm font-medium text-gray-700">קישור LoRA</Label>
+                    <Input
+                      id="lora-link"
+                      value={loraData.lora_link}
+                      onChange={(e) => {
+                        setLoraData(prev => ({ ...prev, lora_link: e.target.value }));
+                        setEditingLoraFields(true);
+                      }}
+                      placeholder="הזן קישור LoRA"
+                      className="mt-2"
+                      disabled={viewMode !== 'admin'}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="lora-name" className="text-sm font-medium text-gray-700">שם LoRA</Label>
+                    <Input
+                      id="lora-name"
+                      value={loraData.lora_name}
+                      onChange={(e) => {
+                        setLoraData(prev => ({ ...prev, lora_name: e.target.value }));
+                        setEditingLoraFields(true);
+                      }}
+                      placeholder="שם תיאורי של LoRA"
+                      className="mt-2"
+                      disabled={viewMode !== 'admin'}
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="lora-name" className="text-xs text-gray-500">שם LoRA</Label>
-                  <Input
-                    id="lora-name"
-                    value={loraData.lora_name}
-                    onChange={(e) => {
-                      setLoraData(prev => ({ ...prev, lora_name: e.target.value }));
-                      setEditingLoraFields(true);
-                    }}
-                    placeholder="שם תיאורי של LoRA"
-                    className="mt-1"
-                    disabled={viewMode !== 'admin'}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lora-id" className="text-xs text-gray-500">מזהה LoRA</Label>
+                  <Label htmlFor="lora-id" className="text-sm font-medium text-gray-700">מזהה LoRA</Label>
                   <Input
                     id="lora-id"
                     value={loraData.lora_id}
@@ -1276,12 +1427,12 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       setEditingLoraFields(true);
                     }}
                     placeholder="מזהה LoRA (טקסט חופשי)"
-                    className="mt-1"
+                    className="mt-2"
                     disabled={viewMode !== 'admin'}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="fixed-prompt" className="text-xs text-gray-500">Prompt קבוע</Label>
+                  <Label htmlFor="fixed-prompt" className="text-sm font-medium text-gray-700">Prompt קבוע</Label>
                   <Textarea
                     id="fixed-prompt"
                     value={loraData.fixed_prompt}
@@ -1290,10 +1441,22 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                       setEditingLoraFields(true);
                     }}
                     placeholder="כתוב את ה-prompt המותאם אישית..."
-                    className="mt-1 font-mono text-sm min-h-[100px]"
+                    className="mt-2 font-mono text-sm min-h-[120px]"
                     disabled={viewMode !== 'admin'}
                   />
                 </div>
+                {editingLoraFields && viewMode === 'admin' && (
+                  <div className="flex justify-end pt-2">
+                    <Button 
+                      onClick={handleLoraUpdate}
+                      disabled={updateLoraMutation.isPending}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Save className="h-4 w-4 ml-2" />
+                      {updateLoraMutation.isPending ? 'שומר...' : 'שמור הגדרות'}
+                    </Button>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1332,28 +1495,55 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
 
               {/* Comment Input */}
               {viewMode === 'admin' && (
-                <div className="mt-4 space-y-2">
-                  <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder={`כתוב הערה ${activeCommentTab === 'admin_internal' ? 'פנימית' : 
-                      activeCommentTab === 'client_visible' ? 'ללקוח' : 'לעורך'}...`}
-                    className="min-h-[80px]"
-                  />
-                  <Button 
-                    onClick={handleAddComment}
-                    disabled={!newComment.trim() || addCommentMutation.isPending}
-                    className="w-full"
-                  >
-                    <MessageSquare className="h-4 w-4 ml-2" />
-                    שלח הערה
-                  </Button>
+                <div className="mt-4 space-y-3">
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">
+                        {activeCommentTab === 'admin_internal' && 'הערה פנימית - רק צוות המערכת יוכל לראות'}
+                        {activeCommentTab === 'client_visible' && 'הערה ללקוח - הלקוח יוכל לראות הערה זו'}
+                        {activeCommentTab === 'editor_note' && 'הערה לעורך - רק עורכים יוכלו לראות'}
+                      </span>
+                    </div>
+                    <Textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder={`כתוב הערה ${activeCommentTab === 'admin_internal' ? 'פנימית' : 
+                        activeCommentTab === 'client_visible' ? 'ללקוח' : 'לעורך'}...`}
+                      className="min-h-[80px] bg-white border-blue-200 focus:border-blue-500"
+                    />
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-xs text-blue-600">
+                        {newComment.length}/500 תווים
+                      </span>
+                      <Button 
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim() || addCommentMutation.isPending || newComment.length > 500}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        size="sm"
+                      >
+                        {addCommentMutation.isPending ? (
+                          <>
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2"></div>
+                            שולח...
+                          </>
+                        ) : (
+                          <>
+                            <MessageSquare className="h-4 w-4 ml-2" />
+                            שלח הערה
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {/* Comments List */}
               <TabsContent value={activeCommentTab} className="mt-4">
                 <div className="space-y-3 max-h-96 overflow-y-auto">
+
+                  
                   {getCommentsByType(activeCommentTab).map((comment) => (
                     <div key={comment.comment_id} className="bg-gray-50 rounded-lg p-4">
                       <div className="flex items-center justify-between mb-2">

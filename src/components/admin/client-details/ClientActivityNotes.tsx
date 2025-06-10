@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -57,12 +57,13 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
   const [leadComments, setLeadComments] = useState<LeadComment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
-  // Local editing state for input fields
-  const [editingNextFollowUpDate, setEditingNextFollowUpDate] = useState('');
-  const [editingReminderDetails, setEditingReminderDetails] = useState('');
+  // PERFORMANCE FIX: Local state for immediate UI responsiveness
+  const [localNotesContent, setLocalNotesContent] = useState('');
+  const [localNextFollowUpDate, setLocalNextFollowUpDate] = useState('');
+  const [localReminderDetails, setLocalReminderDetails] = useState('');
 
   const { clients } = useClients();
-  const client = clients.find(c => c.client_id === clientId);
+  const client = useMemo(() => clients.find(c => c.client_id === clientId), [clients, clientId]);
   const clientUpdateMutation = useClientUpdate();
 
   // Use robust comments and notes system
@@ -81,32 +82,34 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     isUpdating: isUpdatingNotes 
   } = useRobustNotes(clientId, 'client');
 
-  // Use client data directly from useClients instead of separate queries
-  const nextFollowUpDate = client?.next_follow_up_date || '';
-  const reminderDetails = client?.reminder_details || '';
-  const linkedLeadId = client?.original_lead_id || null;
+  // PERFORMANCE FIX: Initialize local state from server data
+  useEffect(() => {
+    if (robustNote && localNotesContent !== robustNote.content) {
+      setLocalNotesContent(robustNote.content);
+    }
+  }, [robustNote?.content]);
 
   useEffect(() => {
     if (client) {
-      // Initialize editing state with current values (notes now handled by robust system)
-      setEditingNextFollowUpDate(client.next_follow_up_date || '');
-      setEditingReminderDetails(client.reminder_details || '');
+      if (localNextFollowUpDate !== (client.next_follow_up_date || '')) {
+        setLocalNextFollowUpDate(client.next_follow_up_date || '');
+      }
+      if (localReminderDetails !== (client.reminder_details || '')) {
+        setLocalReminderDetails(client.reminder_details || '');
+      }
       
       loadLeadAndCommentsData();
     }
-  }, [clientId, client]);
+  }, [client?.client_id]); // Only depend on client ID changes
 
-  const loadLeadAndCommentsData = async () => {
+  const loadLeadAndCommentsData = useCallback(async () => {
+    if (!client?.original_lead_id) return;
+    
     try {
       setIsLoading(true);
       
-      // Comments now handled by robust system - no need to parse internal_notes
-      console.log('[ClientActivityNotes] Using robust comments system, no manual parsing needed');
-
       // Load lead data if this client was converted from a lead
-      if (linkedLeadId) {
-        await loadLeadData(linkedLeadId);
-      }
+      await loadLeadData(client.original_lead_id);
 
     } catch (error) {
       console.error('Error loading client activity data:', error);
@@ -114,7 +117,7 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [client?.original_lead_id]);
 
   const loadLeadData = async (leadId: string) => {
     try {
@@ -144,80 +147,80 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     }
   };
 
-  const handleNotesUpdate = async (newNotes: string) => {
-    try {
-      console.log('[ClientActivityNotes] Using robust notes system for update');
-      await updateRobustNotes(newNotes);
-      // Success/error messages handled by robust system
-    } catch (error) {
-      console.error('[ClientActivityNotes] Notes update error:', error);
-      // Error handling done by robust system
-    }
-  };
+  // PERFORMANCE FIX: Optimized handlers with debouncing built-in
+  const handleNotesChange = useCallback((newNotes: string) => {
+    setLocalNotesContent(newNotes); // Immediate UI update
+    updateRobustNotes(newNotes); // Background server update with debouncing
+  }, [updateRobustNotes]);
 
-  const handleFieldBlur = async (fieldName: string, value: any) => {
+  const handleFieldChange = useCallback((fieldName: string, value: any) => {
+    // Immediate local state update
+    if (fieldName === 'next_follow_up_date') {
+      setLocalNextFollowUpDate(value);
+    } else if (fieldName === 'reminder_details') {
+      setLocalReminderDetails(value);
+    }
+  }, []);
+
+  const handleFieldBlur = useCallback(async (fieldName: string, value: any) => {
+    if (!client) return;
+    
+    // Skip if value hasn't changed from server state
+    const serverValue = fieldName === 'next_follow_up_date' 
+      ? client.next_follow_up_date 
+      : client.reminder_details;
+    
+    if (serverValue === value) return;
+
     try {
-      console.log(`Updating client field ${fieldName}:`, value);
-      
       await clientUpdateMutation.mutateAsync({
         clientId,
         updates: { [fieldName]: value }
       });
-      
-      // Update local state on success
-      if (fieldName === 'next_follow_up_date') {
-        setEditingNextFollowUpDate(value);
-      } else if (fieldName === 'reminder_details') {
-        setEditingReminderDetails(value);
-      }
     } catch (error) {
       console.error('Error updating field:', error);
-      
-      // Reset to original value on error
+      // Reset to server value on error
       if (fieldName === 'next_follow_up_date') {
-        setEditingNextFollowUpDate(nextFollowUpDate);
+        setLocalNextFollowUpDate(client.next_follow_up_date || '');
       } else if (fieldName === 'reminder_details') {
-        setEditingReminderDetails(reminderDetails);
+        setLocalReminderDetails(client.reminder_details || '');
       }
     }
-  };
+  }, [client, clientId, clientUpdateMutation]);
 
-  const handleAddComment = async () => {
+  const handleAddComment = useCallback(async () => {
     if (!newComment.trim()) return;
 
     try {
-      console.log('[ClientActivityNotes] Using robust comment system for adding comment');
       await addRobustComment(newComment.trim());
       setNewComment('');
-      // Success/error messages handled by robust system
     } catch (error) {
       console.error('[ClientActivityNotes] Comment addition error:', error);
-      // Error handling done by robust system
     }
-  };
+  }, [newComment, addRobustComment]);
 
-  const handleForceRefresh = async () => {
+  const handleForceRefresh = useCallback(async () => {
     console.log('[ClientActivityNotes] Force refreshing comments...');
     forceRefresh();
     toast.success('רענון תגובות הופעל');
-  };
+  }, [forceRefresh]);
 
-  const handleDebugComments = async () => {
+  const handleDebugComments = useCallback(async () => {
     console.log('[ClientActivityNotes] Running comment debug...');
     await debugClientComments(clientId);
     toast.success('בדיקת תגובות הושלמה - בדוק את הקונסול');
-  };
+  }, [clientId]);
 
-  const handleForceSync = async () => {
+  const handleForceSync = useCallback(async () => {
     console.log('[ClientActivityNotes] Force syncing lead comments...');
     const success = await forceCommentSync(clientId);
     if (success) {
-      forceRefresh(); // Refresh UI after sync
+      forceRefresh();
       toast.success('סנכרון תגובות הושלם בהצלחה');
     } else {
       toast.error('שגיאה בסנכרון תגובות');
     }
-  };
+  }, [clientId, forceRefresh]);
 
   if (isLoading) {
     return (
@@ -257,7 +260,7 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
                 <RefreshCw className="h-4 w-4" />
                 רענן
               </Button>
-              {linkedLeadId && (
+              {client?.original_lead_id && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -287,14 +290,16 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
               <div>
                 <Label className="text-sm font-medium">הערות כלליות</Label>
                 <Textarea
-                  value={robustNote?.content || ''}
-                  onChange={(e) => handleNotesUpdate(e.target.value)}
-                  onBlur={(e) => handleNotesUpdate(e.target.value)}
+                  value={localNotesContent}
+                  onChange={(e) => handleNotesChange(e.target.value)}
                   className="mt-1"
                   placeholder="הערות כלליות על הלקוח, העדפות, הנחיות מיוחדות..."
                   rows={6}
                   disabled={isUpdatingNotes}
                 />
+                {isUpdatingNotes && (
+                  <div className="text-xs text-gray-500 mt-1">שומר...</div>
+                )}
               </div>
             </div>
 
@@ -347,9 +352,9 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-sm text-gray-500 mb-2">אין תגובות עדיין</p>
-                      {linkedLeadId && (
+                      {client?.original_lead_id && (
                         <p className="text-xs text-gray-400">
-                          לקוח זה הומר מליד: {linkedLeadId}
+                          לקוח זה הומר מליד: {client.original_lead_id}
                         </p>
                       )}
                     </div>
@@ -362,92 +367,30 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
           {/* Follow-up Details */}
           <Separator className="my-6" />
           
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium">תאריך מעקב הבא</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-600">תאריך מעקב הבא</Label>
               <Input
                 type="date"
-                value={editingNextFollowUpDate}
-                onChange={(e) => setEditingNextFollowUpDate(e.target.value)}
+                value={localNextFollowUpDate}
+                onChange={(e) => handleFieldChange('next_follow_up_date', e.target.value)}
                 onBlur={(e) => handleFieldBlur('next_follow_up_date', e.target.value)}
-                className="mt-1"
+                className="w-full"
               />
             </div>
-            
-            <div>
-              <Label className="text-sm font-medium">פרטי תזכורת</Label>
-              <Textarea
-                value={editingReminderDetails}
-                onChange={(e) => setEditingReminderDetails(e.target.value)}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-600">פרטי תזכורת</Label>
+              <Input
+                value={localReminderDetails}
+                onChange={(e) => handleFieldChange('reminder_details', e.target.value)}
                 onBlur={(e) => handleFieldBlur('reminder_details', e.target.value)}
-                placeholder="פרטי התזכורת למעקב..."
-                className="mt-1"
-                rows={3}
+                placeholder="פרטי התזכורת למעקב"
+                className="w-full"
               />
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Lead History Section */}
-      {linkedLeadId && (leadActivities.length > 0 || leadComments.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              היסטוריה מהליד המקורי
-              <Badge variant="secondary" className="mr-2">
-                {linkedLeadId}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Lead Comments */}
-              <div>
-                <Label className="text-sm font-medium mb-2 block">תגובות מהליד</Label>
-                <ScrollArea className="h-48">
-                  {leadComments.length > 0 ? (
-                    <div className="space-y-2">
-                      {leadComments.map((comment) => (
-                        <div key={comment.comment_id} className="p-3 bg-blue-50 rounded-md border-l-4 border-blue-200">
-                          <p className="text-sm text-gray-700">{comment.comment_text}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(comment.comment_timestamp).toLocaleString('he-IL')}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">אין תגובות מהליד</p>
-                  )}
-                </ScrollArea>
-              </div>
-
-              {/* Lead Activities */}
-              <div>
-                <Label className="text-sm font-medium mb-2 block">פעילויות מהליד</Label>
-                <ScrollArea className="h-48">
-                  {leadActivities.length > 0 ? (
-                    <div className="space-y-2">
-                      {leadActivities.filter(activity => !activity.activity_description.startsWith('תגובה:')).map((activity) => (
-                        <div key={activity.activity_id} className="p-3 bg-green-50 rounded-md border-l-4 border-green-200">
-                          <p className="text-sm text-gray-700">{activity.activity_description}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {new Date(activity.activity_timestamp).toLocaleString('he-IL')}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 text-center py-4">אין פעילויות מהליד</p>
-                  )}
-                </ScrollArea>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }; 

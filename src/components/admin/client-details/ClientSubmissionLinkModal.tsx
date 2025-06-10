@@ -68,22 +68,21 @@ export const ClientSubmissionLinkModal: React.FC<ClientSubmissionLinkModalProps>
     setIsLoading(true);
     try {
       // Get submissions that are not linked to this client
-      // We'll get recent submissions that might need to be linked
-             const { data, error } = await supabase
-         .from('customer_submissions')
-         .select(`
-           submission_id,
-           client_id,
-           item_type,
-           item_name_at_submission,
-           submission_status,
-           uploaded_at,
-           original_image_urls,
-           clients!inner(restaurant_name, contact_name)
-         `)
-         .neq('client_id', client.client_id)
-         .order('uploaded_at', { ascending: false })
-         .limit(50);
+      // Start with a simple query first  
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .select(`
+          submission_id,
+          client_id,
+          lead_id,
+          item_type,
+          item_name_at_submission,
+          submission_status,
+          uploaded_at,
+          original_image_urls
+        `)
+        .order('uploaded_at', { ascending: false })
+        .limit(50);
 
        if (error) {
          console.error('Error fetching submissions:', error);
@@ -91,13 +90,43 @@ export const ClientSubmissionLinkModal: React.FC<ClientSubmissionLinkModalProps>
          return;
        }
 
-       // Transform the data to match our interface
-       const transformedData = (data || []).map(item => ({
-         ...item,
-         clients: Array.isArray(item.clients) ? item.clients[0] : item.clients
-       }));
+       // Filter out submissions that belong to the current client
+       const filteredData = (data || []).filter(submission => 
+         submission.client_id !== client.client_id
+       );
 
-       setSubmissions(transformedData);
+       // Get client and lead information separately for each submission
+       const submissionsWithInfo = await Promise.all(
+         filteredData.map(async (submission) => {
+           let clientInfo = null;
+           
+           if (submission.client_id) {
+             const { data: clientData } = await supabase
+               .from('clients')
+               .select('restaurant_name, contact_name')
+               .eq('client_id', submission.client_id)
+               .single();
+             clientInfo = clientData;
+           } else if (submission.lead_id) {
+             const { data: leadData } = await supabase
+               .from('leads')
+               .select('restaurant_name, contact_name')
+               .eq('lead_id', submission.lead_id)
+               .single();
+             clientInfo = leadData ? {
+               restaurant_name: leadData.restaurant_name || 'ליד',
+               contact_name: leadData.contact_name || 'לא ידוע'
+             } : null;
+           }
+           
+           return {
+             ...submission,
+             clients: clientInfo
+           };
+         })
+       );
+
+       setSubmissions(submissionsWithInfo);
     } catch (error) {
       console.error('Error:', error);
       toast.error('אירעה שגיאה בטעינת הגשות');
@@ -187,8 +216,8 @@ export const ClientSubmissionLinkModal: React.FC<ClientSubmissionLinkModalProps>
           </div>
 
           {/* Submissions List */}
-          <div className="flex-1 overflow-hidden">
-            <div className="h-full overflow-y-auto space-y-2 pr-2">
+          <div className="flex-1 min-h-0">
+            <div className="h-[400px] overflow-y-auto space-y-2 pr-2">
               {isLoading ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

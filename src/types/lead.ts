@@ -103,6 +103,11 @@ export interface Lead {
   ai_training_15_count?: number;
   ai_training_25_count?: number;
   is_archived?: boolean;
+  total_work_time_minutes?: number; // Work time tracking field
+  // New requirement fields
+  items_quantity_range?: string;
+  estimated_images_needed?: string;
+  primary_image_usage?: string;
 }
 
 // Lead activity and comment interfaces

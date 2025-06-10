@@ -26,7 +26,8 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { formatCurrency, formatNumber, formatPercentage } from '@/utils/formatters';
+import { formatCurrency, formatCurrencyILS, formatNumber, formatPercentage } from '@/utils/formatters';
+import { WorkTimeTracker } from '@/components/admin/shared/WorkTimeTracker';
 
 // Interface for the cost data
 interface ClientCostData {
@@ -69,7 +70,7 @@ const ClientCostsReportPage: React.FC = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['client-costs-report', timeRange],
     queryFn: async () => {
-      // For now, we'll use a simplified query since we don't have the RPC function yet
+      // Fetch clients with their package information using proper join
       const { data: clients, error } = await supabase
         .from('clients')
         .select(`
@@ -87,7 +88,7 @@ const ClientCostsReportPage: React.FC = () => {
           roi,
           created_at,
           current_package_id,
-          service_packages:current_package_id(package_name)
+          service_packages!clients_current_package_id_fkey(package_name, price)
         `);
       
       if (error) throw error;
@@ -112,7 +113,16 @@ const ClientCostsReportPage: React.FC = () => {
       
       // Calculate totals
       processedData.total_ai_costs = clients.reduce((sum, client) => sum + (client.total_ai_costs || 0), 0);
-      processedData.total_revenue = clients.reduce((sum, client) => sum + (client.revenue_from_client_usd || 0), 0);
+      
+      // Calculate profit in ILS: package_price - (total_ai_costs * exchange_rate)
+      processedData.total_revenue = clients.reduce((sum, client) => {
+        const packagePrice = (client.service_packages as any)?.price || 0;
+        const exchangeRate = client.exchange_rate_at_conversion || 3.8; // Default exchange rate
+        const costsInILS = (client.total_ai_costs || 0) * exchangeRate;
+        const profitInILS = Math.max(0, packagePrice - costsInILS);
+        return sum + profitInILS;
+      }, 0);
+      
       processedData.trainings_count = clients.reduce((sum, client) => 
         sum + (client.ai_training_5_count || 0) + (client.ai_training_15_count || 0) + (client.ai_training_25_count || 0), 0);
       processedData.prompts_count = clients.reduce((sum, client) => sum + (client.ai_prompts_count || 0), 0);
@@ -123,11 +133,16 @@ const ClientCostsReportPage: React.FC = () => {
       processedData.prompts_costs = clients.reduce((sum, client) => 
         sum + ((client.ai_prompts_count || 0) * (client.ai_prompt_cost_per_unit || 0.162)), 0);
       
+      // Calculate ROI based on ILS profit
       if (processedData.total_ai_costs > 0) {
-        processedData.roi_percentage = ((processedData.total_revenue - processedData.total_ai_costs) / processedData.total_ai_costs) * 100;
+        const totalCostsInILS = processedData.total_ai_costs * 3.8; // Convert USD costs to ILS
+        const totalPackageRevenue = clients.reduce((sum, client) => 
+          sum + ((client.service_packages as any)?.price || 0), 0);
+        processedData.roi_percentage = totalPackageRevenue > 0 ? 
+          ((processedData.total_revenue) / totalPackageRevenue) * 100 : 0;
       }
       
-      // Group by status
+      // Group by status with ILS profit calculation
       const statusGroups = clients.reduce((acc, client) => {
         const status = client.client_status || 'לא מוגדר';
         if (!acc[status]) {
@@ -135,7 +150,14 @@ const ClientCostsReportPage: React.FC = () => {
         }
         acc[status].count += 1;
         acc[status].costs += client.total_ai_costs || 0;
-        acc[status].revenue += client.revenue_from_client_usd || 0;
+        
+        // Calculate profit in ILS for this client
+        const packagePrice = (client.service_packages as any)?.price || 0;
+        const exchangeRate = client.exchange_rate_at_conversion || 3.8;
+        const costsInILS = (client.total_ai_costs || 0) * exchangeRate;
+        const profitInILS = Math.max(0, packagePrice - costsInILS);
+        acc[status].revenue += profitInILS;
+        
         return acc;
       }, {} as Record<string, { count: number; costs: number; revenue: number }>);
       
@@ -144,7 +166,7 @@ const ClientCostsReportPage: React.FC = () => {
         status_count: data.count,
         status_costs: data.costs,
         status_revenue: data.revenue,
-        status_roi: data.costs > 0 ? ((data.revenue - data.costs) / data.costs) * 100 : 0
+        status_roi: data.revenue > 0 ? (data.revenue / (data.costs * 3.8 || 1)) * 100 : 0
       }));
       
       return processedData;
@@ -286,10 +308,10 @@ const ClientCostsReportPage: React.FC = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">סה"כ הכנסות</CardTitle>
+            <CardTitle className="text-sm font-medium">סה"כ רווח נקי (₪)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(data.total_revenue)}</div>
+            <div className="text-2xl font-bold">{formatCurrencyILS(data.total_revenue)}</div>
           </CardContent>
         </Card>
         
@@ -385,8 +407,8 @@ const ClientCostsReportPage: React.FC = () => {
                   <tr className="bg-muted/50">
                     <th className="px-4 py-2 text-right text-sm font-medium">סטטוס</th>
                     <th className="px-4 py-2 text-right text-sm font-medium">כמות לקוחות</th>
-                    <th className="px-4 py-2 text-right text-sm font-medium">עלויות</th>
-                    <th className="px-4 py-2 text-right text-sm font-medium">הכנסות</th>
+                    <th className="px-4 py-2 text-right text-sm font-medium">עלויות (USD)</th>
+                    <th className="px-4 py-2 text-right text-sm font-medium">רווח נקי (₪)</th>
                     <th className="px-4 py-2 text-right text-sm font-medium">ROI</th>
                   </tr>
                 </thead>
@@ -396,7 +418,7 @@ const ClientCostsReportPage: React.FC = () => {
                       <td className="px-4 py-2 text-sm">{status.status}</td>
                       <td className="px-4 py-2 text-sm">{status.status_count}</td>
                       <td className="px-4 py-2 text-sm">{formatCurrency(status.status_costs)}</td>
-                      <td className="px-4 py-2 text-sm">{formatCurrency(status.status_revenue)}</td>
+                      <td className="px-4 py-2 text-sm">{formatCurrencyILS(status.status_revenue)}</td>
                       <td className="px-4 py-2 text-sm">
                         <span className={status.status_roi >= 0 ? 'text-green-600' : 'text-red-600'}>
                           {formatPercentage(status.status_roi)}
@@ -409,6 +431,15 @@ const ClientCostsReportPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Work Time Tracking Section */}
+      <div className="mt-8">
+        <WorkTimeTracker
+          entityType="client"
+          entityId="all-clients"
+          totalWorkTimeMinutes={0}
+        />
       </div>
     </div>
   );

@@ -382,36 +382,74 @@ export const useSubmission = (submissionId: string) => {
   });
 };
 
-// Fetch submission comments
+// Fetch submission comments (customer version)
 export const useSubmissionComments = (submissionId: string) => {
   return useQuery<SubmissionComment[]>({
     queryKey: ['submission-comments', submissionId],
     queryFn: async () => {
       console.log('[useSubmissionComments] Fetching comments for submission:', submissionId);
       
-      const { data, error } = await supabase
-        .from('submission_comments')
-        .select(`
-          *,
-          created_by_user:created_by(email)
-        `)
-        .eq('submission_id', submissionId)
-        .order('created_at', { ascending: false });
+              try {
+          // First, try a simple query without joins
+          const { data, error } = await supabase
+            .from('submission_comments')
+            .select(`
+              comment_id,
+              submission_id,
+              comment_type,
+              comment_text,
+              tagged_users,
+              visibility,
+              created_by,
+              created_at,
+              updated_at
+            `)
+          .eq('submission_id', submissionId)
+          .in('comment_type', ['client_visible']) // Only client-visible comments for customers
+          .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[useSubmissionComments] Database error:', error);
-        // If table doesn't exist, return empty array instead of throwing
-        if (error.code === '42P01') { // relation does not exist
-          console.warn('submission_comments table does not exist - returning empty comments');
-          return [];
+        if (error) {
+          console.error('[useSubmissionComments] Database error:', error);
+          
+          // If table doesn't exist, return empty array instead of throwing
+          if (error.code === '42P01' || error.message?.includes('relation "public.submission_comments" does not exist')) {
+            console.warn('submission_comments table does not exist - returning empty comments');
+            return [];
+          }
+          
+          // If RLS access denied, log but continue
+          if (error.code === '42501' || error.message?.includes('permission denied')) {
+            console.warn('Permission denied for submission_comments - returning empty comments');
+            return [];
+          }
+          
+          throw error;
         }
-        throw error;
-      }
 
-      console.log('[useSubmissionComments] Got comments:', data);
-      return data as SubmissionComment[] || [];
+        console.log('[useSubmissionComments] Successfully fetched comments:', data?.length || 0, 'comments');
+        
+                 // Transform the data to match SubmissionComment type without user info for now
+         const transformedData = data?.map(comment => ({
+           ...comment,
+           created_by_user: undefined // We'll add this later once the basic query works
+         })) || [];
+         
+         return transformedData as SubmissionComment[];
+        
+      } catch (error) {
+        console.error('[useSubmissionComments] Unexpected error:', error);
+        // Return empty array instead of failing completely
+        return [];
+      }
     },
     enabled: !!submissionId,
+    retry: (failureCount, error: any) => {
+      // Don't retry if table doesn't exist or permission denied
+      if (error?.code === '42P01' || error?.code === '42501') {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };
 

@@ -100,6 +100,9 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
             <TableHead>{renderSortableHeader("contact_name", "איש קשר")}</TableHead>
             <TableHead>{renderSortableHeader("phone", "טלפון")}</TableHead>
             <TableHead>{renderSortableHeader("lead_status", "סטטוס")}</TableHead>
+            <TableHead>{renderSortableHeader("items_quantity_range", "כמות פריטים")}</TableHead>
+            <TableHead>{renderSortableHeader("estimated_images_needed", "תמונות נדרשות")}</TableHead>
+            <TableHead>{renderSortableHeader("primary_image_usage", "שימוש עיקרי")}</TableHead>
             <TableHead>{renderSortableHeader("updated_at", "תאריך עדכון")}</TableHead>            
             <TableHead>{renderSortableHeader("next_follow_up_date", "תזכורת")}</TableHead>
             <TableHead>{renderSortableHeader("total_ai_costs", "עלויות AI")}</TableHead>
@@ -131,6 +134,30 @@ const LeadsTable: React.FC<LeadsTableProps> = ({
                     {LEAD_STATUS_DISPLAY[lead.lead_status] || lead.lead_status}
                   </Badge>
                 ) : 'N/A'}
+              </TableCell>
+              <TableCell>
+                {lead.items_quantity_range ? (
+                  <Badge variant="outline" className="text-xs">
+                    {lead.items_quantity_range}
+                  </Badge>
+                ) : '-'}
+              </TableCell>
+              <TableCell>
+                {lead.estimated_images_needed ? (
+                  <span className="text-sm">{lead.estimated_images_needed}</span>
+                ) : '-'}
+              </TableCell>
+              <TableCell>
+                {lead.primary_image_usage ? (
+                  <Badge variant="secondary" className="text-xs">
+                    {lead.primary_image_usage === 'instagram' ? 'אינסטגרם ורשתות חברתיות' :
+                     lead.primary_image_usage === 'website-menu' ? 'אתר/תפריט' :
+                     lead.primary_image_usage === 'delivery' ? 'משלוחים' :
+                     lead.primary_image_usage === 'advertising' ? 'פרסום' :
+                     lead.primary_image_usage === 'other' ? 'אחר' :
+                     lead.primary_image_usage}
+                  </Badge>
+                ) : '-'}
               </TableCell>
               <TableCell>{formatDate(lead.updated_at)}</TableCell>
               <TableCell>{formatDate(lead.next_follow_up_date)}</TableCell>

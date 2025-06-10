@@ -245,107 +245,109 @@ export const ClientSubmissionsSection: React.FC<ClientSubmissionsSectionProps> =
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {submissions.map((submission) => (
-                <div key={submission.submission_id} className="border rounded-lg p-4 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h4 className="font-medium">{submission.item_name_at_submission}</h4>
-                        <Badge variant="secondary" className="text-xs">
-                          {submission.item_type}
-                        </Badge>
-                        <Badge className={`text-xs ${getStatusColor(submission.submission_status)}`}>
-                          {submission.submission_status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-gray-600 mb-3">
-                        <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
-                        {submission.processed_at && (
-                          <p>עובד ב: {new Date(submission.processed_at).toLocaleDateString('he-IL')}</p>
+            <div className="h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-4">
+                {submissions.map((submission) => (
+                  <div key={submission.submission_id} className="border rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h4 className="font-medium">{submission.item_name_at_submission}</h4>
+                          <Badge variant="secondary" className="text-xs">
+                            {submission.item_type}
+                          </Badge>
+                          <Badge className={`text-xs ${getStatusColor(submission.submission_status)}`}>
+                            {submission.submission_status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600 mb-3">
+                          <p>הועלה ב: {new Date(submission.uploaded_at).toLocaleDateString('he-IL')}</p>
+                          {submission.processed_at && (
+                            <p>עובד ב: {new Date(submission.processed_at).toLocaleDateString('he-IL')}</p>
+                          )}
+                        </div>
+
+                        {/* Image previews */}
+                        {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-sm font-medium mb-2">תמונות מקוריות:</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {submission.original_image_urls.slice(0, 4).map((url: string, index: number) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={url}
+                                    alt={`תמונה מקורית ${index + 1}`}
+                                    className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80"
+                                    onClick={() => handleDownloadImage(url, `original-${index + 1}.jpg`)}
+                                  />
+                                </div>
+                              ))}
+                              {submission.original_image_urls.length > 4 && (
+                                <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600">
+                                  +{submission.original_image_urls.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Processed images */}
+                        {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-sm font-medium mb-2 text-green-700">תמונות מעובדות:</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {submission.processed_image_urls.slice(0, 4).map((url: string, index: number) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={url}
+                                    alt={`תמונה מעובדת ${index + 1}`}
+                                    className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 border-2 border-green-200"
+                                    onClick={() => handleImageClick(url, submission.processed_image_urls)}
+                                  />
+                                </div>
+                              ))}
+                              {submission.processed_image_urls.length > 4 && (
+                                <div className="w-16 h-16 bg-green-200 rounded flex items-center justify-center text-xs text-green-600">
+                                  +{submission.processed_image_urls.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         )}
                       </div>
 
-                      {/* Image previews */}
-                      {submission.original_image_urls && submission.original_image_urls.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium mb-2">תמונות מקוריות:</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {submission.original_image_urls.slice(0, 4).map((url: string, index: number) => (
-                              <div key={index} className="relative">
-                                <img
-                                  src={url}
-                                  alt={`תמונה מקורית ${index + 1}`}
-                                  className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80"
-                                  onClick={() => handleDownloadImage(url, `original-${index + 1}.jpg`)}
-                                />
-                              </div>
-                            ))}
-                            {submission.original_image_urls.length > 4 && (
-                              <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-600">
-                                +{submission.original_image_urls.length - 4}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Processed images */}
-                      {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
-                        <div className="mb-3">
-                          <p className="text-sm font-medium mb-2 text-green-700">תמונות מעובדות:</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {submission.processed_image_urls.slice(0, 4).map((url: string, index: number) => (
-                              <div key={index} className="relative">
-                                <img
-                                  src={url}
-                                  alt={`תמונה מעובדת ${index + 1}`}
-                                  className="w-16 h-16 object-cover rounded cursor-pointer hover:opacity-80 border-2 border-green-200"
-                                  onClick={() => handleImageClick(url, submission.processed_image_urls)}
-                                />
-                              </div>
-                            ))}
-                            {submission.processed_image_urls.length > 4 && (
-                              <div className="w-16 h-16 bg-green-200 rounded flex items-center justify-center text-xs text-green-600">
-                                +{submission.processed_image_urls.length - 4}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-2 ml-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewSubmission(submission.submission_id)}
-                        className="text-xs"
-                      >
-                        <Eye className="h-3 w-3 mr-1" />
-                        הצג
-                      </Button>
-                      
-                      {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
+                      <div className="flex flex-col gap-2 ml-4">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            submission.processed_image_urls?.forEach((url: string, index: number) => {
-                              handleDownloadImage(url, `${submission.item_name_at_submission}-processed-${index + 1}.jpg`);
-                            });
-                          }}
+                          onClick={() => handleViewSubmission(submission.submission_id)}
                           className="text-xs"
                         >
-                          <Download className="h-3 w-3 mr-1" />
-                          הורד
+                          <Eye className="h-3 w-3 mr-1" />
+                          הצג
                         </Button>
-                      )}
+                        
+                        {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              submission.processed_image_urls?.forEach((url: string, index: number) => {
+                                handleDownloadImage(url, `${submission.item_name_at_submission}-processed-${index + 1}.jpg`);
+                              });
+                            }}
+                            className="text-xs"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            הורד
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>

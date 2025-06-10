@@ -27,6 +27,7 @@ import {
   Cell
 } from 'recharts';
 import { formatCurrency, formatNumber, formatPercentage } from '@/utils/formatters';
+import { WorkTimeTracker } from '@/components/admin/shared/WorkTimeTracker';
 
 // Interface for the cost data
 interface AICostData {
@@ -428,6 +429,15 @@ const CostsReportPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* Work Time Tracking Section */}
+      <div className="mt-8">
+        <WorkTimeTracker
+          entityType="lead"
+          entityId="all-leads"
+          totalWorkTimeMinutes={0}
+        />
       </div>
     </div>
   );

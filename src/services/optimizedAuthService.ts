@@ -3,10 +3,10 @@ import { UserRole } from '@/types/unifiedAuthTypes';
 import { cacheService } from './cacheService';
 
 interface UserAuthData {
-  user_role: string | null;
-  client_id: string | null;
-  restaurant_name: string | null;
-  has_client_record: boolean;
+  role: string | null;
+  clientId: string | null;
+  restaurantName?: string | null;
+  hasLinkedClientRecord: boolean;
 }
 
 /**
@@ -58,7 +58,7 @@ export const optimizedAuthService = {
         };
       }
 
-      if (!data || data.length === 0) {
+      if (!data) {
         console.warn('[OPTIMIZED_AUTH] No auth data found for user');
         return {
           role: null,
@@ -69,13 +69,25 @@ export const optimizedAuthService = {
         };
       }
 
-      const authData: UserAuthData = data[0];
+      // RPC returns JSON directly, not an array
+      const authData: UserAuthData = data as UserAuthData;
+      
+      if (!authData) {
+        console.warn('[OPTIMIZED_AUTH] Auth data is null/undefined');
+        return {
+          role: null,
+          clientId: null,
+          restaurantName: null,
+          hasLinkedClientRecord: false,
+          error: 'Auth data is empty'
+        };
+      }
       
       const result = {
-        role: authData.user_role as UserRole,
-        clientId: authData.client_id,
-        restaurantName: authData.restaurant_name,
-        hasLinkedClientRecord: authData.has_client_record
+        role: authData.role as UserRole,
+        clientId: authData.clientId,
+        restaurantName: authData.restaurantName || null,
+        hasLinkedClientRecord: authData.hasLinkedClientRecord
       };
 
       // Cache the result for 30 minutes (increased from 10 minutes) to handle token refreshes better
@@ -145,7 +157,7 @@ export const optimizedAuthService = {
         };
       }
 
-      if (!data || data.length === 0) {
+      if (!data) {
         console.warn('[OPTIMIZED_AUTH] No auth data found during silent refresh');
         return {
           role: null,
@@ -156,13 +168,25 @@ export const optimizedAuthService = {
         };
       }
 
-      const authData: UserAuthData = data[0];
+      // RPC returns JSON directly, not an array
+      const authData: UserAuthData = data as UserAuthData;
+      
+      if (!authData) {
+        console.warn('[OPTIMIZED_AUTH] Auth data is null/undefined during silent refresh');
+        return {
+          role: null,
+          clientId: null,
+          restaurantName: null,
+          hasLinkedClientRecord: false,
+          error: 'Auth data is empty'
+        };
+      }
       
       const result = {
-        role: authData.user_role as UserRole,
-        clientId: authData.client_id,
-        restaurantName: authData.restaurant_name,
-        hasLinkedClientRecord: authData.has_client_record
+        role: authData.role as UserRole,
+        clientId: authData.clientId,
+        restaurantName: authData.restaurantName || null,
+        hasLinkedClientRecord: authData.hasLinkedClientRecord
       };
 
       // Update cache with fresh data

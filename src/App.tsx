@@ -18,6 +18,7 @@ import FoodVisionForm from "@/pages/FoodVisionForm";
 import SmartUploadPage from "@/pages/SmartUploadPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
+import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import React, { Suspense } from "react";
@@ -140,6 +141,7 @@ const App = () => (
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
+              <Route path="/customer/auth" element={<PublicOnlyRoute><CustomerAuthPage /></PublicOnlyRoute>} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
 

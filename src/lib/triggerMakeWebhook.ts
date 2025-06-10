@@ -15,6 +15,10 @@ export interface MakeWebhookPayload {
   ingredients?: string[] | null;
   // Add any other potentially important fields you identify
   sourceForm?: string; // e.g., 'unified-public', 'unified-client', 'legacy-customer'
+  // New requirement fields
+  itemsQuantityRange?: string;
+  estimatedImagesNeeded?: string;
+  primaryImageUsage?: string;
 }
 
 const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/h15kqbjphouh5wvmsnvxopkl7tff8o7u';

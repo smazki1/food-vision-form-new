@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard } from 'lucide-react';
 import { Client } from '@/types/client';
@@ -24,7 +24,13 @@ export const ClientPaymentStatus: React.FC<ClientPaymentStatusProps> = ({
   client
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [localAmount, setLocalAmount] = useState(client.payment_amount_ils?.toString() || '');
   const updateClient = useClientUpdate();
+
+  // Sync local amount with client data changes
+  useEffect(() => {
+    setLocalAmount(client.payment_amount_ils?.toString() || '');
+  }, [client.payment_amount_ils]);
 
   const handlePaymentStatusChange = async (status: string) => {
     try {
@@ -54,7 +60,11 @@ export const ClientPaymentStatus: React.FC<ClientPaymentStatusProps> = ({
     }
   };
 
-  const handleAmountChange = async (amount: string) => {
+  const handleAmountChange = (amount: string) => {
+    setLocalAmount(amount);
+  };
+
+  const handleAmountSave = async (amount: string) => {
     try {
       setIsUpdating(true);
       const numericAmount = amount ? parseFloat(amount) : null;
@@ -120,9 +130,9 @@ export const ClientPaymentStatus: React.FC<ClientPaymentStatusProps> = ({
             type="number"
             min="0"
             step="0.01"
-            value={client.payment_amount_ils || ''}
+            value={localAmount}
             onChange={(e) => handleAmountChange(e.target.value)}
-            onBlur={(e) => handleAmountChange(e.target.value)}
+            onBlur={(e) => handleAmountSave(e.target.value)}
             disabled={isUpdating}
             placeholder="0.00"
             className="w-full"

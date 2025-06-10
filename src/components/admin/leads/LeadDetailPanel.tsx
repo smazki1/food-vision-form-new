@@ -52,6 +52,7 @@ import {
   Upload,
   Clock
 } from 'lucide-react';
+import { WorkTimeTracker } from '@/components/admin/shared/WorkTimeTracker';
 
 interface LeadDetailPanelProps {
   leadId: string;
@@ -719,6 +720,13 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Work Time Tracking Section */}
+              <WorkTimeTracker
+                entityType="lead"
+                entityId={lead.lead_id}
+                totalWorkTimeMinutes={lead.total_work_time_minutes || 0}
+              />
             </TabsContent>
 
             <TabsContent value="activity" className="p-6 space-y-6">
