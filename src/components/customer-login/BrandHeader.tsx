@@ -28,7 +28,7 @@ const BrandHeader = () => {
               Food Vision
             </h1>
             <p className="text-lg text-slate-600 font-medium mt-2">
-              AI לעיבוד תמונות מזון
+              תמונות מקצועיות למסעדות
             </p>
           </div>
         </div>
@@ -43,8 +43,7 @@ const BrandHeader = () => {
             חסכו 80% מעלויות צילום
           </div>
           <p className="text-lg font-semibold leading-relaxed">
-            תמונות מקצועיות למסעדה שלכם תוך 72 שעות<br />
-            <span className="text-[#f3752b] font-bold text-xl">ללא צלם וללא סטודיו</span>
+            <span className="text-[#f3752b] font-bold text-xl">ללא צלם וללא סטודיו - תוך 72 שעות בלבד</span>
           </p>
         </div>
       </div>

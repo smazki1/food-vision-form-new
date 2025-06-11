@@ -118,7 +118,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
               id={`customItemType-${dish.id}`}
               name="customItemType"
               icon={<UtensilsCrossed />}
-              label="סוג מוצר מותאם אישית"
+              label=""
               placeholder="הזינו את סוג המוצר"
               value={dish.customItemType}
               onChange={handleCustomItemTypeChange}
@@ -140,7 +140,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
         <IconInput
           id={`itemName-${dish.id}`}
           icon={<UtensilsCrossed />}
-          label="שם המנה/המוצר"
+          label=""
           placeholder="למשל: פסטה ברוטב עגבניות"
           name="itemName"
           value={dish.itemName}
@@ -160,7 +160,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
         <IconTextarea
           id={`description-${dish.id}`}
           icon={<FileImage />}
-          label="תיאור המנה"
+          label=""
           placeholder="תארו את המנה - רכיבים, טעמים, סגנון הגשה..."
           name="description"
           value={dish.description}
@@ -181,7 +181,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
         <IconTextarea
           id={`specialNotes-${dish.id}`}
           icon={<Lightbulb />}
-          label="הערות מיוחדות"
+          label=""
           placeholder="הערות נוספות, בקשות מיוחדות לעיצוב..."
           name="specialNotes"
           value={dish.specialNotes}

@@ -14,17 +14,11 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-3">פרטי המסעדה</h2>
-        <p className="text-gray-600 text-lg">בואו נכיר - ספרו לנו על העסק שלכם</p>
-      </div>
-
+    <div className="space-y-4">
       {/* Business Registration Question - Enhanced Design */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
-        <div className="text-center mb-6">
-          <Building2 className="w-8 h-8 text-blue-600 mx-auto mb-3" />
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">האם העסק שלכם כבר רשום במערכת?</h3>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
+        <div className="text-center mb-4">
+          <h3 className="text-xl font-semibold text-gray-800 mb-1">האם העסק שלכם כבר רשום במערכת?</h3>
           <p className="text-gray-600 text-sm">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
         </div>
         
@@ -70,7 +64,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
       </div>
 
       {/* Form Fields */}
-      <div className="grid gap-6">
+      <div className="grid gap-3">
         <div className="space-y-2">
           <Label htmlFor="restaurantName" className="text-lg font-medium text-gray-800">
             שם המסעדה / העסק *
