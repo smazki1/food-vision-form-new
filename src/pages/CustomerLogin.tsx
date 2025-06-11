@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandHeader from '@/components/customer-login/BrandHeader';
@@ -51,14 +52,17 @@ const CustomerLogin = () => {
               <span className="text-sm font-medium">ערבות החזר מלא 100%</span>
             </div>
             
-            {/* Enhanced Main CTA Button */}
+            {/* Enhanced Main CTA Button - Reduced Animation */}
             <Button 
               onClick={redirectToUpload}
-              className="w-full bg-gradient-to-r from-[#f3752b] to-[#ff6b35] hover:from-[#e8621f] hover:to-[#f3752b] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6 animate-pulse hover:animate-none"
+              className="w-full bg-gradient-to-r from-[#f3752b] to-[#ff6b35] hover:from-[#e8621f] hover:to-[#f3752b] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6"
+              style={{
+                animation: 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+              }}
             >
               <span className="relative z-10">קבלו תמונות מקצועיות לעסק שלכם</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#ff6b35]/20 to-[#f3752b]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#ff6b35]/15 to-[#f3752b]/15 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Button>
 
             {/* Simplified How It Works Button */}
