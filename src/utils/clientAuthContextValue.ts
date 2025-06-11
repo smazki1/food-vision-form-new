@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { ClientAuthContextType } from '@/types/clientAuthTypes';
 
@@ -59,7 +58,8 @@ export const useClientAuthContextValue = ({
       userAuthId: user?.id,
       authenticating,
       restaurantName: clientData?.restaurant_name,
-      contactName: clientData?.contact_name
+      contactName: clientData?.contact_name,
+      originalLeadId: clientData?.original_lead_id
     });
     
     return {
@@ -74,6 +74,7 @@ export const useClientAuthContextValue = ({
       refreshClientAuth,
       restaurantName: clientData?.restaurant_name || null,
       contactName: clientData?.contact_name || null,
+      originalLeadId: clientData?.original_lead_id || null,
     };
   }, [
     clientId, unifiedClientId, user?.id, authenticating, clientRecordStatus, errorState, 

@@ -4,12 +4,12 @@ import { useUnifiedFormNavigation } from '@/hooks/useUnifiedFormNavigation';
 import { useUnifiedFormValidation } from '@/hooks/useUnifiedFormValidation';
 import { usePublicFormHandlers } from './hooks/usePublicFormHandlers';
 import RestaurantDetailsStep from './steps/RestaurantDetailsStep';
-import ItemDetailsStep from './steps/ItemDetailsStep';
-import ImageUploadStep from './steps/ImageUploadStep';
+import CombinedUploadStep from './steps/CombinedUploadStep';
 import AdditionalDetailsStep from './steps/AdditionalDetailsStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import ProgressBar from './components/ProgressBar';
 import SuccessModal from './components/SuccessModal';
+import { Plus } from 'lucide-react';
 
 export interface PublicStepProps {
   setExternalErrors?: (errors: Record<string, string>) => void;
@@ -28,28 +28,23 @@ const publicFormSteps = [
   },
   {
     id: 2,
-    name: 'פרטי המנה',
-    component: ItemDetailsStep
+    name: 'פרטי העלאה',
+    component: CombinedUploadStep
   },
   {
     id: 3,
-    name: 'העלאת תמונות',
-    component: ImageUploadStep
-  },
-  {
-    id: 4,
     name: 'פרטים נוספים',
     component: AdditionalDetailsStep
   },
   {
-    id: 5,
+    id: 4,
     name: 'סקירה ואישור',
     component: ReviewSubmitStep
   }
 ];
 
 const PublicFoodVisionUploadForm: React.FC = () => {
-  const { resetFormData } = useNewItemForm();
+  const { resetFormData, formData, updateFormData } = useNewItemForm();
   const {
     currentStepId,
     currentStepConfig,
@@ -91,7 +86,9 @@ const PublicFoodVisionUploadForm: React.FC = () => {
   }, [showSuccessModal]);
 
   const CurrentStepComponent = currentStepConfig?.component || (() => <div>שלב לא תקין</div>);
-  const isReviewStep = currentStepId === 5;
+  const isReviewStep = currentStepId === 4;
+
+
 
   console.log('[PublicFoodVisionUploadForm] Current navigation state:', {
     currentStepId,
@@ -116,7 +113,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         {/* Progress Bar */}
         <ProgressBar 
           currentStep={currentStepId} 
-          totalSteps={5}
+          totalSteps={4}
           steps={publicFormSteps}
         />
 
@@ -133,7 +130,7 @@ const PublicFoodVisionUploadForm: React.FC = () => {
             />
 
             {/* Navigation Buttons - Centered and Mobile Responsive */}
-            {currentStepId !== 5 && (
+            {currentStepId !== 4 && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-12 pt-8 border-t border-gray-100">
                 {!isFirstStep && (
                   <button

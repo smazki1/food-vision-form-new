@@ -1,0 +1,1533 @@
+The core of your request is to build a new, comprehensive lead management system. This involves recreating the page (`admin/leads`), defining a detailed data structure for leads, implementing UI for managing leads (table, filters, modal/sidebar for details), handling AI cost tracking, and integrating this with existing systems like automatic lead creation from submissions.
+
+Here's a high-level plan:
+
+**Phase 1: Backend - Data Structure and API Endpoints**
+
+1. **Define Supabase Schema for Leads:**
+    - Create a new table `leads` in Supabase.
+    - Define columns based on section 5.1.1 of your plan:
+        - `lead_id` (PK, auto-generated UUID)
+        - `restaurant_name` (TEXT, NOT NULL)
+        - `contact_name` (TEXT, NOT NULL)
+        - `phone` (TEXT, NOT NULL)
+        - `email` (TEXT, NOT NULL)
+        - `website_url` (TEXT)
+        - `address` (TEXT)
+        - `status` (TEXT, e.g., 'new', 'contacted', 'interested_sent_pics', 'waiting_reply', 'meeting_scheduled', 'demo_done', 'quote_sent', 'cold_follow_up', 'not_interested', 'converted_to_client', 'archived') - Consider using an ENUM type if your PostgreSQL version supports it well with Supabase, or a TEXT field with predefined values managed by the application.
+        - `ai_trainings_count` (INTEGER, default 0)
+        - `ai_training_cost_per_unit` (NUMERIC, default 1.5) - Store this per lead if it can vary, or have a system-wide setting. Your plan implies per-lead choice.
+        - `ai_prompts_count` (INTEGER, default 0)
+        - `ai_prompt_cost_per_unit` (NUMERIC, default 0.16) - Store this per lead or have a system-wide setting.
+        - `total_ai_costs` (NUMERIC, computed or updated via trigger/function)
+        - `revenue_from_lead` (NUMERIC, default 0)
+        - `roi` (NUMERIC, computed or updated via trigger/function)
+        - `lead_source` (TEXT, e.g., 'website', 'referral', 'facebook', 'instagram', 'auto_submission', 'other')
+        - `created_at` (TIMESTAMPTZ, default NOW())
+        - `updated_at` (TIMESTAMPTZ, default NOW())
+        - `next_follow_up_date` (DATE)
+        - `notes` (TEXT)
+    - Create a new table `lead_activity_log`:
+        - `activity_id` (PK, auto-generated UUID)
+        - `lead_id` (FK to `leads.lead_id`, ON DELETE CASCADE)
+        - `activity_timestamp` (TIMESTAMPTZ, default NOW())
+        - `activity_description` (TEXT, NOT NULL)
+        - `user_id` (FK to `auth.users` - who performed the action, optional)
+    - Create a new table `lead_comments`:
+        - `comment_id` (PK, auto-generated UUID)
+        - `lead_id` (FK to `leads.lead_id`, ON DELETE CASCADE)
+        - `comment_timestamp` (TIMESTAMPTZ, default NOW())
+        - `comment_text` (TEXT, NOT NULL)
+        - `user_id` (FK to `auth.users` - who added the comment, optional)
+    - Consider if `ai_pricing_settings` (section 5.1.8) needs its own table or if these are global app settings. For flexibility and if admins can change these, a table `ai_pricing_settings` with columns like `setting_name` (e.g., 'training_regular', 'training_advanced', 'prompt_default', 'usd_to_local_currency_rate'), `value` (NUMERIC), `is_default` (BOOLEAN) could be useful. For now, let's assume some defaults and allow overrides per lead where specified (like `ai_training_cost_per_unit`). The exchange rate is a global setting.
+2. **Supabase Row Level Security (RLS):**
+    - Implement RLS policies for the new `leads`, `lead_activity_log`, and `lead_comments` tables.
+    - Ensure only authenticated admin users can perform CRUD operations on these tables.
+    - Consider if any specific roles (if you have more than just 'admin') need different levels of access.
+3. **Supabase Functions (RPC):**
+    - Create functions for complex operations if needed (e.g., calculating ROI, `total_ai_costs` if not done by database triggers, or for the "Convert to Client" action).
+    - `log_lead_activity(p_lead_id UUID, p_description TEXT)`: To easily add entries to `lead_activity_log`.
+    - Potentially a function to handle the "Convert to Client" logic, which might involve:
+        - Creating a new record in the `clients` table (if it doesn't exist).
+        - Updating the lead's status to 'converted_to_client'.
+        - Copying relevant information.
+        - Logging this activity.
+4. **Database Triggers (Optional but Recommended):**
+    - A trigger on `leads` to automatically update `updated_at` timestamp on any change.
+    - Triggers or database functions to recalculate `total_ai_costs` and `roi` whenever `ai_trainings_count`, `ai_training_cost_per_unit`, `ai_prompts_count`, `ai_prompt_cost_per_unit`, or `revenue_from_lead` change. This keeps derived data consistent.
+
+**Phase 2: Frontend - UI and Logic (`admin/leads` page)**
+
+1. **Create New Route and Page Structure:**
+    - Add a new route `/admin/leads` pointing to a new `AdminLeadsPage` component.
+    - This page will be protected by the `AdminLayout` and `AdminRoute` similar to other admin pages.
+    - Update admin navigation to include a link to "Leads".
+2. **Main Leads Table (5.1.2 - Table View):**
+    - Component: `LeadsTable.tsx`
+    - Use React Query to fetch leads data from the `leads` table.
+    - Display columns: Restaurant Name, Contact Person, Phone, Status (with color coding as per your spec), Next Follow-up, AI Costs, ROI, Actions.
+    - Implement pagination for the table.
+    - Implement quick action buttons per row:
+        - View (opens modal/sidebar)
+        - Edit (quick edit, potentially in-line or small modal)
+        - Notes (quick add note)
+        - Costs (quick update AI data)
+        - Archive
+        - Convert to Client (conditionally shown based on status)
+3. **Filtering and Searching (5.1.2 - Advanced Filters):**
+    - Component: `LeadsFilters.tsx`
+    - Implement filters for: free text search (restaurant name, contact, email), status, date range (creation, follow-up), ROI (positive, negative, all), lead source.
+    - Update React Query fetch logic to include filter parameters.
+4. **Lead Details Modal/Sidebar (5.1.3):**
+    - Component: `LeadDetailPanel.tsx` (can be a modal or a sidebar).
+    - Triggered by clicking lead name or "View" button.
+    - Uses tabs:
+        - **Tab 1: Basic Details:**
+            - Display and allow editing of: restaurant name, contact, phone, email, website, address.
+            - Dropdowns for Status and Lead Source.
+            - Date picker for "Next Follow-up".
+            - Text area for "General Notes".
+            - Save/Cancel buttons.
+            - Form validation (React Hook Form + Zod).
+            - On save, update lead data and log activity.
+        - **Tab 2: AI Cost Tracking:**
+            - Display and allow manual updates for:
+                - Trainings: count, cost per unit (dropdown: $1.5, $2.5, $5).
+                - Prompts: count, cost per unit (input, default $0.16).
+            - Display calculated: total training cost, total prompt cost, total AI costs.
+            - Input for "Revenue from client" (if converted).
+            - Display calculated ROI.
+            - "Update Costs" and "Reset" buttons.
+            - On update, save counts and costs, recalculate totals, log activity.
+        - **Tab 3: Activity History:**
+            - Fetch and display `lead_activity_log` entries for the current lead, sorted by timestamp.
+            - "Add Manual Activity" button (simple form to add a custom log entry).
+        - **Tab 4: Notes & Correspondence:**
+            - Fetch and display `lead_comments` for the current lead.
+            - Text area to add a new comment.
+            - "Add Comment" button.
+5. **Top Action Buttons (5.1.4 - Page Level):**
+    - Component: `LeadsPageActions.tsx`
+    - `+ New Lead`: Opens a form (could be the LeadDetailPanel in "create" mode or a separate modal) to create a new lead.
+    - `Costs Report`: Navigates to the `admin/leads/costs-report` page.
+    - `Archive Page`: Navigates to `admin/leads/archive`.
+    - `AI Price Settings`: Navigates to `admin/leads/ai-pricing`.
+6. **Bulk Actions (5.1.4):**
+    - Add checkboxes to the `LeadsTable`.
+    - Implement actions for selected leads: Change Status, Archive, Export to Excel/CSV.
+
+**Phase 3: Supporting Pages and Features**
+
+1. **Archive Page (`admin/leads/archive`) (5.1.5):**
+    - Similar to `AdminLeadsPage` but fetches leads with `status = 'archived'`.
+    - Different background color.
+    - Actions: "Restore from Archive" (changes status back to a previous one, e.g., 'new' or its last active status), "Delete Permanently".
+    - Filtering by archive date.
+2. **Costs and ROI Report Page (`admin/leads/costs-report`) (5.1.6):**
+    - Component: `CostsReportPage.tsx`
+    - Display summary: total trainings, total prompts, total AI costs, total revenue from converted leads, overall ROI (monthly or selectable period).
+    - Table breaking down by lead: Restaurant Name, AI Cost, Revenue, ROI, Status.
+    - Filters for date range.
+3. **AI Pricing Settings Page (`admin/leads/ai-pricing`) (5.1.8):**
+    - Component: `AiPricingSettingsPage.tsx`
+    - Form to set default AI costs:
+        - Training costs (regular, advanced, premium).
+        - Prompt cost.
+        - USD to local currency exchange rate.
+    - These settings would ideally be stored in a global configuration table in Supabase (e.g., `app_settings`) or the `ai_pricing_settings` table mentioned earlier. The page would read and update these values.
+    - When calculating costs, the system should use these defaults unless overridden at the individual lead level.
+
+**Phase 4: Integrations and Automation**
+
+1. **Automatic Lead Creation from Submissions (5.1.7):**
+    - This is a key integration. When a new submission arrives (presumably handled in `/admin/submissions` or a Supabase function like `process-public-submission`):
+        - **Check Existing Leads/Clients:** Before creating a new lead, query the `leads` table (by email/restaurant name) and the `clients` table to see if the entity already exists.
+        - **Create New Lead:** If it doesn't exist, create a new entry in the `leads` table:
+            - `status`: 'new'
+            - `lead_source`: 'auto_submission'
+            - Populate `restaurant_name`, `contact_name`, `email`, `phone` from the submission form data.
+            - `next_follow_up_date`: `NOW() + INTERVAL '24 hours'`.
+            - Log activity: "Lead created from automatic submission."
+    - **Notifications for New Leads (5.1.7):**
+        - Implement a UI notification in the admin dashboard (e.g., a badge on the "Leads" navigation link or a toast message) when new leads are created automatically and need attention. This could be driven by a count of leads with `status = 'new'` and `source = 'auto_submission'` that haven't been updated recently.
+2. **"Convert to Client" Functionality:**
+    - When a lead is converted to a client:
+        - The lead's status changes to 'converted_to_client'.
+        - A new entry is created in the `clients` table (if one doesn't already exist for this entity). Map fields from the `leads` table to the `clients` table.
+        - Relevant AI cost history and notes might be linked or copied to the client's record for reference, or you might decide to keep the lead record as the historical source of pre-conversion data. Your spec says "keep lead history even after conversion" and "link back from client to original lead". This implies the lead record remains, and the client record might have a `source_lead_id` FK.
+        - Log this conversion in `lead_activity_log`.
+
+**Phase 5: UI/UX, Refinements, and Testing**
+
+1. **Status Colors and Visual Cues:** Implement the specified color coding for lead statuses throughout the UI.
+2. **Smart Alerts & Reminders (5.1.9):**
+    - Alerts for leads not touched in X days.
+    - Reminders for `next_follow_up_date`.
+    - Alerts for leads with high AI costs but no conversion (this requires defining a threshold).
+    - These can be UI elements or potentially email/system notifications (more complex).
+3. **Data Export (5.1.9):**
+    - Implement CSV/Excel export for the main leads list, cost report, and activity histories.
+4. **Responsive Design:** Ensure all new pages and components are responsive.
+5. **Thorough Testing:**
+    - Unit tests for new components, hooks, and utility functions.
+    - Integration tests for lead creation, editing, status changes, AI cost calculations, and the conversion process.
+    - E2E tests for the entire lead management flow.
+6. **Documentation:** Update `memory-bank` files with the new lead system's architecture, data models, and UI components.
+
+**Impact on Existing System:**
+
+- **`/admin/submissions` and `/admin/queue`:** Your plan mentions potentially merging these. The new lead system provides a robust way to track entities *after* they are identified. The submission/queue pages are more about the initial intake and processing of *files/data*.
+    - The critical integration is that a *submission* should be able to *create a lead*.
+    - Whether you merge `submissions` and `queue` is a separate decision. If a submission becomes a lead, its primary management might shift to the `admin/leads` page. You'll need to define the lifecycle:
+        1. Submission comes in (handled by `submissions` or `queue`).
+        2. System (or admin) decides if this submission represents a new potential customer.
+        3. If yes, a *lead* is created (automatically or manually).
+        4. The *lead* is then managed in `admin/leads`.
+        5. The original *submission* data might still be relevant and linked (e.g., a lead could have multiple submissions associated with it over time, even before becoming a client).
+- **`clients` table:** The "Convert to Client" feature will interact directly with this. Ensure data consistency. The `clients` table might need a `source_lead_id` (nullable FK) to link back to the original lead.
+- **No Destruction:** The plan is to build a *new* module (`admin/leads`) and integrate it. This shouldn't destroy existing functionality if done carefully. The main interaction point is the creation of leads from submissions and the conversion of leads to clients.
+
+**Key Considerations from Your Request:**
+
+- **User (Admin) Convenience:** The design with a main table, quick actions, and a detailed modal/sidebar aims for this.
+- **ROI and Cost Tracking:** This is a central part of the data model and UI for each lead.
+- **Manual Updates:** All AI cost fields (`ai_trainings_count`, `ai_prompts_count`, `revenue_from_lead`) are designed for manual input, with totals and ROI being calculated.
+- **Status Management:** The detailed status list with color coding is included.
+- **Archiving:** Separate archive page and functionality.
+
+**Clarifying Questions (as per "Planner Mode" instructions, though I'm proceeding as this is a direct request for a plan):**
+
+1. **Lead Statuses - Customization:** The list of lead statuses is quite comprehensive. Do you foresee needing to customize (add/edit/remove) these statuses easily through an admin UI in the future, or is the provided list fixed for now?
+2. **AI Training Cost per Unit - Granularity:** The plan mentions `$1.5 / $2.5 / $5` for training cost. When an admin updates `ai_trainings_count`, will they select *which* cost applied to those trainings, or is the `ai_training_cost_per_unit` a single field on the lead that applies to *all* trainings for that lead? The mock-up (`[$2.5 ▼]`) suggests a choice *per update session* or a default for the lead.
+3. **"Convert to Client" - Data Flow:** When a lead becomes a client, which specific fields from the `leads` table should be copied or used to pre-fill the new `clients` table record? Is there an existing `clients` creation form that should be pre-populated?
+4. **Merging `/admin/submissions` and `/admin/queue`:** You mentioned this as a possibility. How do you envision the workflow if they are merged? Would the merged page then also be the place where leads are manually created from submissions, or would that logic reside purely in the new `admin/leads` (for manual creation) and automated process (for auto-creation)?
+5. **Currency Exchange Rate (5.1.8):** The AI costs are in USD. Is the ROI and other financial reporting primarily needed in USD, or should the system also display local currency equivalents using the exchange rate? The `admin/leads/ai-pricing` suggests an exchange rate setting.
+
+This plan is extensive. Let me know how you'd like to proceed or if you want to focus on a specific phase first.
+
+---
+
+**Phase 1: Backend - Data Structure and API Endpoints (Continued)**
+
+**1.1. Supabase Schema for Leads - SQL Definitions**
+
+I'll provide the SQL statements to create the tables. You would run these in your Supabase SQL editor or include them in a new migration file.
+
+- **Leads Table (`leads`)**
+    
+    ```sql
+    CREATE TABLE public.leads (
+        lead_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_name TEXT NOT NULL,
+        contact_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL,
+        website_url TEXT,
+        address TEXT,
+        status TEXT DEFAULT 'new'::text NOT NULL, -- Consider creating an ENUM type for statuses
+        ai_trainings_count INTEGER DEFAULT 0 NOT NULL,
+        ai_training_cost_per_unit NUMERIC(10, 2) DEFAULT 1.50,
+        ai_prompts_count INTEGER DEFAULT 0 NOT NULL,
+        ai_prompt_cost_per_unit NUMERIC(10, 2) DEFAULT 0.16,
+        total_ai_costs NUMERIC(10, 2) GENERATED ALWAYS AS ((ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit)) STORED,
+        revenue_from_lead NUMERIC(10, 2) DEFAULT 0.00,
+        roi NUMERIC(10, 2) GENERATED ALWAYS AS (
+            CASE
+                WHEN ((ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit)) > 0
+                THEN (revenue_from_lead - ((ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit))) / ((ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit)) * 100
+                ELSE NULL -- Or 0, or handle as per business logic for no costs
+            END
+        ) STORED,
+        lead_source TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        next_follow_up_date DATE,
+        notes TEXT,
+        client_id UUID REFERENCES public.clients(client_id) ON DELETE SET NULL -- Link to client if converted
+    );
+    
+    -- Optional: Create an ENUM for lead statuses for better data integrity
+    -- CREATE TYPE lead_status_enum AS ENUM (
+    --  'new', 'contacted', 'interested_sent_pics', 'waiting_reply',
+    --  'meeting_scheduled', 'demo_done', 'quote_sent', 'cold_follow_up',
+    --  'not_interested', 'converted_to_client', 'archived'
+    -- );
+    -- ALTER TABLE public.leads ALTER COLUMN status TYPE lead_status_enum USING status::lead_status_enum;
+    
+    COMMENT ON COLUMN public.leads.total_ai_costs IS 'Calculated: (ai_trainings_count * ai_training_cost_per_unit) + (ai_prompts_count * ai_prompt_cost_per_unit)';
+    COMMENT ON COLUMN public.leads.roi IS 'Calculated: (revenue_from_lead - total_ai_costs) / total_ai_costs * 100. Handle division by zero.';
+    COMMENT ON COLUMN public.leads.client_id IS 'If lead is converted, this links to the corresponding client record.';
+    
+    ```
+    
+- **Lead Activity Log Table (`lead_activity_log`)**
+    
+    ```sql
+    CREATE TABLE public.lead_activity_log (
+        activity_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lead_id UUID NOT NULL REFERENCES public.leads(lead_id) ON DELETE CASCADE,
+        activity_timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        activity_description TEXT NOT NULL,
+        user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL -- Optional: link to user who performed action
+    );
+    
+    CREATE INDEX idx_lead_activity_log_lead_id ON public.lead_activity_log(lead_id);
+    
+    ```
+    
+- **Lead Comments Table (`lead_comments`)**
+    
+    ```sql
+    CREATE TABLE public.lead_comments (
+        comment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lead_id UUID NOT NULL REFERENCES public.leads(lead_id) ON DELETE CASCADE,
+        comment_timestamp TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+        comment_text TEXT NOT NULL,
+        user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL -- Optional: link to user who added comment
+    );
+    
+    CREATE INDEX idx_lead_comments_lead_id ON public.lead_comments(lead_id);
+    
+    ```
+    
+- **AI Pricing Settings Table (`ai_pricing_settings`)** (Recommended for 5.1.8)
+    
+    ```sql
+    CREATE TABLE public.ai_pricing_settings (
+        setting_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        setting_name TEXT NOT NULL UNIQUE, -- e.g., 'training_regular_cost', 'training_advanced_cost', 'training_premium_cost', 'default_prompt_cost', 'usd_to_local_currency_rate'
+        setting_value NUMERIC(10, 4) NOT NULL, -- Using 4 decimal places for rates or precise costs
+        description TEXT,
+        last_updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+        updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+    );
+    
+    -- Populate with initial default values
+    INSERT INTO public.ai_pricing_settings (setting_name, setting_value, description) VALUES
+        ('training_regular_cost', 1.50, 'Default cost for a regular AI training unit'),
+        ('training_advanced_cost', 2.50, 'Default cost for an advanced AI training unit'),
+        ('training_premium_cost', 5.00, 'Default cost for a premium AI training unit'),
+        ('default_prompt_cost', 0.16, 'Default cost per AI prompt'),
+        ('usd_to_local_currency_rate', 3.65, 'Conversion rate from USD to local currency (e.g., ILS)'); -- Adjust as needed
+    
+    COMMENT ON TABLE public.ai_pricing_settings IS 'Stores global AI pricing configurations and exchange rates.';
+    
+    ```
+    
+    *Self-correction*: The `leads` table has `ai_training_cost_per_unit` and `ai_prompt_cost_per_unit`. If these are *chosen* per lead from the options ($1.5, $2.5, $5), then the `ai_pricing_settings` table is more for *defining* these options and perhaps the *default* new leads get. The current lead schema allows overriding these costs per lead. The `admin/leads/ai-pricing` page (5.1.8) would manage the values in `ai_pricing_settings`. When creating/editing a lead, the UI could fetch these options from `ai_pricing_settings` to populate dropdowns.
+    
+
+**1.2. Supabase Row Level Security (RLS) - Policies**
+
+Enable RLS for each new table first in the Supabase dashboard, then apply policies.
+Example policies (assuming you have an admin role check, e.g., `is_admin()` or `get_my_role() = 'admin'` function):
+
+- For `leads` table:
+    
+    ```sql
+    -- Admins can do anything
+    CREATE POLICY "Allow admin full access on leads"
+    ON public.leads
+    FOR ALL
+    TO authenticated
+    USING (is_admin()) -- Replace is_admin() with your actual role check function
+    WITH CHECK (is_admin());
+    
+    ```
+    
+- For `lead_activity_log` table:
+    
+    ```sql
+    -- Admins can do anything
+    CREATE POLICY "Allow admin full access on lead_activity_log"
+    ON public.lead_activity_log
+    FOR ALL
+    TO authenticated
+    USING (is_admin())
+    WITH CHECK (is_admin());
+    
+    -- Allow users to see their own activity if user_id is tracked and relevant
+    -- CREATE POLICY "Allow users to see their own activity"
+    -- ON public.lead_activity_log
+    -- FOR SELECT
+    -- TO authenticated
+    -- USING (auth.uid() = user_id);
+    
+    ```
+    
+- For `lead_comments` table:
+    
+    ```sql
+    -- Admins can do anything
+    CREATE POLICY "Allow admin full access on lead_comments"
+    ON public.lead_comments
+    FOR ALL
+    TO authenticated
+    USING (is_admin())
+    WITH CHECK (is_admin());
+    
+    -- Allow users to see/manage their own comments if relevant
+    -- CREATE POLICY "Allow users to manage their own comments"
+    -- ON public.lead_comments
+    -- FOR ALL
+    -- TO authenticated
+    -- USING (auth.uid() = user_id)
+    -- WITH CHECK (auth.uid() = user_id);
+    
+    ```
+    
+- For `ai_pricing_settings` table:
+    
+    ```sql
+    -- Admins can manage settings
+    CREATE POLICY "Allow admin full access on ai_pricing_settings"
+    ON public.ai_pricing_settings
+    FOR ALL
+    TO authenticated
+    USING (is_admin())
+    WITH CHECK (is_admin());
+    
+    -- Authenticated users might need to read these settings for UI population
+    CREATE POLICY "Allow authenticated users to read ai_pricing_settings"
+    ON public.ai_pricing_settings
+    FOR SELECT
+    TO authenticated
+    USING (true);
+    
+    ```
+    
+    *Important*: Ensure your `is_admin()` or equivalent role-checking function is `SECURITY DEFINER` if it needs to access tables or information not normally available to the calling user. Based on `activeContext.md`, you have `get_my_role()`. Use that.
+    
+
+**1.3. Supabase Functions (RPC) - Examples**
+
+- **`log_lead_activity` Function:**
+    
+    ```sql
+    CREATE OR REPLACE FUNCTION public.log_lead_activity(
+        p_lead_id UUID,
+        p_activity_description TEXT,
+        p_user_id UUID DEFAULT auth.uid() -- Defaults to the current user
+    )
+    RETURNS VOID
+    LANGUAGE plpgsql
+    SECURITY DEFINER -- If needed, but usually auth.uid() is available
+    AS $$
+    BEGIN
+        INSERT INTO public.lead_activity_log (lead_id, activity_description, user_id)
+        VALUES (p_lead_id, p_activity_description, p_user_id);
+    END;
+    $$;
+    
+    -- Grant execute to authenticated users (RLS on the table will still apply for who can call it indirectly)
+    GRANT EXECUTE ON FUNCTION public.log_lead_activity(UUID, TEXT, UUID) TO authenticated;
+    
+    ```
+    
+- **`convert_lead_to_client` Function (Conceptual):**
+This is more complex as it depends on your `clients` table structure.
+    
+    ```sql
+    CREATE OR REPLACE FUNCTION public.convert_lead_to_client(p_lead_id UUID)
+    RETURNS UUID -- Returns the client_id of the new or existing client
+    LANGUAGE plpgsql
+    SECURITY DEFINER -- Likely needed to interact with both leads and clients table
+    AS $$
+    DECLARE
+        v_client_id UUID;
+        v_lead_email TEXT;
+        v_lead_restaurant_name TEXT;
+        -- Add other variables to hold lead data to transfer
+    BEGIN
+        -- Ensure the caller is an admin
+        IF NOT is_admin() THEN -- Replace with your actual role check
+            RAISE EXCEPTION 'User does not have permission to convert leads.';
+        END IF;
+    
+        -- Get lead details
+        SELECT email, restaurant_name --, other fields...
+        INTO v_lead_email, v_lead_restaurant_name --, ...
+        FROM public.leads
+        WHERE lead_id = p_lead_id AND status != 'converted_to_client';
+    
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Lead not found or already converted.';
+        END IF;
+    
+        -- Check if a client already exists with this email or restaurant name (adjust logic as needed)
+        SELECT client_id INTO v_client_id
+        FROM public.clients
+        WHERE email = v_lead_email OR restaurant_name = v_lead_restaurant_name; -- Example check
+    
+        IF v_client_id IS NULL THEN
+            -- Create new client if not found
+            INSERT INTO public.clients (restaurant_name, email, contact_name, phone, client_status) -- Adjust to your clients table columns
+            SELECT restaurant_name, email, contact_name, phone, 'active' -- Default status for new client
+            FROM public.leads
+            WHERE lead_id = p_lead_id
+            RETURNING clients.client_id INTO v_client_id;
+        ELSE
+            -- Optionally update existing client details if necessary
+            -- UPDATE public.clients SET ... WHERE client_id = v_client_id;
+        END IF;
+    
+        -- Update lead status and link to client_id
+        UPDATE public.leads
+        SET status = 'converted_to_client',
+            client_id = v_client_id, -- Link the lead to the client
+            updated_at = NOW()
+        WHERE lead_id = p_lead_id;
+    
+        -- Log this activity
+        PERFORM public.log_lead_activity(p_lead_id, 'Lead converted to client. Client ID: ' || v_client_id::TEXT);
+    
+        RETURN v_client_id;
+    END;
+    $$;
+    
+    GRANT EXECUTE ON FUNCTION public.convert_lead_to_client(UUID) TO authenticated;
+    
+    ```
+    
+    You'll need to adapt the `INSERT INTO public.clients` statement to match the actual columns and requirements of your `clients` table.
+    
+
+**1.4. Database Triggers**
+
+- **Trigger for `updated_at` on `leads` table:**
+    
+    ```sql
+    CREATE OR REPLACE FUNCTION public.trigger_set_timestamp()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = NOW();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    CREATE TRIGGER set_leads_updated_at
+    BEFORE UPDATE ON public.leads
+    FOR EACH ROW
+    EXECUTE FUNCTION public.trigger_set_timestamp();
+    
+    ```
+    
+    You can reuse this trigger function for `lead_activity_log`, `lead_comments`, and `ai_pricing_settings` if they also have `updated_at` fields managed this way. The `ai_pricing_settings` table in the example already has `updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL`, which handles creation and can be augmented by this trigger for updates.
+    
+    The `total_ai_costs` and `roi` fields in the `leads` table are defined as `GENERATED ALWAYS AS ... STORED`. This means PostgreSQL automatically computes and stores these values, so explicit triggers for them are not needed.
+    
+
+This covers a substantial part of the backend setup. After applying these SQL changes (preferably through Supabase migrations), the next step would be to start building the frontend components.
+
+**Answering your implied questions from the previous plan's "Clarifying Questions":**
+
+1. **Lead Statuses Customization:** For now, the plan uses the fixed list. If customization is needed later, the `status TEXT` field is flexible. An ENUM is more rigid but offers better data integrity. A separate `lead_statuses` table could be introduced later if dynamic management is required, where `leads.status_id` would be an FK. For now, the provided list in code/documentation is fine.
+2. **AI Training Cost per Unit Granularity:** The `leads` table has `ai_training_cost_per_unit NUMERIC(10, 2)`. This implies that for *a given lead*, there's *one* training cost per unit. If a lead can have some trainings at $1.5 and others at $2.5, the model needs to be more complex (e.g., a `lead_trainings` table detailing each batch of trainings and its cost). The current spec (5.1.3 Tab 2 mock-up: `כמות: [5 ] × עלות: [$2.5 ▼] = $12.5`) suggests the admin picks *one* cost rate that applies to the entered quantity for that update session or is the currently set rate for that lead. The simpler approach is that `ai_training_cost_per_unit` on the lead record is the *current applicable rate* for new trainings added to that lead. The `admin/leads/ai-pricing` (5.1.8) page would set the *available options* for this rate.
+3. **"Convert to Client" - Data Flow:** The `convert_lead_to_client` RPC function sketch shows how data can be copied. Key fields like `restaurant_name`, `contact_name`, `email`, `phone` are obvious candidates. The `clients` table in `systemPatterns.md` has `client_id, user_auth_id, restaurant_name, contact_name, email, phone, client_status, current_package_id, remaining_servings`. So the function would populate these. The `client_id` would be newly generated or an existing one found. `user_auth_id` might be created separately or linked if the lead's contact person becomes a user. `client_status` could default to 'active'. `current_package_id` and `remaining_servings` would likely be set up in a subsequent step after conversion, perhaps on the client management page.
+4. **Merging `/admin/submissions` and `/admin/queue`:** This is a larger strategic decision. If merged, the page could list all incoming items. An action on this merged page could be "Create Lead" if an item is deemed a prospect. This keeps lead creation distinct. The automated creation from submissions (5.1.7) would still run in the background. The new `admin/leads` page would be the primary interface for *managing entities identified as leads*.
+5. **Currency Exchange Rate (5.1.8):** The `ai_pricing_settings` table includes `usd_to_local_currency_rate`. Reports and UI elements can use this to display local currency equivalents. For ROI, it's crucial to be consistent: if costs are USD and revenue is local, convert revenue to USD (or costs to local) before ROI calculation. The current generated columns for `total_ai_costs` and `roi` assume all inputs (`ai_training_cost_per_unit`, `ai_prompt_cost_per_unit`, `revenue_from_lead`) are in the *same currency* (presumably USD as per your cost figures). If `revenue_from_lead` is entered in local currency, it must be converted to USD before storing or before the ROI calculation uses it.
+
+Let's refine the `revenue_from_lead` handling:
+If `revenue_from_lead` is entered in local currency, the table should perhaps store `revenue_from_lead_local_currency` and `revenue_from_lead_usd` (calculated using the exchange rate). The ROI would then use `revenue_from_lead_usd`.
+
+Alternative for `leads` table regarding revenue and ROI to handle currency:
+
+```sql
+ALTER TABLE public.leads
+ADD COLUMN revenue_from_lead_local NUMERIC(10, 2) DEFAULT 0.00,
+ADD COLUMN exchange_rate_at_conversion NUMERIC(10,4), -- Store the rate when revenue was recorded
+ADD COLUMN revenue_from_lead_usd NUMERIC(10,2) GENERATED ALWAYS AS (
+    CASE
+        WHEN exchange_rate_at_conversion IS NOT NULL AND exchange_rate_at_conversion > 0
+        THEN revenue_from_lead_local / exchange_rate_at_conversion
+        ELSE NULL -- Or handle as 0 if revenue_from_lead_local is also 0
+    END
+) STORED;
+
+-- Then redefine ROI to use revenue_from_lead_usd
+-- First, drop the old ROI column if it exists
+-- ALTER TABLE public.leads DROP COLUMN roi;
+-- Then add the new one
+ALTER TABLE public.leads
+ADD COLUMN roi NUMERIC(10, 2) GENERATED ALWAYS AS (
+    CASE
+        WHEN total_ai_costs > 0 AND revenue_from_lead_usd IS NOT NULL
+        THEN (revenue_from_lead_usd - total_ai_costs) / total_ai_costs * 100
+        ELSE NULL
+    END
+) STORED;
+
+COMMENT ON COLUMN public.leads.revenue_from_lead_local IS 'Revenue recorded in local currency.';
+COMMENT ON COLUMN public.leads.exchange_rate_at_conversion IS 'Exchange rate (Local to USD) when revenue was recorded.';
+COMMENT ON COLUMN public.leads.revenue_from_lead_usd IS 'Revenue converted to USD for consistent ROI calculation.';
+
+```
+
+This makes currency handling more explicit. The `admin/leads/ai-pricing` page would manage the *current* `usd_to_local_currency_rate` from `ai_pricing_settings`. When `revenue_from_lead_local` is entered for a lead, the application would fetch the current rate and store it as `exchange_rate_at_conversion` for that lead.
+
+This level of detail for the backend should provide a solid foundation.
+
+Okay, we've laid a strong foundation with the backend setup. Now, let's move on to **Phase 2: Frontend - UI and Logic (`admin/leads` page)**. This phase will bring the lead management system to life for the admin user.
+
+**Phase 2: Frontend - UI and Logic (`admin/leads` page)**
+
+**2.1. Create New Route and Page Structure**
+
+- **Routing (`src/App.tsx` or your main routing file):**
+    - Add a new route within your admin-specific routing setup.
+        
+        ```tsx
+        // Example using React Router
+        // Make sure this is within your authenticated Admin routes
+        import AdminLeadsPage from '@/pages/admin/leads/AdminLeadsPage'; // New page component
+        // ... other imports
+        
+        // Inside your <Routes> for admin
+        <Route path="leads" element={<AdminLeadsPage />} />
+        <Route path="leads/archive" element={<AdminLeadsArchivePage />} /> // For Phase 3
+        <Route path="leads/costs-report" element={<AdminCostsReportPage />} /> // For Phase 3
+        <Route path="leads/ai-pricing" element={<AdminAiPricingPage />} /> // For Phase 3
+        
+        ```
+        
+- **Navigation (`src/layouts/AdminLayout.tsx` or your admin navigation component):**
+    - Add a new navigation link to "Leads" that points to `/admin/leads`.
+        
+        ```tsx
+        // Example NavLink item
+        <NavLink to="/admin/leads">Leads</NavLink>
+        
+        ```
+        
+- **Page Component (`src/pages/admin/leads/AdminLeadsPage.tsx`):**
+    - This will be the main container for the leads management interface.
+    - It will orchestrate the display of filters, the leads table, and page-level actions.
+        
+        ```tsx
+        // src/pages/admin/leads/AdminLeadsPage.tsx
+        import LeadsFilters from '@/components/admin/leads/LeadsFilters';
+        import LeadsTable from '@/components/admin/leads/LeadsTable';
+        import LeadsPageActions from '@/components/admin/leads/LeadsPageActions';
+        // import other necessary UI components like Layout, Heading, etc.
+        
+        const AdminLeadsPage = () => {
+          // State for filters, pagination, etc. will be managed here or within sub-components
+          // and often lifted to React Query for server state.
+        
+          return (
+            <div> {/* Or your standard Page Layout Component */}
+              {/* <Heading>Leads Management</Heading> */}
+              <LeadsPageActions /> {/* Buttons like "+ New Lead", "Costs Report" */}
+              <LeadsFilters /> {/* Filter controls */}
+              <LeadsTable /> {/* The main table displaying leads */}
+            </div>
+          );
+        };
+        
+        export default AdminLeadsPage;
+        
+        ```
+        
+
+**2.2. Main Leads Table (`src/components/admin/leads/LeadsTable.tsx`)**
+
+- **Data Fetching (React Query):**
+    - Create a hook, e.g., `useLeads.ts`, to fetch leads.
+        
+        ```tsx
+        // src/hooks/admin/useLeads.ts
+        import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+        import { supabase } from '@/integrations/supabase'; // your Supabase client
+        import { Lead } from '@/types'; // Define a Lead type based on your schema
+        
+        export const LEAD_QUERY_KEY = 'leads';
+        
+        // Define Lead type (example, ensure it matches your DB structure and needs)
+        // You should have this in a central types file e.g. src/types/index.ts
+        /*
+        export interface Lead {
+          lead_id: string;
+          restaurant_name: string;
+          contact_name: string;
+          phone: string;
+          email: string;
+          website_url?: string;
+          address?: string;
+          status: string; // Consider specific string literals for statuses
+          ai_trainings_count: number;
+          ai_training_cost_per_unit: number;
+          ai_prompts_count: number;
+          ai_prompt_cost_per_unit: number;
+          total_ai_costs?: number; // Generated column
+          revenue_from_lead_local?: number;
+          exchange_rate_at_conversion?: number;
+          revenue_from_lead_usd?: number; // Generated column
+          roi?: number; // Generated column
+          lead_source?: string;
+          created_at: string;
+          updated_at: string;
+          next_follow_up_date?: string;
+          notes?: string;
+          client_id?: string;
+        }
+        */
+        
+        export const fetchLeads = async ({ pageParam = 0, filters = {} }) => {
+          const PAGE_SIZE = 20; // Or make configurable
+          let query = supabase
+            .from('leads')
+            .select(`
+              *,
+              clients ( restaurant_name )
+            `) // Adjust columns as needed, fetch related client name if converted
+            .neq('status', 'archived') // Exclude archived leads from main view
+            .order('created_at', { ascending: false })
+            .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+        
+          // Apply filters (example)
+          if (filters.searchTerm) {
+            query = query.or(`restaurant_name.ilike.%${filters.searchTerm}%,contact_name.ilike.%${filters.searchTerm}%,email.ilike.%${filters.searchTerm}%`);
+          }
+          if (filters.status) {
+            query = query.eq('status', filters.status);
+          }
+          // Add other filters for date range, ROI, source etc.
+        
+          const { data, error, count } = await query;
+          if (error) throw error;
+          return { data, nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined, count };
+        };
+        
+        export const useLeads = (filters) => {
+          return useQuery({
+             queryKey: [LEAD_QUERY_KEY, filters],
+             queryFn: ({ pageParam }) => fetchLeads({ pageParam, filters }),
+             // For infinite scroll or pagination:
+             // getNextPageParam: (lastPage) => lastPage.nextPage,
+             // initialPageParam: 0,
+          });
+        };
+        
+        // Mutations for update, archive, convert will also go here
+        // Example: Update Lead
+        export const useUpdateLead = () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (updatedLead: Partial<Lead> & { lead_id: string }) => {
+              const { error } = await supabase
+                .from('leads')
+                .update(updatedLead)
+                .eq('lead_id', updatedLead.lead_id);
+              if (error) throw error;
+              // Optionally log activity here via RPC or let the backend handle it via triggers if possible
+              // await supabase.rpc('log_lead_activity', { p_lead_id: updatedLead.lead_id, p_activity_description: 'Lead details updated.' });
+              return updatedLead;
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
+              // queryClient.invalidateQueries(['leadDetails', updatedLead.lead_id]); // If you have a separate query for lead details
+            },
+          });
+        };
+        
+        ```
+        
+- **Table Structure (`LeadsTable.tsx`):**
+    - Use your chosen table component library (e.g., Radix UI Table, TanStack Table, or custom).
+    - Columns (as per 5.1.2):
+        - Checkbox (for bulk actions)
+        - Restaurant Name (Clickable to open `LeadDetailPanel`)
+        - Contact Person
+        - Phone
+        - Status (Display with color coding - see helper function below)
+        - Next Follow-up (Formatted date)
+        - AI Costs (Formatted currency, `total_ai_costs`)
+        - ROI (Formatted percentage, `roi`)
+        - Actions (Buttons: View, Edit, Notes, Costs, Archive, Convert)
+    - Implement pagination controls (e.g., Previous/Next buttons, page numbers).
+- **Color Coding for Status:**
+    
+    ```tsx
+    // src/utils/leadsUtils.ts or similar
+    export const getStatusColor = (status: string): string => {
+      const colors: { [key: string]: string } = {
+        'new': 'blue-500', // ליד חדש (צבע כחול)
+        'contacted': 'orange-500', // יצרתי קשר ראשוני (צבע כתום)
+        'interested_sent_pics': 'green-300', // מעוניין - שלחתי תמונות (צבע ירוק בהיר)
+        'waiting_reply': 'yellow-400', // מעוניין - ממתין לתשובה (צבע צהוב)
+        'meeting_scheduled': 'purple-500', // קבע פגישה/שיחה (צבע סגול)
+        'demo_done': 'blue-700', // הדגמה בוצעה (צבע כחול כהה)
+        'quote_sent': 'pink-500', // הצעת מחיר נשלחה (צבע ורוד)
+        'cold_follow_up': 'gray-500', // ליד קר - לחזור אליו (צבע אפור)
+        'not_interested': 'red-500', // לא מעוניין (צבע אדום)
+        'converted_to_client': 'green-700', // הפך ללקוח (צבע ירוק כהה)
+        'archived': 'gray-300', // ארכיון (מוסתר מהתצוגה הרגילה)
+        // Add default or handle unknown statuses
+      };
+      return colors[status] || 'gray-200'; // Default color
+    };
+    
+    // In LeadsTable.tsx where you render the status:
+    // <span className={`px-2 py-1 text-xs font-semibold rounded-full text-white bg-${getStatusColor(lead.status)}`}>
+    //   {lead.status.replace(/_/g, ' ')} {/* Format status text if needed */}
+    // </span>
+    
+    ```
+    
+- **Action Buttons per Row:**
+    - Each button will trigger a specific action:
+        - **View 👁️:** Open `LeadDetailPanel` for the lead.
+        - **Edit ✏️:** Open `LeadDetailPanel` in edit mode, or a simpler inline/quick edit modal.
+        - **Notes 💬:** Quick add modal for `lead_comments` or open `LeadDetailPanel` to the Notes tab.
+        - **Costs 📊:** Open `LeadDetailPanel` to the AI Costs tab.
+        - **Archive 🗃️:** Call a mutation to update lead status to 'archived'.
+        - **Convert ↔️:** Call a mutation that triggers the `convert_lead_to_client` RPC. Only show if status is appropriate (e.g., not already 'converted_to_client' or 'archived').
+
+**2.3. Filtering and Searching (`src/components/admin/leads/LeadsFilters.tsx`)**
+
+- **UI Elements:**
+    - Input field for free text search (restaurant name, contact, email).
+    - Dropdown/Select for Status (populated with your defined statuses).
+    - Date range pickers for Created Date / Next Follow-up Date.
+    - Dropdown/Select for ROI (e.g., All, Positive, Negative).
+    - Dropdown/Select for Lead Source.
+- **State Management:**
+    - Use local component state (`useState`) to hold filter values.
+    - A "Apply Filters" button or apply filters on change (debounced for text input).
+- **Integration with `useLeads`:**
+    - Pass the filter state to the `useLeads` hook. React Query will refetch when `filters` object changes.
+
+**2.4. Lead Details Modal/Sidebar (`src/components/admin/leads/LeadDetailPanel.tsx`)**
+
+- **Structure:**
+    - Use a Modal or a Sidebar component (Radix UI Dialog or a custom one).
+    - Controlled by state (e.g., `selectedLeadId`, `isPanelOpen`).
+    - Fetch lead details using a dedicated query if not all data is in the main list (e.g., `useLeadDetails(leadId)`).
+        
+        ```tsx
+        // src/hooks/admin/useLeads.ts (add this)
+        export const fetchLeadDetails = async (leadId: string) => {
+          // Fetch lead and its related activity logs and comments
+          const { data: leadData, error: leadError } = await supabase
+            .from('leads')
+            .select('*, clients(restaurant_name)') // Fetch all lead fields
+            .eq('lead_id', leadId)
+            .single();
+          if (leadError) throw leadError;
+        
+          const { data: activities, error: activitiesError } = await supabase
+            .from('lead_activity_log')
+            .select('*')
+            .eq('lead_id', leadId)
+            .order('activity_timestamp', { ascending: false });
+          if (activitiesError) throw activitiesError;
+        
+          const { data: comments, error: commentsError } = await supabase
+            .from('lead_comments')
+            .select('*')
+            .eq('lead_id', leadId)
+            .order('comment_timestamp', { ascending: false });
+          if (commentsError) throw commentsError;
+        
+          return { ...leadData, activities, comments };
+        };
+        
+        export const useLeadDetails = (leadId: string | null) => {
+          return useQuery({
+            queryKey: ['leadDetails', leadId],
+            queryFn: () => fetchLeadDetails(leadId!),
+            enabled: !!leadId, // Only run query if leadId is present
+          });
+        };
+        
+        ```
+        
+- **Tabs (Radix UI Tabs or similar):**
+    - **Tab 1: Basic Details:**
+        - Form using React Hook Form + Zod for validation, pre-filled with lead data.
+        - Fields: Restaurant Name, Contact, Phone, Email, Website, Address.
+        - Dropdowns for Status, Lead Source. Date picker for Next Follow-up.
+        - Textarea for General Notes (`leads.notes`).
+        - `useUpdateLead` mutation on save. Log activity.
+    - **Tab 2: AI Cost Tracking:**
+        - Display current counts and costs.
+        - Inputs for updating `ai_trainings_count`, `ai_prompts_count`.
+        - Dropdown for `ai_training_cost_per_unit` (options from `ai_pricing_settings` or fixed).
+        - Input for `ai_prompt_cost_per_unit` (default from `ai_pricing_settings`).
+        - Input for `revenue_from_lead_local`. (Application fetches current exchange rate to also save `exchange_rate_at_conversion`).
+        - Display calculated `total_ai_costs`, `revenue_from_lead_usd`, `roi`.
+        - Use `useUpdateLead` mutation. Log activity.
+    - **Tab 3: Activity History:**
+        - Display `lead_activity_log` entries (from `useLeadDetails`).
+        - "Add Manual Activity" button: Modal with a textarea to call `supabase.rpc('log_lead_activity', { p_lead_id: lead.lead_id, p_activity_description: newActivityText })`.
+    - **Tab 4: Notes & Correspondence:**
+        - Display `lead_comments` (from `useLeadDetails`).
+        - Textarea and "Add Comment" button to insert into `lead_comments` table (use a mutation). Log activity.
+
+**2.5. Top Action Buttons (`src/components/admin/leads/LeadsPageActions.tsx`)**
+
+- **`+ New Lead` Button:**
+    - Opens `LeadDetailPanel` in "create" mode (no `leadId` initially, form is empty or has defaults).
+    - On save, use a `useCreateLead` mutation.
+        
+        ```tsx
+        // src/hooks/admin/useLeads.ts (add this)
+        export const useCreateLead = () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (newLeadData: Partial<Lead>) => { // Define type for new lead payload
+              const { data, error } = await supabase
+                .from('leads')
+                .insert(newLeadData)
+                .select()
+                .single(); // Assuming you want the created lead back
+              if (error) throw error;
+              // Log activity
+              await supabase.rpc('log_lead_activity', { p_lead_id: data.lead_id, p_activity_description: 'Lead created manually.' });
+              return data;
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] });
+            },
+          });
+        };
+        
+        ```
+        
+- **`Costs Report` Button:** Navigates to `/admin/leads/costs-report`.
+- **`Archive Page` Button:** Navigates to `/admin/leads/archive`.
+- **`AI Price Settings` Button:** Navigates to `/admin/leads/ai-pricing`.
+
+**2.6. Bulk Actions (in `LeadsTable.tsx`)**
+
+- **State for Selection:** Manage an array of selected `lead_id`s.
+- **UI for Bulk Actions:** A dropdown or set of buttons appearing when items are selected.
+- **Actions:**
+    - **Change Status:** Modal with status dropdown. Iterate selected IDs and call `useUpdateLead` for each.
+    - **Archive:** Iterate selected IDs and call `useUpdateLead` to set status to 'archived'.
+    - **Export to Excel/CSV:** Gather data for selected leads and use a library like `papaparse` (CSV) or `xlsx` (Excel) to generate and download the file.
+
+This details the core components for the main leads page. The next phase would be building the supporting pages (Archive, Costs Report, AI Pricing) and then focusing on integrations.
+
+This is a lot of frontend work. It's usually best to tackle it piece by piece:
+
+1. Get basic data fetching and table display working.
+2. Implement the "New Lead" and "Edit Lead" (via `LeadDetailPanel` basic details tab).
+3. Add status updates and quick actions like "Archive".
+4. Implement filters.
+5. Flesh out the other tabs in `LeadDetailPanel` (Costs, Activity, Notes).
+6. Build bulk actions.
+
+Okay, let's proceed to **Phase 3: Supporting Pages and Features**. These pages provide specialized views and management capabilities that complement the main leads dashboard.
+
+**Phase 3: Supporting Pages and Features**
+
+**3.1. Archive Page (`src/pages/admin/leads/AdminLeadsArchivePage.tsx`) (Ref: 5.1.5)**
+
+- **Purpose:** To view and manage leads that have been archived.
+- **Routing:** Already defined (`/admin/leads/archive`).
+- **Component Structure (`AdminLeadsArchivePage.tsx`):**
+    - Similar layout to `AdminLeadsPage.tsx` but with a distinct visual cue (e.g., light gray background as suggested, or a clear "Archive" heading).
+    - It will likely reuse or adapt `LeadsFilters.tsx` and `LeadsTable.tsx`.
+- **Data Fetching:**
+    - Adapt `useLeads` or create `useArchivedLeads` to fetch leads specifically with `status = 'archived'`.
+        
+        ```tsx
+        // src/hooks/admin/useLeads.ts (or a new useArchivedLeads.ts)
+        export const fetchArchivedLeads = async ({ pageParam = 0, filters = {} }) => {
+          const PAGE_SIZE = 20;
+          let query = supabase
+            .from('leads')
+            .select('*, clients(restaurant_name)') // Adjust columns
+            .eq('status', 'archived') // Key difference: fetch only archived
+            .order('updated_at', { ascending: false }) // Order by when they were archived (updated_at changed)
+            .range(pageParam * PAGE_SIZE, (pageParam + 1) * PAGE_SIZE - 1);
+        
+          // Apply filters if any are relevant to archived leads (e.g., search, date archived)
+          if (filters.searchTerm) {
+            query = query.or(`restaurant_name.ilike.%${filters.searchTerm}%,contact_name.ilike.%${filters.searchTerm}%`);
+          }
+          if (filters.archiveDateRange) {
+            // query = query.gte('updated_at', filters.archiveDateRange.start).lte('updated_at', filters.archiveDateRange.end);
+          }
+        
+          const { data, error, count } = await query;
+          if (error) throw error;
+          return { data, nextPage: data.length === PAGE_SIZE ? pageParam + 1 : undefined, count };
+        };
+        
+        export const useArchivedLeads = (filters) => {
+          return useQuery({
+            queryKey: [LEAD_QUERY_KEY, 'archived', filters], // Distinct query key
+            queryFn: ({pageParam}) => fetchArchivedLeads({pageParam, filters})
+            // pagination/infinite scroll params
+          });
+        };
+        
+        ```
+        
+- **Table Display (`LeadsTable` adaptation or a new `ArchivedLeadsTable`):**
+    - Columns might be similar, but actions will differ.
+    - **Actions per Row:**
+        - **View 👁️:** Open `LeadDetailPanel` (mostly read-only view, or limited edits).
+        - **Restore ♻️:**
+            - Mutation that updates the lead's status from 'archived' to a previous active status (e.g., 'new', or perhaps store `previous_status_before_archive` on the lead to restore to that).
+            - Requires a modal to confirm and potentially select the status to restore to.
+            - Invalidate both archived leads query and main leads query.
+            - Log activity: "Lead restored from archive."
+        - **Delete Permanently 🗑️:**
+            - Mutation that deletes the lead record from the `leads` table.
+            - **Critical:** This is a destructive action. Use a confirmation modal with a strong warning.
+            - Consider if true deletion is allowed or if it should be a soft delete (e.g., a `is_deleted` flag). Your spec says "מחיקה סופית" (final deletion).
+            - Invalidate archived leads query.
+            - Log activity (if possible before deletion, or in a separate audit log if strict).
+- **Filtering:**
+    - Filters for searching (name, contact).
+    - Filter by "Date Archived" (using `updated_at` when status was set to archived).
+
+**3.2. Costs and ROI Report Page (`src/pages/admin/leads/AdminCostsReportPage.tsx`) (Ref: 5.1.6)**
+
+- **Purpose:** Provide a consolidated view of AI costs and ROI across leads.
+- **Routing:** Already defined (`/admin/leads/costs-report`).
+- **Component Structure (`AdminCostsReportPage.tsx`):**
+    - Display a summary section and a detailed table.
+- **Data Fetching:**
+    - Need a new hook `useCostsReportData.ts`.
+    - This might involve more complex queries or an RPC function to aggregate data.
+        
+        ```tsx
+        // src/hooks/admin/useCostsReportData.ts
+        // This is conceptual and might need an RPC for efficiency
+        
+        export const fetchCostsReport = async ({ dateRange }: { dateRange?: { start: string, end: string } }) => {
+          // 1. Summary Data (Totals)
+          // This might need an RPC function or careful client-side aggregation if fetching all leads.
+          // Example RPC: get_leads_cost_summary(start_date, end_date)
+          // For client-side, fetch all relevant leads (non-archived, or all if report includes archived)
+          // and then calculate sums.
+        
+          let leadsQuery = supabase
+            .from('leads')
+            .select('total_ai_costs, revenue_from_lead_usd, status') // only fields needed for report
+            .neq('status', 'archived'); // Or include archived if the report should
+        
+          if (dateRange) {
+            leadsQuery = leadsQuery.gte('created_at', dateRange.start).lte('created_at', dateRange.end);
+          }
+          const { data: allLeads, error: leadsError } = await leadsQuery;
+          if (leadsError) throw leadsError;
+        
+          const summary = allLeads.reduce((acc, lead) => {
+            acc.totalAiCosts += lead.total_ai_costs || 0;
+            acc.totalRevenue += lead.revenue_from_lead_usd || 0;
+            if (lead.status === 'converted_to_client') { // Assuming 'converted_to_client' is the status for "הכנסות מלקוחות שהומרו"
+                 acc.convertedClientsRevenue += lead.revenue_from_lead_usd || 0;
+            }
+            // For total trainings/prompts, you'd need ai_trainings_count, ai_prompts_count,
+            // ai_training_cost_per_unit, ai_prompt_cost_per_unit to be more precise if costs per unit vary.
+            // The example 5.1.6 shows "סך אימונים: 47 (עלות: $117.5)" implying summing counts and costs separately.
+            // This requires fetching those fields too.
+            return acc;
+          }, { totalAiCosts: 0, totalRevenue: 0, convertedClientsRevenue: 0 /*, totalTrainings: 0, totalPrompts: 0 */ });
+        
+          const overallRoi = summary.totalAiCosts > 0
+            ? ((summary.convertedClientsRevenue - summary.totalAiCosts) / summary.totalAiCosts) * 100
+            : 0; // Or null if no costs
+        
+          // 2. Detailed Data (Per Lead) - this is essentially the `allLeads` data, perhaps filtered/sorted.
+          const detailedData = allLeads.map(lead => ({
+            restaurant_name: lead.restaurant_name, // Need to select this field
+            ai_cost: lead.total_ai_costs,
+            revenue: lead.revenue_from_lead_usd,
+            roi: lead.roi, // Use the pre-calculated ROI from the leads table
+            status: lead.status,
+          }));
+        
+          return {
+            summary: {
+              ...summary,
+              overallRoi
+              // TODO: Add total prompts/trainings count and their separate costs if needed by fetching relevant fields.
+            },
+            detailedData
+          };
+        };
+        
+        export const useCostsReport = (dateRange) => {
+          return useQuery({
+            queryKey: ['costsReport', dateRange],
+            queryFn: () => fetchCostsReport({ dateRange }),
+          });
+        };
+        
+        ```
+        
+- **UI Display:**
+    - **Summary Section (5.1.6 Top Box):**
+        - Display: Total Trainings (count & cost), Total Prompts (count & cost), Total AI Costs, Revenue from Converted Clients, Overall ROI.
+        - Date range filter for this summary (e.g., "This Month", "Last Month", Custom Range).
+    - **Detailed Table (5.1.6 Bottom Table):**
+        - Columns: Restaurant Name, AI Cost, Revenue, ROI, Status.
+        - Sortable columns.
+        - Pagination if the list is long.
+
+**3.3. AI Pricing Settings Page (`src/pages/admin/leads/AdminAiPricingPage.tsx`) (Ref: 5.1.8)**
+
+- **Purpose:** Allow admins to configure default AI costs and the exchange rate.
+- **Routing:** Already defined (`/admin/leads/ai-pricing`).
+- **Component Structure (`AdminAiPricingPage.tsx`):**
+    - A form to edit the settings.
+- **Data Fetching & Updating:**
+    - Create `useAiPricingSettings.ts`.
+        
+        ```tsx
+        // src/hooks/admin/useAiPricingSettings.ts
+        import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+        import { supabase } from '@/integrations/supabase';
+        
+        export interface AiPricingSetting {
+          setting_id?: string;
+          setting_name: string;
+          setting_value: number;
+          description?: string;
+        }
+        
+        const AI_PRICING_SETTINGS_KEY = 'aiPricingSettings';
+        
+        export const fetchAiPricingSettings = async (): Promise<AiPricingSetting[]> => {
+          const { data, error } = await supabase.from('ai_pricing_settings').select('*');
+          if (error) throw error;
+          return data;
+        };
+        
+        export const useAiPricingSettingsList = () => {
+          return useQuery({
+            queryKey: [AI_PRICING_SETTINGS_KEY],
+            queryFn: fetchAiPricingSettings,
+          });
+        };
+        
+        // For updating, it's easier to update them one by one if the UI shows separate fields,
+        // or have a batch update if submitting a whole form.
+        export const useUpdateAiPricingSetting = () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (setting: AiPricingSetting) => {
+              const { setting_name, setting_value } = setting;
+              const { data, error } = await supabase
+                .from('ai_pricing_settings')
+                .update({ setting_value, updated_at: new Date().toISOString() }) // Assuming user_id is set by trigger or not tracked here
+                .eq('setting_name', setting_name)
+                .select();
+              if (error) throw error;
+              return data;
+            },
+            onSuccess: () => {
+              queryClient.invalidateQueries({ queryKey: [AI_PRICING_SETTINGS_KEY] });
+            },
+          });
+        };
+        
+        ```
+        
+- **UI Form:**
+    - Fields (as per 5.1.8):
+        - Training Costs: Regular, Advanced, Premium (numeric inputs).
+        - Prompt Cost (numeric input).
+        - Exchange Rate (USD to Local Currency) (numeric input).
+    - Use React Hook Form + Zod for validation.
+    - On save, call `useUpdateAiPricingSetting` for each setting.
+    - Display current values in the form fields, fetched by `useAiPricingSettingsList`. Group/map the flat list of settings from DB to the form structure.
+    Example:
+        
+        ```tsx
+        // AdminAiPricingPage.tsx (simplified)
+        // ...
+        const { data: settingsList, isLoading } = useAiPricingSettingsList();
+        const updateSettingMutation = useUpdateAiPricingSetting();
+        // ...
+        // Transform settingsList into an object for easier form handling:
+        // const settingsMap = settingsList?.reduce((acc, s) => ({...acc, [s.setting_name]: s.setting_value }),{});
+        // ...
+        // const onSubmit = async (formData) => {
+        //   await updateSettingMutation.mutateAsync({ setting_name: 'training_regular_cost', setting_value: formData.training_regular_cost });
+        //   // ... and so on for other settings
+        // };
+        
+        ```
+        
+
+This covers the supporting pages. Each of these pages builds upon the data structures and core concepts introduced in Phase 1 and 2. The next major step will be integrations and automation.
+
+הבנתי. אז אם עמוד `/admin/leads` כבר קיים, אנחנו נתייחס לתוכנית כאל **שכתוב ושדרוג מקיף של העמוד הקיים** כדי להתאים אותו למפרט המתקדם שסיפקת. זה אומר שייתכן שחלק מהקוד הקיים בעמוד זה יוחלף או ישונה באופן משמעותי, במיוחד בצד הלוגיקה של הנתונים ובממשק המשתמש, כדי להכיל את כל התכונות החדשות.
+
+אני אמשיך כעת עם **Phase 4: Integrations and Automation**, תוך התחשבות בכך שאנחנו משדרגים עמוד קיים `/admin/leads`.
+
+**Phase 4: Integrations and Automation**
+
+This phase is crucial for making the lead management system efficient and connected to other parts of your application, specifically the submissions process.
+
+**4.1. Automatic Lead Creation from Submissions (Ref: 5.1.7)**
+
+This feature aims to automatically create new leads in the `leads` table when a new submission is made through your public form, provided the restaurant/business doesn't already exist as a lead or a client.
+
+- **Trigger Point:** This logic needs to run after a new submission is successfully processed. This could be:
+    - **Within a Supabase Function:** If you have a Supabase function (e.g., `process-public-submission` mentioned in your project layout, or a similar one) that handles new submissions, this is an ideal place to add the lead creation logic. This keeps the process on the backend.
+    - **Frontend Logic (Less Ideal):** If submission processing is primarily on the frontend, the logic could be triggered there after successful submission. However, backend is preferred for reliability and security.
+- **Logic Flow:**
+    1. **Receive Submission Data:** Get the relevant data from the new submission (restaurant name, contact name, email, phone, etc.).
+    2. **Check for Existing Lead:**
+        - Query the `public.leads` table to see if a lead already exists with the same identifying information (e.g., email AND restaurant name).
+            
+            ```sql
+            -- Example check within a PL/pgSQL function
+            SELECT lead_id INTO v_existing_lead_id
+            FROM public.leads
+            WHERE lower(email) = lower(p_submission_email)
+              AND lower(restaurant_name) = lower(p_submission_restaurant_name);
+            IF v_existing_lead_id IS NOT NULL THEN
+                -- Lead already exists, do nothing or log an update
+                RETURN;
+            END IF;
+            
+            ```
+            
+    3. **Check for Existing Client:**
+        - Query the `public.clients` table similarly.
+            
+            ```sql
+            -- Example check
+            SELECT client_id INTO v_existing_client_id
+            FROM public.clients
+            WHERE lower(email) = lower(p_submission_email)
+              AND lower(restaurant_name) = lower(p_submission_restaurant_name);
+            IF v_existing_client_id IS NOT NULL THEN
+                -- Client already exists, do nothing or link submission to client
+                RETURN;
+            END IF;
+            
+            ```
+            
+    4. **Create New Lead:** If no existing lead or client is found:
+        - Insert a new record into `public.leads`.
+        - `status`: 'new'
+        - `lead_source`: 'auto_submission'
+        - Populate `restaurant_name`, `contact_name`, `email`, `phone` from submission data.
+        - `next_follow_up_date`: `NOW() + INTERVAL '24 hours'` (or as per your business rule).
+        - `created_at`, `updated_at`: `NOW()`
+        - Other fields: Use defaults or leave NULL as appropriate.
+        - **Log Activity:** Call `public.log_lead_activity` for the newly created lead: "Lead created from automatic submission."
+- **Implementation (Supabase Function Example - Conceptual):**
+    
+    ```sql
+    -- Supabase Function: process_submission_and_create_lead(submission_data JSONB)
+    -- This function would be called after a submission is made.
+    CREATE OR REPLACE FUNCTION public.handle_new_submission_for_lead_creation(
+        p_submission_restaurant_name TEXT,
+        p_submission_contact_name TEXT,
+        p_submission_email TEXT,
+        p_submission_phone TEXT
+        -- Add other relevant submission fields as parameters
+    )
+    RETURNS UUID -- Returns new lead_id or NULL
+    LANGUAGE plpgsql
+    SECURITY DEFINER -- Important if it needs to bypass RLS for these checks/inserts internally
+    AS $$
+    DECLARE
+        v_existing_lead_id UUID;
+        v_existing_client_id UUID;
+        v_new_lead_id UUID;
+    BEGIN
+        -- Normalize inputs for comparison (e.g., lowercase)
+        p_submission_email := lower(p_submission_email);
+        p_submission_restaurant_name := lower(p_submission_restaurant_name);
+    
+        -- 1. Check existing leads
+        SELECT lead_id INTO v_existing_lead_id
+        FROM public.leads
+        WHERE lower(email) = p_submission_email
+          AND lower(restaurant_name) = p_submission_restaurant_name;
+    
+        IF v_existing_lead_id IS NOT NULL THEN
+            -- Optional: Update existing lead's updated_at or add a note?
+            -- For now, just exit if lead exists.
+            RAISE NOTICE 'Lead already exists: %', v_existing_lead_id;
+            RETURN NULL;
+        END IF;
+    
+        -- 2. Check existing clients
+        SELECT client_id INTO v_existing_client_id
+        FROM public.clients
+        WHERE lower(email) = p_submission_email
+          AND lower(restaurant_name) = p_submission_restaurant_name;
+    
+        IF v_existing_client_id IS NOT NULL THEN
+            RAISE NOTICE 'Client already exists: %', v_existing_client_id;
+            RETURN NULL;
+        END IF;
+    
+        -- 3. Create new lead
+        INSERT INTO public.leads (
+            restaurant_name, contact_name, email, phone,
+            status, lead_source, next_follow_up_date
+        ) VALUES (
+            p_submission_restaurant_name, p_submission_contact_name, p_submission_email, p_submission_phone,
+            'new', 'auto_submission', NOW() + INTERVAL '24 hours'
+        ) RETURNING lead_id INTO v_new_lead_id;
+    
+        -- 4. Log activity for the new lead
+        IF v_new_lead_id IS NOT NULL THEN
+            PERFORM public.log_lead_activity(v_new_lead_id, 'Lead created from automatic submission.', auth.uid());
+        END IF;
+    
+        RETURN v_new_lead_id;
+    END;
+    $$;
+    
+    -- Grant EXECUTE permission to the role that processes submissions
+    -- GRANT EXECUTE ON FUNCTION public.handle_new_submission_for_lead_creation(TEXT, TEXT, TEXT, TEXT) TO authenticated;
+    -- Or to 'service_role' if called by another backend process.
+    
+    ```
+    
+- **Notifications for New Leads (Ref: 5.1.7 - UI part):**
+    - This is a frontend task.
+    - In your `AdminLayout.tsx` or a shared admin header component:
+        - Periodically fetch a count of new, untouched leads (e.g., `status = 'new'` AND `lead_source = 'auto_submission'` AND `created_at` within the last X days AND `updated_at` equals `created_at`).
+            
+            ```tsx
+            // src/hooks/admin/useNewLeadsNotification.ts
+            export const useNewLeadsNotification = () => {
+              return useQuery({
+                queryKey: ['newLeadsNotificationCount'],
+                queryFn: async () => {
+                  const { count, error } = await supabase
+                    .from('leads')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'new')
+                    .eq('lead_source', 'auto_submission') // Only automatically created ones not yet touched.
+                    // .eq('updated_at', 'created_at') // This check might be too strict if updated_at trigger always fires.
+                    // A better check might be if no manual activity log entry exists or last activity was 'created'.
+                    // Or simply, any lead with status 'new' and source 'auto_submission'.
+                  if (error) throw error;
+                  return count;
+                },
+                refetchInterval: 60000, // Refetch every minute
+              });
+            };
+            
+            ```
+            
+        - Display a badge on the "Leads" navigation link or a non-intrusive notification area if the count > 0.
+        - Clicking this could navigate to the `/admin/leads` page, possibly with a filter pre-applied to show these new leads.
+
+**4.2. "Convert to Client" Functionality (Ref: End of 5.1.7, part of 5.1.9)**
+
+This integrates the lead lifecycle with your existing client management.
+
+- **Trigger Point:** A "Convert to Client ↔️" button in the `LeadsTable` (actions column) or in the `LeadDetailPanel`. This button would be enabled based on lead status (e.g., not for 'archived' or already 'converted_to_client').
+- **Action:**
+    1. Call the `public.convert_lead_to_client(p_lead_id UUID)` RPC function (defined in Phase 1.3).
+    2. This function will:
+        - Check permissions.
+        - Find or create a record in `public.clients`, copying relevant data from the lead (restaurant_name, contact_name, email, phone).
+        - Update the lead's `status` to 'converted_to_client'.
+        - Set the `leads.client_id` to link to the `clients.client_id`.
+        - Log the conversion in `lead_activity_log`.
+- **Frontend Implementation:**
+    - Create a mutation using React Query for this.
+        
+        ```tsx
+        // src/hooks/admin/useLeads.ts (add/extend)
+        export const useConvertLeadToClient = () => {
+          const queryClient = useQueryClient();
+          return useMutation({
+            mutationFn: async (leadId: string) => {
+              const { data, error } = await supabase.rpc('convert_lead_to_client', { p_lead_id: leadId });
+              if (error) throw error;
+              return data; // Returns client_id
+            },
+            onSuccess: (data, leadId) => {
+              queryClient.invalidateQueries({ queryKey: [LEAD_QUERY_KEY] }); // Refetch leads list
+              queryClient.invalidateQueries({ queryKey: ['leadDetails', leadId] }); // Refetch details if open
+              queryClient.invalidateQueries({ queryKey: ['clients'] }); // Refetch clients list if you have one
+              // Show success toast: "Lead converted to client."
+            },
+            onError: (error) => {
+              // Show error toast
+            }
+          });
+        };
+        
+        ```
+        
+    - The component with the "Convert" button would call `convertLeadToClientMutation.mutate(lead.lead_id)`.
+    - Provide user feedback (loading state, success/error toasts).
+
+**Considerations for Existing `/admin/leads` Page:**
+
+- **Data Structure Migration:** If your current `/admin/leads` page uses a different backend data structure for leads, you'll need a strategy to:
+    1. **Create the new tables** (`leads`, `lead_activity_log`, `lead_comments`, `ai_pricing_settings`) as defined in Phase 1.
+    2. **Migrate existing lead data** from your old structure to the new `leads` table. This might involve a one-time SQL script or a backend process. You'll need to map old fields to new fields and decide how to handle missing data for the new detailed fields (like AI costs, ROI, etc. which will likely be empty/default for old leads initially).
+    3. **Backup old data** before migration.
+- **UI Overhaul:** The frontend components described in Phase 2 (`LeadsTable.tsx`, `LeadDetailPanel.tsx`, etc.) will likely replace major parts of the UI of your current `/admin/leads` page to accommodate the new features and data.
+- **Backend API Calls:** Existing API calls fetching lead data for `/admin/leads` will need to be updated or replaced to query the new tables and use the new data structures and React Query hooks (`useLeads`, `useLeadDetails`, etc.).
+
+By confirming that we are upgrading `/admin/leads`, the plan remains largely the same in terms of *what* needs to be built (the new tables, new UI components, new logic as per your detailed spec). The main adjustment is recognizing that this work will transform an existing page rather than creating a completely new one from scratch in an empty spot.
+
+The next phase, **Phase 5: UI/UX, Refinements, and Testing**, will focus on polishing these features and ensuring the system is robust.
+
+[Continue]
+
+Great. Let's move on to the final phase, which ties everything together and ensures a quality, user-friendly experience.
+
+**Phase 5: UI/UX, Refinements, and Testing**
+
+This phase focuses on polishing the user interface and experience, adding helpful features like smart alerts, ensuring data can be exported, and conducting thorough testing.
+
+**5.1. Status Colors and Visual Cues (Ref: Throughout UI)**
+
+- **Implementation:** Ensure the `getStatusColor` utility function (defined in Phase 2.2) is consistently applied wherever lead status is displayed:
+    - In the main `LeadsTable`.
+    - In the `ArchivedLeadsTable`.
+    - In the `LeadDetailPanel` (Basic Details tab).
+    - In the `CostsReportPage` table.
+- **Styling:** Use Tailwind CSS classes (as in the example `bg-${getStatusColor(lead.status)}`) to apply background colors or text colors for status badges or tags. Ensure good contrast for accessibility.
+- **Consistency:** Make sure the textual representation of the status (e.g., "New", "Contacted") is also consistent and user-friendly (e.g., replacing underscores with spaces).
+
+**5.2. Smart Alerts & Reminders (Ref: 5.1.9)**
+
+These are proactive features to help admins stay on top of leads.
+
+- **Alerts for Leads Not Touched in X Days:**
+    - **Logic:** A lead is "untouched" if its `updated_at` timestamp hasn't changed for a specified period (e.g., 3, 5, or 7 days) AND its status is still an active one (e.g., 'new', 'contacted', 'waiting_reply').
+    - **Backend (Optional but better):** A Supabase scheduled function could periodically check for such leads and flag them (e.g., add a temporary flag `needs_attention_untouched` to the lead, or populate a separate `notifications` table).
+    - **Frontend:**
+        - If using a backend flag, the UI can easily filter/highlight these.
+        - Alternatively, the frontend can fetch leads and apply this logic, but it's less efficient for a global "alert count".
+        - Display as a notification count in the admin dashboard, or a separate "Attention Needed" section on the `/admin/leads` page.
+- **Reminders for `next_follow_up_date`:**
+    - **Logic:** Check leads where `next_follow_up_date` is today or in the past, and the status is still active.
+    - **Backend (Optional):** Similar to above, a scheduled function could flag these.
+    - **Frontend:**
+        - Highlight these leads in the `LeadsTable` (e.g., with an icon or different row color).
+        - Provide a quick filter for "Follow-ups Due".
+        - Potentially a dashboard widget listing upcoming follow-ups.
+- **Alerts for Leads with High AI Costs but No Conversion:**
+    - **Logic:** Identify leads that are *not* `status = 'converted_to_client'` but where `total_ai_costs` exceeds a certain threshold (e.g., $50, $100 - this threshold should be configurable, perhaps in `ai_pricing_settings`).
+    - **Backend/Frontend:** Similar implementation strategy as other alerts.
+    - **Display:** Highlight in table, include in a "Review Needed" filter or section.
+
+**5.3. Data Export (Ref: 5.1.9)**
+
+- **Main Leads List Export (from `LeadsTable` or `LeadsPageActions`):**
+    - Allow exporting currently filtered leads or all (non-archived) leads.
+    - **Format:** CSV initially is easiest. Excel (XLSX) is a good enhancement.
+    - **Implementation:**
+        - Fetch all necessary lead data (all pages, respecting filters).
+        - Use a library like `papaparse` for CSV:
+            
+            ```jsx
+            // Example CSV export function
+            // import Papa from 'papaparse';
+            // const exportLeadsToCSV = (leadsData) => {
+            //   const csvData = Papa.unparse(leadsData.map(lead => ({
+            //     "Restaurant Name": lead.restaurant_name,
+            //     "Contact Name": lead.contact_name,
+            //     "Email": lead.email,
+            //     "Phone": lead.phone,
+            //     "Status": lead.status,
+            //     "AI Costs": lead.total_ai_costs,
+            //     "ROI (%)": lead.roi,
+            //     "Lead Source": lead.lead_source,
+            //     "Created At": lead.created_at,
+            //     "Next Follow Up": lead.next_follow_up_date,
+            //     // Add all relevant fields from your spec
+            //   })));
+            //   const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            //   const link = document.createElement('a');
+            //   link.href = URL.createObjectURL(blob);
+            //   link.setAttribute('download', 'leads_export.csv');
+            //   document.body.appendChild(link);
+            //   link.click();
+            //   document.body.removeChild(link);
+            // }
+            
+            ```
+            
+        - For Excel, `xlsx` library (SheetJS) is popular.
+- **Cost Report Export (from `CostsReportPage`):**
+    - Export the summary and/or the detailed table. CSV/Excel.
+- **Activity History Export (from `LeadDetailPanel` - Activity Tab):**
+    - Allow exporting the activity log for a specific lead. CSV/Excel.
+
+**5.4. Responsive Design**
+
+- **Testing:** Thoroughly test all new pages and components (`/admin/leads`, `LeadDetailPanel` modal/sidebar, archive page, reports page, settings page) on various screen sizes (desktop, tablet, mobile).
+- **Tailwind CSS:** Leverage Tailwind's responsive prefixes (e.g., `md:`, `lg:`) to adjust layouts, visibility of elements, font sizes, etc.
+- **Tables:** Ensure tables are scrollable horizontally on small screens or adapt to a card-based layout if necessary.
+- **Modals/Sidebars:** Ensure they are usable and look good on all screen sizes.
+
+**5.5. Thorough Testing**
+
+This is a critical step. Cover various types of testing:
+
+- **Unit Tests (Jest/Vitest, React Testing Library):**
+    - Test individual components: `LeadsTable` (rendering rows, actions), `LeadsFilters`, `LeadDetailPanel` tabs, form components, `getStatusColor` util, etc.
+    - Test custom hooks: `useLeads`, `useLeadDetails`, `useUpdateLead`, `useCreateLead`, `useConvertLeadToClient`, etc. Mock Supabase calls.
+- **Integration Tests (React Testing Library, potentially with MSW for API mocking):**
+    - Test flows:
+        - Creating a new lead through the form.
+        - Editing a lead's details.
+        - Changing a lead's status.
+        - Updating AI costs and seeing ROI recalculate.
+        - Filtering the leads table.
+        - Archiving and restoring a lead.
+        - Converting a lead to a client.
+        - Automatic lead creation (this might need backend/E2E testing focus).
+- **End-to-End (E2E) Tests (Cypress, Playwright):**
+    - Simulate full user scenarios:
+        - Admin logs in, navigates to `/admin/leads`.
+        - Creates a lead, fills all details, saves.
+        - Edits the lead, changes status, adds notes and AI costs.
+        - Filters the leads list to find the lead.
+        - Archives the lead, then restores it.
+        - Converts the lead to a client.
+        - Checks the costs report and AI pricing settings page.
+    - Test the automatic lead creation flow if a public submission form can be triggered.
+- **Manual Testing:**
+    - Go through all user stories and acceptance criteria from your detailed specification (5.1).
+    - Test on different browsers.
+    - Test edge cases (e.g., empty form submissions, invalid data, no results for filters).
+    - Test concurrency (e.g., two admins working simultaneously, though this is harder to test without specific setup).
+    - Security: Ensure RLS policies are correctly preventing unauthorized access (try accessing data as a non-admin user if possible in your test setup).
+
+**5.6. Documentation (Updating `memory-bank/`)**
+
+As you complete these phases, update your `memory-bank` files:
+
+- **`systemPatterns.md`:**
+    - Add the new database schema for `leads`, `lead_activity_log`, `lead_comments`, `ai_pricing_settings`.
+    - Document new RPC functions (`log_lead_activity`, `convert_lead_to_client`, `handle_new_submission_for_lead_creation`).
+    - Describe patterns used in the new lead management UI (e.g., tabbed modal for details, table with advanced filters).
+- **`techContext.md`:**
+    - Note any new significant libraries added (e.g., `papaparse` for CSV export, `xlsx` for Excel).
+- **`productContext.md`:**
+    - Update workflow descriptions if the new lead system changes how admins interact with potential customers.
+- **`activeContext.md`:**
+    - As features are completed, move them from "Active Development Areas" to "Recent Achievements."
+    - Update "Next Actions" and "Known Issues."
+- **`progress.md`:**
+    - Mark completed features and list any new issues found during development.
+    - List all new components created for the leads module (e.g., `AdminLeadsPage`, `LeadsTable`, `LeadDetailPanel`, etc.) and their purpose.
+
+**Specific Considerations for Upgrading `/admin/leads`:**
+
+- **File Structure:** The new components (`LeadsTable.tsx`, `LeadsFilters.tsx`, `LeadDetailPanel.tsx`, `LeadsPageActions.tsx`) would reside in `src/components/admin/leads/`. The page itself would be `src/pages/admin/leads/AdminLeadsPage.tsx`. If `/admin/leads` was a single large file, it will now be broken down into these more manageable and reusable components.
+- **State Management:** Transition existing state management on the `/admin/leads` page to use React Query for server state and well-scoped component state for UI.
+- **API Calls:** Replace old data fetching logic with the new Supabase queries and React Query hooks.
+- **Gradual Rollout/Feature Flags (Optional, Advanced):** For such a significant upgrade to an existing page, you might consider using feature flags to roll out the new version to a subset of users or to allow easy rollback, but this adds complexity. For most internal admin tools, a direct upgrade after thorough testing is common.
+
+This completes the 5-phase plan for developing your advanced lead management system by upgrading the existing `/admin/leads` page. This iterative approach, starting from backend data structures to frontend UI, integrations, and finally refinements and testing, should provide a structured path to achieving the comprehensive system you've outlined.
+
+[End of Output]

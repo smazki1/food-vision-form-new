@@ -11,7 +11,7 @@ import FormErrorAlert from './components/FormErrorAlert';
 import FormClientAlert from './components/FormClientAlert';
 import FormNavigationButtons from './components/FormNavigationButtons';
 import FormErrorDisplay from './components/FormErrorDisplay';
-import SuccessModal from '../../public/upload-form/components/SuccessModal';
+import CustomerSuccessModal from './components/CustomerSuccessModal';
 import { useNavigate } from 'react-router-dom';
 
 export interface StepProps {
@@ -183,7 +183,7 @@ const FoodVisionUploadForm: React.FC = () => {
       </main>
 
       {/* Success Modal */}
-      <SuccessModal
+      <CustomerSuccessModal
         key={`success-modal-${showSuccessModal}`}
         isOpen={showSuccessModal}
         onClose={handleGoToDashboard}

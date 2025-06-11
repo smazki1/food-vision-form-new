@@ -14,14 +14,21 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
   const {
     restaurantName,
     submitterName,
-    itemName,
-    itemType,
-    description,
-    specialNotes,
-    referenceImages,
-    brandingMaterials,
-    referenceExamples
+    dishes
   } = formData;
+
+  // Calculate aggregated statistics
+  const totalDishes = dishes.length;
+  const totalImages = dishes.reduce((sum, dish) => sum + dish.referenceImages.length, 0);
+  const totalBrandingFiles = dishes.reduce((sum, dish) => sum + dish.brandingMaterials.length, 0);
+  const totalReferenceFiles = dishes.reduce((sum, dish) => sum + dish.referenceExamples.length, 0);
+  
+  // Group dishes by type for summary
+  const dishesbyType = dishes.reduce((acc, dish) => {
+    const type = dish.itemType || 'לא צוין';
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -58,82 +65,104 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
           </div>
         </div>
 
-        {/* Item Details */}
-        <div className="border-t border-gray-200 pt-6 space-y-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <UtensilsCrossed className="w-6 h-6 text-[#F3752B]" />
-            <span className="font-semibold text-lg text-[#333333]">שם המנה:</span>
-          </div>
-          <p className="text-lg text-gray-700 mr-9">{itemName}</p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <UtensilsCrossed className="w-6 h-6 text-emerald-500" />
-            <span className="font-semibold text-lg text-[#333333]">סוג הפריט:</span>
-          </div>
-          <p className="text-lg text-gray-700 mr-9">{itemType}</p>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <FileText className="w-6 h-6 text-[#F3752B]" />
-            <span className="font-semibold text-lg text-[#333333]">תיאור המנה:</span>
-          </div>
-          <p className="text-lg text-gray-700 mr-9 leading-relaxed">{description}</p>
-        </div>
-
-        {specialNotes && (
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3 rtl:space-x-reverse">
-              <FileText className="w-6 h-6 text-emerald-500" />
-              <span className="font-semibold text-lg text-[#333333]">הערות מיוחדות:</span>
+        {/* Aggregated Statistics */}
+        <div className="border-t border-gray-200 pt-6 space-y-6">
+          <h3 className="text-xl font-bold text-[#333333] text-center">סיכום הגשה</h3>
+          
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse mb-2">
+                <UtensilsCrossed className="w-5 h-5 text-[#F3752B]" />
+                <span className="font-semibold text-gray-700">מנות</span>
+              </div>
+              <p className="text-2xl font-bold text-[#333333]">{totalDishes}</p>
             </div>
-            <p className="text-lg text-gray-700 mr-9 leading-relaxed">{specialNotes}</p>
+            
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse mb-2">
+                <Camera className="w-5 h-5 text-[#F3752B]" />
+                <span className="font-semibold text-gray-700">תמונות</span>
+              </div>
+              <p className="text-2xl font-bold text-[#333333]">{totalImages}</p>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+              <div className="flex items-center justify-center space-x-2 rtl:space-x-reverse mb-2">
+                <FileText className="w-5 h-5 text-[#F3752B]" />
+                <span className="font-semibold text-gray-700">קבצים נוספים</span>
+              </div>
+              <p className="text-2xl font-bold text-[#333333]">{totalBrandingFiles + totalReferenceFiles}</p>
+            </div>
           </div>
-        )}
-
-        {/* Images Count */}
-        <div className="border-t border-gray-200 pt-6 space-y-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Camera className="w-6 h-6 text-[#F3752B]" />
-            <span className="font-semibold text-lg text-[#333333]">מספר תמונות:</span>
-          </div>
-          <p className="text-lg text-gray-700 mr-9">{referenceImages.length} תמונות</p>
         </div>
 
-        {/* Additional Details */}
-        {(brandingMaterials.length > 0 || referenceExamples.length > 0) && (
+        {/* Dishes Breakdown */}
+        <div className="border-t border-gray-200 pt-6 space-y-4">
+          <h3 className="text-xl font-bold text-[#333333] text-center">פירוט המנות</h3>
+          
+          <div className="space-y-3">
+            {Object.entries(dishesbyType).map(([type, count]) => (
+              <div key={type} className="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-200">
+                <span className="font-medium text-gray-700">{type}</span>
+                <span className="font-bold text-[#333333]">{count} מנות</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Individual Dishes List */}
+        <div className="border-t border-gray-200 pt-6 space-y-4">
+          <h3 className="text-xl font-bold text-[#333333] text-center">רשימת המנות</h3>
+          
+          <div className="space-y-3">
+            {dishes.map((dish, index) => (
+              <div key={dish.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 className="font-semibold text-lg text-[#333333]">
+                      {dish.itemName || `מנה ${index + 1}`}
+                    </h4>
+                    <p className="text-sm text-gray-600">{dish.itemType}</p>
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {dish.referenceImages.length} תמונות
+                  </div>
+                </div>
+                
+                {dish.description && (
+                  <p className="text-sm text-gray-700 mb-2">{dish.description}</p>
+                )}
+                
+                {dish.specialNotes && (
+                  <p className="text-xs text-gray-600 italic">הערות: {dish.specialNotes}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Additional Files Summary */}
+        {(totalBrandingFiles > 0 || totalReferenceFiles > 0) && (
           <div className="border-t border-gray-200 pt-6 space-y-6">
-            <h3 className="text-xl font-bold text-[#333333] text-center">פרטים נוספים</h3>
+            <h3 className="text-xl font-bold text-[#333333] text-center">קבצים נוספים</h3>
             
-            {brandingMaterials.length > 0 && (
+            {totalBrandingFiles > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <Palette className="w-6 h-6 text-purple-500" />
                   <span className="font-semibold text-lg text-[#333333]">חומרי מיתוג:</span>
                 </div>
-                <p className="text-lg text-gray-700 mr-9">{brandingMaterials.length} קבצים</p>
-                <div className="mr-9 space-y-1">
-                  {brandingMaterials.map((file, index) => (
-                    <p key={index} className="text-sm text-gray-600">• {file.name}</p>
-                  ))}
-                </div>
+                <p className="text-lg text-gray-700 mr-9">{totalBrandingFiles} קבצים</p>
               </div>
             )}
 
-            {referenceExamples.length > 0 && (
+            {totalReferenceFiles > 0 && (
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
                   <Eye className="w-6 h-6 text-green-500" />
                   <span className="font-semibold text-lg text-[#333333]">דוגמאות להתייחסות:</span>
                 </div>
-                <p className="text-lg text-gray-700 mr-9">{referenceExamples.length} קבצים</p>
-                <div className="mr-9 space-y-1">
-                  {referenceExamples.map((file, index) => (
-                    <p key={index} className="text-sm text-gray-600">• {file.name}</p>
-                  ))}
-                </div>
+                <p className="text-lg text-gray-700 mr-9">{totalReferenceFiles} קבצים</p>
               </div>
             )}
           </div>
@@ -143,7 +172,10 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
       {/* Info Message */}
       <div className="max-w-3xl mx-auto text-center">
         <p className="text-xl text-gray-600 font-medium">
-          הגשה זו תנצל מנה אחת מהחבילה שלך.
+          הגשה זו תנצל {totalDishes} {totalDishes === 1 ? 'מנה' : 'מנות'} מהחבילה שלך.
+        </p>
+        <p className="text-lg text-gray-500 mt-2">
+          סה"כ {totalImages} תמונות ו-{totalBrandingFiles + totalReferenceFiles} קבצים נוספים
         </p>
       </div>
 

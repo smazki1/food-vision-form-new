@@ -247,6 +247,35 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
           <FileImage className="w-6 h-6 text-primary ml-2" />
           העלאת תמונות
         </h3>
+
+        {/* Photography Tips Section */}
+        <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 mb-6">
+          <h4 className="text-lg font-medium text-blue-800 mb-4 flex items-center">
+            💡 טיפים לצילום מושלם
+          </h4>
+          <div className="space-y-3 text-blue-700">
+            <div className="flex items-start gap-3">
+              <span className="text-blue-500 font-bold">•</span>
+              <p className="text-sm">וודאו שהתמונה ברורה ומוארת היטב - אור טבעי הוא הטוב ביותר</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-blue-500 font-bold">•</span>
+              <p className="text-sm">מרכזו את המנה בפוקוס ובמרכז התמונה</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-blue-500 font-bold">•</span>
+              <p className="text-sm">השתמשו ברקע נקי ופשוט שלא יסיח את הדעת מהמנה</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-blue-500 font-bold">•</span>
+              <p className="text-sm">צלמו מכמה זוויות שונות להצגה מגוונת של המנה</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="text-blue-500 font-bold">•</span>
+              <p className="text-sm">ודאו שהצבעים חיים ומושכים - זה מה שמושך לקוחות!</p>
+            </div>
+          </div>
+        </div>
         
         <div
           {...getRootProps()}

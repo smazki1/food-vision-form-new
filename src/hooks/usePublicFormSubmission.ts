@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
-import { NewItemFormData } from '@/contexts/NewItemFormContext';
+import { NewItemFormData, DishData } from '@/contexts/NewItemFormContext';
 import { triggerMakeWebhook, MakeWebhookPayload } from '@/lib/triggerMakeWebhook';
 import { uploadImages, uploadAdditionalFiles } from '@/components/unified-upload/utils/imageUploadUtils';
 
@@ -13,7 +13,7 @@ export const usePublicFormSubmission = () => {
     formData: NewItemFormData,
     setStepErrors?: (errors: Record<string, string>) => void
   ): Promise<boolean> => {
-    console.log('[PublicFormSubmission] Starting submission process...', formData);
+    console.log('[PublicFormSubmission] Starting submission process for multiple dishes...', formData);
     
     // Validation
     if (!formData.restaurantName?.trim()) {
@@ -30,215 +30,208 @@ export const usePublicFormSubmission = () => {
       return false;
     }
 
-    if (!formData.itemName?.trim()) {
-      console.log('[PublicFormSubmission] Missing item name');
-      toast.error("שם הפריט הוא שדה חובה.");
-      setStepErrors?.({ itemName: "שם הפריט הוא שדה חובה." });
+    if (!formData.dishes || formData.dishes.length === 0) {
+      console.log('[PublicFormSubmission] No dishes provided');
+      toast.error("חובה להוסיף לפחות מנה אחת.");
+      setStepErrors?.({ dishes: "חובה להוסיף לפחות מנה אחת." });
       return false;
     }
 
-    if (!formData.itemType) {
-      console.log('[PublicFormSubmission] Missing item type');
-      toast.error("סוג הפריט הוא שדה חובה.");
-      setStepErrors?.({ itemType: "סוג הפריט הוא שדה חובה." });
-      return false;
-    }
+    // Validate each dish
+    for (let i = 0; i < formData.dishes.length; i++) {
+      const dish = formData.dishes[i];
+      if (!dish.itemName?.trim()) {
+        console.log(`[PublicFormSubmission] Missing item name for dish ${i + 1}`);
+        toast.error(`שם הפריט הוא שדה חובה במנה ${i + 1}.`);
+        setStepErrors?.({ [`dish_${dish.id}_itemName`]: `שם הפריט הוא שדה חובה במנה ${i + 1}.` });
+        return false;
+      }
 
-    if (formData.referenceImages.length < 4) {
-      console.log('[PublicFormSubmission] Not enough images uploaded');
-      toast.error("יש להעלות לפחות 4 תמונות.");
-      setStepErrors?.({ referenceImages: "יש להעלות לפחות 4 תמונות." });
-      return false;
-    }
+      if (!dish.itemType) {
+        console.log(`[PublicFormSubmission] Missing item type for dish ${i + 1}`);
+        toast.error(`סוג הפריט הוא שדה חובה במנה ${i + 1}.`);
+        setStepErrors?.({ [`dish_${dish.id}_itemType`]: `סוג הפריט הוא שדה חובה במנה ${i + 1}.` });
+        return false;
+      }
 
-    // Add validation for new requirement fields (only for new businesses)
-    if (formData.isNewBusiness && !formData.itemsQuantityRange?.trim()) {
-      console.log('[PublicFormSubmission] Missing items quantity range');
-      toast.error("יש לבחור טווח כמות פריטים.");
-      setStepErrors?.({ itemsQuantityRange: "יש לבחור טווח כמות פריטים." });
-      return false;
-    }
-
-    if (formData.isNewBusiness && !formData.estimatedImagesNeeded?.trim()) {
-      console.log('[PublicFormSubmission] Missing estimated images needed');
-      toast.error("יש למלא הערכה של כמות התמונות.");
-      setStepErrors?.({ estimatedImagesNeeded: "יש למלא הערכה של כמות התמונות." });
-      return false;
-    }
-
-    if (formData.isNewBusiness && !formData.primaryImageUsage?.trim()) {
-      console.log('[PublicFormSubmission] Missing primary image usage');
-      toast.error("יש לבחור שימוש עיקרי לתמונות.");
-      setStepErrors?.({ primaryImageUsage: "יש לבחור שימוש עיקרי לתמונות." });
-      return false;
+      if (!dish.referenceImages || dish.referenceImages.length === 0) {
+        console.log(`[PublicFormSubmission] Missing images for dish ${i + 1}`);
+        toast.error(`נדרשת לפחות תמונה אחת למנה ${i + 1}.`);
+        setStepErrors?.({ [`dish_${dish.id}_referenceImages`]: `נדרשת לפחות תמונה אחת למנה ${i + 1}.` });
+        return false;
+      }
     }
 
     setIsSubmitting(true);
-    toast.info("מעלה תמונות ושומר הגשה...");
-
     let rpcSuccessful = false;
-    let uploadedImageUrls: string[] = [];
-    let brandingMaterialUrls: string[] = [];
-    let referenceExampleUrls: string[] = [];
-
+    const submissionResults = [];
+    
     try {
-      console.log('[PublicFormSubmission] Uploading images...');
+      console.log('[PublicFormSubmission] Starting submission for', formData.dishes.length, 'dishes');
       
-      // Upload main reference images
-      uploadedImageUrls = await uploadImages(
-        formData.referenceImages,
-        false, // isAuthenticated
-        null, // clientId
-        formData.itemType
-      );
-      
-      console.log('[PublicFormSubmission] All images uploaded successfully');
+      // Submit each dish separately
+      for (let i = 0; i < formData.dishes.length; i++) {
+        const dish = formData.dishes[i];
+        console.log(`[PublicFormSubmission] Processing dish ${i + 1}:`, dish.itemName);
 
-      // Upload additional files if they exist
-      if (formData.brandingMaterials && formData.brandingMaterials.length > 0) {
-        console.log('[PublicFormSubmission] Uploading branding materials...');
-        brandingMaterialUrls = await uploadAdditionalFiles(
-          formData.brandingMaterials,
+        // Upload images for this dish
+        const uploadedImageUrls = await uploadImages(
+          dish.referenceImages,
+          false, // isAuthenticated
+          null, // clientId
+          dish.itemType
+        );
+
+        // Upload additional files for this dish
+        const brandingMaterialUrls = await uploadAdditionalFiles(
+          dish.brandingMaterials || [],
           'branding',
           false, // isAuthenticated
           null, // clientId
-          formData.itemType
+          dish.itemType
         );
-        console.log('[PublicFormSubmission] Branding materials uploaded successfully');
-      }
 
-      if (formData.referenceExamples && formData.referenceExamples.length > 0) {
-        console.log('[PublicFormSubmission] Uploading reference examples...');
-        referenceExampleUrls = await uploadAdditionalFiles(
-          formData.referenceExamples,
+        const referenceExampleUrls = await uploadAdditionalFiles(
+          dish.referenceExamples || [],
           'reference',
           false, // isAuthenticated
           null, // clientId
-          formData.itemType
+          dish.itemType
         );
-        console.log('[PublicFormSubmission] Reference examples uploaded successfully');
-      }
-      
-      // Prepare parameters for RPC including contact information
-      let category = null;
-      let ingredients = null;
-      
-      // More flexible cocktail detection for ingredients vs category
-      const itemTypeLower = formData.itemType.toLowerCase().trim();
-      if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
-        ingredients = formData.description?.trim() ? 
-          formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
-      } else {
-        category = formData.description?.trim() || null;
-      }
 
-      const rpcParams = {
-        p_restaurant_name: formData.restaurantName.trim(),
-        p_item_type: formData.itemType.toLowerCase(),
-        p_item_name: formData.itemName.trim(),
-        p_description: formData.description?.trim() || null,
-        p_category: category || null,
-        p_ingredients: ingredients || null,
-        p_reference_image_urls: uploadedImageUrls,
-        p_branding_material_urls: brandingMaterialUrls,
-        p_reference_example_urls: referenceExampleUrls,
-        p_contact_name: formData.submitterName?.trim() || null,
-        p_contact_email: formData.contactEmail?.trim() || null,
-        p_contact_phone: formData.contactPhone?.trim() || null,
-        p_items_quantity_range: formData.itemsQuantityRange.trim(),
-        p_estimated_images_needed: formData.estimatedImagesNeeded.trim(),
-        p_primary_image_usage: formData.primaryImageUsage.trim(),
-      };
+        console.log(`[PublicFormSubmission] Upload completed for dish ${i + 1}:`, {
+          images: uploadedImageUrls.length,
+          branding: brandingMaterialUrls.length,
+          reference: referenceExampleUrls.length
+        });
 
-      console.log('[PublicFormSubmission] Calling RPC with params:', rpcParams);
-
-      const { data: submissionData, error: submissionError } = await supabase.rpc(
-        'public_submit_item_by_restaurant_name',
-        rpcParams
-      );
-
-      if (submissionError) {
-        console.error('[PublicFormSubmission] RPC error:', submissionError);
-        throw new Error(`שגיאה בהגשה: ${submissionError.message}`);
-      }
-
-      console.log('[PublicFormSubmission] RPC response:', submissionData);
-      console.log('[PublicFormSubmission] RPC response type:', typeof submissionData);
-      console.log('[PublicFormSubmission] RPC response keys:', submissionData ? Object.keys(submissionData) : 'null/undefined');
-      console.log('[PublicFormSubmission] RPC response.success:', submissionData?.success);
-      console.log('[PublicFormSubmission] RPC response.message:', submissionData?.message);
-      console.log('[PublicFormSubmission] RPC response.error:', submissionData?.error);
-      console.log('[PublicFormSubmission] Full RPC response details:', JSON.stringify(submissionData, null, 2));
-
-      if (submissionData && typeof submissionData === 'object') {
-        if (submissionData.success) {
-          // Success case
-          if (submissionData.client_found) {
-            toast.success('הפריט הוגש בהצלחה ושויך למסעדה!');
-          } else if (submissionData.lead_created) {
-            toast.success('הפריט הוגש בהצלחה! נוצר ליד חדש למסעדה במערכת.');
-          } else {
-            toast.success('הפריט הוגש בהצלחה! המסעדה לא נמצאה במערכת, הפריט ממתין לשיוך ידני.');
-          }
-          
-          console.log('[PublicFormSubmission] Setting showSuccessModal to true');
-          setShowSuccessModal(true);
-          rpcSuccessful = true;
-          return true;
+        // Prepare category and ingredients based on item type
+        let category = null;
+        let ingredients = null;
+        
+        const itemTypeLower = dish.itemType.toLowerCase().trim();
+        if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
+          ingredients = dish.description?.trim() ? 
+            dish.description.split(',').map(i => i.trim()).filter(i => i.length > 0) : null;
         } else {
-          // Failed case - extract the actual error message
-          const errorMessage = submissionData.message || submissionData.error || 'הגשה נכשלה מסיבה לא ידועה';
-          console.error('[PublicFormSubmission] RPC operation failed:', errorMessage);
-          throw new Error(errorMessage);
+          category = dish.description?.trim() || null;
         }
-      } else {
-        console.error('[PublicFormSubmission] Invalid RPC response structure:', submissionData);
-        throw new Error('הגשה נכשלה - תגובה לא תקינה מהשרת');
+
+        const rpcParams = {
+          p_restaurant_name: formData.restaurantName.trim(),
+          p_item_type: dish.itemType,
+          p_item_name: dish.itemName.trim(),
+          p_description: dish.description?.trim() || null,
+          p_category: category || null,
+          p_ingredients: ingredients || null,
+          p_reference_image_urls: uploadedImageUrls,
+          p_branding_material_urls: brandingMaterialUrls,
+          p_reference_example_urls: referenceExampleUrls,
+          p_contact_name: formData.submitterName?.trim() || null,
+          p_contact_email: formData.contactEmail?.trim() || null,
+          p_contact_phone: formData.contactPhone?.trim() || null
+        };
+
+        console.log(`[PublicFormSubmission] Calling RPC for dish ${i + 1} with params:`, rpcParams);
+
+        const { data: submissionData, error: submissionError } = await supabase.rpc(
+          'public_submit_item_by_restaurant_name',
+          rpcParams
+        );
+
+        if (submissionError) {
+          console.error(`[PublicFormSubmission] RPC error for dish ${i + 1}:`, submissionError);
+          throw new Error(`שגיאה בהגשת מנה ${i + 1}: ${submissionError.message}`);
+        }
+
+        console.log(`[PublicFormSubmission] RPC response for dish ${i + 1}:`, submissionData);
+        submissionResults.push({
+          dish: dish,
+          submissionData: submissionData,
+          uploadedImageUrls: uploadedImageUrls,
+          brandingMaterialUrls: brandingMaterialUrls,
+          referenceExampleUrls: referenceExampleUrls
+        });
       }
+
+      rpcSuccessful = true;
+      console.log('[PublicFormSubmission] All dishes submitted successfully:', submissionResults.length);
+
+      // Calculate totals for success message
+      const totalDishes = submissionResults.length;
+      const totalImages = submissionResults.reduce((sum, result) => sum + result.uploadedImageUrls.length, 0);
+      
+      toast.success(
+        `הגשה הושלמה בהצלחה! ${totalDishes} מנות עם ${totalImages} תמונות נשלחו למערכת.`,
+        { duration: 5000 }
+      );
+      
+      setShowSuccessModal(true);
+      return true;
+
     } catch (error: any) {
-      console.error("[PublicFormSubmission] Error in submission process:", error);
-      const errorMessage = error.message || "אירעה שגיאה במהלך ההגשה. נסו שוב.";
-      setStepErrors?.({ submit: errorMessage });
-      toast.error(errorMessage);
-      rpcSuccessful = false;
+      console.error('[PublicFormSubmission] Error during submission:', error);
+      
+      if (typeof error === 'string') {
+        toast.error(error);
+        setStepErrors?.({ submit: error });
+      } else if (error?.message) {
+        const errorMessage = `שגיאה בהגשה: ${error.message}`;
+        toast.error(errorMessage);
+        setStepErrors?.({ submit: errorMessage });
+      } else {
+        const defaultError = "אירעה שגיאה בעת שליחת הטופס. אנא נסו שוב.";
+        toast.error(defaultError);
+        setStepErrors?.({ submit: defaultError });
+      }
+      
       return false;
     } finally {
       setIsSubmitting(false);
       if (rpcSuccessful) {
-        let categoryWebhook: string | null = null;
-        let ingredientsWebhook: string[] | null = null;
-        
-        // Use same flexible logic for webhook
-        const itemTypeLower = formData.itemType.toLowerCase().trim();
-        if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
-          ingredientsWebhook = formData.description?.trim()
-            ? formData.description.split(',').map(i => i.trim()).filter(i => i.length > 0)
-            : null;
-        } else {
-          categoryWebhook = formData.description?.trim() || null;
-        }
+        // Trigger webhook for each dish
+        for (const result of submissionResults) {
+          const dish = result.dish;
+          let categoryWebhook: string | null = null;
+          let ingredientsWebhook: string[] | null = null;
+          
+          // Use same flexible logic for webhook
+          const itemTypeLower = dish.itemType.toLowerCase().trim();
+          if (itemTypeLower.includes('קוקטייל') || itemTypeLower.includes('cocktail') || itemTypeLower.includes('משקה')) {
+            ingredientsWebhook = dish.description?.trim()
+              ? dish.description.split(',').map(i => i.trim()).filter(i => i.length > 0)
+              : null;
+          } else {
+            categoryWebhook = dish.description?.trim() || null;
+          }
 
-        const webhookPayload: MakeWebhookPayload = {
-          submissionTimestamp: new Date().toISOString(),
-          isAuthenticated: false,
-          clientId: null,
-          restaurantName: formData.restaurantName,
-          submitterName: formData.submitterName,
-          contactEmail: formData.contactEmail,
-          contactPhone: formData.contactPhone,
-          itemName: formData.itemName,
-          itemType: formData.itemType,
-          description: formData.description,
-          specialNotes: formData.specialNotes,
-          uploadedImageUrls: uploadedImageUrls,
-          category: categoryWebhook,
-          ingredients: ingredientsWebhook,
-          sourceForm: 'public-form-context',
-          itemsQuantityRange: formData.itemsQuantityRange,
-          estimatedImagesNeeded: formData.estimatedImagesNeeded,
-          primaryImageUsage: formData.primaryImageUsage,
-        };
-        triggerMakeWebhook(webhookPayload);
+          const webhookPayload: MakeWebhookPayload = {
+            submissionTimestamp: new Date().toISOString(),
+            isAuthenticated: false,
+            clientId: null,
+            restaurantName: formData.restaurantName,
+            submitterName: formData.submitterName,
+            contactEmail: formData.contactEmail,
+            contactPhone: formData.contactPhone,
+            itemName: dish.itemName,
+            itemType: dish.itemType,
+            description: dish.description,
+            specialNotes: dish.specialNotes,
+            uploadedImageUrls: result.uploadedImageUrls,
+            category: categoryWebhook,
+            ingredients: ingredientsWebhook,
+            sourceForm: 'public-form-multiple-dishes',
+            itemsQuantityRange: formData.itemsQuantityRange,
+            estimatedImagesNeeded: formData.estimatedImagesNeeded,
+            primaryImageUsage: formData.primaryImageUsage,
+          };
+          
+          try {
+            await triggerMakeWebhook(webhookPayload);
+          } catch (webhookError) {
+            console.warn('[PublicFormSubmission] Webhook failed for dish:', dish.itemName, webhookError);
+          }
+        }
       }
     }
   };
