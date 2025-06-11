@@ -118,9 +118,14 @@ export const useAuthInitialization = (
         if (event === 'TOKEN_REFRESHED' && session?.user) {
           console.log("[AUTH_INIT] Token refreshed silently for user:", session.user.id);
           // Just update the session object, but don't trigger full re-initialization
+          // Keep all existing state to prevent logout
           updateAuthState({
             session: session,
-            user: session.user
+            user: session.user,
+            isAuthenticated: true,
+            loading: false,
+            initialized: true,
+            hasError: false
           });
           return;
         }

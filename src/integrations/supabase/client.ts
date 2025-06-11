@@ -26,4 +26,13 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    // Set session to persist indefinitely - prevent automatic logout
+    persistSession: true,
+    // Enable automatic token refresh to prevent expiry
+    autoRefreshToken: true,
+    // Prevent session detection from causing timeouts
+    detectSessionInUrl: false
+  }
+});

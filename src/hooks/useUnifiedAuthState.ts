@@ -87,36 +87,35 @@ export const useUnifiedAuthState = () => {
   }, [updateAuthState, authState.loading, authState.initialized]);
   
   // Set up loading timeouts - force completion after specified duration
+  // Disabled timeouts to prevent unwanted session termination
   useEffect(() => {
-    if (authState.loading && !authState.authLoadingTimeout) {
+    // Only use timeouts for initial loading, not for authenticated users
+    if (authState.loading && !authState.authLoadingTimeout && !authState.isAuthenticated) {
       const timeoutId = setTimeout(() => {
         console.warn("[UNIFIED_AUTH] Auth loading timeout reached, forcing completion");
         emergencyRecovery();
-      }, 15000); // Reduced to 15 seconds
+      }, 30000); // Increased to 30 seconds for slower connections
       
       return () => clearTimeout(timeoutId);
     }
     
-    if (authState.isAuthenticated && !authState.clientId && 
-        !authState.clientAuthLoadingTimeout && authState.role === 'customer') {
-      const timeoutId = setTimeout(() => {
-        console.warn("[UNIFIED_AUTH] Client auth loading timeout reached, forcing completion");
-        updateAuthState({ 
-          clientAuthLoadingTimeout: true,
-          loading: false 
-        });
-      }, 15000); // Reduced to 15 seconds
-      
-      return () => clearTimeout(timeoutId);
-    }
+    // Disable client auth timeout to prevent logout of authenticated users
+    // if (authState.isAuthenticated && !authState.clientId && 
+    //     !authState.clientAuthLoadingTimeout && authState.role === 'customer') {
+    //   const timeoutId = setTimeout(() => {
+    //     console.warn("[UNIFIED_AUTH] Client auth loading timeout reached, forcing completion");
+    //     updateAuthState({ 
+    //       clientAuthLoadingTimeout: true,
+    //       loading: false 
+    //     });
+    //   }, 15000);
+    //   
+    //   return () => clearTimeout(timeoutId);
+    // }
   }, [
     authState.loading, 
     authState.authLoadingTimeout, 
-    authState.clientAuthLoadingTimeout,
     authState.isAuthenticated,
-    authState.clientId,
-    authState.role,
-    updateAuthState,
     emergencyRecovery
   ]);
   
