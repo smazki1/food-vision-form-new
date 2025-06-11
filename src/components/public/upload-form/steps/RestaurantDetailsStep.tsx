@@ -1,523 +1,146 @@
-import React, { useEffect, FC, useState } from 'react';
+
+import React from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Building2, User, Mail, Phone, CheckCircle, Package, Image, Target } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Check, Building2 } from 'lucide-react';
 
-const restaurantDetailsSchema = z.object({
-  restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
-  submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
-  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).optional().or(z.literal('')),
-  contactPhone: z.string().optional().or(z.literal('')),
-  itemsQuantityRange: z.string().optional().or(z.literal('')),
-  estimatedImagesNeeded: z.string().optional().or(z.literal('')),
-  primaryImageUsage: z.string().optional().or(z.literal('')),
-});
-
-// סכמה נוספת עבור מצב "עסק חדש" - בו המייל והטלפון הם שדות חובה
-const newBusinessSchema = z.object({
-  restaurantName: z.string().min(1, "שם המסעדה הוא שדה חובה"),
-  submitterName: z.string().min(1, "שם המגיש הוא שדה חובה"),
-  contactEmail: z.string().email({ message: "כתובת אימייל לא תקינה" }).min(1, "כתובת אימייל היא שדה חובה"),
-  contactPhone: z.string().min(1, "טלפון הוא שדה חובה"),
-  itemsQuantityRange: z.string().min(1, "יש לבחור טווח כמות פריטים"),
-  estimatedImagesNeeded: z.string().min(1, "יש למלא הערכה של כמות התמונות"),
-  primaryImageUsage: z.string().min(1, "יש לבחור שימוש עיקרי לתמונות"),
-});
-
-type RestaurantDetailsFormData = z.infer<typeof restaurantDetailsSchema>;
-
-export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
+const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   const { formData, updateFormData } = useNewItemForm();
-  const [isNewBusiness, setIsNewBusiness] = useState<boolean | null>(null);
-  
-  const form = useForm<RestaurantDetailsFormData>({
-    resolver: zodResolver(isNewBusiness ? newBusinessSchema : restaurantDetailsSchema),
-    defaultValues: {
-      restaurantName: formData.restaurantName || '',
-      submitterName: formData.submitterName || '',
-      contactEmail: formData.contactEmail || '',
-      contactPhone: formData.contactPhone || '',
-      itemsQuantityRange: formData.itemsQuantityRange || '',
-      estimatedImagesNeeded: formData.estimatedImagesNeeded || '',
-      primaryImageUsage: formData.primaryImageUsage || '',
-    },
-    mode: 'onChange'
-  });
-  
-  // עדכון הסכמה כאשר משתנה סטטוס העסק (חדש/קיים)
-  useEffect(() => {
-    form.clearErrors();
-    // ברגע שמשתנה סטטוס העסק, מעדכנים את ה-resolver של הטופס
-    form.setError = form.setError;
-  }, [isNewBusiness, form]);
 
-  // Get current user session directly from Supabase
-  const { data: session, isLoading: sessionLoading } = useQuery({
-    queryKey: ['current-session'],
-    queryFn: async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('[RestaurantDetailsStep] Session error:', error);
-        return null;
-      }
-      console.log('[RestaurantDetailsStep] Current session:', session);
-      return session;
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 1,
-  });
-
-  const isAuthenticated = !!session?.user;
-  const userAuthId = session?.user?.id || null;
-
-  console.log('[RestaurantDetailsStep] Auth state:', { 
-    isAuthenticated, 
-    userAuthId,
-    sessionLoading,
-    currentFormData: formData 
-  });
-
-  // Query to fetch client details if user is authenticated
-  const { data: clientData, isLoading: isLoadingClientData, error: clientError } = useQuery({
-    queryKey: ['client-details', userAuthId],
-    queryFn: async () => {
-      if (!userAuthId) {
-        console.log('[RestaurantDetailsStep] No userAuthId, skipping query');
-        return null;
-      }
-      
-      console.log('[RestaurantDetailsStep] Fetching client data for userAuthId:', userAuthId);
-      
-      const { data, error } = await supabase
-        .from('clients')
-        .select('restaurant_name, contact_name, email, phone')
-        .eq('user_auth_id', userAuthId)
-        .single();
-
-      if (error) {
-        console.error('[RestaurantDetailsStep] Error fetching client data:', error);
-        return null;
-      }
-
-      console.log('[RestaurantDetailsStep] Client data fetched successfully:', data);
-      return data;
-    },
-    enabled: !!userAuthId && isAuthenticated && !sessionLoading,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 2,
-  });
-
-  // Auto-fill form data when client data is loaded
-  useEffect(() => {
-    console.log('[RestaurantDetailsStep] useEffect triggered:', {
-      clientData,
-      isAuthenticated,
-      isLoadingClientData,
-      clientError,
-      sessionLoading
-    });
-
-    if (clientData && isAuthenticated && !isLoadingClientData && !sessionLoading) {
-      console.log('[RestaurantDetailsStep] Auto-filling form with client data:', {
-        restaurant_name: clientData.restaurant_name,
-        contact_name: clientData.contact_name
-      });
-
-      updateFormData({
-        restaurantName: clientData.restaurant_name || '',
-        submitterName: clientData.contact_name || '',
-        isLead: false // Authenticated users are existing clients, not leads
-      });
-    }
-  }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError, sessionLoading]);
-
-  // Update global form data context on local form change
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      updateFormData(value as Partial<RestaurantDetailsFormData>);
-    });
-    return () => subscription.unsubscribe();
-  }, [form, updateFormData]);
-
-  // Handle blur for individual field validation and context update
-  const handleBlur = (fieldName: keyof RestaurantDetailsFormData) => {
-    form.trigger(fieldName);
-    const fieldValue = form.getValues(fieldName);
-    // Ensure that we only update if the value is a string, as per the context expectations
-    if (typeof fieldValue === 'string') {
-      updateFormData({ [fieldName]: fieldValue });
-    }
-  };
-
-  const isFieldDisabled = isAuthenticated && (isLoadingClientData || sessionLoading);
-
-  const onSubmit = (data: RestaurantDetailsFormData) => {
-    console.log('[RestaurantDetailsStep] Form submitted with data:', data);
-    
-    updateFormData({
-      ...data,
-      isNewBusiness: isNewBusiness === true,
-      isLead: isNewBusiness === true // Lead if new business, not lead if registered
-    });
-    
-    console.log('[RestaurantDetailsStep] Updated form data with isNewBusiness:', isNewBusiness, 'isLead:', isNewBusiness === true);
+  const handleBusinessRegistrationChange = (isNewBusiness: boolean) => {
+    updateFormData({ isNewBusiness, isLead: isNewBusiness });
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#333333] mb-4">
-          פרטי מסעדה
-        </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          {isAuthenticated 
-            ? "הפרטים נטענים אוטומטית מפרופיל הלקוח שלך"
-            : "בואו נתחיל עם הפרטים הבסיסיים של המסעדה שלכם"
-          }
-        </p>
+    <div className="space-y-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-3">פרטי המסעדה</h2>
+        <p className="text-gray-600 text-lg">בואו נכיר - ספרו לנו על העסק שלכם</p>
       </div>
 
-      {/* בחירת סטטוס העסק - חדש במערכת או קיים */}
-      {!isAuthenticated && (
-        <div className="mb-6 p-5 bg-blue-50 rounded-lg shadow-sm">
-          <p className="font-medium mb-3 text-lg text-center">האם העסק שלכם כבר רשום במערכת?</p>
-          <div className="flex justify-center gap-4 mt-2">
-            <button 
-              onClick={() => {
-                setIsNewBusiness(false);
-                updateFormData({ isLead: false }); // Registered business = not a lead
-              }}
-              type="button"
-              className={cn(
-                "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
-                isNewBusiness === false 
-                  ? "bg-[#F3752B] text-white border-2 border-[#F3752B]" 
-                  : "bg-white text-gray-700 border-2 border-gray-300 hover:border-[#F3752B]/50"
-              )}
-            >
-              כן, העסק שלנו רשום
-              {isNewBusiness === false && <CheckCircle className="inline-block mr-2 h-4 w-4" />}
-            </button>
-            <button 
-              onClick={() => {
-                setIsNewBusiness(true);
-                updateFormData({ isLead: true }); // First time = lead
-              }}
-              type="button"
-              className={cn(
-                "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
-                isNewBusiness === true 
-                  ? "bg-[#F3752B] text-white border-2 border-[#F3752B]" 
-                  : "bg-white text-gray-700 border-2 border-gray-300 hover:border-[#F3752B]/50"
-              )}
-            >
-              לא, זו פעם ראשונה שלנו
-              {isNewBusiness === true && <CheckCircle className="inline-block mr-2 h-4 w-4" />}
-            </button>
-          </div>
+      {/* Business Registration Question - Enhanced Design */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+        <div className="text-center mb-6">
+          <Building2 className="w-8 h-8 text-blue-600 mx-auto mb-3" />
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">האם העסק שלכם כבר רשום במערכת?</h3>
+          <p className="text-gray-600 text-sm">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
         </div>
-      )}
-
-      {/* Debug info for development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-100 p-4 rounded-lg text-sm">
-          <strong>Debug Info:</strong>
-          <br />
-          isAuthenticated: {String(isAuthenticated)}
-          <br />
-          userAuthId: {userAuthId || 'null'}
-          <br />
-          sessionLoading: {String(sessionLoading)}
-          <br />
-          isLoadingClientData: {String(isLoadingClientData)}
-          <br />
-          clientData: {clientData ? JSON.stringify(clientData) : 'null'}
-          <br />
-          formData: {JSON.stringify({ restaurantName: formData.restaurantName, submitterName: formData.submitterName })}
+        
+        <div className="flex gap-4 justify-center">
+          <button
+            type="button"
+            onClick={() => handleBusinessRegistrationChange(false)}
+            className={`
+              relative px-6 py-4 rounded-xl border-2 transition-all duration-300 min-w-[140px] group
+              ${formData.isNewBusiness === false 
+                ? 'border-green-500 bg-green-50 text-green-700 shadow-lg scale-105' 
+                : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50/50'
+              }
+            `}
+          >
+            {formData.isNewBusiness === false && (
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            )}
+            <span className="font-medium">כן, העסק שלנו רשום</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => handleBusinessRegistrationChange(true)}
+            className={`
+              relative px-6 py-4 rounded-xl border-2 transition-all duration-300 min-w-[140px] group
+              ${formData.isNewBusiness === true 
+                ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-lg scale-105' 
+                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50'
+              }
+            `}
+          >
+            {formData.isNewBusiness === true && (
+              <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            )}
+            <span className="font-medium">לא, זו פעם ראשונה שלנו</span>
+          </button>
         </div>
-      )}
-
-      {/* Loading indicator for authenticated users */}
-      {isAuthenticated && (isLoadingClientData || sessionLoading) && (
-        <div className="text-center py-4">
-          <div className="inline-flex items-center text-[#F3752B]">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#F3752B] ml-3"></div>
-            טוען פרטי לקוח...
-          </div>
-        </div>
-      )}
-
-      {/* Error indicator */}
-      {isAuthenticated && clientError && (
-        <div className="text-center py-4">
-          <div className="text-red-500 text-sm">
-            שגיאה בטעינת פרטי הלקוח. אנא נסה לרענן את הדף.
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Form Fields */}
-      <Form {...form}>
-        <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="restaurantName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                  <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                    <Building2 className="w-5 h-5 text-[#F3752B]" />
-                  </div>
-                  שם המסעדה / שם העסק
-                  <span className="text-red-500 mr-1">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    onBlur={() => handleBlur("restaurantName")}
-                    placeholder="הזינו את שם המסעדה או העסק"
-                    className={cn(
-                      "w-full px-6 py-4 text-lg border-2 rounded-xl",
-                      form.formState.errors.restaurantName ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                    )}
-                  />
-                </FormControl>
-                <FormDescription>
-                  אם העסק כבר קיים במערכת, כתבו את השם שלו כפי שהוא מופיע.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
+      <div className="grid gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="restaurantName" className="text-lg font-medium text-gray-800">
+            שם המסעדה / העסק *
+          </Label>
+          <Input
+            id="restaurantName"
+            type="text"
+            placeholder="לדוגמה: מסעדת השף הקטן"
+            value={formData.restaurantName}
+            onChange={(e) => updateFormData({ restaurantName: e.target.value })}
+            className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
           />
+          {errors?.restaurantName && (
+            <p className="text-red-500 text-sm">{errors.restaurantName}</p>
+          )}
+        </div>
 
-          <FormField
-            control={form.control}
-            name="submitterName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                  <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                    <User className="w-5 h-5 text-[#F3752B]" />
-                  </div>
-                  שם מלא של המגיש
-                  <span className="text-red-500 mr-1">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    onBlur={() => handleBlur("submitterName")}
-                    placeholder="הזינו את שם איש הקשר"
-                    className={cn(
-                      "w-full px-6 py-4 text-lg border-2 rounded-xl",
-                      form.formState.errors.submitterName ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                    )}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+        <div className="space-y-2">
+          <Label htmlFor="submitterName" className="text-lg font-medium text-gray-800">
+            שם איש הקשר *
+          </Label>
+          <Input
+            id="submitterName"
+            type="text"
+            placeholder="השם שלכם"
+            value={formData.submitterName}
+            onChange={(e) => updateFormData({ submitterName: e.target.value })}
+            className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
           />
+          {errors?.submitterName && (
+            <p className="text-red-500 text-sm">{errors.submitterName}</p>
+          )}
+        </div>
 
-          {(isNewBusiness === true || isAuthenticated) && (
-            <FormField
-              control={form.control}
-              name="contactEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                    <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                      <Mail className="w-5 h-5 text-[#F3752B]" />
-                    </div>
-                    אימייל לקבל תוצאות
-                    {isNewBusiness && <span className="text-red-500 mr-1">*</span>}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      onBlur={() => handleBlur("contactEmail")}
-                      placeholder="לדוגמה: email@example.com"
-                      className={cn(
-                        "w-full px-6 py-4 text-lg border-2 rounded-xl",
-                        form.formState.errors.contactEmail ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                      )}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {isNewBusiness ? "אנו נשלח את תוצאות הפניה שלך לכתובת זו" : "מומלץ להשאיר פרטים כדי שנוכל ליצור איתך קשר"}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="contactEmail" className="text-lg font-medium text-gray-800">
+              כתובת אימייל
+            </Label>
+            <Input
+              id="contactEmail"
+              type="email"
+              placeholder="your@email.com"
+              value={formData.contactEmail || ''}
+              onChange={(e) => updateFormData({ contactEmail: e.target.value })}
+              className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
             />
-          )}
+            {errors?.contactEmail && (
+              <p className="text-red-500 text-sm">{errors.contactEmail}</p>
+            )}
+          </div>
 
-          {(isNewBusiness === true || isAuthenticated) && (
-            <FormField
-              control={form.control}
-              name="contactPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                    <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                      <Phone className="w-5 h-5 text-[#F3752B]" />
-                    </div>
-                    טלפון ליצירת קשר
-                    {isNewBusiness && <span className="text-red-500 mr-1">*</span>}
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="tel"
-                      inputMode="tel"
-                      autoComplete="tel"
-                      onBlur={() => handleBlur("contactPhone")}
-                      placeholder="לדוגמה: 050-1234567"
-                      className={cn(
-                        "w-full px-6 py-4 text-lg border-2 rounded-xl",
-                        form.formState.errors.contactPhone ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                      )}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+          <div className="space-y-2">
+            <Label htmlFor="contactPhone" className="text-lg font-medium text-gray-800">
+              מספר טלפון
+            </Label>
+            <Input
+              id="contactPhone"
+              type="tel"
+              placeholder="050-1234567"
+              value={formData.contactPhone || ''}
+              onChange={(e) => updateFormData({ contactPhone: e.target.value })}
+              className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
             />
-          )}
-
-          {/* Only show requirement questions for new businesses */}
-          {isNewBusiness === true && (
-            <>
-              <FormField
-                control={form.control}
-                name="itemsQuantityRange"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                        <Package className="w-5 h-5 text-[#F3752B]" />
-                      </div>
-                      מספר פריטים (מנות או מוצרים) לצילום?
-                      <span className="text-red-500 mr-1">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className={cn(
-                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
-                          form.formState.errors.itemsQuantityRange ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                        )}>
-                          <SelectValue placeholder="בחרו טווח כמות" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1-10">1-10</SelectItem>
-                          <SelectItem value="11-30">11-30</SelectItem>
-                          <SelectItem value="30+">30+</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      זה יעזור לנו להבין את היקף הפרויקט ולהמליץ על החבילה המתאימה
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="estimatedImagesNeeded"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                        <Image className="w-5 h-5 text-[#F3752B]" />
-                      </div>
-                      כמה תמונות אתם צריכים בשלב הנוכחי?
-                      <span className="text-red-500 mr-1">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="לדוגמה: 20 תמונות, או ל-50 תמונות"
-                        className={cn(
-                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
-                          form.formState.errors.estimatedImagesNeeded ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                        )}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      אפשר הערכה גסה – זה יעזור לנו להתאים את החבילה הנכונה
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="primaryImageUsage"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center text-lg font-semibold text-[#333333]">
-                      <div className="bg-[#F3752B]/10 p-2 rounded-full mr-2">
-                        <Target className="w-5 h-5 text-[#F3752B]" />
-                      </div>
-                      לאיזה שימוש עיקרי התמונות מיועדות?
-                      <span className="text-red-500 mr-1">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <SelectTrigger className={cn(
-                          "w-full px-6 py-4 text-lg border-2 rounded-xl text-right",
-                          form.formState.errors.primaryImageUsage ? "border-red-500 bg-red-50" : "border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300"
-                        )}>
-                          <SelectValue placeholder="בחרו שימוש עיקרי" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="instagram">אינסטגרם ורשתות חברתיות</SelectItem>
-                          <SelectItem value="website-menu">אתר / תפריט</SelectItem>
-                          <SelectItem value="delivery">משלוחים</SelectItem>
-                          <SelectItem value="advertising">פרסום</SelectItem>
-                          <SelectItem value="other">אחר</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
-                    <FormDescription>
-                      זה יעזור לנו להתאים את סגנון העיבוד לשימוש המיועד
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </>
-          )}
-        </form>
-      </Form>
+            {errors?.contactPhone && (
+              <p className="text-red-500 text-sm">{errors.contactPhone}</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
