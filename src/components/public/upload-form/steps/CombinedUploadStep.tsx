@@ -402,14 +402,16 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors: externalErrors,
           </div>
         ))}
         
-        {/* Add Another Dish Button */}
-        <Button
-          onClick={addNewDish}
-          className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center gap-2"
-        >
-          <Plus className="w-5 h-5" />
-          הוספת מנה נוספת
-        </Button>
+        {/* Add Another Dish Button - Only for registered businesses (non-leads) */}
+        {!formData.isLead && (
+          <Button
+            onClick={addNewDish}
+            className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center gap-2"
+          >
+            <Plus className="w-5 h-5" />
+            הוספת מנה נוספת
+          </Button>
+        )}
       </div>
     </div>
   );

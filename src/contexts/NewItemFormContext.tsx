@@ -32,6 +32,8 @@ export interface NewItemFormData {
   estimatedImagesNeeded: string;
   primaryImageUsage: string;
   isNewBusiness?: boolean;
+  // Business type detection for features
+  isLead?: boolean; // true if this is a lead (first time), false if registered business
 }
 
 interface NewItemFormContextType {

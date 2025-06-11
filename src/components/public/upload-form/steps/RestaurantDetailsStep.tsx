@@ -149,7 +149,8 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
 
       updateFormData({
         restaurantName: clientData.restaurant_name || '',
-        submitterName: clientData.contact_name || ''
+        submitterName: clientData.contact_name || '',
+        isLead: false // Authenticated users are existing clients, not leads
       });
     }
   }, [clientData, isAuthenticated, isLoadingClientData, updateFormData, clientError, sessionLoading]);
@@ -179,10 +180,11 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
     
     updateFormData({
       ...data,
-      isNewBusiness: isNewBusiness === true
+      isNewBusiness: isNewBusiness === true,
+      isLead: isNewBusiness === true // Lead if new business, not lead if registered
     });
     
-    console.log('[RestaurantDetailsStep] Updated form data with isNewBusiness:', isNewBusiness);
+    console.log('[RestaurantDetailsStep] Updated form data with isNewBusiness:', isNewBusiness, 'isLead:', isNewBusiness === true);
   };
 
   return (
@@ -206,7 +208,10 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
           <p className="font-medium mb-3 text-lg text-center">האם העסק שלכם כבר רשום במערכת?</p>
           <div className="flex justify-center gap-4 mt-2">
             <button 
-              onClick={() => setIsNewBusiness(false)}
+              onClick={() => {
+                setIsNewBusiness(false);
+                updateFormData({ isLead: false }); // Registered business = not a lead
+              }}
               type="button"
               className={cn(
                 "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
@@ -219,7 +224,10 @@ export const RestaurantDetailsStep: FC<PublicStepProps> = ({ errors: externalErr
               {isNewBusiness === false && <CheckCircle className="inline-block mr-2 h-4 w-4" />}
             </button>
             <button 
-              onClick={() => setIsNewBusiness(true)}
+              onClick={() => {
+                setIsNewBusiness(true);
+                updateFormData({ isLead: true }); // First time = lead
+              }}
               type="button"
               className={cn(
                 "px-5 py-2 rounded-md transition-all duration-300 text-base font-medium",
