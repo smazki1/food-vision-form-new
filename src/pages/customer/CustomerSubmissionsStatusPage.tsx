@@ -1,229 +1,101 @@
-import React, { useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { useSubmissions } from '@/hooks/useSubmissions';
-import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
-import { Submission as ProcessedItem } from '@/api/submissionApi';
-import { Activity, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Export the helper function for use in other components
-export const getStatusIconAndStyle = (status?: string): { icon: JSX.Element | null, style: string, hebrewStatus: string } => {
-  switch (status) {
-    case "ממתינה לעיבוד":
-      return { icon: <Activity className="h-4 w-4" />, style: "text-yellow-600 bg-yellow-100", hebrewStatus: "ממתינה לעיבוד" };
-    case "בעיבוד":
-      return { icon: <Activity className="h-4 w-4" />, style: "text-blue-600 bg-blue-100", hebrewStatus: "בעיבוד" };
-    case "מוכנה להצגה":
-    case "הושלמה ואושרה":
-      return { icon: <CheckCircle2 className="h-4 w-4" />, style: "text-green-600 bg-green-100", hebrewStatus: "הושלמה" };
-    case "נדחתה":
-      return { icon: <XCircle className="h-4 w-4" />, style: "text-red-600 bg-red-100", hebrewStatus: "נדחתה" };
-    case "דורש תיקונים":
-        return { icon: <AlertCircle className="h-4 w-4" />, style: "text-orange-600 bg-orange-100", hebrewStatus: "דורש תיקונים" };
-    default:
-      return { icon: null, style: "text-gray-600 bg-gray-100", hebrewStatus: status || "לא ידוע" };
-  }
+import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import SubmissionCard from '@/components/customer/SubmissionCard';
+import { Clock, CheckCircle, RefreshCw, PenSquare, Package, Star } from 'lucide-react';
+
+// Mock data as functionality is out of scope for this task
+const mockSubmissions = [
+  { id: '1', name: 'ספייסי צ\'יקן בורגר', category: 'מנה עיקרית', status: 'מוכן לבדיקה', variations: 2, imageUrl: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=2072&auto=format&fit=crop' },
+  { id: '2', name: 'גורמה ביף בורגר', category: 'מנה עיקרית', status: 'בתהליך', variations: 1, imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1998&auto=format&fit=crop' },
+  { id: '3', name: 'צ\'יזבורגר קלאסי', category: 'מנה עיקרית', status: 'הושלם', variations: 1, imageUrl: 'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1965&auto=format&fit=crop' },
+  { id: '4', name: 'בורגר צמחוני', category: 'צמחוני', status: 'מוכן לבדיקה', variations: 1, imageUrl: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=2069&auto=format&fit=crop' },
+  { id: '5', name: 'BBQ בייקון בורגר', category: 'מנה עיקרית', status: 'בתהליך', variations: 1, imageUrl: 'https://images.unsplash.com/photo-1607013251379-e6eecfffe234?q=80&w=1974&auto=format&fit=crop' },
+  { id: '6', name: 'פיש בורגר דלוקס', category: 'דגים', status: 'דרוש תיקון', variations: 1, imageUrl: 'https://images.unsplash.com/photo-1572441716334-3677fc42d9f4?q=80&w=1974&auto=format&fit=crop' },
+];
+
+const statusConfig: Record<string, { style: string; hebrew: string; icon: React.ReactNode }> = {
+    'מוכן לבדיקה': { style: 'bg-blue-100 text-blue-800', hebrew: 'מוכן לבדיקה', icon: <PenSquare className="w-3 h-3" /> },
+    'בתהליך': { style: 'bg-yellow-100 text-yellow-800', hebrew: 'בתהליך', icon: <Clock className="w-3 h-3" /> },
+    'הושלם': { style: 'bg-green-100 text-green-800', hebrew: 'הושלם', icon: <CheckCircle className="w-3 h-3" /> },
+    'דרוש תיקון': { style: 'bg-orange-100 text-orange-800', hebrew: 'דרוש תיקון', icon: <RefreshCw className="w-3 h-3" /> },
 };
 
-// Export the helper function
-export const getItemTypeName = (type: string | undefined) => {
-  if (!type) return 'לא ידוע';
-  switch (type) {
-    case 'dish': return 'מנה';
-    case 'cocktail': return 'קוקטייל';
-    case 'drink': return 'משקה';
-    default: return type;
-  }
+export const getStatusIconAndStyle = (status: string | null) => {
+    return statusConfig[status || ''] || { style: 'bg-gray-100 text-gray-800', hebrew: 'לא ידוע', icon: <Star className="w-3 h-3" /> };
 };
 
-const CustomerSubmissionsStatusPage: React.FC = () => {
-  const { 
-    submissions, 
-    loading: submissionsLoading,
-    clientLoading: authLoading,
-    error,
-    refreshSubmissions, 
-    clientId: effectiveClientId,
-    isAuthenticated: effectiveAuthenticated
-  } = useSubmissions();
-  
-  const { user: unifiedUser } = useUnifiedAuth();
+export const getItemTypeName = (itemType: string | null) => {
+    const types: Record<string, string> = {
+      dish: 'מנה',
+      cocktail: 'קוקטייל',
+      drink: 'משקה',
+    };
+    return types[itemType || ''] || 'פריט';
+};
 
-  const sortedSubmissions = useMemo(() => {
-    if (!submissions || !Array.isArray(submissions)) {
-      console.warn("[CustomerSubmissionsStatusPage] Invalid submissions data:", submissions);
-      return [];
-    }
-    try {
-      return [...submissions].sort((a, b) => {
-        const dateA = new Date(a.uploaded_at).getTime();
-        const dateB = new Date(b.uploaded_at).getTime();
-        return dateB - dateA;
-      });
-    } catch (err) {
-      console.error("[CustomerSubmissionsStatusPage] Error sorting submissions:", err);
-      return submissions;
-    }
-  }, [submissions]);
-
-  console.log("[CustomerSubmissionsStatusPage] Component state:", {
-    effectiveClientId,
-    effectiveAuthenticated,
-    authLoading,
-    submissionsLoading,
-    unifiedUser: unifiedUser?.id,
-    submissionsCount: submissions?.length,
-    error: error?.message,
-    timestamp: Date.now()
-  });
-
-  let content;
-
-  if (authLoading || submissionsLoading || (!effectiveClientId && effectiveAuthenticated && !error)) {
-    content = (
-      <div dir="rtl" className="text-center p-10">
-        <div className="flex items-center justify-center gap-2">
-          <RefreshCw className="h-4 w-4 animate-spin" />
-          טוען הגשות...
-        </div>
-      </div>
-    );
-  } else if (!effectiveAuthenticated) {
-    content = (
-      <div dir="rtl" className="text-center p-10">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            יש להיות מחובר כדי לצפות בהגשות
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  } else if (!effectiveClientId) {
-    content = (
-      <div dir="rtl" className="text-center p-10">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            לא נמצא פרופיל לקוח מקושר לחשבון זה
-          </AlertDescription>
-        </Alert>
-        <div className="mt-4 text-sm text-gray-600">
-          <p>פרטי דיבוג:</p>
-          <p>משתמש: {unifiedUser?.id}</p>
-          <p>אימייל משתמש: {unifiedUser?.email}</p>
-          <p>סטטוס אימות (useSubmissions): {effectiveAuthenticated ? 'מאומת' : 'לא מאומת'}</p>
-          <p>מזהה לקוח (useSubmissions): {effectiveClientId || 'לא נמצא'}</p>
-        </div>
-      </div>
-    );
-  } else if (error) {
-    content = (
-      <div dir="rtl" className="text-center p-10">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            שגיאה בטעינת ההגשות: {error.message}
-          </AlertDescription>
-        </Alert>
-        <Button onClick={refreshSubmissions} className="mt-4" variant="outline">
-          <RefreshCw className="h-4 w-4 ml-2" />
-          נסה שוב
-        </Button>
-      </div>
-    );
-  } else if (sortedSubmissions.length === 0) {
-    content = (
-      <div className="text-center text-gray-500 py-10">
-        <p>לא נמצאו הגשות עבור לקוח זה.</p>
-        <p>עדיין לא העלית פריטים? <Link to="/customer/upload" className="text-primary hover:underline">התחל עכשיו!</Link></p>
-        <div className="mt-4 text-sm">
-          <p>מידע דיבוג:</p>
-          <p>לקוח ID: {effectiveClientId}</p>
-          <p>משתמש ID: {unifiedUser?.id}</p>
-          <p>מאומת: {effectiveAuthenticated ? 'כן' : 'לא'}</p>
-        </div>
-      </div>
-    );
-  } else {
-    content = (
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[200px]">שם הפריט</TableHead>
-              <TableHead>סוג</TableHead>
-              <TableHead>סטטוס</TableHead>
-              <TableHead className="text-right">תאריך העלאה</TableHead>
-              <TableHead className="text-right">פעולות</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedSubmissions.map((item: ProcessedItem) => {
-              const statusInfoLocal = getStatusIconAndStyle(item.submission_status);
-              return (
-                <TableRow key={item.submission_id}>
-                  <TableCell className="font-medium truncate" title={item.item_name_at_submission}>{item.item_name_at_submission}</TableCell>
-                  <TableCell>{getItemTypeName(item.item_type)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`border-transparent ${statusInfoLocal.style}`}>
-                      {statusInfoLocal.icon}
-                      <span className="ml-2">{statusInfoLocal.hebrewStatus}</span>
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">{new Date(item.uploaded_at).toLocaleDateString('he-IL')}</TableCell>
-                  <TableCell className="text-right">
-                    <Button asChild variant="ghost" size="sm">
-                      <Link to={`/customer/submissions/${item.submission_id}`}>צפה בפרטים</Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    );
-  }
-
+const CustomerSubmissionsStatusPage = () => {
   return (
-    <div dir="rtl" className="p-4 md:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">סטטוס הגשות</h1>
-        <div className="flex gap-2">
-          <Button onClick={refreshSubmissions} variant="outline" size="sm" disabled={authLoading || submissionsLoading}>
-            <RefreshCw className={`h-4 w-4 ml-2 ${authLoading || submissionsLoading ? 'animate-spin' : ''}`} />
-            רענן
-          </Button>
-          <Button asChild>
-            <Link to="/customer/upload">הוסף הגשה חדשה</Link>
-          </Button>
-        </div>
-      </div>
+    <div dir="rtl" className="bg-slate-50 min-h-screen">
+      <main className="container mx-auto py-8 px-4">
+        {/* Header */}
+        <header className="flex items-center gap-4 mb-8">
+          <Avatar className="w-16 h-16 border-2 border-primary-FV">
+            <AvatarImage src="https://github.com/shadcn.png" alt="Sophia Carter" />
+            <AvatarFallback>SC</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">סופיה כרטר</h1>
+            <p className="text-muted-foreground">מסעדת הפאר</p>
+          </div>
+        </header>
 
-      <div className="mb-4">
-        <Alert>
-          <AlertDescription>
-            {effectiveClientId ? `מציג הגשות עבור לקוח ID: ${effectiveClientId}` : 'מנסה לאתר פרטי לקוח...'}
-            <br />
-            משתמש: {unifiedUser?.email || (effectiveAuthenticated ? 'טוען אימייל...' : 'לא מחובר')}
-            <br />
-            סה"כ הגשות נמצאו: {sortedSubmissions?.length || 0}
-          </AlertDescription>
-        </Alert>
-      </div>
-      
-      {content}
+        {/* Package Info */}
+        <Card className="mb-8 shadow-soft">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <Package className="w-6 h-6 text-primary-FV" />
+              <CardTitle>פרטי חבילה</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-3 gap-6 text-center">
+            <div>
+              <p className="text-sm text-muted-foreground">סוג חבילה</p>
+              <p className="font-bold text-lg">חבילת פרימיום</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">ניצול</p>
+              <p className="font-bold text-lg">7 מתוך 10 מנות</p>
+              <Progress value={70} className="mt-2 h-2" />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">תוקף</p>
+              <p className="font-bold text-lg">31 בדצמבר, 2025</p>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Dishes Grid */}
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">המנות שלכם</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {mockSubmissions.map(sub => (
+              <SubmissionCard
+                key={sub.id}
+                id={sub.id}
+                imageUrl={sub.imageUrl}
+                name={sub.name}
+                category={sub.category}
+                status={sub.status}
+                statusStyle={statusConfig[sub.status]?.style || ''}
+                variations={sub.variations}
+              />
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

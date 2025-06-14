@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -21,7 +20,10 @@ import ThankYouPage from "@/pages/ThankYouPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
+import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
+import SubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
+import SubmissionDetailsPageAdmin from "@/pages/admin/SubmissionDetailsPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import React, { Suspense } from "react";
 
@@ -147,6 +149,8 @@ const App = () => (
               <Route path="/customer/auth" element={<PublicOnlyRoute><CustomerAuthPage /></PublicOnlyRoute>} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
+              <Route path="/customer/submissions-status" element={<CustomerRoute><CustomerSubmissionsStatusPage /></CustomerRoute>} />
+              <Route path="/customer/submissions/:submissionId" element={<CustomerRoute><SubmissionDetailsPage /></CustomerRoute>} />
 
               {/* Editor routes - no client auth needed */}
               <Route path="/editor" element={<EditorDashboardPage />} />
@@ -169,7 +173,7 @@ const App = () => (
                 <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />
                 <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
                 <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />
-                <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPage /></Suspense>} />
+                <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPageAdmin /></Suspense>} />
                 <Route path="alerts" element={<Suspense fallback={<LoadingSpinner />}><AlertsDashboard /></Suspense>} />
                 <Route path="leads-test-page" element={<Suspense fallback={<LoadingSpinner />}><LeadsTestPage /></Suspense>} />
               </Route>
