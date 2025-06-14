@@ -20,7 +20,10 @@ import ThankYouPage from "@/pages/ThankYouPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
+import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
+import CustomerSubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
+import SubmissionDetailsPageAdmin from "@/pages/admin/SubmissionDetailsPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import WireframeTest from "@/pages/wireframe-test";
 import React, { Suspense } from "react";
@@ -37,7 +40,7 @@ const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesMa
 const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
 const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
 const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQueuePage"));
-const SubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
+const LazyAdminSubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
 const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
 const AlertsDashboard = React.lazy(() => import("@/pages/admin/AlertsDashboard"));
 
@@ -142,6 +145,8 @@ const App = () => (
               <Route path="/smart-upload" element={<SmartUploadPage />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
               <Route path="/wireframe-test" element={<WireframeTest />} />
+              <Route path="/submissions-status" element={<CustomerSubmissionsStatusPage />} />
+              <Route path="/submissions/:submissionId" element={<CustomerSubmissionDetailsPage />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
@@ -170,7 +175,7 @@ const App = () => (
                 <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />
                 <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
                 <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />
-                <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPage /></Suspense>} />
+                <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPageAdmin /></Suspense>} />
                 <Route path="alerts" element={<Suspense fallback={<LoadingSpinner />}><AlertsDashboard /></Suspense>} />
                 <Route path="leads-test-page" element={<Suspense fallback={<LoadingSpinner />}><LeadsTestPage /></Suspense>} />
               </Route>

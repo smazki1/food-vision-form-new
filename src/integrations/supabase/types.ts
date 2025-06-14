@@ -888,6 +888,47 @@ export type Database = {
         }
         Relationships: []
       }
+      work_sessions: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          session_date: string
+          updated_at: string | null
+          work_type: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes: number
+          id?: string
+          session_date: string
+          updated_at?: string | null
+          work_type?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          session_date?: string
+          updated_at?: string | null
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_sessions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
       work_time_sessions: {
         Row: {
           created_at: string
