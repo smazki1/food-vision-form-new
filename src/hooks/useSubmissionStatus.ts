@@ -1,8 +1,6 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SubmissionStatus } from "@/api/submissionApi";
 import { toast } from "sonner";
 import { updateClientServings } from "@/api/clientApi";
 
@@ -54,52 +52,70 @@ async function handleGeneralAutomaticServingDeduction(submissionId: string, subm
   }
 }
 
-export function useSubmissionStatus() {
+export const SUBMISSION_STATUSES = [
+  'ממתינה לעיבוד',
+  'בעיבוד', 
+  'מוכנה להצגה',
+  'הערות התקבלו',
+  'הושלמה ואושרה'
+] as const;
+
+export type SubmissionStatus = typeof SUBMISSION_STATUSES[number];
+
+export const useSubmissionStatus = () => {
   const queryClient = useQueryClient();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateStatus = useMutation({
-    mutationFn: async ({ submissionId, status }: { submissionId: string; status: SubmissionStatus }) => {
-      setIsUpdating(true);
-      try {
-        const { data, error } = await supabase
-          .from("customer_submissions")
-          .update({ submission_status: status })
-          .eq("submission_id", submissionId)
-          .select()
-          .single();
+  const updateSubmissionStatus = async (submissionId: string, newStatus: SubmissionStatus) => {
+    if (!submissionId) {
+      toast.error('מזהה הגשה חסר');
+      return false;
+    }
 
-        if (error) throw error;
-
-        // Automatic serving deduction when submission is approved
-        if (status === "הושלמה ואושרה") {
-          await handleGeneralAutomaticServingDeduction(submissionId, data);
-        }
-
-        return data;
-      } finally {
-        setIsUpdating(false);
-      }
-    },
-    onSuccess: (data) => {
-      toast.success(`סטטוס משימה עודכן ל: ${data.submission_status}`);
-      queryClient.invalidateQueries({ queryKey: ["editor-submissions"] });
-      queryClient.invalidateQueries({ queryKey: ["submission", data.submission_id] });
+    setIsUpdating(true);
+    try {
+      console.log('Updating submission status:', { submissionId, newStatus });
       
-      // Invalidate client queries to refresh package counts in UI
-      if (data.client_id) {
-        queryClient.invalidateQueries({ queryKey: ['client', data.client_id] });
-        queryClient.invalidateQueries({ queryKey: ['client-detail', data.client_id] });
-        queryClient.invalidateQueries({ queryKey: ['clients'] });
+      const { data, error } = await supabase
+        .from('customer_submissions')
+        .update({ 
+          submission_status: newStatus
+        })
+        .eq('submission_id', submissionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating submission status:', error);
+        toast.error(`שגיאה בעדכון סטטוס: ${error.message}`);
+        return false;
       }
-    },
-    onError: (error) => {
-      toast.error(`שגיאה בעדכון סטטוס: ${error instanceof Error ? error.message : "שגיאה לא ידועה"}`);
-    },
-  });
+
+      console.log('Status update successful:', data);
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['client-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      
+      // Handle automatic serving deduction for approved submissions
+      if (newStatus === 'הושלמה ואושרה' && data) {
+        await handleGeneralAutomaticServingDeduction(submissionId, data);
+      }
+
+      toast.success(`סטטוס ההגשה עודכן ל: ${newStatus}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating submission status:', error);
+      toast.error('שגיאה בעדכון סטטוס ההגשה');
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return {
-    updateStatus,
-    isUpdating
+    updateSubmissionStatus,
+    isUpdating,
+    availableStatuses: SUBMISSION_STATUSES
   };
-}
+};

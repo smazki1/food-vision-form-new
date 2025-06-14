@@ -9,6 +9,8 @@ import AdditionalDetailsStep from './steps/AdditionalDetailsStep';
 import ReviewSubmitStep from './steps/ReviewSubmitStep';
 import ProgressBar from './components/ProgressBar';
 import SuccessModal from './components/SuccessModal';
+import FormErrorSummary from './components/FormErrorSummary';
+import { ExistingBusinessSuccessDialog } from '@/components/ui/ExistingBusinessSuccessDialog';
 import { Plus } from 'lucide-react';
 
 export interface PublicStepProps {
@@ -45,6 +47,7 @@ const publicFormSteps = [
 
 const PublicFoodVisionUploadForm: React.FC = () => {
   const { resetFormData, formData, updateFormData } = useNewItemForm();
+  const [showExistingBusinessDialog, setShowExistingBusinessDialog] = React.useState(false);
   const {
     currentStepId,
     currentStepConfig,
@@ -65,7 +68,9 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     handleNewSubmission,
     handleCloseSuccessModal,
     isSubmitting,
-    showSuccessModal
+    showSuccessModal,
+    showValidationErrors,
+    setShowValidationErrors
   } = usePublicFormHandlers(
     currentStepId,
     isLastStep,
@@ -73,12 +78,20 @@ const PublicFoodVisionUploadForm: React.FC = () => {
     moveToPreviousStep,
     moveToStep,
     validateStep,
-    clearErrors
+    clearErrors,
+    () => setShowExistingBusinessDialog(true)
   );
 
   useEffect(() => {
     resetFormData(); 
   }, []); 
+
+  // Auto-dismiss validation errors when user interacts with form data
+  useEffect(() => {
+    if (showValidationErrors) {
+      setShowValidationErrors(false);
+    }
+  }, [formData]);
 
   // Log whenever showSuccessModal changes
   useEffect(() => {
@@ -129,6 +142,26 @@ const PublicFoodVisionUploadForm: React.FC = () => {
               isSubmitting={isSubmitting}
             />
 
+            {/* Error Summary for Review Step */}
+            {currentStepId === 4 && showValidationErrors && Object.keys(errors).length > 0 && (
+              <div className="mt-8">
+                <FormErrorSummary 
+                  errors={errors}
+                  onDismiss={() => setShowValidationErrors(false)}
+                />
+              </div>
+            )}
+
+            {/* Error Summary - Show when validation fails */}
+            {currentStepId !== 4 && showValidationErrors && Object.keys(errors).length > 0 && (
+              <div className="mt-8">
+                <FormErrorSummary 
+                  errors={errors}
+                  onDismiss={() => setShowValidationErrors(false)}
+                />
+              </div>
+            )}
+
             {/* Navigation Buttons - Centered and Mobile Responsive */}
             {currentStepId !== 4 && (
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-12 pt-8 border-t border-gray-100">
@@ -161,6 +194,12 @@ const PublicFoodVisionUploadForm: React.FC = () => {
         isOpen={showSuccessModal}
         onClose={handleCloseSuccessModal}
         onNewSubmission={handleNewSubmission}
+      />
+
+      {/* Existing Business Success Dialog */}
+      <ExistingBusinessSuccessDialog
+        open={showExistingBusinessDialog}
+        onOpenChange={setShowExistingBusinessDialog}
       />
     </div>
   );

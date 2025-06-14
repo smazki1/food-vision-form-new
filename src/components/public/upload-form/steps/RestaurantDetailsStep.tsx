@@ -18,7 +18,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
       {/* Business Registration Question - Enhanced Design */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
         <div className="text-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800 mb-1">האם העסק שלכם כבר רשום במערכת?</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-1">האם העסק שלכם כבר רשום במערכת? *</h3>
           <p className="text-gray-600 text-sm">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
         </div>
         
@@ -77,9 +77,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
             onChange={(e) => updateFormData({ restaurantName: e.target.value })}
             className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
           />
-          {errors?.restaurantName && (
-            <p className="text-red-500 text-sm">{errors.restaurantName}</p>
-          )}
+
         </div>
 
         <div className="space-y-2">
@@ -94,46 +92,42 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
             onChange={(e) => updateFormData({ submitterName: e.target.value })}
             className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
           />
-          {errors?.submitterName && (
-            <p className="text-red-500 text-sm">{errors.submitterName}</p>
-          )}
+
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="contactEmail" className="text-lg font-medium text-gray-800">
-              כתובת אימייל
-            </Label>
-            <Input
-              id="contactEmail"
-              type="email"
-              placeholder="your@email.com"
-              value={formData.contactEmail || ''}
-              onChange={(e) => updateFormData({ contactEmail: e.target.value })}
-              className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-            />
-            {errors?.contactEmail && (
-              <p className="text-red-500 text-sm">{errors.contactEmail}</p>
-            )}
-          </div>
+        {formData.isNewBusiness !== false && (
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="contactEmail" className="text-lg font-medium text-gray-800">
+                כתובת אימייל{formData.isNewBusiness ? ' *' : ''}
+              </Label>
+              <Input
+                id="contactEmail"
+                type="email"
+                placeholder="your@email.com"
+                value={formData.contactEmail || ''}
+                onChange={(e) => updateFormData({ contactEmail: e.target.value })}
+                className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
+              />
 
-          <div className="space-y-2">
-            <Label htmlFor="contactPhone" className="text-lg font-medium text-gray-800">
-              מספר טלפון
-            </Label>
-            <Input
-              id="contactPhone"
-              type="tel"
-              placeholder="050-1234567"
-              value={formData.contactPhone || ''}
-              onChange={(e) => updateFormData({ contactPhone: e.target.value })}
-              className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-            />
-            {errors?.contactPhone && (
-              <p className="text-red-500 text-sm">{errors.contactPhone}</p>
-            )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="contactPhone" className="text-lg font-medium text-gray-800">
+                מספר טלפון{formData.isNewBusiness ? ' *' : ''}
+              </Label>
+              <Input
+                id="contactPhone"
+                type="tel"
+                placeholder="050-1234567"
+                value={formData.contactPhone || ''}
+                onChange={(e) => updateFormData({ contactPhone: e.target.value })}
+                className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
+              />
+
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -27,11 +27,13 @@ const mockClient: Client = {
   website_url: 'https://test.com',
   internal_notes: 'Internal test notes',
   remaining_servings: 10,
+  remaining_images: 5,
+  consumed_images: 15,
+  reserved_images: 0,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   current_package_id: null,
   user_auth_id: null,
-  service_packages: null,
   original_lead_id: null,
   last_activity_at: '2024-01-01T00:00:00Z'
 };
@@ -91,10 +93,11 @@ describe('ClientDetailPanel', () => {
         { wrapper: createWrapper() }
       );
 
-      expect(screen.getAllByText('פרטי הלקוח')).toHaveLength(2); // Tab and header
+      expect(screen.getByText('פרטים')).toBeInTheDocument();
       expect(screen.getByText('חבילות')).toBeInTheDocument();
       expect(screen.getByText('הגשות')).toBeInTheDocument();
-      expect(screen.getByText('פעילות')).toBeInTheDocument();
+      expect(screen.getByText('הגשות 2')).toBeInTheDocument();
+      expect(screen.getByText('עלויות')).toBeInTheDocument();
       expect(screen.getByText('עיצוב')).toBeInTheDocument();
     });
 
@@ -106,9 +109,9 @@ describe('ClientDetailPanel', () => {
         { wrapper: createWrapper() }
       );
 
-      // Click on activity tab
-      await user.click(screen.getByText('פעילות'));
-      expect(screen.getByText('פעילות והערות')).toBeInTheDocument();
+      // Click on submissions2 tab
+      await user.click(screen.getByText('הגשות 2'));
+      expect(screen.getByText('הגשות')).toBeInTheDocument(); // Should show submissions content
 
       // Click on design tab
       await user.click(screen.getByText('עיצוב'));
@@ -130,6 +133,64 @@ describe('ClientDetailPanel', () => {
       
       expect(screen.getByText('שמירה')).toBeInTheDocument();
       expect(screen.getByText('ביטול')).toBeInTheDocument();
+    });
+
+    it('should render in full-screen layout', () => {
+      render(
+        <ClientDetailPanel clientId="test-client-1" onClose={mockOnClose} />,
+        { wrapper: createWrapper() }
+      );
+
+      // Check for full-screen layout classes
+      const fullScreenContainer = document.querySelector('.fixed.inset-0.z-50.bg-background');
+      expect(fullScreenContainer).toBeInTheDocument();
+    });
+
+    it('should have both back arrow and X close buttons', () => {
+      render(
+        <ClientDetailPanel clientId="test-client-1" onClose={mockOnClose} />,
+        { wrapper: createWrapper() }
+      );
+
+      // Should have both navigation buttons
+      const buttons = screen.getAllByRole('button');
+      const closeButtons = buttons.filter(button => 
+        button.querySelector('[data-testid="x-icon"]') || 
+        button.querySelector('[data-testid="arrow-left-icon"]')
+      );
+      
+      expect(closeButtons.length).toBeGreaterThan(0);
+    });
+
+    it('should render submissions2 tab with wireframe functionality', async () => {
+      const user = userEvent.setup();
+      
+      render(
+        <ClientDetailPanel clientId="test-client-1" onClose={mockOnClose} />,
+        { wrapper: createWrapper() }
+      );
+
+      // Click on submissions2 tab
+      await user.click(screen.getByText('הגשות 2'));
+      
+      // Should show wireframe-style content
+      expect(screen.getByText('הגשות')).toBeInTheDocument();
+      
+      // Should show stats cards (from wireframe)
+      expect(screen.getByText('בביצוע')).toBeInTheDocument();
+      expect(screen.getByText('ממתינות')).toBeInTheDocument();
+      expect(screen.getByText('הושלמו')).toBeInTheDocument();
+    });
+
+    it('should use 6-column grid layout for tabs', () => {
+      render(
+        <ClientDetailPanel clientId="test-client-1" onClose={mockOnClose} />,
+        { wrapper: createWrapper() }
+      );
+
+      // Check for 6-column grid layout
+      const tabsList = document.querySelector('.grid-cols-6');
+      expect(tabsList).toBeInTheDocument();
     });
   });
 

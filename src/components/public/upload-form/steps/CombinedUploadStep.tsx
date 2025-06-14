@@ -6,9 +6,13 @@ import DishFormSection from './components/DishFormSection';
 import { Camera, Lightbulb, Upload } from 'lucide-react';
 
 const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors }) => {
-  const { formData, dishes, addDish, removeDish, updateDish } = useNewItemForm();
+  const { formData, addDish, removeDish, updateDish } = useNewItemForm();
 
   const handleAddDish = () => {
+    // Limit new leads to 3 dishes maximum
+    if (formData.isLead && formData.dishes.length >= 3) {
+      return;
+    }
     addDish();
   };
 
@@ -94,14 +98,22 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors }) => {
 
             <DishFormSection
               dish={dish}
-              errors={errors}
+              errors={{
+                itemName: errors?.[`dish_${dish.id}_itemName`],
+                itemType: errors?.[`dish_${dish.id}_itemType`],
+                description: errors?.[`dish_${dish.id}_description`],
+                referenceImages: errors?.[`dish_${dish.id}_referenceImages`]
+              }}
               onUpdate={(updates) => updateDish(dish.id, updates)}
             />
           </div>
         ))}
 
-        {/* Add Another Dish Button - Only for non-leads */}
-        {!formData.isLead && (
+        {/* Add Another Dish Button - Show for all users with limits */}
+        {(
+          (!formData.isLead) || 
+          (formData.isLead && formData.dishes.length < 3)
+        ) && (
           <div className="text-center">
             <button
               onClick={handleAddDish}
@@ -109,6 +121,11 @@ const CombinedUploadStep: React.FC<PublicStepProps> = ({ errors }) => {
             >
               <Lightbulb className="w-5 h-5" />
               הוספת מנה נוספת
+              {formData.isLead && (
+                <span className="text-sm opacity-75">
+                  ({formData.dishes.length}/3)
+                </span>
+              )}
             </button>
           </div>
         )}

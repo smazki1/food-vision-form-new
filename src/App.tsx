@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,6 +22,7 @@ import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
+import WireframeTest from "@/pages/wireframe-test";
 import React, { Suspense } from "react";
 
 // Import debug script for testing comments
@@ -141,6 +141,7 @@ const App = () => (
               <Route path="/food-vision-form" element={<FoodVisionForm />} />
               <Route path="/smart-upload" element={<SmartUploadPage />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
+              <Route path="/wireframe-test" element={<WireframeTest />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />

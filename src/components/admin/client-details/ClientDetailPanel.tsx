@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +17,7 @@ import {
   CreditCard, 
   Palette,
   X,
+  ArrowLeft,
   Edit,
   Save,
   Phone,
@@ -30,6 +30,7 @@ import {
 
 // Import the components we created
 import { ClientSubmissionsSection } from './ClientSubmissionsSection';
+import { ClientSubmissions2 } from './ClientSubmissions2';
 import { ClientDesignSettings } from './ClientDesignSettings';
 import { ClientPackageManagement } from './ClientPackageManagement';
 import { ClientActivityNotes } from './ClientActivityNotes';
@@ -146,41 +147,68 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
 
   // CRITICAL FIX: Memoize loading/error/not found states to prevent unnecessary re-renders
   const loadingContent = useMemo(() => (
-    <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div className="fixed inset-0 z-50 bg-background">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-      </SheetContent>
-    </Sheet>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   ), [onClose]);
 
   const errorContent = useMemo(() => (
-    <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-            <h3 className="text-lg font-semibold text-red-600">שגיאה בטעינת נתונים</h3>
-            <p className="text-gray-600 mt-2">{error?.message}</p>
+    <div className="fixed inset-0 z-50 bg-background">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h3 className="text-lg font-semibold text-red-600">שגיאה בטעינת נתונים</h3>
+              <p className="text-gray-600 mt-2">{error?.message}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   ), [onClose, error]);
 
   const notFoundContent = useMemo(() => (
-    <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent side="left" className="w-full sm:max-w-4xl overflow-y-auto">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-600">לקוח לא נמצא</h3>
-            <p className="text-gray-500 mt-2">לא נמצא לקוח עם המזהה המבוקש</p>
+    <div className="fixed inset-0 z-50 bg-background">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4">
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <User className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <h3 className="text-lg font-semibold text-gray-600">לקוח לא נמצא</h3>
+              <p className="text-gray-500 mt-2">לא נמצא לקוח עם המזהה המבוקש</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   ), [onClose]);
 
   if (isLoading) {
@@ -196,70 +224,77 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
   }
 
   return (
-    <Sheet open={true} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:max-w-4xl overflow-y-auto">
-        <SheetHeader className="border-b pb-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-lg font-semibold text-primary">
-                  {client.restaurant_name?.charAt(0).toUpperCase() || 'L'}
-                </span>
-              </div>
-              <div>
-                <SheetTitle className="text-xl font-bold">
-                  {client.restaurant_name || 'לקוח ללא שם'}
-                </SheetTitle>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge className={getStatusColor(client.client_status || 'לא פעיל')}>
-                    {client.client_status || 'לא פעיל'}
-                  </Badge>
-                  {client.contact_name && (
-                    <span className="text-sm text-muted-foreground">
-                      {client.contact_name}
-                    </span>
-                  )}
+    <div className="fixed inset-0 z-50 bg-background">
+      <div className="h-full w-full overflow-y-auto">
+        <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-lg font-semibold text-primary">
+                    {client.restaurant_name?.charAt(0).toUpperCase() || 'L'}
+                  </span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">
+                    {client.restaurant_name || 'לקוח ללא שם'}
+                  </h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge className={getStatusColor(client.client_status || 'לא פעיל')}>
+                      {client.client_status || 'לא פעיל'}
+                    </Badge>
+                    {client.contact_name && (
+                      <span className="text-sm text-muted-foreground">
+                        {client.contact_name}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              {!isEditing ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  עריכה
-                </Button>
-              ) : (
-                <>
+              <div className="flex items-center gap-2">
+                {!isEditing ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={handleCancel}
+                    onClick={() => setIsEditing(true)}
                   >
-                    ביטול
+                    <Edit className="h-4 w-4 mr-2" />
+                    עריכה
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    שמירה
-                  </Button>
-                </>
-              )}
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="h-4 w-4" />
-              </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCancel}
+                    >
+                      ביטול
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleSave}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      שמירה
+                    </Button>
+                  </>
+                )}
+                <Button variant="ghost" size="sm" onClick={onClose}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
-        </SheetHeader>
+        </div>
+
+        <div className="container mx-auto px-4 py-6">
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview" className="flex items-center gap-1">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">פרטים</span>
@@ -271,6 +306,10 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
             <TabsTrigger value="submissions" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">הגשות</span>
+            </TabsTrigger>
+            <TabsTrigger value="submissions2" className="flex items-center gap-1">
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">הגשות 2</span>
             </TabsTrigger>
             <TabsTrigger value="costs" className="flex items-center gap-1">
               <DollarSign className="h-4 w-4" />
@@ -492,6 +531,10 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
               <ClientSubmissionsSection key={client.client_id} clientId={client.client_id} client={client} />
             </TabsContent>
 
+            <TabsContent value="submissions2">
+              <ClientSubmissions2 key={client.client_id} clientId={client.client_id} client={client} />
+            </TabsContent>
+
             <TabsContent value="costs">
               <ClientCostTracking key={client.client_id} client={client} clientId={client.client_id} />
             </TabsContent>
@@ -501,8 +544,9 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
             </TabsContent>
           </ScrollArea>
         </Tabs>
-      </SheetContent>
-    </Sheet>
+        </div>
+      </div>
+    </div>
   );
 };
 

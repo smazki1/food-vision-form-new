@@ -16,17 +16,27 @@ interface DishFormSectionProps {
 }
 
 const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, onUpdate }) => {
-  const [qualityChecked, setQualityChecked] = useState(false);
+  const [qualityChecked, setQualityChecked] = useState(dish.qualityConfirmed);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
-    const newFiles = [...dish.referenceImages];
+    const currentFiles = dish.referenceImages || [];
+    const newFiles = [...currentFiles];
+    
     acceptedFiles.forEach(file => {
-      if (!newFiles.find(f => f.name === file.name) && newFiles.length < 10) {
+      // Check if file already exists and if we haven't reached the limit
+      const fileExists = newFiles.some(existingFile => 
+        existingFile.name === file.name && existingFile.size === file.size
+      );
+      
+      if (!fileExists && newFiles.length < 10) {
         newFiles.push(file);
       }
     });
     
-    onUpdate({ referenceImages: newFiles });
+    // Only update if there are actually new files
+    if (newFiles.length !== currentFiles.length) {
+      onUpdate({ referenceImages: newFiles });
+    }
 
     if (fileRejections.length > 0) {
       console.warn("File rejections:", fileRejections);
@@ -91,7 +101,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
     <div className="space-y-6" dir="rtl">
       {/* Item Type Selection */}
       <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">סוג המוצר</Label>
+        <Label className="text-sm font-medium text-gray-700">סוג המוצר *</Label>
         <div className="grid grid-cols-2 gap-3">
           {itemTypes.map((type) => (
             <button
@@ -127,19 +137,17 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           </div>
         )}
         
-        {errors?.itemType && (
-          <p className="text-red-500 text-sm mt-1">{errors.itemType}</p>
-        )}
+
       </div>
 
       {/* Item Name */}
       <div className="space-y-2">
         <Label htmlFor={`itemName-${dish.id}`} className="text-sm font-medium text-gray-700">
-          שם המנה/המוצר
+          שם המנה/המוצר *
         </Label>
         <IconInput
           id={`itemName-${dish.id}`}
-          icon={<UtensilsCrossed />}
+          icon={<CheckCircle />}
           label=""
           placeholder="למשל: פסטה ברוטב עגבניות"
           name="itemName"
@@ -147,19 +155,17 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           onChange={handleChange}
           error={errors?.itemName}
         />
-        {errors?.itemName && (
-          <p className="text-red-500 text-sm">{errors.itemName}</p>
-        )}
+
       </div>
 
       {/* Description */}
       <div className="space-y-2">
         <Label htmlFor={`description-${dish.id}`} className="text-sm font-medium text-gray-700">
-          תיאור המנה
+          תיאור המנה *
         </Label>
         <IconTextarea
           id={`description-${dish.id}`}
-          icon={<FileImage />}
+          icon={<CheckCircle />}
           label=""
           placeholder="תארו את המנה - רכיבים, טעמים, סגנון הגשה..."
           name="description"
@@ -168,9 +174,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           rows={4}
           error={errors?.description}
         />
-        {errors?.description && (
-          <p className="text-red-500 text-sm">{errors.description}</p>
-        )}
+
       </div>
 
       {/* Special Notes */}
@@ -180,7 +184,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
         </Label>
         <IconTextarea
           id={`specialNotes-${dish.id}`}
-          icon={<Lightbulb />}
+          icon={<CheckCircle />}
           label=""
           placeholder="הערות נוספות, בקשות מיוחדות לעיצוב..."
           name="specialNotes"
@@ -193,7 +197,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
 
       {/* Image Upload */}
       <div className="space-y-4">
-        <Label className="text-sm font-medium text-gray-700">תמונות המנה</Label>
+        <Label className="text-sm font-medium text-gray-700">תמונות המנה *</Label>
         
         <div
           {...getRootProps()}
@@ -244,9 +248,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           </div>
         )}
 
-        {errors?.referenceImages && (
-          <p className="text-red-500 text-sm">{errors.referenceImages}</p>
-        )}
+
       </div>
 
       {/* Quality Confirmation */}
@@ -255,17 +257,21 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           <Checkbox
             id={`quality-${dish.id}`}
             checked={qualityChecked}
-            onCheckedChange={(checked) => setQualityChecked(checked === true)}
+            onCheckedChange={(checked) => {
+              const isChecked = checked === true;
+              setQualityChecked(isChecked);
+              onUpdate({ qualityConfirmed: isChecked });
+            }}
           />
           <div className="space-y-1">
             <Label 
               htmlFor={`quality-${dish.id}`}
               className="text-sm font-medium text-gray-700 cursor-pointer"
             >
-              אני מאשר/ת שהתמונות באיכות גבוהה
+              אני מאשר/ת שהתמונות ברורות ומובנות *
             </Label>
             <p className="text-xs text-gray-500">
-              תמונות באיכות גבוהה מבטיחות תוצאות טובות יותר
+              תמונות ברורות ומובנות מבטיחות תוצאות טובות יותר
             </p>
           </div>
         </div>

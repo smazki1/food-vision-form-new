@@ -19,9 +19,8 @@ const BrandHeader = () => {
             <img 
               src="/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png" 
               alt="Food Vision Logo" 
-              className="w-16 h-16 sm:w-20 sm:h-20 mr-4 drop-shadow-lg"
+              className="w-16 h-16 sm:w-20 sm:h-20 mr-4"
             />
-            <div className="absolute -inset-2 bg-gradient-to-r from-[#8b1e3f] to-[#f3752b] rounded-full opacity-20 blur-lg"></div>
           </div>
           <div className="text-right">
             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-l from-[#8b1e3f] to-[#a91e4f] bg-clip-text text-transparent tracking-tight leading-none">
@@ -43,7 +42,7 @@ const BrandHeader = () => {
             חסכו 80% מעלויות צילום
           </div>
           <p className="text-lg font-semibold leading-relaxed">
-            <span className="text-[#f3752b] font-bold text-xl">ללא צלם וללא סטודיו - תוך 72 שעות בלבד</span>
+            <span className="text-[#f3752b] font-bold text-xl">ללא צלם וללא סטודיו<br />תוך 72 שעות בלבד</span>
           </p>
         </div>
       </div>

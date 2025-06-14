@@ -10,11 +10,13 @@ export const usePublicFormHandlers = (
   moveToPreviousStep: () => void,
   moveToStep: (step: number) => void,
   validateStep: (stepId: number) => Promise<boolean>,
-  clearErrors: () => void
+  clearErrors: () => void,
+  onShowExistingBusinessDialog?: () => void
 ) => {
   const { formData, resetFormData, updateFormData } = useNewItemForm();
   const { isSubmitting, submitForm } = usePublicFormSubmission();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const handleNext = useCallback(async () => {
     console.log('1. handleNext called');
@@ -22,12 +24,18 @@ export const usePublicFormHandlers = (
     console.log('2. Validation result:', isValid);
     if (isValid && !isLastStep) {
       console.log('3. Moving to next step');
+      setShowValidationErrors(false);
       moveToNextStep();
+    } else if (!isValid) {
+      console.log('3. Validation failed, showing errors');
+      setShowValidationErrors(true);
+      toast.error('יש לתקן את השגיאות כדי להמשיך');
     }
   }, [currentStepId, isLastStep, moveToNextStep, validateStep]);
 
   const handlePrevious = useCallback(() => {
     clearErrors();
+    setShowValidationErrors(false);
     if (currentStepId > 1) {
       moveToPreviousStep();
     }
@@ -37,7 +45,11 @@ export const usePublicFormHandlers = (
     console.log('1. handleSubmit started');
     const isValid = await validateStep(currentStepId);
     console.log('2. Validation result:', isValid);
-    if (!isValid) return;
+    if (!isValid) {
+      setShowValidationErrors(true);
+      toast.error('יש לתקן את השגיאות כדי להגיש');
+      return;
+    }
 
     try {
       console.log('3. Submitting form data');
@@ -45,15 +57,24 @@ export const usePublicFormHandlers = (
       console.log('4. Submit result:', success);
       
       if (success) {
-        console.log('5. Setting showSuccessModal to true');
-        setShowSuccessModal(true);
+        console.log('5. Setting success modal based on business type');
+        
+        // Show different success dialogs based on business type
+        if (formData.isNewBusiness === false) {
+          console.log('6. Showing existing business dialog');
+          onShowExistingBusinessDialog?.();
+        } else {
+          console.log('6. Showing standard success modal');
+          setShowSuccessModal(true);
+          setTimeout(() => {
+            console.log('7. Modal state after delay:', showSuccessModal);
+            if (!showSuccessModal) {
+              setShowSuccessModal(true);
+            }
+          }, 300);
+        }
+        
         toast.success('המנה נשלחה בהצלחה!');
-        setTimeout(() => {
-          console.log('6. Modal state after delay:', showSuccessModal);
-          if (!showSuccessModal) {
-            setShowSuccessModal(true);
-          }
-        }, 300);
 
         // Debug logs for Make.com webhook call
         console.log('Sending to Make.com Webhook:');
@@ -112,6 +133,7 @@ export const usePublicFormHandlers = (
       }
     }, 100);
     clearErrors();
+    setShowValidationErrors(false);
     setShowSuccessModal(false);
   }, [resetFormData, updateFormData, moveToStep, clearErrors, formData.restaurantName, formData.submitterName]);
 
@@ -127,6 +149,8 @@ export const usePublicFormHandlers = (
     handleNewSubmission,
     handleCloseSuccessModal,
     isSubmitting,
-    showSuccessModal
+    showSuccessModal,
+    showValidationErrors,
+    setShowValidationErrors
   };
 };

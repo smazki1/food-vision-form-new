@@ -11,6 +11,7 @@ export interface DishData {
   referenceExamples: File[];
   isCustomItemType: boolean;
   customItemType: string;
+  qualityConfirmed: boolean;
 }
 
 export interface NewItemFormData {
@@ -71,7 +72,8 @@ const createInitialDish = (id: string): DishData => ({
   brandingMaterials: [],
   referenceExamples: [],
   isCustomItemType: false,
-  customItemType: ''
+  customItemType: '',
+  qualityConfirmed: false
 });
 
 const initialFormData: NewItemFormData = {

@@ -155,7 +155,7 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
               מוכנים לטעום?
             </h3>
             <Button
-              onClick={() => window.open('https://app.food-vision.co.il/customer-login', '_blank')}
+              onClick={() => window.open('/public-upload', '_blank')}
               className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg font-bold rounded-2xl flex items-center gap-3 mx-auto mb-4"
             >
               <Sparkles className="w-6 h-6" />

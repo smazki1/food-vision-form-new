@@ -38,6 +38,8 @@ interface ClientCostData {
   prompts_costs: number;
   trainings_count: number;
   prompts_count: number;
+  total_work_hours: number;
+  work_sessions_count: number;
   by_status: {
     status: string;
     status_count: number;
@@ -57,6 +59,11 @@ interface ClientCostData {
     costs: number;
     revenue: number;
     roi: number;
+  }[];
+  work_sessions: {
+    work_type: string;
+    total_minutes: number;
+    sessions_count: number;
   }[];
 }
 
@@ -93,6 +100,15 @@ const ClientCostsReportPage: React.FC = () => {
       
       if (error) throw error;
       
+      // Fetch work sessions data
+      const { data: workSessions, error: workSessionsError } = await supabase
+        .from('work_sessions')
+        .select('client_id, duration_minutes, work_type, created_at');
+      
+      if (workSessionsError) {
+        console.error('Error fetching work sessions:', workSessionsError);
+      }
+      
       // Process the data to match the expected interface
       const processedData: ClientCostData = {
         total_ai_costs: 0,
@@ -102,9 +118,12 @@ const ClientCostsReportPage: React.FC = () => {
         prompts_costs: 0,
         trainings_count: 0,
         prompts_count: 0,
+        total_work_hours: 0,
+        work_sessions_count: 0,
         by_status: [],
         by_package: [],
-        by_month: []
+        by_month: [],
+        work_sessions: []
       };
       
       if (!clients || clients.length === 0) {
@@ -168,6 +187,29 @@ const ClientCostsReportPage: React.FC = () => {
         status_revenue: data.revenue,
         status_roi: data.revenue > 0 ? (data.revenue / (data.costs * 3.8 || 1)) * 100 : 0
       }));
+      
+      // Process work sessions data
+      if (workSessions && workSessions.length > 0) {
+        processedData.total_work_hours = workSessions.reduce((sum, session) => sum + (session.duration_minutes || 0), 0) / 60;
+        processedData.work_sessions_count = workSessions.length;
+        
+        // Group by work type
+        const workTypeGroups = workSessions.reduce((acc, session) => {
+          const workType = session.work_type || 'לא מוגדר';
+          if (!acc[workType]) {
+            acc[workType] = { total_minutes: 0, sessions_count: 0 };
+          }
+          acc[workType].total_minutes += session.duration_minutes || 0;
+          acc[workType].sessions_count += 1;
+          return acc;
+        }, {} as Record<string, { total_minutes: number; sessions_count: number }>);
+        
+        processedData.work_sessions = Object.entries(workTypeGroups).map(([work_type, data]) => ({
+          work_type,
+          total_minutes: data.total_minutes,
+          sessions_count: data.sessions_count
+        }));
+      }
       
       return processedData;
     },
@@ -293,7 +335,7 @@ const ClientCostsReportPage: React.FC = () => {
       </div>
       
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">סה"כ עלויות AI</CardTitle>
@@ -340,10 +382,22 @@ const ClientCostsReportPage: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">סה"כ זמן עבודה</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.total_work_hours.toFixed(1)}h</div>
+            <p className="text-xs text-muted-foreground">
+              {data.work_sessions_count} פעילויות
+            </p>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* AI Costs Breakdown */}
         <Card>
           <CardHeader>
@@ -391,6 +445,38 @@ const ClientCostsReportPage: React.FC = () => {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+        
+        {/* Work Sessions Breakdown */}
+        <Card>
+          <CardHeader>
+            <CardTitle>פילוח זמן עבודה</CardTitle>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data.work_sessions.map(ws => ({
+                    name: ws.work_type,
+                    value: ws.total_minutes / 60 // Convert to hours
+                  }))}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {data.work_sessions.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `${(value as number).toFixed(1)} שעות`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Detailed Tables */}
@@ -423,6 +509,39 @@ const ClientCostsReportPage: React.FC = () => {
                         <span className={status.status_roi >= 0 ? 'text-green-600' : 'text-red-600'}>
                           {formatPercentage(status.status_roi)}
                         </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Work Sessions Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>פירוט זמן עבודה לפי קטגוריה</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <table className="min-w-full divide-y divide-border">
+                <thead>
+                  <tr className="bg-muted/50">
+                    <th className="px-4 py-2 text-right text-sm font-medium">קטגוריה</th>
+                    <th className="px-4 py-2 text-right text-sm font-medium">מספר פעילויות</th>
+                    <th className="px-4 py-2 text-right text-sm font-medium">סה"כ זמן (שעות)</th>
+                    <th className="px-4 py-2 text-right text-sm font-medium">ממוצע לפעילות</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {data.work_sessions.map((session, idx) => (
+                    <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/20'}>
+                      <td className="px-4 py-2 text-sm font-medium">{session.work_type}</td>
+                      <td className="px-4 py-2 text-sm">{session.sessions_count}</td>
+                      <td className="px-4 py-2 text-sm">{(session.total_minutes / 60).toFixed(1)}h</td>
+                      <td className="px-4 py-2 text-sm">
+                        {(session.total_minutes / session.sessions_count / 60).toFixed(1)}h
                       </td>
                     </tr>
                   ))}

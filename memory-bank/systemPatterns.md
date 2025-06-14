@@ -1394,3 +1394,176 @@ describe('Component Tests', () => {
 ```
 
 ## Architecture Overview 
+
+## Testing Architecture Patterns
+
+### ✅ Comprehensive Component Testing Strategy (January 2025)
+
+#### **Test ID Strategy Pattern - PROVEN SUCCESS**
+**Achievement**: 100% test success rate for WireframeTest component using systematic test ID implementation.
+
+**Test ID Naming Convention:**
+```typescript
+// Pattern: {feature}-{action} or {feature}-{type}-{index}
+'stats-section', 'stats-in-progress', 'stats-waiting', 'stats-completed'
+'costs-section', 'costs-toggle', 'gpt4-control', 'gpt4-quantity'
+'submissions-sidebar', 'submission-item-{index}', 'submission-name-{index}'
+'main-content', 'main-title', 'background-toggle'
+'images-section', 'original-images', 'processed-images'
+'notes-section', 'notes-tab-{type}', 'notes-content-{type}'
+'submission-details-section', 'submission-details-toggle'
+```
+
+**Element Selection Best Practices:**
+```typescript
+// ❌ AVOID: Ambiguous text-based selectors
+expect(screen.getByText('0')).toBeInTheDocument(); // Multiple "0" elements
+
+// ✅ USE: Specific test ID selectors
+expect(screen.getByTestId('stats-in-progress')).toHaveTextContent('0');
+
+// ✅ USE: Indexed selectors for dynamic content
+expect(screen.getByTestId('submission-item-0')).toBeInTheDocument();
+```
+
+#### **Async Test Handling Pattern**
+**Critical Pattern**: Always use `waitFor()` for dynamic content and state changes.
+
+```typescript
+// ✅ CORRECT: Async handling for dynamic content
+await waitFor(() => {
+  expect(screen.getByTestId('submission-details-content')).toBeInTheDocument();
+});
+
+// ✅ CORRECT: State change testing
+await waitFor(() => {
+  expect(screen.getByTestId('costs-section')).toHaveClass('expanded');
+});
+```
+
+#### **Mock Strategy for Complex Components**
+**Proven Pattern**: Comprehensive UI component mocking with proper data structures.
+
+```typescript
+// Mock complex UI components inline within vi.mock()
+vi.mock('@/components/ui/card', () => ({
+  Card: ({ children, className }: any) => (
+    <div className={className} data-testid="card">{children}</div>
+  ),
+  CardContent: ({ children }: any) => (
+    <div data-testid="card-content">{children}</div>
+  ),
+  CardHeader: ({ children }: any) => (
+    <div data-testid="card-header">{children}</div>
+  ),
+  CardTitle: ({ children }: any) => (
+    <h3 data-testid="card-title">{children}</h3>
+  )
+}));
+
+// Mock data structures matching actual component expectations
+const mockSubmissions = [
+  {
+    id: '1',
+    item_name_at_submission: 'חמבורגר טרופי',
+    submission_status: 'in_progress',
+    original_image_urls: ['url1.jpg', 'url2.jpg'],
+    processed_image_urls: ['processed1.jpg']
+  }
+];
+```
+
+#### **Hebrew Language Testing Pattern**
+**Critical Considerations**: RTL and Hebrew text require specific testing approaches.
+
+```typescript
+// ✅ Test Hebrew content with proper expectations
+expect(screen.getByTestId('submission-name-0')).toHaveTextContent('חמבורגר טרופי');
+
+// ✅ Test RTL layout considerations
+expect(screen.getByTestId('notes-section')).toHaveAttribute('dir', 'rtl');
+
+// ✅ Test Hebrew form inputs
+const textarea = screen.getByTestId('notes-textarea-general');
+fireEvent.change(textarea, { target: { value: 'הערות כלליות' } });
+expect(textarea).toHaveValue('הערות כלליות');
+```
+
+#### **Test Categories Organization**
+**Systematic Approach**: Organize tests by functionality categories for comprehensive coverage.
+
+```typescript
+describe('WireframeTest Component', () => {
+  // 1. Component Rendering (6 tests)
+  describe('Component Rendering', () => {
+    it('renders header stats section', () => { /* test */ });
+    it('renders costs section', () => { /* test */ });
+    it('renders submissions sidebar', () => { /* test */ });
+  });
+
+  // 2. State Management (4 tests)
+  describe('State Management', () => {
+    it('toggles costs section visibility', () => { /* test */ });
+    it('toggles background images', () => { /* test */ });
+  });
+
+  // 3. Image Navigation (4 tests)
+  describe('Image Navigation', () => {
+    it('navigates between original images', () => { /* test */ });
+    it('handles navigation bounds', () => { /* test */ });
+  });
+
+  // 4. Edge Cases (2 tests)
+  describe('Edge Cases', () => {
+    it('handles empty submissions', () => { /* test */ });
+    it('handles invalid data', () => { /* test */ });
+  });
+});
+```
+
+#### **Error Handling Testing Pattern**
+**Comprehensive Coverage**: Test all error scenarios and edge cases systematically.
+
+```typescript
+// ✅ Test undefined/null data handling
+it('handles undefined submissions gracefully', () => {
+  render(<WireframeTest />, {
+    wrapper: ({ children }) => (
+      <QueryClient>
+        <MockProvider submissions={undefined}>
+          {children}
+        </MockProvider>
+      </QueryClient>
+    )
+  });
+  
+  expect(screen.getByTestId('submissions-sidebar')).toBeInTheDocument();
+  expect(screen.getByText('אין הגשות זמינות')).toBeInTheDocument();
+});
+
+// ✅ Test error state recovery
+it('recovers from error states', async () => {
+  // Test error scenario and recovery
+});
+```
+
+#### **Performance Testing Considerations**
+**Efficiency Metrics**: Ensure tests execute efficiently for CI/CD pipelines.
+
+```typescript
+// ✅ Efficient test execution patterns
+- Test execution under 2 seconds per component
+- Proper cleanup with afterEach hooks
+- Minimal DOM manipulation
+- Efficient mock strategies
+
+// ✅ Memory management
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+```
+
+### ✅ Component Architecture Patterns
+
+// ... existing code ... 

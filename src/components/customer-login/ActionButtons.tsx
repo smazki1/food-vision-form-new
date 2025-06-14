@@ -12,10 +12,9 @@ const ActionButtons = ({ onGetPhotos, onHowItWorks, onLogin }: ActionButtonsProp
       {/* CTA Button */}
       <Button 
         onClick={onGetPhotos}
-        className="w-full bg-gradient-to-r from-[#f3752b] to-[#ff6b35] hover:from-[#e8621f] hover:to-[#f3752b] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[56px] relative overflow-hidden group mb-4"
+        className="w-full bg-gradient-to-r from-[#f3752b] to-[#ff6b35] hover:from-[#e8621f] hover:to-[#f3752b] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[56px] mb-4"
       >
-        <span className="relative z-10">קבלו תמונות מקצועיות לעסק שלכם</span>
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+        קבלו תמונות מקצועיות לעסק שלכם
       </Button>
 
       {/* How It Works Button */}

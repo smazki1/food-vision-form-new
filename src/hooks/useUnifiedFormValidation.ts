@@ -19,11 +19,14 @@ export const useUnifiedFormValidation = () => {
       case 1: // Restaurant Details
         newErrors = validateRestaurantDetailsStep(formData);
         break;
-      case 2: // Item Details
-        newErrors = validateItemDetailsStep(formData);
+      case 2: // Combined Upload (Item Details + Images)
+        newErrors = {
+          ...validateItemDetailsStep(formData),
+          ...validateImageUploadStep(formData)
+        };
         break;
-      case 3: // Image Upload
-        newErrors = validateImageUploadStep(formData);
+      case 3: // Additional Details (no validation needed currently)
+        newErrors = {};
         break;
       case 4: // Review
         newErrors = validateReviewStep(formData);
