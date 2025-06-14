@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Submission as CustomerSubmission } from '@/api/submissionApi';
+import { CustomerSubmission } from '@/types/submission';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Download, Heart, MessageCircle, RefreshCcw, Star, ThumbsUp } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,40 @@ const ImageComparison = ({ originalUrl, processedUrl }: { originalUrl: string; p
     </div>
 );
 
+const mockDetailedSubmission: CustomerSubmission = {
+  submission_id: '1',
+  client_id: 'mock-client-id-xyz',
+  uploaded_at: new Date().toISOString(),
+  processed_at: null,
+  final_approval_timestamp: null,
+  assigned_editor_id: null,
+  edit_history: null,
+  lead_id: null,
+  original_item_id: null,
+  created_lead_id: null,
+  processed_image_count: 1,
+  image_credits_used: 1,
+  main_processed_image_url: null,
+  lora_link: null,
+  lora_name: null,
+  lora_id: null,
+  fixed_prompt: null,
+  restaurant_name: 'בורגר בר',
+  contact_name: 'ישראל ישראלי',
+  email: 'israel@example.com',
+  phone: '050-1234567',
+  branding_material_urls: [],
+  reference_example_urls: [],
+  description: 'המבורגר עוף פיקנטי בלחמניית בריוש עם ירקות טריים ורוטב סודי.',
+  category: 'מנה עיקרית',
+  ingredients: ['לחמניית בריוש', 'קציצת עוף', 'חסה', 'עגבניה', 'בצל סגול', 'רוטב סודי'],
+  item_type: 'dish',
+  item_name_at_submission: 'ספייסי צ\'יקן בורגר',
+  submission_status: 'מוכן לבדיקה',
+  original_image_urls: ['https://images.unsplash.com/photo-1571091718767-18b5b1457add?q=80&w=2072&auto=format&fit=crop'],
+  processed_image_urls: ['https://images.unsplash.com/photo-1607013251379-e6eecfffe234?q=80&w=1974&auto=format&fit=crop'],
+};
+
 const SubmissionDetailsPage: React.FC = () => {
   const { submissionId } = useParams<{ submissionId: string }>();
   const [submission, setSubmission] = useState<CustomerSubmission | null>(null);
@@ -32,6 +66,12 @@ const SubmissionDetailsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("variation-1");
 
   useEffect(() => {
+    if (submissionId === '1') {
+      setSubmission(mockDetailedSubmission);
+      setLoading(false);
+      return;
+    }
+      
     const fetchSubmissionDetails = async () => {
       if (!submissionId) {
         setError('מזהה הגשה לא תקין.');
@@ -84,7 +124,7 @@ const SubmissionDetailsPage: React.FC = () => {
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
              <Button asChild variant="outline" size="icon">
-                <Link to="/customer/submissions-status">
+                <Link to="/submissions-status">
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

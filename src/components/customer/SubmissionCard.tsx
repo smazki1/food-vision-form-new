@@ -17,7 +17,7 @@ interface SubmissionCardProps {
 
 const SubmissionCard: React.FC<SubmissionCardProps> = ({ id, imageUrl, name, category, status, statusStyle, variations }) => {
   return (
-    <Link to={`/customer/submissions/${id}`} className="block group">
+    <Link to={`/submissions/${id}`} className="block group">
       <Card className="overflow-hidden h-full transition-all duration-300 hover:shadow-strong hover:-translate-y-1">
         <div className="relative">
           <img src={imageUrl} alt={name} className="aspect-square w-full object-cover" />
