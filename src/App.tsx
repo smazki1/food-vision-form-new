@@ -21,7 +21,7 @@ import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
-import SubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
+import CustomerSubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionDetailsPageAdmin from "@/pages/admin/SubmissionDetailsPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
@@ -39,7 +39,7 @@ const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesMa
 const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
 const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
 const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQueuePage"));
-const SubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
+const LazyAdminSubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
 const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
 const AlertsDashboard = React.lazy(() => import("@/pages/admin/AlertsDashboard"));
 
@@ -143,14 +143,14 @@ const App = () => (
               <Route path="/food-vision-form" element={<FoodVisionForm />} />
               <Route path="/smart-upload" element={<SmartUploadPage />} />
               <Route path="/thank-you" element={<ThankYouPage />} />
+              <Route path="/submissions-status" element={<CustomerSubmissionsStatusPage />} />
+              <Route path="/submissions/:submissionId" element={<CustomerSubmissionDetailsPage />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
               <Route path="/customer/auth" element={<PublicOnlyRoute><CustomerAuthPage /></PublicOnlyRoute>} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
-              <Route path="/customer/submissions-status" element={<CustomerRoute><CustomerSubmissionsStatusPage /></CustomerRoute>} />
-              <Route path="/customer/submissions/:submissionId" element={<CustomerRoute><SubmissionDetailsPage /></CustomerRoute>} />
 
               {/* Editor routes - no client auth needed */}
               <Route path="/editor" element={<EditorDashboardPage />} />

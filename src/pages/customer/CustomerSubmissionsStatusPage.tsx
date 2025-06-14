@@ -1,8 +1,5 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import SubmissionCard from '@/components/customer/SubmissionCard';
 import { Clock, CheckCircle, RefreshCw, PenSquare, Package, Star } from 'lucide-react';
 
@@ -41,45 +38,14 @@ const CustomerSubmissionsStatusPage = () => {
     <div dir="rtl" className="bg-slate-50 min-h-screen">
       <main className="container mx-auto py-8 px-4">
         {/* Header */}
-        <header className="flex items-center gap-4 mb-8">
-          <Avatar className="w-16 h-16 border-2 border-primary-FV">
-            <AvatarImage src="https://github.com/shadcn.png" alt="Sophia Carter" />
-            <AvatarFallback>SC</AvatarFallback>
-          </Avatar>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">סופיה כרטר</h1>
-            <p className="text-muted-foreground">מסעדת הפאר</p>
-          </div>
+        <header className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-800">גלריית הגשות</h1>
+            <p className="text-lg text-muted-foreground mt-2">צפו בהגשות האחרונות ובעבודות לדוגמה</p>
         </header>
 
-        {/* Package Info */}
-        <Card className="mb-8 shadow-soft">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <Package className="w-6 h-6 text-primary-FV" />
-              <CardTitle>פרטי חבילה</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="grid md:grid-cols-3 gap-6 text-center">
-            <div>
-              <p className="text-sm text-muted-foreground">סוג חבילה</p>
-              <p className="font-bold text-lg">חבילת פרימיום</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">ניצול</p>
-              <p className="font-bold text-lg">7 מתוך 10 מנות</p>
-              <Progress value={70} className="mt-2 h-2" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">תוקף</p>
-              <p className="font-bold text-lg">31 בדצמבר, 2025</p>
-            </div>
-          </CardContent>
-        </Card>
-        
         {/* Dishes Grid */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">המנות שלכם</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">המנות שלנו</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mockSubmissions.map(sub => (
               <SubmissionCard
