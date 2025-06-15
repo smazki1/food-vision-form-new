@@ -12,7 +12,7 @@ const BrandHeader = () => {
         </span>
       </div>
       
-      {/* Brand Logo & Title with warm colors */}
+      {/* Brand Logo & Title with burgundy colors and background frame */}
       <div className="mb-8">
         <div className="flex items-center justify-center mb-6">
           <div className="relative">
@@ -22,22 +22,25 @@ const BrandHeader = () => {
               className="w-16 h-16 sm:w-20 sm:h-20 mr-4"
             />
           </div>
-          <div className="text-right">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-l from-amber-500 to-orange-500 bg-clip-text text-transparent tracking-tight leading-none">
+          <div className="text-right bg-white/85 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-white/40">
+            <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-l from-red-800 to-red-600 bg-clip-text text-transparent tracking-tight leading-none">
               Food Vision
             </h1>
-            <p className="text-lg text-slate-600 font-medium mt-2">
+            <p className="text-lg text-slate-700 font-medium mt-2">
               תמונות מקצועיות למסעדות
             </p>
           </div>
         </div>
       </div>
       
-      {/* Promotional Banner with warm colors */}
-      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white rounded-3xl p-6 mb-6 shadow-2xl border border-amber-500/20 relative overflow-hidden">
+      {/* Promotional Banner with frame and enhanced design */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white rounded-3xl p-6 mb-6 shadow-2xl border-4 border-white/30 relative overflow-hidden">
+        {/* Inner decorative frame */}
+        <div className="absolute inset-2 border-2 border-white/20 rounded-2xl pointer-events-none"></div>
+        
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12"></div>
         <div className="text-center relative z-10">
-          <div className="inline-flex items-center bg-orange-600 text-white px-5 py-3 rounded-full text-sm font-bold mb-4 shadow-lg">
+          <div className="inline-flex items-center bg-orange-600 text-white px-5 py-3 rounded-full text-sm font-bold mb-4 shadow-lg border-2 border-white/20">
             <Award className="w-4 h-4 ml-2" />
             חסכו 80% מעלויות צילום
           </div>
@@ -45,6 +48,12 @@ const BrandHeader = () => {
             <span className="text-yellow-100 font-bold text-xl">ללא צלם וללא סטודיו<br />תוך 72 שעות בלבד</span>
           </p>
         </div>
+        
+        {/* Corner decorative elements */}
+        <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-white/30"></div>
+        <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-white/30"></div>
+        <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-white/30"></div>
+        <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-white/30"></div>
       </div>
     </div>
   );
