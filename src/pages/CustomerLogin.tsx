@@ -28,24 +28,13 @@ const CustomerLogin = () => {
   return (
     <div dir="rtl" className="min-h-screen relative flex flex-col items-center justify-center px-6 py-8 sm:px-8 overflow-hidden">
       
-      {/* Split Background */}
-      <div className="absolute inset-0 flex">
-        {/* Left side - Professional Kitchen */}
-        <div 
-          className="flex-1 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `linear-gradient(135deg, rgba(139, 30, 63, 0.7), rgba(243, 117, 43, 0.6)), url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80')`
-          }}
-        />
-        
-        {/* Right side - Beautiful Food Bowl */}
-        <div 
-          className="flex-1 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `linear-gradient(225deg, rgba(243, 117, 43, 0.7), rgba(139, 30, 63, 0.6)), url('/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png')`
-          }}
-        />
-      </div>
+      {/* Single Background Image (already split) */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(135deg, rgba(139, 30, 63, 0.3), rgba(243, 117, 43, 0.3)), url('/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png')`
+        }}
+      />
 
       {/* Overlay for better readability */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
