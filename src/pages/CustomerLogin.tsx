@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandHeader from '@/components/customer-login/BrandHeader';
@@ -65,7 +64,7 @@ const CustomerLogin = () => {
         <BrandHeader />
         
         {/* Enhanced Main Card with improved glass effect */}
-        <div className="bg-white/92 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden hover:shadow-3xl transition-all duration-500 relative">
+        <div className="bg-white/92 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden hover:shadow-3xl transition-all duration-500 relative mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-white/40 pointer-events-none"></div>
           
           {/* Warm border glow */}
@@ -78,10 +77,10 @@ const CustomerLogin = () => {
             {/* Pricing Section moved here */}
             <PricingSection />
             
-            {/* Enhanced Guarantee Section with warm colors */}
-            <div className="flex items-center justify-center gap-2 text-amber-700 mb-6 bg-gradient-to-r from-white/85 to-white/70 rounded-xl py-3 px-4 backdrop-blur-sm border border-amber-200/40 shadow-sm">
-              <Shield className="w-5 h-5" />
-              <span className="text-sm font-semibold">ערבות החזר מלא 100%</span>
+            {/* Simplified Guarantee Section */}
+            <div className="flex items-center justify-center gap-2 text-amber-700 mb-6">
+              <Shield className="w-4 h-4" />
+              <span className="text-sm font-medium">ערבות החזר מלא 100%</span>
             </div>
             
             {/* Enhanced Main CTA Button with warm gradient */}
@@ -96,30 +95,32 @@ const CustomerLogin = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
             </Button>
 
-            {/* Enhanced How It Works Button */}
-            <Button
-              onClick={() => setShowHowItWorks(true)}
-              variant="ghost"
-              className="w-full text-amber-700 hover:text-amber-800 hover:bg-white/60 backdrop-blur-sm py-3 px-4 text-base font-medium rounded-xl transition-all duration-300 min-h-[44px] mb-4 border border-white/40 hover:border-amber-200/60"
-            >
-              איך זה עובד?
-            </Button>
-
-            {/* Enhanced Existing Customers */}
-            <div className="flex justify-center">
+            {/* Narrower How It Works Button */}
+            <div className="flex justify-center mb-4">
               <Button
-                onClick={goToLogin}
+                onClick={() => setShowHowItWorks(true)}
                 variant="ghost"
-                className="px-6 py-2 text-sm font-normal text-slate-600 hover:text-amber-700 hover:bg-white/50 transition-all duration-300 rounded-xl backdrop-blur-sm border border-transparent hover:border-white/50"
+                className="w-auto px-8 text-amber-700 hover:text-amber-800 hover:bg-white/60 backdrop-blur-sm py-3 text-base font-medium rounded-xl transition-all duration-300 min-h-[44px] border border-white/40 hover:border-amber-200/60"
               >
-                התחברות ללקוחות קיימים
+                איך זה עובד?
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Existing Customers - Moved outside and below the main card */}
+        <div className="flex justify-center mb-6">
+          <Button
+            onClick={goToLogin}
+            variant="ghost"
+            className="px-6 py-2 text-sm font-normal text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300 rounded-xl backdrop-blur-sm border border-transparent hover:border-white/20"
+          >
+            התחברות ללקוחות קיימים
+          </Button>
+        </div>
         
         {/* Enhanced Footer */}
-        <div className="text-center mt-8">
+        <div className="text-center">
           <p className="text-white/95 font-medium text-sm drop-shadow-lg backdrop-blur-sm bg-black/20 rounded-xl py-2 px-4 inline-block">
             © 2025 Food Vision - פלטפורמה מתקדמת לעיבוד תמונות מזון
           </p>
