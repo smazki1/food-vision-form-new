@@ -27,19 +27,19 @@ const CustomerLogin = () => {
   return (
     <div dir="rtl" className="min-h-screen relative flex flex-col items-center justify-center px-6 py-8 sm:px-8 overflow-hidden">
       
-      {/* Split Background */}
+      {/* Split Background - Desktop only, Mobile shows only right image */}
       <div className="absolute inset-0 flex">
-        {/* Left side - Salmon Bowl */}
+        {/* Left side - Salmon Bowl - Hidden on mobile */}
         <div 
-          className="flex-1 bg-cover bg-center bg-no-repeat"
+          className="hidden md:flex flex-1 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `linear-gradient(135deg, rgba(251, 146, 60, 0.3), rgba(245, 158, 11, 0.3)), url('/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png')`
           }}
         />
         
-        {/* Right side - Chocolate Cake */}
+        {/* Right side - Chocolate Cake - Full width on mobile, half width on desktop */}
         <div 
-          className="flex-1 bg-cover bg-center bg-no-repeat"
+          className="flex-1 bg-cover bg-center bg-no-repeat w-full md:flex-1"
           style={{
             backgroundImage: `linear-gradient(225deg, rgba(245, 158, 11, 0.3), rgba(251, 146, 60, 0.3)), url('/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png')`
           }}
