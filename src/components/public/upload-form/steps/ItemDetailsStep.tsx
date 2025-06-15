@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { FileText, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
@@ -221,7 +221,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
 
         {/* Special Notes */}
         <div className="space-y-3">
-          <label htmlFor="specialNotes" className="block text-lg font-semibold text-[#333333] flex items-center">
+          <label htmlFor="specialNotes" className="block text-lg font-semibold text-[#333333]">
             הערות מיוחדות
             <span className="text-sm text-gray-500 font-normal mr-2">(אופציונלי)</span>
           </label>
