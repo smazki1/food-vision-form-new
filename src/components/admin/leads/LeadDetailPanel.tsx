@@ -31,6 +31,7 @@ import {
   mapHebrewToLeadStatusEnum
 } from '@/types/lead';
 import { SubmissionsSection } from './SubmissionsSection';
+import { LeadSubmissions2 } from './LeadSubmissions2';
 import { SmartBusinessTypeSelect } from './SmartBusinessTypeSelect';
 import { SmartLeadSourceSelect } from './SmartLeadSourceSelect';
 import { SmartLeadStatusSelect } from './SmartLeadStatusSelect';
@@ -304,11 +305,12 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <div className="px-6 py-2 border-b">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="details">פרטים</TabsTrigger>
               <TabsTrigger value="costs">עלויות</TabsTrigger>
               <TabsTrigger value="activity">פעילות</TabsTrigger>
               <TabsTrigger value="submissions">הגשות</TabsTrigger>
+              <TabsTrigger value="submissions2">הגשות 2</TabsTrigger>
             </TabsList>
           </div>
 
@@ -809,6 +811,11 @@ export const LeadDetailPanel: React.FC<LeadDetailPanelProps> = ({
             <TabsContent value="submissions" className="p-6">
               {/* Submissions Section */}
               <SubmissionsSection leadId={leadId} lead={lead} />
+            </TabsContent>
+
+            <TabsContent value="submissions2" className="p-0">
+              {/* Enhanced Submissions Section */}
+              {lead && <LeadSubmissions2 leadId={leadId} lead={lead} />}
             </TabsContent>
           </ScrollArea>
         </Tabs>
