@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Check, Building2 } from 'lucide-react';
+import { Check, Building2, Sparkles, Users, AlertCircle } from 'lucide-react';
 
 const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   const { formData, updateFormData } = useNewItemForm();
@@ -14,120 +14,136 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8 animate-fade-in">
+      {/* Enhanced Header */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-full mb-6 shadow-xl relative overflow-hidden group">
+          <Building2 className="h-10 w-10 text-white relative z-10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+        </div>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-800">בואו נכיר!</h2>
+        <p className="text-lg text-gray-600 max-w-lg mx-auto leading-relaxed">
+          ספרו לנו על העסק שלכם כדי שנוכל להתאים לכם את השירות הטוב ביותר
+        </p>
+      </div>
+
       {/* Business Registration Question - Enhanced Design */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100">
-        <div className="text-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800 mb-1">האם העסק שלכם כבר רשום במערכת? *</h3>
-          <p className="text-gray-600 text-sm">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-100 shadow-lg animate-slide-in-right">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-4 shadow-lg">
+            <Users className="h-8 w-8 text-white" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-800 mb-2">האם העסק שלכם כבר רשום במערכת? *</h3>
+          <p className="text-gray-600">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
         </div>
         
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
           <button
             type="button"
             onClick={() => handleBusinessRegistrationChange(false)}
             className={`
-              relative px-6 py-4 rounded-xl border-2 transition-all duration-300 min-w-[140px] group
+              relative px-8 py-6 rounded-2xl border-2 transition-all duration-300 min-w-[160px] group flex-1 hover:scale-105 active:scale-95
               ${formData.isNewBusiness === false 
-                ? 'border-green-500 bg-green-50 text-green-700 shadow-lg scale-105' 
-                : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50/50'
+                ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 text-green-700 shadow-xl shadow-green-500/20 scale-105' 
+                : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50/50 shadow-lg'
               }
             `}
           >
             {formData.isNewBusiness === false && (
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                <Check className="w-4 h-4 text-white" />
+              <div className="absolute -top-3 -right-3 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                <Check className="w-5 h-5 text-white" />
               </div>
             )}
-            <span className="font-medium">כן, העסק שלנו רשום</span>
+            <div className="text-center">
+              <div className="text-xl font-bold mb-1">כן, העסק שלנו רשום</div>
+              <div className="text-sm opacity-80">לקוח קיים במערכת</div>
+            </div>
           </button>
           
           <button
             type="button"
             onClick={() => handleBusinessRegistrationChange(true)}
             className={`
-              relative px-6 py-4 rounded-xl border-2 transition-all duration-300 min-w-[140px] group
+              relative px-8 py-6 rounded-2xl border-2 transition-all duration-300 min-w-[160px] group flex-1 hover:scale-105 active:scale-95
               ${formData.isNewBusiness === true 
-                ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-lg scale-105' 
-                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50'
+                ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 shadow-xl shadow-blue-500/20 scale-105' 
+                : 'border-gray-200 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50/50 shadow-lg'
               }
             `}
           >
             {formData.isNewBusiness === true && (
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                <Check className="w-4 h-4 text-white" />
+              <div className="absolute -top-3 -right-3 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                <Check className="w-5 h-5 text-white" />
               </div>
             )}
-            <span className="font-medium">לא, זו פעם ראשונה שלנו</span>
+            <div className="text-center">
+              <div className="text-xl font-bold mb-1">לא, זו פעם ראשונה</div>
+              <div className="text-sm opacity-80">לקוח חדש במערכת</div>
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Form Fields */}
-      <div className="grid gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="restaurantName" className="text-lg font-medium text-gray-800">
+      {/* Enhanced Form Fields */}
+      <div className="grid gap-6 max-w-xl mx-auto">
+        <div className="space-y-3 group">
+          <Label htmlFor="restaurantName" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-[#8B1E3F]" />
             שם המסעדה / העסק *
           </Label>
-          <Input
-            id="restaurantName"
-            type="text"
-            placeholder="לדוגמה: מסעדת השף הקטן"
-            value={formData.restaurantName}
-            onChange={(e) => updateFormData({ restaurantName: e.target.value })}
-            className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-          />
-
+          <div className="relative">
+            <Input
+              id="restaurantName"
+              type="text"
+              placeholder="לדוגמה: מסעדת השף הקטן"
+              value={formData.restaurantName}
+              onChange={(e) => updateFormData({ restaurantName: e.target.value })}
+              className={`h-14 text-lg border-2 rounded-2xl transition-all duration-300 shadow-lg focus:shadow-xl pl-4 pr-12 ${
+                errors?.restaurantName 
+                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                  : 'border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300'
+              }`}
+            />
+            <Sparkles className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          </div>
+          {errors?.restaurantName && (
+            <div className="flex items-center gap-2 text-red-600 text-sm font-medium animate-shake">
+              <AlertCircle className="w-4 h-4" />
+              {errors.restaurantName}
+            </div>
+          )}
+          <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
+            💡 אם העסק כבר קיים במערכת, כתבו את השם המדויק שלו
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="submitterName" className="text-lg font-medium text-gray-800">
+        <div className="space-y-3 group">
+          <Label htmlFor="submitterName" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Users className="w-5 h-5 text-[#8B1E3F]" />
             שם איש הקשר *
           </Label>
-          <Input
-            id="submitterName"
-            type="text"
-            placeholder="השם שלכם"
-            value={formData.submitterName}
-            onChange={(e) => updateFormData({ submitterName: e.target.value })}
-            className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-          />
-
-        </div>
-
-        {formData.isNewBusiness !== false && (
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="contactEmail" className="text-lg font-medium text-gray-800">
-                כתובת אימייל{formData.isNewBusiness ? ' *' : ''}
-              </Label>
-              <Input
-                id="contactEmail"
-                type="email"
-                placeholder="your@email.com"
-                value={formData.contactEmail || ''}
-                onChange={(e) => updateFormData({ contactEmail: e.target.value })}
-                className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-              />
-
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="contactPhone" className="text-lg font-medium text-gray-800">
-                מספר טלפון{formData.isNewBusiness ? ' *' : ''}
-              </Label>
-              <Input
-                id="contactPhone"
-                type="tel"
-                placeholder="050-1234567"
-                value={formData.contactPhone || ''}
-                onChange={(e) => updateFormData({ contactPhone: e.target.value })}
-                className="h-12 text-lg border-2 border-gray-200 focus:border-[#F3752B] rounded-xl"
-              />
-
-            </div>
+          <div className="relative">
+            <Input
+              id="submitterName"
+              type="text"
+              placeholder="השם שלכם"
+              value={formData.submitterName}
+              onChange={(e) => updateFormData({ submitterName: e.target.value })}
+              className={`h-14 text-lg border-2 rounded-2xl transition-all duration-300 shadow-lg focus:shadow-xl pl-4 pr-12 ${
+                errors?.submitterName 
+                  ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                  : 'border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300'
+              }`}
+            />
+            <Users className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           </div>
-        )}
+          {errors?.submitterName && (
+            <div className="flex items-center gap-2 text-red-600 text-sm font-medium animate-shake">
+              <AlertCircle className="w-4 h-4" />
+              {errors.submitterName}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

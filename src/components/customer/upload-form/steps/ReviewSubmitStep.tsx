@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { StepProps as GlobalStepProps } from '../FoodVisionUploadForm';
@@ -23,9 +24,12 @@ interface ReviewItemProps {
 const ReviewItem: React.FC<ReviewItemProps> = ({ label, value, isMissing }) => {
   if (!value && !isMissing) return null;
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
-      <dt className="text-sm font-medium text-gray-500 sm:w-1/3">{label}</dt>
-      <dd className={cn("mt-1 text-sm text-gray-800 sm:mt-0 sm:w-2/3", isMissing && !value && "text-red-500 italic")}>
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 px-1 rounded-lg hover:bg-gray-50/50 transition-colors duration-200">
+      <dt className="text-sm font-semibold text-gray-600 sm:w-1/3 mb-1 sm:mb-0">{label}</dt>
+      <dd className={cn(
+        "text-sm sm:w-2/3 font-medium transition-colors duration-200",
+        isMissing && !value ? "text-red-500 italic" : "text-gray-800"
+      )}>
         {value || (isMissing ? "לא סופק" : "-")}
       </dd>
     </div>
@@ -58,127 +62,158 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
   const canSubmit = remainingDishes === undefined || remainingDishes > 0;
 
   return (
-    <div className="space-y-8" dir="rtl">
-      <div>
-        <h2 className="text-xl md:text-2xl font-semibold mb-2 text-[#8B1E3F] text-center">סקירה ואישור</h2>
-        <p className="text-sm md:text-base text-muted-foreground mb-8 text-center">
-          אנא בדקו את כל הפרטים שהזנתם/ן לפני ההגשה הסופית. ודאו שהכל תקין.
+    <div className="space-y-8 animate-fade-in" dir="rtl">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-full mb-4 shadow-lg">
+          <CheckCircle className="h-8 w-8 text-white" />
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-[#8B1E3F]">סקירה ואישור סופי</h2>
+        <p className="text-base text-gray-600 max-w-lg mx-auto leading-relaxed">
+          אנא בדקו את כל הפרטים שהזנתם לפני ההגשה הסופית. ודאו שהכל תקין ומדויק.
         </p>
       </div>
 
       {/* Restaurant Details Section */}
       {!clientId && restaurantName && (
-        <section className="space-y-4">
-          <div className="flex items-center mb-3 justify-center">
-            <Building2 className="h-6 w-6 text-[#F3752B] ml-3" /> 
-            <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי המסעדה</h3>
+        <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.1s' }}>
+          <div className="flex items-center mb-4 justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-[#8B1E3F]">פרטי המסעדה</h3>
           </div>
-          <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
-            <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
-          </dl>
-          <Separator className="my-6" />
+          <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+            <dl className="space-y-1">
+              <ReviewItem label="שם המסעדה" value={restaurantName} isMissing={!restaurantName} />
+            </dl>
+          </div>
         </section>
       )}
 
       {/* Item Details Section */}
-      <section className="space-y-4">
-        <div className="flex items-center mb-3 justify-center">
-          <ItemIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
-          <h3 className="text-lg font-semibold text-[#8B1E3F]">פרטי הפריט</h3>
+      <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.2s' }}>
+        <div className="flex items-center mb-4 justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
+            <ItemIcon className="h-5 w-5 text-white" />
+          </div>
+          <h3 className="text-xl font-bold text-[#8B1E3F]">פרטי הפריט</h3>
         </div>
-        <dl className="divide-y divide-gray-200 rounded-md border border-gray-200 p-4 bg-white">
-          <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
-          <ReviewItem label="סוג הפריט" value={getItemTypeDisplay(itemType)} isMissing={!itemType} />
-          <ReviewItem label="תיאור/מרכיבים" value={description} />
-          <ReviewItem label="הערות מיוחדות" value={specialNotes} />
-        </dl>
-        <Separator className="my-6" />
+        <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+          <dl className="space-y-1">
+            <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
+            <ReviewItem label="סוג הפריט" value={getItemTypeDisplay(itemType)} isMissing={!itemType} />
+            <ReviewItem label="תיאור/מרכיבים" value={description} />
+            <ReviewItem label="הערות מיוחדות" value={specialNotes} />
+          </dl>
+        </div>
       </section>
 
       {/* Uploaded Images Section */}
-      <section className="space-y-4">
-         <div className="flex items-center mb-3 justify-center">
-            <ImageIcon className="h-6 w-6 text-[#F3752B] ml-3" /> 
-            <h3 className="text-lg font-semibold text-[#8B1E3F]">תמונות שהועלו ({referenceImages.length})</h3>
+      <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.3s' }}>
+        <div className="flex items-center mb-4 justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
+            <ImageIcon className="h-5 w-5 text-white" />
           </div>
+          <h3 className="text-xl font-bold text-[#8B1E3F]">
+            תמונות שהועלו 
+            <span className="inline-flex items-center justify-center w-8 h-8 bg-[#8B1E3F] text-white text-sm font-bold rounded-full mr-2">
+              {referenceImages.length}
+            </span>
+          </h3>
+        </div>
+        <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
           {referenceImages.length > 0 ? (
-          <div className="space-y-4 p-4 border border-gray-200 rounded-md bg-white"> 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
               {referenceImages.map((file, index) => (
-              <div key={index} className="relative group w-full bg-gray-100 rounded-lg shadow-sm overflow-hidden border border-gray-200 aspect-video"> 
+                <div key={index} className="group relative bg-gray-50 rounded-xl shadow-sm overflow-hidden border-2 border-gray-100 aspect-video hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"> 
                   <img 
                     src={URL.createObjectURL(file)} 
-                  alt={`תצוגה מקדימה ${index + 1}`} 
-                  className="w-full h-full object-contain"
-                  onLoad={() => URL.revokeObjectURL(file.name)}
+                    alt={`תצוגה מקדימה ${index + 1}`} 
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    onLoad={() => URL.revokeObjectURL(file.name)}
                   />
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs p-1.5 truncate text-center">
-                    {file.name}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs p-3">
+                    <div className="truncate font-medium">{file.name}</div>
+                  </div>
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {index + 1}
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-          <div className="p-4 border border-gray-200 rounded-md bg-white">
-            <p className="text-muted-foreground text-center py-4">לא הועלו תמונות.</p>
-          </div>
+            <div className="text-center py-12">
+              <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">לא הועלו תמונות</p>
+            </div>
           )}
-        <Separator className="my-6" />
+        </div>
       </section>
 
       {/* Submission Cost / Package Info Alert */}
-      <Alert 
-        variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} 
-        className={cn(
-          "p-4 rounded-md",
-          remainingDishes !== undefined && remainingDishes <= 0 
-            ? "bg-red-50 border-red-500 text-red-700"
-            : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <= 5 
-                ? "bg-[#F3752B]/10 border-[#F3752B] text-[#F3752B]"
-                : "bg-[#8B1E3F]/10 border-[#8B1E3F] text-[#8B1E3F]") 
-      )}>
-        <InfoIcon className="h-5 w-5" />
-        <AlertDescription className="text-sm mr-2"> 
-          {remainingDishes !== undefined && remainingDishes <= 0 ? (
-            <>הגשה זו לא תתאפשר. <strong>לא נותרו לכם/ן מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
-          ) : (
-            <>
-              הגשה זו תנצל מנה אחת מהחבילה שלכם/ן.
-            </>
-          )}
-        </AlertDescription>
-      </Alert>
+      <div className="animate-slide-in-right" style={{ animationDelay: '0.4s' }}>
+        <Alert 
+          variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} 
+          className={cn(
+            "p-6 rounded-2xl border-2 shadow-lg transition-all duration-300 hover:shadow-xl",
+            remainingDishes !== undefined && remainingDishes <= 0 
+              ? "bg-red-50 border-red-200 text-red-800"
+              : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <= 5 
+                  ? "bg-orange-50 border-orange-200 text-orange-800"
+                  : "bg-blue-50 border-blue-200 text-blue-800") 
+        )}>
+          <InfoIcon className="h-6 w-6" />
+          <AlertDescription className="text-base font-medium mr-3"> 
+            {remainingDishes !== undefined && remainingDishes <= 0 ? (
+              <>הגשה זו לא תתאפשר. <strong>לא נותרו לכם מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
+            ) : (
+              <>
+                הגשה זו תנצל מנה אחת מהחבילה שלכם.
+                {remainingDishes !== undefined && (
+                  <div className="mt-2 text-sm opacity-80">
+                    נותרו לכם {remainingDishes} מנות נוספות
+                  </div>
+                )}
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
+      </div>
 
       {/* Final Confirmation Button */}
       {onFinalSubmit && (
-        <Button
+        <div className="animate-scale-in" style={{ animationDelay: '0.5s' }}>
+          <Button
             onClick={onFinalSubmit}
-            disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit) }
+            disabled={!canSubmit || (errors && Object.keys(errors).length > 0 && !errors.finalCheck && !errors.submit)}
             className={cn(
-                "w-full text-lg md:text-xl font-bold py-5 px-6 rounded-full shadow-lg transition-all duration-200 ease-in-out",
-                "flex items-center justify-center gap-x-3 rtl:gap-x-reverse",
-                canSubmit 
-                ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90 text-white" 
-                : "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed",
-                (errors && (errors.finalCheck || errors.submit)) && "bg-red-500 hover:bg-red-600 text-white"
+              "w-full text-xl font-bold py-6 px-8 rounded-2xl shadow-xl transition-all duration-300 ease-in-out transform hover:scale-[1.02] active:scale-[0.98]",
+              "flex items-center justify-center gap-x-3",
+              "relative overflow-hidden group",
+              canSubmit 
+                ? "bg-gradient-to-r from-[#8B1E3F] to-[#7A1B37] hover:from-[#7A1B37] hover:to-[#6B1830] text-white shadow-[#8B1E3F]/25" 
+                : "bg-gray-300 hover:bg-gray-300 text-gray-500 cursor-not-allowed shadow-gray-300/25",
+              (errors && (errors.finalCheck || errors.submit)) && "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-red-500/25"
             )}
-        >
-            <CheckCircle className="h-6 w-6 shrink-0 md:h-7 md:w-7" />
-            <span className="leading-tight">✓ בדקנו הכל - הגישו עכשיו!</span>
-        </Button>
-      )}
-      
-      {/* Display any submission errors (specifically for this step, like missing images before confirming) */}
-      {errors?.finalCheck && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
-            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
-            <span>{errors.finalCheck}</span>
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+            <CheckCircle className="h-7 w-7 shrink-0" />
+            <span className="leading-tight relative z-10">✓ בדקנו הכל - הגישו עכשיו!</span>
+          </Button>
         </div>
       )}
-      {/* Display general submit errors (e.g. from API) */}
-       {errors?.submit && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-center text-sm text-red-600 justify-center">
-            <AlertTriangle className="h-4 w-4 ml-2 shrink-0" /> 
-            <span>{errors.submit}</span>
+      
+      {/* Display any submission errors */}
+      {errors?.finalCheck && (
+        <div className="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl flex items-center text-red-700 justify-center shadow-lg animate-fade-in">
+          <AlertTriangle className="h-5 w-5 ml-3 shrink-0" /> 
+          <span className="font-medium">{errors.finalCheck}</span>
+        </div>
+      )}
+      {errors?.submit && (
+        <div className="mt-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl flex items-center text-red-700 justify-center shadow-lg animate-fade-in">
+          <AlertTriangle className="h-5 w-5 ml-3 shrink-0" /> 
+          <span className="font-medium">{errors.submit}</span>
         </div>
       )}
     </div>
