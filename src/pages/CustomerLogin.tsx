@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandHeader from '@/components/customer-login/BrandHeader';
@@ -60,9 +61,7 @@ const CustomerLogin = () => {
 
       <div className="w-full max-w-md sm:max-w-lg flex-1 flex flex-col justify-center relative z-10">
         
-        <BrandHeader />
-        
-        {/* Enhanced Main Card with improved glass effect */}
+        {/* Enhanced Main Card with improved glass effect - now includes brand header */}
         <div className="bg-white/92 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden hover:shadow-3xl transition-all duration-500 relative mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-white/60 to-white/40 pointer-events-none"></div>
           
@@ -71,9 +70,12 @@ const CustomerLogin = () => {
           
           <div className="p-8 relative z-10">
             
+            {/* Brand Header moved inside the card */}
+            <BrandHeader />
+            
             <FeaturesGrid />
             
-            {/* Pricing Section moved here */}
+            {/* Pricing Section */}
             <PricingSection />
             
             {/* Enhanced Main CTA Button with warm gradient */}

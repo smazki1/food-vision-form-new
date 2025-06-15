@@ -12,7 +12,7 @@ const BrandHeader = () => {
         </span>
       </div>
       
-      {/* Brand Logo & Title with burgundy colors and background frame */}
+      {/* Brand Logo & Title - simplified for inside card */}
       <div className="mb-8">
         <div className="flex items-center justify-center mb-6">
           <div className="relative">
@@ -22,7 +22,7 @@ const BrandHeader = () => {
               className="w-16 h-16 sm:w-20 sm:h-20 mr-4"
             />
           </div>
-          <div className="text-right bg-white/85 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-white/40">
+          <div className="text-right">
             <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-l from-red-800 to-red-600 bg-clip-text text-transparent tracking-tight leading-none">
               Food Vision
             </h1>
@@ -33,7 +33,7 @@ const BrandHeader = () => {
         </div>
       </div>
       
-      {/* Promotional Banner with frame and enhanced design */}
+      {/* Promotional Banner with enhanced design */}
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 text-white rounded-3xl p-6 mb-6 shadow-2xl border-4 border-white/30 relative overflow-hidden">
         {/* Inner decorative frame */}
         <div className="absolute inset-2 border-2 border-white/20 rounded-2xl pointer-events-none"></div>
