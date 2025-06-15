@@ -25,9 +25,6 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
         <p className="text-lg text-gray-600 max-w-lg mx-auto leading-relaxed">
           ספרו לנו על העסק שלכם
         </p>
-        <div className="mt-2 inline-flex items-center gap-2 text-sm text-[#F3752B] bg-orange-50 px-4 py-2 rounded-full">
-          <span className="font-medium">beta</span>
-        </div>
       </div>
 
       {/* Business Registration Question - Enhanced Design */}
