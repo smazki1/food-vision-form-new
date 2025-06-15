@@ -112,7 +112,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
             </div>
           )}
           <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            💡 אם העסק כבר קיים במערכת, כתבו את השם המדויק שלו
+            אם העסק כבר קיים במערכת, כתבו את השם המדויק שלו
           </p>
         </div>
 
