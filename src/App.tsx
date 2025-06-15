@@ -7,6 +7,7 @@ import "./App.css";
 import { UnifiedAuthProvider } from "./providers/UnifiedAuthProvider";
 import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import AdminRoute from "@/components/AdminRoute";
+import EditorRoute from "@/components/EditorRoute";
 import PublicOnlyRoute from "@/components/PublicOnlyRoute";
 import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -154,9 +155,17 @@ const App = () => (
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
 
-              {/* Editor routes - no client auth needed */}
-              <Route path="/editor" element={<EditorDashboardPage />} />
-              <Route path="/editor/submission/:submissionId" element={<SubmissionProcessingPage />} />
+              {/* Editor routes - protected by EditorRoute */}
+              <Route path="/editor/*" element={
+                <CurrentUserRoleProvider>
+                  <EditorRoute>
+                    <Routes>
+                      <Route index element={<EditorDashboardPage />} />
+                      <Route path="submission/:submissionId" element={<SubmissionProcessingPage />} />
+                    </Routes>
+                  </EditorRoute>
+                </CurrentUserRoleProvider>
+              } />
 
               {/* Admin routes - no client auth needed */}
               <Route path="/admin/*" element={

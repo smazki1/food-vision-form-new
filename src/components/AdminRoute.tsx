@@ -44,7 +44,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
     return <Navigate to="/admin-login" state={{ from: location }} replace />;
   }
   
-  // Check admin access
+  // Check admin access - explicitly exclude editors
   if (!isAdmin && !isAccountManager) {
     const adminAuth = localStorage.getItem("adminAuthenticated") === "true";
     if (adminAuth) {
@@ -52,7 +52,14 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
       return <>{children}</>;
     }
     
-    console.warn('[AdminRoute] Access Denied. User is not admin.');
+    // If user is editor, redirect to editor dashboard
+    if (role === 'editor') {
+      console.warn('[AdminRoute] Editor trying to access admin area - redirecting to editor dashboard');
+      toast.error("Access Denied: Editors should use the editor dashboard.");
+      return <Navigate to="/editor" replace />;
+    }
+    
+    console.warn('[AdminRoute] Access Denied. User is not admin. Role:', role);
     toast.error("Access Denied: You do not have admin privileges.");
     return <Navigate to="/admin-login" state={{ from: location }} replace />;
   }
