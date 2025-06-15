@@ -6,7 +6,6 @@ import FeaturesGrid from '@/components/customer-login/FeaturesGrid';
 import HowItWorksModal from '@/components/customer-login/HowItWorksModal';
 import WhatsAppButton from '@/components/customer-login/WhatsAppButton';
 import { Button } from '@/components/ui/button';
-import { Shield } from 'lucide-react';
 
 const CustomerLogin = () => {
   const navigate = useNavigate();
@@ -77,12 +76,6 @@ const CustomerLogin = () => {
             {/* Pricing Section moved here */}
             <PricingSection />
             
-            {/* Simplified Guarantee Section */}
-            <div className="flex items-center justify-center gap-2 text-amber-700 mb-6">
-              <Shield className="w-4 h-4" />
-              <span className="text-sm font-medium">ערבות החזר מלא 100%</span>
-            </div>
-            
             {/* Enhanced Main CTA Button with warm gradient */}
             <Button 
               onClick={redirectToUpload}
@@ -122,7 +115,7 @@ const CustomerLogin = () => {
         {/* Enhanced Footer */}
         <div className="text-center">
           <p className="text-white/95 font-medium text-sm drop-shadow-lg backdrop-blur-sm bg-black/20 rounded-xl py-2 px-4 inline-block">
-            © 2025 Food Vision - פלטפורמה מתקדמת לעיבוד תמונות מזון
+            © 2025 Food Vision - פלטפורמה מתקדמת ליצירת תמונות קולינריות
           </p>
         </div>
       </div>
