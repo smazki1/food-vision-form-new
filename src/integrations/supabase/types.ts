@@ -890,34 +890,31 @@ export type Database = {
       }
       work_sessions: {
         Row: {
-          client_id: string | null
+          client_id: string
           created_at: string | null
           description: string | null
           duration_minutes: number
           id: string
-          lead_id: string | null
           session_date: string
           updated_at: string | null
           work_type: string | null
         }
         Insert: {
-          client_id?: string | null
+          client_id: string
           created_at?: string | null
           description?: string | null
           duration_minutes: number
           id?: string
-          lead_id?: string | null
           session_date: string
           updated_at?: string | null
           work_type?: string | null
         }
         Update: {
-          client_id?: string | null
+          client_id?: string
           created_at?: string | null
           description?: string | null
           duration_minutes?: number
           id?: string
-          lead_id?: string | null
           session_date?: string
           updated_at?: string | null
           work_type?: string | null
@@ -929,13 +926,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "clients"
             referencedColumns: ["client_id"]
-          },
-          {
-            foreignKeyName: "work_sessions_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["lead_id"]
           },
         ]
       }
