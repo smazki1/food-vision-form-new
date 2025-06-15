@@ -14,10 +14,10 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 animate-fade-in">
       {/* Enhanced Header */}
-      <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-full mb-6 shadow-xl relative overflow-hidden group">
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-full mb-4 shadow-xl relative overflow-hidden group">
           <Building2 className="h-10 w-10 text-white relative z-10" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
         </div>
@@ -28,13 +28,12 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
       </div>
 
       {/* Business Registration Question - Enhanced Design */}
-      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-8 border-2 border-blue-100 shadow-lg animate-slide-in-right">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-4 shadow-lg">
+      <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl p-6 border-2 border-blue-100 shadow-lg animate-slide-in-right">
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full mb-3 shadow-lg">
             <Users className="h-8 w-8 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-800 mb-2">האם העסק שלכם כבר רשום במערכת? *</h3>
-          <p className="text-gray-600">זה יעזור לנו להתאים את השירות בצורה הטובה ביותר</p>
+          <h3 className="text-2xl font-bold text-gray-800 mb-1">האם העסק שלכם כבר רשום במערכת? *</h3>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-lg mx-auto">
@@ -85,8 +84,8 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
       </div>
 
       {/* Enhanced Form Fields */}
-      <div className="grid gap-6 max-w-xl mx-auto">
-        <div className="space-y-3 group">
+      <div className="grid gap-5 max-w-xl mx-auto">
+        <div className="space-y-2 group">
           <Label htmlFor="restaurantName" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <Building2 className="w-5 h-5 text-[#8B1E3F]" />
             שם המסעדה / העסק *
@@ -117,7 +116,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
           </p>
         </div>
 
-        <div className="space-y-3 group">
+        <div className="space-y-2 group">
           <Label htmlFor="submitterName" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <Users className="w-5 h-5 text-[#8B1E3F]" />
             שם איש הקשר *
