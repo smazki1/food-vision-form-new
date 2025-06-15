@@ -44,6 +44,7 @@ const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQ
 const LazyAdminSubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
 const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
 const AlertsDashboard = React.lazy(() => import("@/pages/admin/AlertsDashboard"));
+const AnalyticsDashboard = React.lazy(() => import("@/pages/admin/AnalyticsDashboard"));
 
 // Loading component for lazy-loaded routes
 const LoadingSpinner = () => (
@@ -185,6 +186,7 @@ const App = () => (
                 <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
                 <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />
                 <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPageAdmin /></Suspense>} />
+                <Route path="analytics" element={<Suspense fallback={<LoadingSpinner />}><AnalyticsDashboard /></Suspense>} />
                 <Route path="alerts" element={<Suspense fallback={<LoadingSpinner />}><AlertsDashboard /></Suspense>} />
                 <Route path="leads-test-page" element={<Suspense fallback={<LoadingSpinner />}><LeadsTestPage /></Suspense>} />
               </Route>
