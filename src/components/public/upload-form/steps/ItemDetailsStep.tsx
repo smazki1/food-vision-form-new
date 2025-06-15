@@ -222,7 +222,6 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
         {/* Special Notes */}
         <div className="space-y-3">
           <label htmlFor="specialNotes" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <FileText className="w-6 h-6 text-emerald-500 ml-3" />
             הערות מיוחדות
             <span className="text-sm text-gray-500 font-normal mr-2">(אופציונלי)</span>
           </label>
