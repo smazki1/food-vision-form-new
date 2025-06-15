@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Check, Building2, Sparkles, Users, AlertCircle, Mail, Phone } from 'lucide-react';
+import { Check, Building2, Users, AlertCircle, Mail, Phone } from 'lucide-react';
 
 const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   const { formData, updateFormData } = useNewItemForm();
@@ -16,7 +16,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Enhanced Header */}
-      <div className="text-center space-y-3">
+      <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-full mb-2 shadow-xl relative overflow-hidden group">
           <Building2 className="h-10 w-10 text-white relative z-10" />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
@@ -25,6 +25,9 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
         <p className="text-lg text-gray-600 max-w-lg mx-auto leading-relaxed">
           ספרו לנו על העסק שלכם
         </p>
+        <div className="mt-2 inline-flex items-center gap-2 text-sm text-[#F3752B] bg-orange-50 px-4 py-2 rounded-full">
+          <span className="font-medium">beta</span>
+        </div>
       </div>
 
       {/* Business Registration Question - Enhanced Design */}
