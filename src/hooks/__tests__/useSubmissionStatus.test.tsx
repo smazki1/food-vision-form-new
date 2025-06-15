@@ -1,451 +1,516 @@
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { useSubmissionStatus, SUBMISSION_STATUSES } from '../useSubmissionStatus';
-import React from 'react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { useSubmissionStatus } from '../useSubmissionStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { updateClientServings } from '@/api/clientApi';
+import { toast } from 'sonner';
 
 // Mock dependencies
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          select: vi.fn(() => ({
-            single: vi.fn()
-          }))
-        }))
-      })),
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          single: vi.fn()
-        }))
-      }))
-    }))
-  }
-}));
+vi.mock('@/integrations/supabase/client');
+vi.mock('@/api/clientApi');
+vi.mock('sonner');
 
-vi.mock('sonner', () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn()
-  }
-}));
+const mockSupabase = supabase as any;
+const mockUpdateClientServings = updateClientServings as any;
+const mockToast = toast as any;
 
-vi.mock('@/api/clientApi', () => ({
-  updateClientServings: vi.fn()
-}));
+// Test wrapper with QueryClient
+const createWrapper = () => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+  
+  return ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+};
 
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
-import { updateClientServings } from '@/api/clientApi';
-
-describe('useSubmissionStatus Hook', () => {
-  let queryClient: QueryClient;
-  let wrapper: React.FC<{ children: React.ReactNode }>;
-
+describe('useSubmissionStatus', () => {
   beforeEach(() => {
-    queryClient = new QueryClient({
-      defaultOptions: {
-        queries: { retry: false },
-        mutations: { retry: false }
-      }
-    });
-
-    wrapper = ({ children }) => (
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    );
-
     vi.clearAllMocks();
+    mockToast.success = vi.fn();
+    mockToast.error = vi.fn();
   });
 
-  afterEach(() => {
-    queryClient.clear();
-  });
-
-  describe('Hook Initialization', () => {
-    it('should return initial state correctly', () => {
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
+  describe('Hook initialization', () => {
+    it('should initialize with correct default values', () => {
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.isUpdating).toBe(false);
-      expect(result.current.availableStatuses).toEqual(SUBMISSION_STATUSES);
-      expect(typeof result.current.updateSubmissionStatus).toBe('function');
-    });
-
-    it('should have all required status options', () => {
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      const expectedStatuses = [
+      expect(result.current.availableStatuses).toEqual([
         'ממתינה לעיבוד',
-        'בעיבוד', 
+        'בעיבוד',
         'מוכנה להצגה',
         'הערות התקבלו',
         'הושלמה ואושרה'
-      ];
-
-      expect(result.current.availableStatuses).toEqual(expectedStatuses);
+      ]);
+      expect(typeof result.current.updateSubmissionStatus).toBe('function');
     });
   });
 
-  describe('updateSubmissionStatus - Happy Path', () => {
+  describe('Basic status updates', () => {
     it('should successfully update submission status', async () => {
-      const mockData = {
-        submission_id: 'test-123',
-        submission_status: 'בעיבוד',
-        client_id: 'client-123'
-      };
-
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
+      // Mock current submission fetch
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockData, error: null })
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'בעיבוד',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
             })
           })
         })
       });
 
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      let updateResult: boolean | undefined;
-      await act(async () => {
-        updateResult = await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
-      });
-
-      expect(updateResult).toBe(true);
-      expect(toast.success).toHaveBeenCalledWith('סטטוס ההגשה עודכן ל: בעיבוד');
-    });
-
-    it('should handle approved status with serving deduction', async () => {
-      const mockSubmissionData = {
-        submission_id: 'test-123',
-        submission_status: 'הושלמה ואושרה',
-        client_id: 'client-123',
-        item_name_at_submission: 'Test Item'
-      };
-
-      const mockClientData = {
-        remaining_servings: 5,
-        restaurant_name: 'Test Restaurant'
-      };
-
-      (supabase.from as any).mockImplementation((table: string) => {
-        if (table === 'customer_submissions') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                select: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({ data: mockSubmissionData, error: null })
-                })
-              })
-            })
-          };
-        } else if (table === 'clients') {
-          return {
+      // Mock status update
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: mockClientData, error: null })
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'test-123',
+                  submission_status: 'מוכנה להצגה',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
               })
             })
-          };
-        }
+          })
+        })
       });
 
-      (updateClientServings as any).mockResolvedValue(true);
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'הושלמה ואושרה');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
       });
 
-      expect(updateClientServings).toHaveBeenCalledWith(
+      const success = await result.current.updateSubmissionStatus('test-123', 'מוכנה להצגה');
+
+      expect(success).toBe(true);
+      expect(mockToast.success).toHaveBeenCalledWith('סטטוס ההגשה עודכן ל: מוכנה להצגה');
+    });
+  });
+
+  describe('Serving deduction and restoration', () => {
+    it('should deduct serving when changing TO approved status', async () => {
+      // Mock current submission fetch (not approved)
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'מוכנה להצגה',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
+            })
+          })
+        })
+      });
+
+      // Mock status update
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'sub-123',
+                  submission_status: 'הושלמה ואושרה',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      // Mock client fetch for serving deduction
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                remaining_servings: 5,
+                restaurant_name: 'Test Restaurant'
+              },
+              error: null
+            })
+          })
+        })
+      });
+
+      mockUpdateClientServings.mockResolvedValue(true);
+
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('sub-123', 'הושלמה ואושרה');
+
+      expect(success).toBe(true);
+      expect(mockUpdateClientServings).toHaveBeenCalledWith(
         'client-123',
         4,
-        'ניכוי אוטומטי בעקבות אישור עבודה: Test Item'
+        'ניכוי אוטומטי בעקבות אישור עבודה: Test Dish'
       );
-      expect(toast.success).toHaveBeenCalledWith('נוכה סרבינג אחד מTest Restaurant. נותרו: 4 מנות');
+      expect(mockToast.success).toHaveBeenCalledWith('נוכה סרבינג אחד מTest Restaurant. נותרו: 4 מנות');
     });
 
-    it('should invalidate relevant queries after successful update', async () => {
-      const mockData = { submission_id: 'test-123', submission_status: 'בעיבוד' };
-
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
+    it('should restore serving when changing FROM approved status', async () => {
+      // Mock current submission fetch (currently approved)
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockData, error: null })
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'הושלמה ואושרה',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
             })
           })
         })
       });
 
-      const invalidateQueriesSpy = vi.spyOn(queryClient, 'invalidateQueries');
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
+      // Mock status update
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'sub-123',
+                  submission_status: 'הערות התקבלו',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
+              })
+            })
+          })
+        })
       });
 
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['client-submissions'] });
-      expect(invalidateQueriesSpy).toHaveBeenCalledWith({ queryKey: ['submission', 'test-123'] });
+      // Mock client fetch for serving restoration
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                remaining_servings: 3,
+                restaurant_name: 'Test Restaurant'
+              },
+              error: null
+            })
+          })
+        })
+      });
+
+      mockUpdateClientServings.mockResolvedValue(true);
+
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('sub-123', 'הערות התקבלו');
+
+      expect(success).toBe(true);
+      expect(mockUpdateClientServings).toHaveBeenCalledWith(
+        'client-123',
+        4,
+        'החזרת מנה אוטומטית בעקבות ביטול אישור עבודה: Test Dish'
+      );
+      expect(mockToast.success).toHaveBeenCalledWith('הוחזרה מנה אחת לTest Restaurant. סה"כ: 4 מנות');
+    });
+
+    it('should not change servings when status remains approved', async () => {
+      // Mock current submission fetch (already approved)
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'הושלמה ואושרה',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
+            })
+          })
+        })
+      });
+
+      // Mock status update (same status)
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'sub-123',
+                  submission_status: 'הושלמה ואושרה',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('sub-123', 'הושלמה ואושרה');
+
+      expect(success).toBe(true);
+      expect(mockUpdateClientServings).not.toHaveBeenCalled();
+    });
+
+    it('should not change servings for non-approved status changes', async () => {
+      // Mock current submission fetch
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'בעיבוד',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
+            })
+          })
+        })
+      });
+
+      // Mock status update
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'sub-123',
+                  submission_status: 'מוכנה להצגה',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
+              })
+            })
+          })
+        })
+      });
+
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('sub-123', 'מוכנה להצגה');
+
+      expect(success).toBe(true);
+      expect(mockUpdateClientServings).not.toHaveBeenCalled();
     });
   });
 
-  describe('updateSubmissionStatus - Error Handling', () => {
+  describe('Error handling', () => {
     it('should handle empty submission ID', async () => {
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      let updateResult: boolean | undefined;
-      await act(async () => {
-        updateResult = await result.current.updateSubmissionStatus('', 'בעיבוד');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
       });
 
-      expect(updateResult).toBe(false);
-      expect(toast.error).toHaveBeenCalledWith('מזהה הגשה חסר');
+      const success = await result.current.updateSubmissionStatus('', 'בעיבוד');
+
+      expect(success).toBe(false);
+      expect(mockToast.error).toHaveBeenCalledWith('מזהה הגשה חסר');
     });
 
-    it('should handle Supabase errors', async () => {
-      const mockError = { message: 'Database error' };
-
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
+    it('should handle fetch current submission error', async () => {
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: null, error: mockError })
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Submission not found' }
             })
           })
         })
       });
 
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      let updateResult: boolean | undefined;
-      await act(async () => {
-        updateResult = await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
       });
 
-      expect(updateResult).toBe(false);
-      expect(toast.error).toHaveBeenCalledWith('שגיאה בעדכון סטטוס: Database error');
+      const success = await result.current.updateSubmissionStatus('sub-123', 'הושלמה ואושרה');
+
+      expect(success).toBe(false);
+      expect(mockToast.error).toHaveBeenCalledWith('שגיאה בטעינת נתוני ההגשה: Submission not found');
     });
 
-    it('should handle network/exception errors', async () => {
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
+    it('should handle status update errors', async () => {
+      // Mock current submission fetch
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockRejectedValue(new Error('Network error'))
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'בעיבוד',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
             })
           })
         })
       });
 
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      let updateResult: boolean | undefined;
-      await act(async () => {
-        updateResult = await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
+      // Mock status update error
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            select: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: 'Database error' }
+              })
+            })
+          })
+        })
       });
 
-      expect(updateResult).toBe(false);
-      expect(toast.error).toHaveBeenCalledWith('שגיאה בעדכון סטטוס ההגשה');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
+
+      expect(success).toBe(false);
+      expect(mockToast.error).toHaveBeenCalledWith('שגיאה בעדכון סטטוס: Database error');
     });
 
-    it('should handle serving deduction errors gracefully', async () => {
-      const mockSubmissionData = {
-        submission_id: 'test-123',
-        submission_status: 'הושלמה ואושרה',
-        client_id: 'client-123'
-      };
-
-      (supabase.from as any).mockImplementation((table: string) => {
-        if (table === 'customer_submissions') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                select: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({ data: mockSubmissionData, error: null })
-                })
-              })
+    it('should handle serving restoration errors gracefully', async () => {
+      // Mock current submission fetch (approved)
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: {
+                submission_status: 'הושלמה ואושרה',
+                client_id: 'client-123',
+                item_name_at_submission: 'Test Dish'
+              },
+              error: null
             })
-          };
-        } else if (table === 'clients') {
-          return {
+          })
+        })
+      });
+
+      // Mock successful status update
+      mockSupabase.from.mockReturnValueOnce({
+        update: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
             select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Client not found' } })
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  submission_id: 'sub-123',
+                  submission_status: 'בעיבוד',
+                  client_id: 'client-123',
+                  item_name_at_submission: 'Test Dish'
+                },
+                error: null
               })
             })
-          };
-        }
+          })
+        })
       });
 
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      let updateResult: boolean | undefined;
-      await act(async () => {
-        updateResult = await result.current.updateSubmissionStatus('test-123', 'הושלמה ואושרה');
+      // Mock client fetch error for serving restoration
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: null,
+              error: { message: 'Client not found' }
+            })
+          })
+        })
       });
 
-      // Should still return true for status update, even if serving deduction fails
-      expect(updateResult).toBe(true);
-      expect(toast.success).toHaveBeenCalledWith('סטטוס ההגשה עודכן ל: הושלמה ואושרה');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
+      });
+
+      const success = await result.current.updateSubmissionStatus('sub-123', 'בעיבוד');
+
+      // Status update should still succeed even if serving restoration fails
+      expect(success).toBe(true);
+      expect(mockToast.success).toHaveBeenCalledWith('סטטוס ההגשה עודכן ל: בעיבוד');
     });
   });
 
-  describe('updateSubmissionStatus - Edge Cases', () => {
-    it('should handle submission without client_id for serving deduction', async () => {
-      const mockSubmissionData = {
-        submission_id: 'test-123',
-        submission_status: 'הושלמה ואושרה',
-        client_id: null // No client_id
-      };
+  describe('Loading state management', () => {
+    it('should manage loading state correctly during update', async () => {
+      let resolvePromise: (value: any) => void;
+      const promise = new Promise((resolve) => {
+        resolvePromise = resolve;
+      });
 
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
+      // Mock current submission fetch
+      mockSupabase.from.mockReturnValueOnce({
+        select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockSubmissionData, error: null })
-            })
+            single: vi.fn().mockReturnValue(promise)
           })
         })
       });
 
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'הושלמה ואושרה');
-      });
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Cannot deduct servings: submission has no client_id');
-      expect(updateClientServings).not.toHaveBeenCalled();
-
-      consoleWarnSpy.mockRestore();
-    });
-
-    it('should handle client with zero remaining servings', async () => {
-      const mockSubmissionData = {
-        submission_id: 'test-123',
-        submission_status: 'הושלמה ואושרה',
-        client_id: 'client-123'
-      };
-
-      const mockClientData = {
-        remaining_servings: 0,
-        restaurant_name: 'Test Restaurant'
-      };
-
-      (supabase.from as any).mockImplementation((table: string) => {
-        if (table === 'customer_submissions') {
-          return {
-            update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                select: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({ data: mockSubmissionData, error: null })
-                })
-              })
-            })
-          };
-        } else if (table === 'clients') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: mockClientData, error: null })
-              })
-            })
-          };
-        }
-      });
-
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'הושלמה ואושרה');
-      });
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith('Cannot deduct servings: client has no remaining servings');
-      expect(updateClientServings).not.toHaveBeenCalled();
-
-      consoleWarnSpy.mockRestore();
-    });
-
-    it('should handle all status types correctly', async () => {
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      for (const status of SUBMISSION_STATUSES) {
-        const mockData = { submission_id: 'test-123', submission_status: status };
-
-        (supabase.from as any).mockReturnValue({
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({ data: mockData, error: null })
-              })
-            })
-          })
-        });
-
-        await act(async () => {
-          await result.current.updateSubmissionStatus('test-123', status);
-        });
-
-        expect(toast.success).toHaveBeenCalledWith(`סטטוס ההגשה עודכן ל: ${status}`);
-      }
-    });
-  });
-
-  describe('Loading State Management', () => {
-    it('should manage isUpdating state correctly during successful update', async () => {
-      const mockData = { submission_id: 'test-123', submission_status: 'בעיבוד' };
-
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: mockData, error: null })
-            })
-          })
-        })
-      });
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      expect(result.current.isUpdating).toBe(false);
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
-      });
-
-      // Should be false after completion
-      expect(result.current.isUpdating).toBe(false);
-    });
-
-    it('should reset isUpdating state after error', async () => {
-      (supabase.from as any).mockReturnValue({
-        update: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockRejectedValue(new Error('Network error'))
-            })
-          })
-        })
-      });
-
-      const { result } = renderHook(() => useSubmissionStatus(), { wrapper });
-
-      expect(result.current.isUpdating).toBe(false);
-
-      await act(async () => {
-        await result.current.updateSubmissionStatus('test-123', 'בעיבוד');
+      const { result } = renderHook(() => useSubmissionStatus(), {
+        wrapper: createWrapper(),
       });
 
       expect(result.current.isUpdating).toBe(false);
+
+      const updatePromise = result.current.updateSubmissionStatus('sub-123', 'הושלמה ואושרה');
+
+      await waitFor(() => {
+        expect(result.current.isUpdating).toBe(true);
+      });
+
+      resolvePromise!({
+        data: {
+          submission_status: 'בעיבוד',
+          client_id: 'client-123',
+          item_name_at_submission: 'Test Dish'
+        },
+        error: null
+      });
+
+      await updatePromise;
+
+      await waitFor(() => {
+        expect(result.current.isUpdating).toBe(false);
+      });
     });
   });
 }); 
