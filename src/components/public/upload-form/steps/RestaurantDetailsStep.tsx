@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { Check, Building2, Sparkles, Users, AlertCircle } from 'lucide-react';
+import { Check, Building2, Sparkles, Users, AlertCircle, Mail, Phone } from 'lucide-react';
 
 const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
   const { formData, updateFormData } = useNewItemForm();
@@ -143,6 +143,68 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
             </div>
           )}
         </div>
+
+        {/* Conditional Email Field - Only show for new businesses */}
+        {formData.isNewBusiness === true && (
+          <div className="space-y-2 group animate-fade-in">
+            <Label htmlFor="contactEmail" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-[#8B1E3F]" />
+              כתובת אימייל *
+            </Label>
+            <div className="relative">
+              <Input
+                id="contactEmail"
+                type="email"
+                placeholder="your@email.com"
+                value={formData.contactEmail || ''}
+                onChange={(e) => updateFormData({ contactEmail: e.target.value })}
+                className={`h-14 text-lg border-2 rounded-2xl transition-all duration-300 shadow-lg focus:shadow-xl pl-4 pr-12 ${
+                  errors?.contactEmail 
+                    ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                    : 'border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300'
+                }`}
+              />
+              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+            {errors?.contactEmail && (
+              <div className="flex items-center gap-2 text-red-600 text-sm font-medium animate-shake">
+                <AlertCircle className="w-4 h-4" />
+                {errors.contactEmail}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Conditional Phone Field - Only show for new businesses */}
+        {formData.isNewBusiness === true && (
+          <div className="space-y-2 group animate-fade-in">
+            <Label htmlFor="contactPhone" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Phone className="w-5 h-5 text-[#8B1E3F]" />
+              מספר טלפון *
+            </Label>
+            <div className="relative">
+              <Input
+                id="contactPhone"
+                type="tel"
+                placeholder="050-1234567"
+                value={formData.contactPhone || ''}
+                onChange={(e) => updateFormData({ contactPhone: e.target.value })}
+                className={`h-14 text-lg border-2 rounded-2xl transition-all duration-300 shadow-lg focus:shadow-xl pl-4 pr-12 ${
+                  errors?.contactPhone 
+                    ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                    : 'border-gray-200 focus:border-[#F3752B] bg-white hover:border-gray-300'
+                }`}
+              />
+              <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            </div>
+            {errors?.contactPhone && (
+              <div className="flex items-center gap-2 text-red-600 text-sm font-medium animate-shake">
+                <AlertCircle className="w-4 h-4" />
+                {errors.contactPhone}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
