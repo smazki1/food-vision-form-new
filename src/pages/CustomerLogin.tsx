@@ -38,11 +38,11 @@ const CustomerLogin = () => {
           }}
         />
         
-        {/* Right side - Beautiful Food */}
+        {/* Right side - Beautiful Food Bowl */}
         <div 
           className="flex-1 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `linear-gradient(225deg, rgba(243, 117, 43, 0.7), rgba(139, 30, 63, 0.6)), url('https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2081&q=80')`
+            backgroundImage: `linear-gradient(225deg, rgba(243, 117, 43, 0.7), rgba(139, 30, 63, 0.6)), url('/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png')`
           }}
         />
       </div>
