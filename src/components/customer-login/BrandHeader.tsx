@@ -1,5 +1,5 @@
 
-import { Sparkles, Award } from 'lucide-react';
+import { Award } from 'lucide-react';
 
 const BrandHeader = () => {
   return (
@@ -7,8 +7,7 @@ const BrandHeader = () => {
       {/* Beta Badge with warm colors - removed animation and fixed text order */}
       <div className="mb-6">
         <span className="inline-flex items-center bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-bold px-6 py-3 rounded-full shadow-lg tracking-wide">
-          <Sparkles className="w-4 h-4 ml-2" />
-          גרסת Beta
+          Beta
         </span>
       </div>
       
