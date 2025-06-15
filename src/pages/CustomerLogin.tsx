@@ -73,9 +73,10 @@ const CustomerLogin = () => {
           
           <div className="p-8 relative z-10">
             
-            <PricingSection />
-            
             <FeaturesGrid />
+            
+            {/* Pricing Section moved here */}
+            <PricingSection />
             
             {/* Enhanced Guarantee Section with warm colors */}
             <div className="flex items-center justify-center gap-2 text-amber-700 mb-6 bg-gradient-to-r from-white/85 to-white/70 rounded-xl py-3 px-4 backdrop-blur-sm border border-amber-200/40 shadow-sm">
