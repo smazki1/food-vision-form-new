@@ -3,27 +3,24 @@ import { Shield } from 'lucide-react';
 
 const PricingSection = () => {
   return (
-    <div className="text-center mb-6">
+    <div className="text-center mb-8">
       <div className="inline-flex items-center bg-gradient-to-r from-[#f3752b]/10 to-[#f3752b]/5 border-2 border-[#f3752b] text-[#f3752b] px-5 py-3 rounded-full text-sm font-bold mb-6 shadow-lg">
         <Shield className="w-5 h-5 ml-2" />
         מוגבל ל-30 עסקים בלבד
       </div>
       
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 mb-4 border border-white/60 shadow-lg">
+      <div className="bg-gradient-to-br from-slate-50 via-white to-[#f3752b]/5 rounded-3xl p-8 mb-6 border-2 border-slate-100 shadow-inner">
         <div className="flex flex-col items-center justify-center">
-          <div className="relative mb-3">
-            <div className="text-5xl sm:text-6xl font-bold text-[#8b1e3f] leading-none mb-2">
+          <div className="relative">
+            <div className="text-6xl sm:text-7xl font-bold bg-gradient-to-b from-[#8b1e3f] to-[#a91e4f] bg-clip-text text-transparent leading-none mb-2">
               249
-              <span className="text-2xl text-[#f3752b] font-bold mr-1">₪</span>
+              <span className="text-3xl text-[#f3752b] font-bold">₪</span>
             </div>
-            <div className="absolute -top-2 -left-6 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full transform -rotate-12 shadow-md">
+            <div className="absolute -top-3 -right-8 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full transform rotate-12 shadow-lg">
               50% הנחה
             </div>
           </div>
-          <div className="text-lg text-slate-400 line-through font-medium mb-2">499₪</div>
-          <div className="text-sm text-slate-600 bg-slate-50 px-4 py-2 rounded-full">
-            מחיר מיוחד לתקופה מוגבלת
-          </div>
+          <div className="text-xl text-slate-400 line-through font-medium">499₪</div>
         </div>
       </div>
     </div>
