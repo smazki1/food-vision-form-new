@@ -28,13 +28,24 @@ const CustomerLogin = () => {
   return (
     <div dir="rtl" className="min-h-screen relative flex flex-col items-center justify-center px-6 py-8 sm:px-8 overflow-hidden">
       
-      {/* Single Background Image (already split) */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `linear-gradient(135deg, rgba(139, 30, 63, 0.3), rgba(243, 117, 43, 0.3)), url('/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png')`
-        }}
-      />
+      {/* Split Background */}
+      <div className="absolute inset-0 flex">
+        {/* Left side - Salmon Bowl */}
+        <div 
+          className="flex-1 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(135deg, rgba(139, 30, 63, 0.3), rgba(243, 117, 43, 0.3)), url('/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png')`
+          }}
+        />
+        
+        {/* Right side - Chocolate Cake */}
+        <div 
+          className="flex-1 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `linear-gradient(225deg, rgba(243, 117, 43, 0.3), rgba(139, 30, 63, 0.3)), url('/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png')`
+          }}
+        />
+      </div>
 
       {/* Overlay for better readability */}
       <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px]"></div>
