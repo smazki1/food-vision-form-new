@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { PublicStepProps } from '../PublicFoodVisionUploadForm';
-import { UtensilsCrossed, FileText, Coffee, Utensils, Wine, ChevronDown } from 'lucide-react';
+import { FileText, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
@@ -98,8 +98,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
       <div className="space-y-8 max-w-3xl mx-auto">
         {/* Item Name */}
         <div className="space-y-3">
-          <label htmlFor="itemName" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <UtensilsCrossed className="w-6 h-6 text-[#F3752B] ml-3" />
+          <label htmlFor="itemName" className="block text-lg font-semibold text-[#333333]">
             שם המנה / המוצר
             <span className="text-red-500 mr-1">*</span>
           </label>
@@ -127,8 +126,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
 
         {/* Item Type Selection - Free text with autocomplete */}
         <div className="space-y-4 relative">
-          <label htmlFor="itemType" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <UtensilsCrossed className="w-6 h-6 text-[#F3752B] ml-3" />
+          <label htmlFor="itemType" className="block text-lg font-semibold text-[#333333]">
             סוג הפריט
             <span className="text-red-500 mr-1">*</span>
           </label>
@@ -194,8 +192,7 @@ const ItemDetailsStep: React.FC<PublicStepProps> = ({ errors: externalErrors, cl
 
         {/* Description - simplified without visual examples */}
         <div className="space-y-3">
-          <label htmlFor="description" className="block text-lg font-semibold text-[#333333] flex items-center">
-            <FileText className="w-6 h-6 text-[#F3752B] ml-3" />
+          <label htmlFor="description" className="block text-lg font-semibold text-[#333333]">
             ספרו בקצרה מה מרכיבי המנה העיקריים
             <span className="text-red-500 mr-1">*</span>
           </label>
