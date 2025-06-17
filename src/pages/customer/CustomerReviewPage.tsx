@@ -10,7 +10,6 @@ interface Client {
   client_id: string;
   restaurant_name: string;
   remaining_servings: number;
-  total_servings: number;
   package_name: string;
 }
 
@@ -40,26 +39,33 @@ const CustomerReviewPage: React.FC = () => {
       if (!clientId) return;
       
       try {
-        // Fetch client data with package info
+        // Fetch client data
         const { data: clientData } = await supabase
           .from('clients')
-          .select(`
-            client_id, 
-            restaurant_name, 
-            remaining_servings, 
-            total_servings,
-            packages(package_name)
-          `)
+          .select('client_id, restaurant_name, remaining_servings, current_package_id')
           .eq('client_id', clientId)
           .single();
+
+        // Fetch package info separately if package_id exists
+        let packageName = 'חבילה רגילה';
+        if (clientData?.current_package_id) {
+          const { data: packageData } = await supabase
+            .from('packages')
+            .select('package_name')
+            .eq('id', clientData.current_package_id)
+            .single();
+          
+          if (packageData) {
+            packageName = packageData.package_name;
+          }
+        }
         
         if (clientData) {
           setClient({
             client_id: clientData.client_id,
             restaurant_name: clientData.restaurant_name,
             remaining_servings: clientData.remaining_servings || 0,
-            total_servings: clientData.total_servings || 0,
-            package_name: clientData.packages?.[0]?.package_name || 'חבילה רגילה'
+            package_name: packageName
           });
         }
 
@@ -144,7 +150,7 @@ const CustomerReviewPage: React.FC = () => {
                       {client.remaining_servings}
                     </div>
                     <div className="text-xs text-gray-500">
-                      מתוך {client.total_servings} מנות
+                      מנות נותרות
                     </div>
                   </div>
 
@@ -162,34 +168,18 @@ const CustomerReviewPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Package Progress */}
+                  {/* Submissions Count */}
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <div className="flex items-center justify-center mb-2">
                       <Package className="h-5 w-5 text-purple-600 ml-1" />
-                      <span className="text-sm font-medium text-gray-600">התקדמות</span>
+                      <span className="text-sm font-medium text-gray-600">הגשות</span>
                     </div>
                     <div className="text-2xl font-bold text-purple-600">
-                      {Math.round(((client.total_servings - client.remaining_servings) / client.total_servings) * 100)}%
+                      {submissions.length}
                     </div>
                     <div className="text-xs text-gray-500">
-                      מהחבילה
+                      סה"כ הגשות
                     </div>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="mt-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>התקדמות החבילה</span>
-                    <span>{client.total_servings - client.remaining_servings} / {client.total_servings}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${Math.max(5, ((client.total_servings - client.remaining_servings) / client.total_servings) * 100)}%` 
-                      }}
-                    ></div>
                   </div>
                 </div>
               </CardContent>
