@@ -23,6 +23,7 @@ import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
 import CustomerSubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
+import CustomerReviewPage from "@/pages/customer/CustomerReviewPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionDetailsPageAdmin from "@/pages/admin/SubmissionDetailsPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
@@ -149,6 +150,7 @@ const App = () => (
               <Route path="/wireframe-test" element={<WireframeTest />} />
               <Route path="/submissions-status" element={<CustomerSubmissionsStatusPage />} />
               <Route path="/submissions/:submissionId" element={<CustomerSubmissionDetailsPage />} />
+              <Route path="/customer-review/:id" element={<CustomerReviewPage />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
