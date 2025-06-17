@@ -18,6 +18,7 @@ interface Submission {
   original_image_urls: string[] | null;
   processed_image_urls: string[] | null;
   main_processed_image_url: string | null;
+  uploaded_at: string;
 }
 
 const CustomerReviewPage: React.FC = () => {
@@ -47,7 +48,7 @@ const CustomerReviewPage: React.FC = () => {
           setClient(clientData);
         }
 
-        // Fetch submissions data
+        // Fetch submissions data - newest first
         const { data: submissionsData } = await supabase
           .from('customer_submissions')
           .select(`
@@ -56,9 +57,11 @@ const CustomerReviewPage: React.FC = () => {
             submission_status,
             original_image_urls,
             processed_image_urls,
-            main_processed_image_url
+            main_processed_image_url,
+            uploaded_at
           `)
-          .eq('client_id', clientId);
+          .eq('client_id', clientId)
+          .order('uploaded_at', { ascending: false });
 
         if (submissionsData) {
           setSubmissions(submissionsData);
