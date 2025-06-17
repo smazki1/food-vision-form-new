@@ -3,12 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Package, Image, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Client {
   client_id: string;
   restaurant_name: string;
+  remaining_servings: number;
+  total_servings: number;
+  package_name: string;
 }
 
 interface Submission {
@@ -37,15 +40,27 @@ const CustomerReviewPage: React.FC = () => {
       if (!clientId) return;
       
       try {
-        // Fetch client data
+        // Fetch client data with package info
         const { data: clientData } = await supabase
           .from('clients')
-          .select('client_id, restaurant_name')
+          .select(`
+            client_id, 
+            restaurant_name, 
+            remaining_servings, 
+            total_servings,
+            packages(package_name)
+          `)
           .eq('client_id', clientId)
           .single();
         
         if (clientData) {
-          setClient(clientData);
+          setClient({
+            client_id: clientData.client_id,
+            restaurant_name: clientData.restaurant_name,
+            remaining_servings: clientData.remaining_servings || 0,
+            total_servings: clientData.total_servings || 0,
+            package_name: clientData.packages?.[0]?.package_name || 'חבילה רגילה'
+          });
         }
 
         // Fetch submissions data - newest first
@@ -101,12 +116,86 @@ const CustomerReviewPage: React.FC = () => {
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
       <main className="container mx-auto py-8 px-4">
-        <header className="text-center mb-12">
+        <header className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">
             {client?.restaurant_name || 'Food Gallery'}
           </h1>
           <p className="text-lg text-gray-600 mt-2">תוצאות הצילום המקצועי שלכם</p>
         </header>
+
+        {/* Package Details Section */}
+        {client && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-md">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <Package className="h-6 w-6 text-blue-600 ml-2" />
+                  <h2 className="text-xl font-semibold text-gray-800">{client.package_name}</h2>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                  {/* Remaining Servings */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-center mb-2">
+                      <Clock className="h-5 w-5 text-green-600 ml-1" />
+                      <span className="text-sm font-medium text-gray-600">מנות נותרות</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">
+                      {client.remaining_servings}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      מתוך {client.total_servings} מנות
+                    </div>
+                  </div>
+
+                  {/* Total Images */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-center mb-2">
+                      <Image className="h-5 w-5 text-blue-600 ml-1" />
+                      <span className="text-sm font-medium text-gray-600">תמונות מעובדות</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      {submissions.reduce((total, sub) => total + (sub.processed_image_urls?.length || 0), 0)}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      סה"כ תמונות
+                    </div>
+                  </div>
+
+                  {/* Package Progress */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-center justify-center mb-2">
+                      <Package className="h-5 w-5 text-purple-600 ml-1" />
+                      <span className="text-sm font-medium text-gray-600">התקדמות</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">
+                      {Math.round(((client.total_servings - client.remaining_servings) / client.total_servings) * 100)}%
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      מהחבילה
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm text-gray-600 mb-1">
+                    <span>התקדמות החבילה</span>
+                    <span>{client.total_servings - client.remaining_servings} / {client.total_servings}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                      style={{ 
+                        width: `${Math.max(5, ((client.total_servings - client.remaining_servings) / client.total_servings) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {submissions.map((submission) => (
