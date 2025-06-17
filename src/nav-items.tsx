@@ -1,4 +1,4 @@
-import { HomeIcon, Users, Package, FileText, Settings, LogIn, Upload, UserPlus, Calendar, ClipboardList, Eye } from "lucide-react";
+import { HomeIcon, Users, Package, FileText, Settings, LogIn, Upload, UserPlus, Calendar, ClipboardList, Eye, BarChart3 } from "lucide-react";
 import CustomerDashboardPage from "./pages/customer/CustomerDashboardPage";
 import CustomerLogin from "./pages/CustomerLogin";
 import AdminLogin from "./pages/AdminLogin";
@@ -14,6 +14,7 @@ import LeadsManagement from "./pages/admin/LeadsManagement";
 import SubmissionsPage from "./pages/admin/SubmissionsPage";
 import SubmissionsQueuePage from "./pages/admin/SubmissionsQueuePage";
 import SubmissionDetailsPage from "./pages/admin/SubmissionDetailsPage";
+import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
 
 // Editor imports
 import EditorDashboardPage from "./pages/editor/EditorDashboardPage";
@@ -117,6 +118,12 @@ export const navItems = [
     to: "/admin/submissions/:submissionId",
     icon: <Eye className="h-4 w-4" />,
     page: <SubmissionDetailsPage />,
+  },
+  {
+    title: "אנליטיקה",
+    to: "/admin/analytics",
+    icon: <BarChart3 className="h-4 w-4" />,
+    page: <AnalyticsDashboard />,
   },
 
   // Editor routes
