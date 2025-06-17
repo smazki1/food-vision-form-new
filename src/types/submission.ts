@@ -1,4 +1,3 @@
-
 export interface CustomerSubmission {
   submission_id: string;
   client_id: string;
@@ -32,3 +31,18 @@ export interface CustomerSubmission {
   original_image_urls: string[];
   processed_image_urls: string[];
 }
+
+// Submission status definitions
+export const SUBMISSION_STATUSES = {
+  'ממתינה לעיבוד': { label: 'ממתינה לעיבוד', color: 'gray' },
+  'בעיבוד': { label: 'בעיבוד', color: 'blue' },
+  'מוכנה להצגה': { label: 'מוכנה להצגה', color: 'yellow' },
+  'הערות התקבלו': { label: 'הערות התקבלו', color: 'orange' },
+  'הושלמה ואושרה': { label: 'הושלמה ואושרה', color: 'green' }
+} as const;
+
+export type SubmissionStatusKey = keyof typeof SUBMISSION_STATUSES;
+export type SubmissionStatus = typeof SUBMISSION_STATUSES[SubmissionStatusKey];
+
+// Image view mode types
+export type ImageViewMode = 'grid' | 'gallery' | 'comparison';
