@@ -1218,13 +1218,13 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
               <div className="space-y-1">
                 {submissions
                   .sort((a, b) => {
-                    // Status priority: בעיבוד (in progress) first, then others
+                    // Status priority matching the image order
                     const statusPriority = {
-                      'בעיבוד': 1,
-                      'מוכנה להצגה': 2,
-                      'הערות התקבלו': 3,
-                      'ממתינה לעיבוד': 4,
-                      'הושלמה ואושרה': 5
+                      'הושלמה ואושרה': 1,
+                      'ממתינה לעיבוד': 2,
+                      'בעיבוד': 3,
+                      'מוכנה להצגה': 4,
+                      'הערות התקבלו': 5
                     };
                     
                     const priorityA = statusPriority[a.submission_status] || 6;
