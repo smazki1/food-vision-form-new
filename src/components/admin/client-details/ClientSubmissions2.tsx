@@ -30,6 +30,9 @@ import { useSubmissionNotes } from '@/hooks/useSubmissionNotes';
 import { useLoraDetails } from '@/hooks/useLoraDetails';
 import { useSubmissionStatus } from '@/hooks/useSubmissionStatus';
 import { StatusSelector } from './StatusSelector';
+import { useAdminSubmissionComments, useAdminAddSubmissionComment } from '@/hooks/useAdminSubmissions';
+import { SubmissionCommentType } from '@/types/submission';
+import { MessageSquare } from 'lucide-react';
 
 interface ClientSubmissions2Props {
   clientId: string;
@@ -657,6 +660,12 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   
   // Use submission status hook
   const { updateSubmissionStatus, isUpdating: isStatusUpdating } = useSubmissionStatus();
+  
+  // Comments system
+  const [activeCommentTab, setActiveCommentTab] = useState<SubmissionCommentType>('admin_internal');
+  const [newComment, setNewComment] = useState('');
+  const { data: comments = [] } = useAdminSubmissionComments(currentSubmissionId || '');
+  const addCommentMutation = useAdminAddSubmissionComment();
 
   // Timer functionality
   useEffect(() => {
@@ -978,6 +987,39 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
       // Refresh submissions data to show updated status
       refetchSubmissions();
     }
+  };
+
+  // Handle comment submission
+  const handleAddComment = () => {
+    if (!newComment.trim() || !currentSubmissionId) return;
+
+    // Map comment types to appropriate visibility levels
+    const getVisibilityForCommentType = (commentType: SubmissionCommentType): string => {
+      switch (commentType) {
+        case 'client_visible':
+          return 'client';
+        case 'admin_internal':
+          return 'admin';
+        case 'editor_note':
+          return 'editor';
+        default:
+          return 'admin';
+      }
+    };
+
+    const visibility = getVisibilityForCommentType(activeCommentTab);
+    addCommentMutation.mutate({
+      submissionId: currentSubmissionId,
+      commentType: activeCommentTab,
+      commentText: newComment,
+      visibility
+    });
+    setNewComment('');
+  };
+
+  // Get comments by type
+  const getCommentsByType = (type: SubmissionCommentType) => {
+    return comments.filter(comment => comment.comment_type === type);
   };
 
   return (
@@ -1404,48 +1446,82 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                   </div>
                 )}
 
-                {/* Notes Section - Tabbed */}
+                {/* Comments System */}
                 <div>
-                  <Tabs value={activeNotesTab} onValueChange={setActiveNotesTab} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full">
-                      <TabsTrigger value="self">הערה לעצמי</TabsTrigger>
-                      <TabsTrigger value="client">הערה ללקוח</TabsTrigger>
-                      <TabsTrigger value="editor">הערה לעורך</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="self" className="mt-4">
-                      <Textarea
-                        placeholder="הערות אישיות להגשה..."
-                        value={notes.admin_internal}
-                        onChange={(e) => updateNote('admin_internal', e.target.value)}
-                        className="min-h-[80px] resize-none"
-                        disabled={isSaving}
-                      />
-                      {isSaving && <div className="text-xs text-gray-500 mt-1">שומר...</div>}
-                    </TabsContent>
-                    
-                    <TabsContent value="client" className="mt-4">
-                      <Textarea
-                        placeholder="הערות ללקוח..."
-                        value={notes.client_visible}
-                        onChange={(e) => updateNote('client_visible', e.target.value)}
-                        className="min-h-[80px] resize-none"
-                        disabled={isSaving}
-                      />
-                      {isSaving && <div className="text-xs text-gray-500 mt-1">שומר...</div>}
-                    </TabsContent>
-                    
-                    <TabsContent value="editor" className="mt-4">
-                      <Textarea
-                        placeholder="הערות לעורך..."
-                        value={notes.editor_note}
-                        onChange={(e) => updateNote('editor_note', e.target.value)}
-                        className="min-h-[80px] resize-none"
-                        disabled={isSaving}
-                      />
-                      {isSaving && <div className="text-xs text-gray-500 mt-1">שומר...</div>}
-                    </TabsContent>
-                  </Tabs>
+                    <Tabs value={activeCommentTab} onValueChange={(value) => setActiveCommentTab(value as SubmissionCommentType)}>
+                      <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="admin_internal" className="flex items-center gap-2">
+                          הערות פנימיות
+                          <Badge variant="destructive" className="text-xs">
+                            {getCommentsByType('admin_internal').length}
+                          </Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="client_visible" className="flex items-center gap-2">
+                          הערות ללקוח
+                          <Badge variant="default" className="text-xs bg-green-500">
+                            {getCommentsByType('client_visible').length}
+                          </Badge>
+                        </TabsTrigger>
+                        <TabsTrigger value="editor_note" className="flex items-center gap-2">
+                          הערות לעורך
+                          <Badge variant="default" className="text-xs bg-blue-500">
+                            {getCommentsByType('editor_note').length}
+                          </Badge>
+                        </TabsTrigger>
+                      </TabsList>
+
+                      {/* Comment Input */}
+                      <div className="mt-4 space-y-3">
+                        <div className="bg-blue-50 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <MessageSquare className="h-4 w-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-800">
+                              {activeCommentTab === 'admin_internal' && 'הערה פנימית - רק צוות המערכת יוכל לראות'}
+                              {activeCommentTab === 'client_visible' && 'הערה ללקוח - הלקוח יוכל לראות הערה זו'}
+                              {activeCommentTab === 'editor_note' && 'הערה לעורך - רק עורכים יוכלו לראות'}
+                            </span>
+                          </div>
+                          <Textarea
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            placeholder={`כתוב הערה ${activeCommentTab === 'admin_internal' ? 'פנימית' : 
+                              activeCommentTab === 'client_visible' ? 'ללקוח' : 'לעורך'}...`}
+                            className="min-h-[80px] bg-white border-blue-200 focus:border-blue-500"
+                          />
+                          <Button
+                            onClick={handleAddComment}
+                            disabled={!newComment.trim() || addCommentMutation.isPending}
+                            className="mt-3 w-full bg-blue-600 hover:bg-blue-700"
+                          >
+                            {addCommentMutation.isPending ? 'שולח...' : 'שלח הערה'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <TabsContent value={activeCommentTab} className="mt-4">
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {getCommentsByType(activeCommentTab).map((comment) => (
+                            <div key={comment.comment_id} className="bg-gray-50 rounded-lg p-4">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="font-medium text-sm">
+                                  {comment.created_by_user?.email || 'משתמש לא ידוע'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  {new Date(comment.created_at).toLocaleString('he-IL')}
+                                </span>
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap">{comment.comment_text}</p>
+                            </div>
+                          ))}
+                          {getCommentsByType(activeCommentTab).length === 0 && (
+                            <div className="text-center py-8 text-gray-500">
+                              <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                              <p>אין הערות עדיין</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
                 </div>
 
                 {/* LORA Details */}

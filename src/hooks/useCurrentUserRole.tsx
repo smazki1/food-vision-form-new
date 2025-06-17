@@ -51,123 +51,44 @@ const useCurrentUserRoleEngine = (): CurrentUserRoleState => {
         console.log('[STABLE_AUTH] Starting initialization');
         setStatus('CHECKING_SESSION');
         
-        // Check for test users first (highest priority)
-        const testAdminId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        const testCustomerId = 'f4bd43ed-a53b-4ada-aeb3-b2a42dbcb3a3';
-        const unifiedAuthUser = JSON.parse(localStorage.getItem('unifiedAuthUser') || '{}');
-        const adminAuth = localStorage.getItem("adminAuthenticated") === "true";
+        // Get current session first to determine real user
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        // Test admin detection (including localStorage fallback)
-        if (unifiedAuthUser.id === testAdminId || (adminAuth && !unifiedAuthUser.id)) {
-          console.log('[STABLE_AUTH] Test admin detected - setting stable admin state');
-          setUserId(testAdminId);
-          userIdRef.current = testAdminId;
-          setRole('admin');
-          setStatus('ROLE_DETERMINED');
+        if (sessionError) {
+          console.warn('[STABLE_AUTH] Session error:', sessionError.message);
+          throw sessionError;
+        }
+        
+        // Handle no session case
+        if (!session) {
+          console.log('[STABLE_AUTH] No session - setting no session state');
+          setStatus('NO_SESSION');
+          setRole(null);
+          setUserId(null);
+          userIdRef.current = null;
           setError(null);
           stableStateRef.current = true;
           return;
         }
         
-        // Test customer detection
-        if (unifiedAuthUser.id === testCustomerId) {
-          console.log('[STABLE_AUTH] Test customer detected - setting stable customer state');
-          setUserId(testCustomerId);
-          userIdRef.current = testCustomerId;
-          setRole('customer');
-          setStatus('ROLE_DETERMINED');
-          setError(null);
-          stableStateRef.current = true;
-          return;
-        }
+        // We have a session, try to get role
+        console.log('[STABLE_AUTH] Session found, fetching role for user:', session.user.id);
+        setUserId(session.user.id);
+        userIdRef.current = session.user.id;
+        setStatus('FETCHING_ROLE');
         
-        // Try Supabase session
         try {
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-          
-          if (sessionError) {
-            console.warn('[STABLE_AUTH] Session error:', sessionError.message);
-            // Fallback to localStorage if available
-            if (adminAuth) {
-              console.log('[STABLE_AUTH] Session error but localStorage admin - using fallback');
-              setUserId(testAdminId);
-              userIdRef.current = testAdminId;
-              setRole('admin');
-              setStatus('FORCED_COMPLETE');
-              setError(null);
-              stableStateRef.current = true;
-              return;
-            }
-            throw sessionError;
-          }
-          
-          if (!session) {
-            // No session but check localStorage
-            if (adminAuth) {
-              console.log('[STABLE_AUTH] No session but localStorage admin - using fallback');
-              setUserId(testAdminId);
-              userIdRef.current = testAdminId;
-              setRole('admin');
-              setStatus('FORCED_COMPLETE');
-              setError(null);
-              stableStateRef.current = true;
-              return;
-            }
-            
-            console.log('[STABLE_AUTH] No session and no localStorage - setting no session state');
-            setStatus('NO_SESSION');
-            setRole(null);
-            setUserId(null);
-            userIdRef.current = null;
-            setError(null);
-            stableStateRef.current = true;
-            return;
-          }
-          
-          // We have a session, try to get role
-          console.log('[STABLE_AUTH] Session found, fetching role for user:', session.user.id);
-          setUserId(session.user.id);
-          userIdRef.current = session.user.id;
-          setStatus('FETCHING_ROLE');
-          
-          try {
-            const authData = await optimizedAuthService.getUserAuthData(session.user.id);
-            console.log('[STABLE_AUTH] Role fetched successfully:', authData.role);
-            setRole(authData.role);
-            setStatus('ROLE_DETERMINED');
-            setError(null);
-            stableStateRef.current = true;
-          } catch (roleError) {
-            console.error('[STABLE_AUTH] Role fetch failed:', roleError);
-            // Final fallback to localStorage
-            if (adminAuth) {
-              console.log('[STABLE_AUTH] Role fetch failed but localStorage admin - using fallback');
-              setRole('admin');
-              setStatus('FORCED_COMPLETE');
-              setError(null);
-              stableStateRef.current = true;
-            } else {
-              setStatus('ERROR_FETCHING_ROLE');
-              setError(roleError instanceof Error ? roleError.message : 'Failed to fetch role');
-              stableStateRef.current = true;
-            }
-          }
-        } catch (supabaseError) {
-          console.error('[STABLE_AUTH] Supabase error:', supabaseError);
-          // Final fallback
-          if (adminAuth) {
-            console.log('[STABLE_AUTH] Supabase error but localStorage admin - using fallback');
-            setUserId(testAdminId);
-            userIdRef.current = testAdminId;
-            setRole('admin');
-            setStatus('FORCED_COMPLETE');
-            setError(null);
-            stableStateRef.current = true;
-          } else {
-            setStatus('ERROR_SESSION');
-            setError(supabaseError instanceof Error ? supabaseError.message : 'Authentication failed');
-            stableStateRef.current = true;
-          }
+          const authData = await optimizedAuthService.getUserAuthData(session.user.id);
+          console.log('[STABLE_AUTH] Role fetched successfully:', authData.role);
+          setRole(authData.role);
+          setStatus('ROLE_DETERMINED');
+          setError(null);
+          stableStateRef.current = true;
+        } catch (roleError) {
+          console.error('[STABLE_AUTH] Role fetch failed:', roleError);
+          setStatus('ERROR_FETCHING_ROLE');
+          setError(roleError instanceof Error ? roleError.message : 'Failed to fetch role');
+          stableStateRef.current = true;
         }
       } catch (error) {
         console.error('[STABLE_AUTH] Initialization failed:', error);

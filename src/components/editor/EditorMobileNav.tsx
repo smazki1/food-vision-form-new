@@ -30,7 +30,7 @@ const EditorMobileNav: React.FC<EditorMobileNavProps> = ({ onLogout }) => {
         <div className="flex flex-col h-full">
           <div className="flex h-14 items-center justify-between border-b px-4">
             <Link
-              to="/editor/dashboard"
+              to="/editor"
               className="flex items-center gap-2 font-semibold"
               onClick={() => setIsMobileMenuOpen(false)}
             >

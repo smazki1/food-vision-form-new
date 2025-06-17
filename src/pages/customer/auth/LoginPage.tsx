@@ -68,7 +68,7 @@ const LoginPage = () => {
         
         if (directRoleData?.role === 'editor') {
           toast.success('התחברות עורך בוצעה בהצלחה!');
-          navigate('/editor/dashboard');
+          navigate('/editor');
           setIsLoading(false);
           return;
         }
@@ -85,7 +85,7 @@ const LoginPage = () => {
 
         if (userRole === 'editor') {
           toast.success('התחברות עורך בוצעה בהצלחה!');
-          navigate('/editor/dashboard');
+          navigate('/editor');
           setIsLoading(false);
           return;
         }

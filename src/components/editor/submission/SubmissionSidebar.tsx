@@ -37,8 +37,8 @@ const SubmissionSidebar: React.FC<SubmissionSidebarProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  const deadlineDate = submission.target_completion_date ? 
-    new Date(submission.target_completion_date) : null;
+    const deadlineDate = submission.uploaded_at ?
+    new Date(new Date(submission.uploaded_at).getTime() + 3 * 24 * 60 * 60 * 1000) : null;
   const isOverdue = deadlineDate && deadlineDate < new Date();
   
   const getStatusBadgeVariant = (status: string) => {
@@ -77,9 +77,9 @@ const SubmissionSidebar: React.FC<SubmissionSidebarProps> = ({
             <div className="flex items-center gap-1">
               <Clock className={`h-4 w-4 ${isOverdue ? "text-red-500" : ""}`} />
               <p className={isOverdue ? "text-red-500 font-medium" : ""}>
-                {submission.target_completion_date ? 
-                  formatDate(submission.target_completion_date) : 
-                  "לא הוגדר"}
+                        {deadlineDate ?
+          formatDate(deadlineDate.toISOString()) :
+          "לא הוגדר"}
               </p>
             </div>
           </div>

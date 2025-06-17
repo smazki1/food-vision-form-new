@@ -16,7 +16,7 @@ const SubmissionHeader: React.FC<SubmissionHeaderProps> = ({ title }) => {
       <Button 
         variant="ghost" 
         size="sm" 
-        onClick={() => navigate("/editor/dashboard")}
+        onClick={() => navigate("/editor")}
         className="gap-1"
       >
         <ArrowLeft className="h-4 w-4" />

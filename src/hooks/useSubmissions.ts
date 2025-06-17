@@ -137,7 +137,6 @@ export function useSubmissions() {
           final_approval_timestamp: null,
           internal_team_notes: null,
           assigned_editor_id: null,
-          target_completion_date: null,
           priority: null,
           created_lead_id: null,
           lead_id: null,
@@ -360,7 +359,6 @@ export const useSubmission = (submissionId: string) => {
         created_at: data.uploaded_at, // Use uploaded_at as created_at
         edit_count: Array.isArray(data.edit_history) ? data.edit_history.length : 0,
         internal_team_notes: '',
-        target_completion_date: null,
         priority: 'Medium',
         submission_contact_name: '',
         submission_contact_email: '',
@@ -757,7 +755,6 @@ export const useLeadSubmissions = (leadId: string) => {
         created_at: item.uploaded_at, // Use uploaded_at as created_at
         edit_count: Array.isArray(item.edit_history) ? item.edit_history.length : 0,
         internal_team_notes: '',
-        target_completion_date: null,
         priority: 'Medium',
         submission_contact_name: '',
         submission_contact_email: '',
@@ -789,7 +786,7 @@ export const useSubmissionsWithFilters = (filters: {
   itemType?: string;
 }) => {
   return useQuery<EnhancedSubmission[]>({
-    queryKey: ['submissions-filtered', filters],
+    queryKey: ['submissions-with-filters', filters],
     queryFn: async () => {
       let query = supabase
         .from('customer_submissions')
@@ -810,7 +807,6 @@ export const useSubmissionsWithFilters = (filters: {
           final_approval_timestamp,
           internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
           priority,
           created_lead_id,
           submission_contact_name,
@@ -859,7 +855,7 @@ export const useSubmissionsWithFilters = (filters: {
         leads: Array.isArray(item.leads) && item.leads.length > 0 ? item.leads[0] : undefined
       }));
       
-      return (processedData || []) as EnhancedSubmission[];
+      return (processedData || []) as unknown as EnhancedSubmission[];
     },
   });
 };
@@ -994,7 +990,6 @@ export const useUnlinkedSubmissions = () => {
         created_at: item.uploaded_at, // Use uploaded_at as created_at
         edit_count: Array.isArray(item.edit_history) ? item.edit_history.length : 0,
         internal_team_notes: '',
-        target_completion_date: null,
         priority: 'Medium',
         submission_contact_name: '',
         submission_contact_email: '',
@@ -1041,7 +1036,6 @@ export const useSearchSubmissionById = (submissionId: string) => {
           final_approval_timestamp,
           internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
           priority,
           created_lead_id,
           submission_contact_name,

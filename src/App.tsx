@@ -22,12 +22,15 @@ import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
-import CustomerSubmissionDetailsPage from "@/pages/customer/SubmissionDetailsPage";
+import { SubmissionDetailsPage as CustomerSubmissionDetailsPage } from "@/components/customer/SubmissionDetailsPage";
+import CustomerSubmissionsPage from "@/pages/customer/CustomerSubmissionsPage";
+import CustomerReviewPage from "@/pages/customer/CustomerReviewPage";
 import EditorDashboardPage from "@/pages/editor/EditorDashboardPage";
 import SubmissionDetailsPageAdmin from "@/pages/admin/SubmissionDetailsPage";
 import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import WireframeTest from "@/pages/wireframe-test";
 import React, { Suspense } from "react";
+import EditorSubmissionViewer from "@/pages/editor/EditorSubmissionViewer";
 
 // Import debug script for testing comments
 import "@/test-comments-debug";
@@ -148,12 +151,16 @@ const App = () => (
               <Route path="/wireframe-test" element={<WireframeTest />} />
               <Route path="/submissions-status" element={<CustomerSubmissionsStatusPage />} />
               <Route path="/submissions/:submissionId" element={<CustomerSubmissionDetailsPage />} />
+              <Route path="/customer-review/:clientId" element={<CustomerReviewPage />} />
+              <Route path="/customer-review/:clientId/submission/:submissionId" element={<CustomerSubmissionDetailsPage />} />
 
               {/* Customer routes - wrapped with ClientAuthProvider */}
-              <Route path="/customer-login" element={<PublicOnlyRoute><CustomerLogin /></PublicOnlyRoute>} />
-              <Route path="/customer/auth" element={<PublicOnlyRoute><CustomerAuthPage /></PublicOnlyRoute>} />
+              <Route path="/customer-login" element={<CustomerLogin />} />
+              <Route path="/customer/auth" element={<CustomerAuthPage />} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
+              <Route path="/customer/submissions" element={<CustomerRoute><CustomerSubmissionsPage /></CustomerRoute>} />
+              <Route path="/customer/submissions/:submissionId" element={<CustomerRoute><CustomerSubmissionDetailsPage /></CustomerRoute>} />
 
               {/* Editor routes - protected by EditorRoute */}
               <Route path="/editor/*" element={
@@ -161,7 +168,7 @@ const App = () => (
                   <EditorRoute>
                     <Routes>
                       <Route index element={<EditorDashboardPage />} />
-                      <Route path="submission/:submissionId" element={<SubmissionProcessingPage />} />
+                      <Route path="submissions/:submissionId" element={<EditorSubmissionViewer />} />
                     </Routes>
                   </EditorRoute>
                 </CurrentUserRoleProvider>

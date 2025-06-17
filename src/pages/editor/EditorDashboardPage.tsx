@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +45,7 @@ const EditorDashboardPage: React.FC = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error("לא מחובר");
+        throw new Error("Not authenticated");
       }
       
       const { data, error } = await supabase
@@ -56,7 +55,7 @@ const EditorDashboardPage: React.FC = () => {
           clients(restaurant_name)
         `)
         .eq('assigned_editor_id', session.user.id)
-        .order('target_completion_date', { ascending: true });
+        .order('uploaded_at', { ascending: false });
         
       if (error) throw error;
       
@@ -65,16 +64,16 @@ const EditorDashboardPage: React.FC = () => {
   });
   
   if (isLoading) {
-    return <div className="flex justify-center p-8">טוען משימות...</div>;
+    return <div className="flex justify-center p-8">Loading tasks...</div>;
   }
   
   if (error) {
     return (
-      <Alert variant="destructive" className="mx-auto my-8 max-w-2xl">
+      <Alert variant="destructive" className="m-6">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>שגיאה בטעינת משימות</AlertTitle>
+        <AlertTitle>Error loading tasks</AlertTitle>
         <AlertDescription>
-          {error instanceof Error ? error.message : "שגיאה לא ידועה"}
+          {error instanceof Error ? error.message : "Unknown error"}
         </AlertDescription>
       </Alert>
     );
@@ -89,8 +88,8 @@ const EditorDashboardPage: React.FC = () => {
       submission.clients?.restaurant_name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     
-    const matchesStatus = statusFilter ? submission.submission_status === statusFilter : true;
-    const matchesPriority = priorityFilter ? submission.priority === priorityFilter : true;
+    const matchesStatus = statusFilter && statusFilter !== 'all' ? submission.submission_status === statusFilter : true;
+    const matchesPriority = priorityFilter && priorityFilter !== 'all' ? submission.priority === priorityFilter : true;
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
@@ -98,17 +97,21 @@ const EditorDashboardPage: React.FC = () => {
   const uniqueStatuses = [...new Set(submissions.map(sub => sub.submission_status))];
   const uniquePriorities = [...new Set(submissions.map(sub => sub.priority).filter(Boolean))];
   
-  // Check if there are any past-due submissions
+  // Check if there are any past-due submissions (using uploaded_at + 3 days as deadline)
   const now = new Date();
-  const overdueSubmissions = submissions.filter(sub => 
-    sub.target_completion_date && new Date(sub.target_completion_date) < now
-  );
+  const overdueSubmissions = submissions.filter(sub => {
+    if (!sub.uploaded_at) return false;
+    const deadline = new Date(sub.uploaded_at);
+    deadline.setDate(deadline.getDate() + 3); // 3 days from upload
+    return deadline < now;
+  });
   
   // Tasks nearing deadline (within 24 hours)
   const nearingDeadlineSubmissions = submissions.filter(sub => {
-    if (!sub.target_completion_date) return false;
+    if (!sub.uploaded_at) return false;
     
-    const deadline = new Date(sub.target_completion_date);
+    const deadline = new Date(sub.uploaded_at);
+    deadline.setDate(deadline.getDate() + 3); // 3 days from upload
     const timeDiff = deadline.getTime() - now.getTime();
     const hoursDiff = timeDiff / (1000 * 60 * 60);
     
@@ -155,9 +158,9 @@ const EditorDashboardPage: React.FC = () => {
       <div className="mb-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">דאשבורד עורך</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Editor Dashboard</h1>
             <p className="text-muted-foreground">
-              ניהול ומעקב אחר משימות העריכה שלך
+              Manage and track your editing tasks
             </p>
           </div>
         </div>
@@ -168,51 +171,51 @@ const EditorDashboardPage: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">סך הכול משימות</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
               <BarChart4 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{submissions.length}</div>
-              <p className="text-xs text-muted-foreground">משימות מוקצות לך</p>
+              <p className="text-xs text-muted-foreground">Tasks assigned to you</p>
             </CardContent>
           </Card>
           
           <Card className={overdueSubmissions.length > 0 ? "border-red-300 bg-red-50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">משימות באיחור</CardTitle>
+              <CardTitle className="text-sm font-medium">Overdue Tasks</CardTitle>
               <AlertCircle className={`h-4 w-4 ${overdueSubmissions.length > 0 ? "text-red-500" : "text-muted-foreground"}`} />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${overdueSubmissions.length > 0 ? "text-red-500" : ""}`}>
                 {overdueSubmissions.length}
               </div>
-              <p className="text-xs text-muted-foreground">משימות שעברו את הדדליין</p>
+              <p className="text-xs text-muted-foreground">Tasks past deadline</p>
             </CardContent>
           </Card>
           
           <Card className={nearingDeadlineSubmissions.length > 0 ? "border-yellow-300 bg-yellow-50" : ""}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">קרובות לדדליין</CardTitle>
+              <CardTitle className="text-sm font-medium">Near Deadline</CardTitle>
               <Clock className={`h-4 w-4 ${nearingDeadlineSubmissions.length > 0 ? "text-yellow-500" : "text-muted-foreground"}`} />
             </CardHeader>
             <CardContent>
               <div className={`text-2xl font-bold ${nearingDeadlineSubmissions.length > 0 ? "text-yellow-500" : ""}`}>
                 {nearingDeadlineSubmissions.length}
               </div>
-              <p className="text-xs text-muted-foreground">משימות לסיום בתוך 24 שעות</p>
+              <p className="text-xs text-muted-foreground">Tasks due within 24 hours</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">ממתינות לעיבוד</CardTitle>
+              <CardTitle className="text-sm font-medium">Pending Processing</CardTitle>
               <Filter className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {submissions.filter(s => s.submission_status === "ממתינה לעיבוד").length}
               </div>
-              <p className="text-xs text-muted-foreground">משימות חדשות לביצוע</p>
+              <p className="text-xs text-muted-foreground">New tasks to complete</p>
             </CardContent>
           </Card>
         </div>
@@ -221,39 +224,39 @@ const EditorDashboardPage: React.FC = () => {
       {/* Tasks Table Section */}
       <Card>
         <CardHeader>
-          <CardTitle>משימות שלי</CardTitle>
+          <CardTitle>My Tasks</CardTitle>
           <CardDescription>
-            רשימת כל המשימות המוקצות לך
+            List of all tasks assigned to you
           </CardDescription>
         </CardHeader>
         <CardContent>
           {/* Filters Bar */}
           <div className="flex flex-col md:flex-row gap-2 md:items-center justify-between mb-4">
             <Input
-              placeholder="חיפוש לפי שם פריט/מסעדה..."
+              placeholder="Search by item name/restaurant..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-sm"
             />
             <div className="flex flex-wrap gap-2">
-              <Select value={statusFilter || ''} onValueChange={(value) => setStatusFilter(value || null)}>
+              <Select value={statusFilter || 'all'} onValueChange={(value) => setStatusFilter(value === 'all' ? null : value)}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="סנן לפי סטטוס" />
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל הסטטוסים</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   {uniqueStatuses.map((status) => (
                     <SelectItem key={status} value={status}>{status}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               
-              <Select value={priorityFilter || ''} onValueChange={(value) => setPriorityFilter(value || null)}>
+              <Select value={priorityFilter || 'all'} onValueChange={(value) => setPriorityFilter(value === 'all' ? null : value)}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="סנן לפי עדיפות" />
+                  <SelectValue placeholder="Filter by priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">כל העדיפויות</SelectItem>
+                  <SelectItem value="all">All Priorities</SelectItem>
                   {uniquePriorities.map((priority) => (
                     <SelectItem key={priority} value={priority}>{priority}</SelectItem>
                   ))}
@@ -265,25 +268,26 @@ const EditorDashboardPage: React.FC = () => {
           {/* Data Table */}
           {filteredSubmissions.length === 0 ? (
             <div className="text-center py-10 text-muted-foreground">
-              לא נמצאו משימות מתאימות לחיפוש שלך
+              No tasks found matching your search
             </div>
           ) : (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>פריט</TableHead>
-                    <TableHead>מסעדה</TableHead>
-                    <TableHead>תאריך יעד</TableHead>
-                    <TableHead>עדיפות</TableHead>
-                    <TableHead>סטטוס</TableHead>
-                    <TableHead className="text-right">פעולות</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Restaurant</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSubmissions.map((submission) => {
-                    const isOverdue = submission.target_completion_date && 
-                      new Date(submission.target_completion_date) < new Date();
+                    const deadline = submission.uploaded_at ? 
+                      new Date(new Date(submission.uploaded_at).getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+                    const isOverdue = deadline && deadline < new Date();
                     
                     return (
                       <TableRow 
@@ -296,9 +300,9 @@ const EditorDashboardPage: React.FC = () => {
                         <TableCell>{submission.clients?.restaurant_name}</TableCell>
                         <TableCell>
                           <span className={isOverdue ? "text-red-500 font-medium" : ""}>
-                            {submission.target_completion_date ? 
-                              formatDate(submission.target_completion_date) : 
-                              "לא הוגדר"}
+                            {deadline ? 
+                              formatDate(deadline.toISOString()) : 
+                              "Not set"}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -318,7 +322,7 @@ const EditorDashboardPage: React.FC = () => {
                             onClick={() => handleProcessItem(submission.submission_id)}
                             className="hover:bg-primary/90 transition-colors"
                           >
-                            עבד על מנה
+                            Process Item
                           </Button>
                         </TableCell>
                       </TableRow>

@@ -1,20 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
 import { useMessages } from "@/hooks/useMessages";
+import { useAddSubmissionComment } from "@/hooks/useSubmissions";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, Share2, Facebook, Instagram, Mail, Link as LinkIcon, Maximize } from "lucide-react";
+import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, ChevronLeft, ChevronRight, Maximize } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShareDialog } from "./ShareDialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import OriginalImagesCustomerTab from "./OriginalImagesCustomerTab";
 
 // Status badge variant mapping
 const statusBadgeVariant: Record<string, string> = {
@@ -26,9 +25,10 @@ const statusBadgeVariant: Record<string, string> = {
 };
 
 export function SubmissionDetailsPage() {
-  const { submissionId } = useParams<{ submissionId: string }>();
-  const { submission, loading: submissionLoading, error: submissionError, requestEdit, updateSubmissionStatus, setMainProcessedImage } = useSubmission(submissionId);
+  const { submissionId, clientId } = useParams<{ submissionId: string; clientId?: string }>();
+  const { submission, loading: submissionLoading, error: submissionError, updateSubmissionStatus, setMainProcessedImage } = useSubmission(submissionId);
   const { messages, loading: messagesLoading, sendMessage } = useMessages(submissionId);
+  const addCommentMutation = useAddSubmissionComment();
   
   const [editNote, setEditNote] = useState("");
   const [newMessage, setNewMessage] = useState("");
@@ -38,6 +38,34 @@ export function SubmissionDetailsPage() {
   const [imageToShare, setImageToShare] = useState<string | null>(null);
   
   const { toast } = useToast();
+
+  // Navigation state for images
+  const [currentProcessedIndex, setCurrentProcessedIndex] = useState(0);
+  const [currentOriginalIndex, setCurrentOriginalIndex] = useState(0);
+  
+  // Lightbox navigation state
+  const [lightboxImageType, setLightboxImageType] = useState<'processed' | 'original' | null>(null);
+  const [lightboxCurrentIndex, setLightboxCurrentIndex] = useState(0);
+  
+  // Fullscreen comparison state
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+  const [comparisonProcessedIndex, setComparisonProcessedIndex] = useState(0);
+  const [comparisonOriginalIndex, setComparisonOriginalIndex] = useState(0);
+  const [comparisonImageType, setComparisonImageType] = useState<'processed' | 'original'>('processed');
+
+  // Prevent body scroll when dialogs are open
+  useEffect(() => {
+    if (selectedImage || isComparisonOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedImage, isComparisonOpen]);
 
   const handleRequestEdit = async () => {
     if (!editNote.trim()) {
@@ -49,16 +77,43 @@ export function SubmissionDetailsPage() {
       return;
     }
     
-    const success = await requestEdit(editNote);
-    
-    if (success) {
+    if (!submission?.submission_id) {
       toast({
-        title: "בקשת עריכה נשלחה",
-        description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
+        title: "שגיאה",
+        description: "לא נמצא מזהה הגשה",
+        variant: "destructive",
       });
-      setEditNote("");
-      setEditDialogOpen(false);
-    } else {
+      return;
+    }
+
+    try {
+      // Use the new submission_comments system
+      await addCommentMutation.mutateAsync({
+        submissionId: submission.submission_id,
+        commentType: 'client_visible',
+        commentText: editNote,
+        visibility: 'admin'
+      });
+
+      // Update submission status to indicate client feedback received
+      const statusSuccess = await updateSubmissionStatus("הערות התקבלו");
+      
+      if (statusSuccess) {
+        toast({
+          title: "בקשת עריכה נשלחה",
+          description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
+        });
+        setEditNote("");
+        setEditDialogOpen(false);
+      } else {
+        toast({
+          title: "שגיאה בעדכון סטטוס",
+          description: "ההערה נשמרה אך הסטטוס לא עודכן",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error in handleRequestEdit:", error);
       toast({
         title: "שגיאה בשליחת בקשת העריכה",
         description: "אירעה שגיאה בעת שליחת בקשת העריכה. אנא נסו שוב מאוחר יותר.",
@@ -143,6 +198,109 @@ export function SubmissionDetailsPage() {
     setShareDialogOpen(true);
   };
 
+  // Navigation functions for processed images
+  const navigateProcessedImage = (direction: 'prev' | 'next') => {
+    if (!submission.processed_image_urls || submission.processed_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setCurrentProcessedIndex(prev => 
+        prev === 0 ? submission.processed_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentProcessedIndex(prev => 
+        prev === submission.processed_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  // Navigation functions for original images
+  const navigateOriginalImage = (direction: 'prev' | 'next') => {
+    if (!submission.original_image_urls || submission.original_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setCurrentOriginalIndex(prev => 
+        prev === 0 ? submission.original_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentOriginalIndex(prev => 
+        prev === submission.original_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  // Lightbox navigation functions
+  const navigateLightboxImage = (direction: 'prev' | 'next') => {
+    if (!lightboxImageType) return;
+    
+    const imageUrls = lightboxImageType === 'processed' 
+      ? submission.processed_image_urls 
+      : submission.original_image_urls;
+    
+    if (!imageUrls || imageUrls.length === 0) return;
+    
+    let newIndex;
+    if (direction === 'prev') {
+      newIndex = lightboxCurrentIndex === 0 ? imageUrls.length - 1 : lightboxCurrentIndex - 1;
+    } else {
+      newIndex = lightboxCurrentIndex === imageUrls.length - 1 ? 0 : lightboxCurrentIndex + 1;
+    }
+    
+    setLightboxCurrentIndex(newIndex);
+    setSelectedImage(imageUrls[newIndex]);
+  };
+
+  // Open lightbox with navigation context
+  const openLightbox = (imageUrl: string, imageType: 'processed' | 'original', index: number) => {
+    setSelectedImage(imageUrl);
+    setLightboxImageType(imageType);
+    setLightboxCurrentIndex(index);
+  };
+
+  // Close lightbox and reset navigation state
+  const closeLightbox = () => {
+    setSelectedImage(null);
+    setLightboxImageType(null);
+    setLightboxCurrentIndex(0);
+  };
+
+
+
+  // Fullscreen comparison navigation functions
+  const navigateComparisonProcessed = (direction: 'prev' | 'next') => {
+    if (!submission.processed_image_urls || submission.processed_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setComparisonProcessedIndex(prev => 
+        prev === 0 ? submission.processed_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setComparisonProcessedIndex(prev => 
+        prev === submission.processed_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const navigateComparisonOriginal = (direction: 'prev' | 'next') => {
+    if (!submission.original_image_urls || submission.original_image_urls.length === 0) return;
+    
+    if (direction === 'prev') {
+      setComparisonOriginalIndex(prev => 
+        prev === 0 ? submission.original_image_urls!.length - 1 : prev - 1
+      );
+    } else {
+      setComparisonOriginalIndex(prev => 
+        prev === submission.original_image_urls!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const openFullscreenComparison = () => {
+    setComparisonProcessedIndex(currentProcessedIndex);
+    setComparisonOriginalIndex(currentOriginalIndex);
+    setComparisonImageType('processed'); // Start with processed image
+    setIsComparisonOpen(true);
+  };
+
   if (submissionLoading) {
     return (
       <div className="space-y-6">
@@ -182,7 +340,7 @@ export function SubmissionDetailsPage() {
   // Check if this submission can be edited
   const canRequestEdit = submission.submission_status === "מוכנה להצגה";
   
-  // Check if this submission can be approved
+  // Check if this submission can be approved  
   const canApprove = submission.submission_status === "מוכנה להצגה";
   
   // Check if images can be downloaded or shared
@@ -192,31 +350,46 @@ export function SubmissionDetailsPage() {
   // Parse the edit history if available
   const editHistory = submission.edit_history?.status_changes || [];
 
+  const getBackUrl = () => {
+    if (clientId) {
+      return `/customer-review/${clientId}`;
+    }
+    return "/customer/submissions";
+  };
+
+  const getBackText = () => {
+    if (clientId) {
+      return "חזרה לגלריה";
+    }
+    return "חזרה לרשימת ההגשות";
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Back button and header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <Button variant="outline" size="sm" asChild className="mb-2">
-            <Link to="/customer/submissions">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="space-y-4 sm:space-y-6 px-4 sm:px-6 pt-4 sm:pt-6 pb-4 sm:pb-6">
+      {/* Back button and header - Mobile optimized */}
+      <div className="space-y-4 sm:space-y-0 sm:flex sm:items-start sm:justify-between sm:gap-4">
+        <div className="space-y-3 sm:space-y-2">
+          <Button variant="outline" size="sm" asChild className="w-fit shadow-sm">
+            <Link to={getBackUrl()}>
               <ArrowLeft className="ml-2 h-4 w-4" />
-              חזרה לרשימת ההגשות
+              {getBackText()}
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold">{submission.item_name_at_submission}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant={statusBadgeVariant[submission.submission_status] as any}>
+          <h1 className="text-xl sm:text-2xl font-bold leading-tight">{submission.item_name_at_submission}</h1>
+          <div className="flex flex-col items-center sm:items-start gap-2">
+            <span className="text-sm text-muted-foreground">הועלה בתאריך: {formatDate(submission.uploaded_at)}</span>
+            <Badge variant={statusBadgeVariant[submission.submission_status] as any} className="w-fit">
               {submission.submission_status}
             </Badge>
-            <span className="text-sm text-muted-foreground">הועלה בתאריך: {formatDate(submission.uploaded_at)}</span>
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
           {canRequestEdit && (
             <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button className="w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm">
                   <Edit className="ml-2 h-4 w-4" />
                   בקש עריכה
                 </Button>
@@ -249,7 +422,7 @@ export function SubmissionDetailsPage() {
           )}
           
           {canApprove && (
-            <Button onClick={handleApprove}>
+            <Button onClick={handleApprove} className="w-full sm:w-auto py-3 sm:py-2 text-base sm:text-sm">
               <Check className="ml-2 h-4 w-4" />
               אשר מנה
             </Button>
@@ -259,249 +432,320 @@ export function SubmissionDetailsPage() {
       
       {/* Lightbox Dialog for selectedImage */}
       {selectedImage && (
-        <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-          <DialogContent className="max-w-3xl p-0">
-            <DialogHeader className="sr-only">
-              <DialogTitle>צפייה בתמונה</DialogTitle>
-              <DialogDescription>תצוגה מוגדלת של התמונה</DialogDescription>
-            </DialogHeader>
-            <img src={selectedImage} alt="Selected Preview" className="max-h-[80vh] w-auto mx-auto" />
-          </DialogContent>
-        </Dialog>
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+          <div className="relative max-w-full max-h-full flex items-center justify-center">
+            <img 
+              src={selectedImage} 
+              alt="Selected Preview" 
+              className="max-w-full max-h-full object-contain" 
+            />
+            
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 bg-white/90 hover:bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
+              onClick={closeLightbox}
+            >
+              <span className="text-lg font-bold">✕</span>
+            </button>
+            
+            {/* Navigation arrows */}
+            {lightboxImageType && (() => {
+              const imageUrls = lightboxImageType === 'processed' 
+                ? submission.processed_image_urls 
+                : submission.original_image_urls;
+              
+              return imageUrls && imageUrls.length > 1 && (
+                <>
+                  <button
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+                    onClick={() => navigateLightboxImage('prev')}
+                  >
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+                    onClick={() => navigateLightboxImage('next')}
+                  >
+                    <ChevronRight className="h-6 w-6" />
+                  </button>
+                  
+                  {/* Image counter */}
+                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    {lightboxCurrentIndex + 1} / {imageUrls.length}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
       )}
 
-      <Tabs defaultValue="images" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-lg mb-4">
-          <TabsTrigger value="images">תמונות</TabsTrigger>
-          <TabsTrigger value="originals">תמונות מקוריות</TabsTrigger>
+      {/* Fullscreen Comparison Dialog - Single Image View with Navigation */}
+      {isComparisonOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+          <div className="relative max-w-full max-h-full flex items-center justify-center">
+            {comparisonImageType === 'processed' ? (
+              hasProcessedImages && (
+                <img 
+                  src={submission.processed_image_urls[comparisonProcessedIndex]} 
+                  alt="Processed" 
+                  className="max-w-full max-h-full object-contain"
+                />
+              )
+            ) : (
+              submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                <img 
+                  src={submission.original_image_urls[comparisonOriginalIndex]} 
+                  alt="Original" 
+                  className="max-w-full max-h-full object-contain"
+                />
+              )
+            )}
+            
+            {/* Navigation arrows to switch between original and processed */}
+            <button
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+              onClick={() => {
+                if (comparisonImageType === 'processed') {
+                  setComparisonImageType('original');
+                } else {
+                  setComparisonImageType('processed');
+                }
+              }}
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+            
+            <button
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
+              onClick={() => {
+                if (comparisonImageType === 'processed') {
+                  setComparisonImageType('original');
+                } else {
+                  setComparisonImageType('processed');
+                }
+              }}
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+            
+            {/* Image type indicator */}
+            <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-lg font-semibold">
+              {comparisonImageType === 'processed' ? 'תמונה מעובדת' : 'תמונה מקורית'}
+            </div>
+            
+            {/* Image counter */}
+            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium">
+              {comparisonImageType === 'processed' ? (
+                `${comparisonProcessedIndex + 1} / ${submission.processed_image_urls?.length || 0}`
+              ) : (
+                `${comparisonOriginalIndex + 1} / ${submission.original_image_urls?.length || 0}`
+              )}
+            </div>
+            
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 bg-white/90 hover:bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
+              onClick={() => setIsComparisonOpen(false)}
+            >
+              <span className="text-lg font-bold">✕</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <Tabs defaultValue="main" className="w-full">
+        <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
+          <TabsTrigger value="main">תמונות מעובדות</TabsTrigger>
           <TabsTrigger value="editHistory">היסטוריית עריכות</TabsTrigger>
-          <TabsTrigger value="messages">תקשורת</TabsTrigger>
         </TabsList>
         
-        {/* Images Tab */}
-        <TabsContent value="images">
-          <Card>
-            <CardHeader>
-              <CardTitle>תמונות מעובדות</CardTitle>
-              <CardDescription>
-                {hasProcessedImages 
-                  ? "צפו בתמונות המעובדות של המנה" 
-                  : "אין תמונות מעובדות עדיין"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {hasProcessedImages ? (
-                <div className="space-y-6">
-                  {/* Main image display */}
-                  {submission.main_processed_image_url && (
-                    <div className="relative rounded-lg overflow-hidden border-2 border-primary">
-                      <div className="aspect-video max-h-[400px] overflow-hidden flex items-center justify-center">
-                        <img 
-                          src={submission.main_processed_image_url} 
-                          alt={`${submission.item_name_at_submission} - תמונה ראשית`}
-                          className="object-contain w-full h-full"
-                        />
+        {/* Main Tab - Side by side comparison with single images */}
+        <TabsContent value="main">
+          <div className="space-y-4 sm:space-y-6">
+            {/* Side by side image comparison - single images with navigation */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-none">
+              {/* Processed Images - Left Side */}
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <CardTitle className="text-right text-lg sm:text-xl">תמונות מעובדות</CardTitle>
+                    {hasProcessedImages && (
+                      <Badge variant="outline" className="w-fit text-sm">
+                        {currentProcessedIndex + 1} / {submission.processed_image_urls.length}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-6">
+                  {hasProcessedImages ? (
+                                          <div className="relative group">
+                        <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                          <img
+                            src={submission.processed_image_urls[currentProcessedIndex]}
+                            alt={`${submission.item_name_at_submission} - מעובד`}
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => openLightbox(submission.processed_image_urls![currentProcessedIndex], 'processed', currentProcessedIndex)}
+                          />
+                        </div>
                         
-                        {/* Watermark for preview mode */}
-                        {submission.submission_status === "מוכנה להצגה" && (
-                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <p className="text-white text-3xl font-bold opacity-30 rotate-[330deg]">
-                              תצוגה מקדימה - Food Vision AI
-                            </p>
-                          </div>
+                        {/* Navigation arrows for processed images - Mobile optimized */}
+                        {submission.processed_image_urls.length > 1 && (
+                          <>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                              onClick={() => navigateProcessedImage('prev')}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                              onClick={() => navigateProcessedImage('next')}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                          </>
                         )}
-                      </div>
                       
-                      {/* Action buttons for main image */}
-                      <div className="absolute bottom-2 right-2 flex gap-2">
-                        <Button 
-                          size="icon" 
-                          variant="secondary" 
-                          onClick={() => setSelectedImage(submission.main_processed_image_url)}
-                        >
-                          <Maximize className="h-4 w-4" />
-                        </Button>
-                        
-                        {canDownload && (
-                          <Button 
-                            size="icon" 
-                            variant="secondary" 
-                            onClick={() => handleDownloadImage(submission.main_processed_image_url!)}
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        )}
-                        
-                        {canShare && (
-                          <Button 
-                            size="icon" 
-                            variant="secondary" 
-                            onClick={() => handleShareImage(submission.main_processed_image_url!)}
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-500">אין תמונות מעובדות</p>
                     </div>
                   )}
-                  
-                  {/* All processed images carousel */}
-                  <div className="py-4">
-                    <h3 className="text-lg font-medium mb-4">כל התמונות ({submission.processed_image_urls.length})</h3>
-                    
-                    <Carousel className="w-full">
-                      <CarouselContent>
-                        {submission.processed_image_urls.map((imageUrl, index) => (
-                          <CarouselItem key={index} className="md:basis-1/3">
-                            <div className="p-1">
-                              <div className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
-                                imageUrl === submission.main_processed_image_url ? 'border-primary' : 'border-transparent'
-                              }`}>
-                                <img 
-                                  src={imageUrl} 
-                                  alt={`${submission.item_name_at_submission} - ${index + 1}`}
-                                  className="w-full h-full object-cover"
-                                  onClick={() => setSelectedImage(imageUrl)}
-                                />
-                                
-                                {/* Watermark for preview mode */}
-                                {submission.submission_status === "מוכנה להצגה" && (
-                                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <p className="text-white text-xs font-bold opacity-30 rotate-[330deg]">
-                                      תצוגה מקדימה
-                                    </p>
-                                  </div>
-                                )}
-                                
-                                {/* Overlay with buttons */}
-                                <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 flex flex-col items-center justify-center transition-opacity gap-2">
-                                  {(submission.submission_status === "מוכנה להצגה" || submission.submission_status === "הערות התקבלו") && (
-                                    <Button 
-                                      variant="secondary" 
-                                      className="text-sm"
-                                      onClick={() => handleSetMainImage(imageUrl)}
-                                    >
-                                      {imageUrl === submission.main_processed_image_url 
-                                        ? "תמונה ראשית" 
-                                        : "הגדר כתמונה ראשית"}
-                                    </Button>
-                                  )}
-                                  
-                                  <div className="flex gap-2 mt-2">
-                                    {canDownload && (
-                                      <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        onClick={() => handleDownloadImage(imageUrl)}
-                                      >
-                                        <Download className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                    
-                                    {canShare && (
-                                      <Button 
-                                        size="icon" 
-                                        variant="outline" 
-                                        onClick={() => handleShareImage(imageUrl)}
-                                      >
-                                        <Share2 className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious className="right-auto left-1" />
-                      <CarouselNext className="left-auto right-1" />
-                    </Carousel>
+                </CardContent>
+              </Card>
+
+              {/* Original Images - Right Side */}
+              <Card>
+                <CardHeader className="pb-3 sm:pb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <CardTitle className="text-right text-lg sm:text-xl">תמונות מקור</CardTitle>
+                    {submission.original_image_urls && submission.original_image_urls.length > 0 && (
+                      <Badge variant="outline" className="w-fit text-sm">
+                        {currentOriginalIndex + 1} / {submission.original_image_urls.length}
+                      </Badge>
+                    )}
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground">
-                    טרם הועלו תמונות מעובדות למנה זו. 
-                    {submission.submission_status === "ממתינה לעיבוד" || submission.submission_status === "בעיבוד" 
-                      ? " המנה נמצאת בעיבוד, התמונות יופיעו כאן כשיהיו מוכנות."
-                      : ""}
-                  </p>
-                </div>
-              )}
-              
-              {/* Image Preview Dialog */}
-              {selectedImage && (
-                <Dialog open={!!selectedImage} onOpenChange={(open) => !open && setSelectedImage(null)}>
-                  <DialogContent className="sm:max-w-[900px] md:max-w-[1100px] p-1">
-                    <img 
-                      src={selectedImage} 
-                      alt="תמונה מוגדלת"
-                      className="w-full h-full object-contain max-h-[80vh]"
-                    />
-                    
-                    {/* Watermark for preview mode */}
-                    {submission.submission_status === "מוכנה להצגה" && (
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <p className="text-white text-4xl font-bold opacity-30 rotate-[330deg]">
-                          תצוגה מקדימה - Food Vision AI
-                        </p>
+                </CardHeader>
+                <CardContent className="p-3 sm:p-6">
+                  {submission.original_image_urls && submission.original_image_urls.length > 0 ? (
+                    <div className="relative group">
+                      <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                        <img
+                          src={submission.original_image_urls[currentOriginalIndex]}
+                          alt={`${submission.item_name_at_submission} - מקור`}
+                          className="w-full h-full object-cover cursor-pointer"
+                          onClick={() => openLightbox(submission.original_image_urls![currentOriginalIndex], 'original', currentOriginalIndex)}
+                        />
                       </div>
-                    )}
-                    
-                    {/* Action buttons */}
-                    {submission.submission_status === "הושלמה ואושרה" && (
-                      <div className="absolute bottom-4 right-4 flex gap-2">
-                        <Button 
-                          variant="secondary" 
-                          onClick={() => handleDownloadImage(selectedImage)}
-                        >
-                          <Download className="ml-2 h-4 w-4" />
-                          הורד תמונה
-                        </Button>
-                        <Button 
-                          variant="secondary" 
-                          onClick={() => {
-                            handleShareImage(selectedImage);
-                            setSelectedImage(null);
-                          }}
-                        >
-                          <Share2 className="ml-2 h-4 w-4" />
-                          שתף תמונה
-                        </Button>
+                      
+                      {/* Navigation arrows for original images */}
+                      {submission.original_image_urls.length > 1 && (
+                        <>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                            onClick={() => navigateOriginalImage('prev')}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                            onClick={() => navigateOriginalImage('next')}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                      
+
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+                      <p className="text-gray-500">אין תמונות מקור</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Fullscreen Comparison Button */}
+            {hasProcessedImages && submission.original_image_urls && submission.original_image_urls.length > 0 && (
+              <div className="flex justify-center px-4 sm:px-0">
+                <Button 
+                  onClick={openFullscreenComparison}
+                  variant="outline"
+                  size="lg"
+                  className="gap-2 w-full sm:w-auto text-base sm:text-sm py-3 sm:py-2"
+                >
+                  <Maximize className="h-5 w-5" />
+                  השוואה מלאה
+                </Button>
+              </div>
+            )}
+
+            {/* Comments Section */}
+            <Card>
+              <CardHeader className="pb-3 sm:pb-6">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <MessageSquare className="h-5 w-5" />
+                  הודעות והערות
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-3 sm:p-6">
+                {/* Existing Messages */}
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {messagesLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </div>
+                  ) : messages.length > 0 ? (
+                    messages.map((message) => (
+                      <div key={message.message_id} className="bg-gray-50 p-3 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="font-medium text-sm">{message.sender_type}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(message.timestamp)}
+                          </span>
+                        </div>
+                        <p className="text-sm">{message.content}</p>
                       </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              )}
-              
-              {/* Share Dialog */}
-              <ShareDialog 
-                open={shareDialogOpen} 
-                onOpenChange={setShareDialogOpen}
-                imageUrl={imageToShare || ''}
-                itemName={submission.item_name_at_submission}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {/* Original Images Tab - New */}
-        <TabsContent value="originals">
-          <Card>
-            <CardHeader>
-              <CardTitle>תמונות מקוריות</CardTitle>
-              <CardDescription>
-                אלו התמונות שהעליתם במקור עבור פריט זה.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <OriginalImagesCustomerTab 
-                submission={submission} 
-                onImageClick={setSelectedImage} 
-              />
-            </CardContent>
-          </Card>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">אין הודעות עדיין</p>
+                  )}
+                </div>
+
+                {/* New Message Input */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                  <Textarea
+                    placeholder="כתבו הודעה או הערה..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 min-h-[80px]"
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim()}
+                    className="self-start sm:self-end w-full sm:w-auto py-3 sm:py-2"
+                  >
+                    <Send className="h-4 w-4 ml-2 sm:ml-0" />
+                    <span className="sm:hidden">שלח הודעה</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         {/* Edit History Tab */}
@@ -510,7 +754,7 @@ export function SubmissionDetailsPage() {
             <CardHeader>
               <CardTitle>היסטוריית עריכות</CardTitle>
               <CardDescription>
-                רשימת בקשות העריכה והשינויים שנעשו
+                רשימת בקשות העריכה והשינויים שבוצעו
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -550,75 +794,18 @@ export function SubmissionDetailsPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        {/* Messages Tab */}
-        <TabsContent value="messages">
-          <Card>
-            <CardHeader>
-              <CardTitle>תקשורת</CardTitle>
-              <CardDescription>
-                שלחו הודעות לצוות העריכה וצפו בהיסטוריית ההודעות
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col h-[400px]">
-                <div className="flex-1 overflow-y-auto mb-4 space-y-4">
-                  {messagesLoading ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-20 w-3/4" />
-                      <Skeleton className="h-20 w-3/4 mr-auto" />
-                      <Skeleton className="h-20 w-3/4" />
-                    </div>
-                  ) : messages.length > 0 ? (
-                    messages.map((message) => (
-                      <div 
-                        key={message.message_id} 
-                        className={`flex ${message.sender_type === 'client' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div 
-                          className={`max-w-[80%] p-3 rounded-lg ${
-                            message.sender_type === 'client' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : 'bg-secondary text-secondary-foreground'
-                          }`}
-                        >
-                          <p className="whitespace-pre-line">{message.content}</p>
-                          <p className={`text-xs mt-1 ${
-                            message.sender_type === 'client' 
-                              ? 'text-primary-foreground/70' 
-                              : 'text-secondary-foreground/70'
-                          }`}>
-                            {new Date(message.timestamp).toLocaleString('he-IL')}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="text-center text-muted-foreground">
-                        <MessageSquare className="mx-auto h-12 w-12 opacity-20" />
-                        <p className="mt-2">אין הודעות עדיין</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="כתבו הודעה..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="resize-none"
-                  />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
+
+
+
+      {/* Share Dialog */}
+      <ShareDialog 
+        open={shareDialogOpen} 
+        onOpenChange={setShareDialogOpen}
+        imageUrl={imageToShare || ''}
+        itemName={submission.item_name_at_submission}
+      />
+      </div>
     </div>
   );
 }

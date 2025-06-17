@@ -13,18 +13,39 @@ export type Message = {
 
 // Get all messages for a specific submission
 export async function getSubmissionMessages(submissionId: string): Promise<Message[]> {
-  const { data, error } = await supabase
-    .from("messages")
-    .select("*")
-    .eq("submission_id", submissionId)
-    .order("timestamp", { ascending: true });
+  try {
+    // Use submission_comments table with proper mapping
+    const { data, error } = await supabase
+      .from("submission_comments")
+      .select("*")
+      .eq("submission_id", submissionId)
+      .in("comment_type", ["client_visible"])
+      .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching messages:", error);
-    throw error;
+    if (error) {
+      console.error("Error fetching messages:", error);
+      // If table doesn't exist, return empty array
+      if (error.code === '42P01') {
+        console.warn('submission_comments table does not exist - returning empty messages');
+        return [];
+      }
+      throw error;
+    }
+
+    // Map submission_comments to Message format
+    return (data || []).map(comment => ({
+      message_id: comment.comment_id,
+      submission_id: comment.submission_id,
+      sender_type: comment.comment_type === 'client_visible' ? 'client' : 'team',
+      sender_id: comment.created_by || '',
+      content: comment.comment_text,
+      timestamp: comment.created_at,
+      read_status: true
+    })) as Message[];
+  } catch (error) {
+    console.error("Error in getSubmissionMessages:", error);
+    return [];
   }
-
-  return data as Message[];
 }
 
 // Send a new message as client
@@ -37,12 +58,13 @@ export async function sendClientMessage(submissionId: string, content: string): 
   }
 
   const { data, error } = await supabase
-    .from("messages")
+    .from("submission_comments")
     .insert({
       submission_id: submissionId,
-      sender_type: 'client',
-      sender_id: user.id,
-      content
+      comment_type: 'client_visible',
+      comment_text: content,
+      visibility: 'admin',
+      created_by: user.id
     })
     .select()
     .single();
@@ -52,7 +74,16 @@ export async function sendClientMessage(submissionId: string, content: string): 
     throw error;
   }
 
-  return data as Message;
+  // Map back to Message format
+  return {
+    message_id: data.comment_id,
+    submission_id: data.submission_id,
+    sender_type: 'client',
+    sender_id: data.created_by || '',
+    content: data.comment_text,
+    timestamp: data.created_at,
+    read_status: true
+  } as Message;
 }
 
 // Mark message as read

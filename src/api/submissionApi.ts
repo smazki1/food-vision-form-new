@@ -65,7 +65,6 @@ export type Submission = {
   final_approval_timestamp: string | null;
   internal_team_notes: string | null;
   assigned_editor_id: string | null;
-  target_completion_date: string | null;
   priority: string | null;
   created_lead_id?: string | null;
   lead_id?: string | null;
@@ -136,7 +135,7 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
       final_approval_timestamp: null,
       internal_team_notes: null,
       assigned_editor_id: null,
-      target_completion_date: null,
+
       priority: null,
       created_lead_id: null,
       lead_id: null,

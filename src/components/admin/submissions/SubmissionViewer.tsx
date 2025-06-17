@@ -3,8 +3,8 @@ import { toast } from 'sonner';
 import {
   SubmissionCommentType,
   ImageViewMode,
-  SUBMISSION_STATUSES,
-  SubmissionStatusKey
+  SubmissionStatusKey,
+  SUBMISSION_STATUSES
 } from '@/types/submission';
 
 // Custom hooks - use admin-specific hooks for admin/editor views

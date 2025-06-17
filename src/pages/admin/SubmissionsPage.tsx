@@ -179,7 +179,7 @@ const SubmissionsPage = () => {
             // Fill missing fields with defaults for UI compatibility
             edit_count: Array.isArray(submission.edit_history) ? submission.edit_history.length : 0,
             internal_team_notes: '',
-            target_completion_date: null,
+    
             priority: 'Medium',
             submission_contact_name: submission.contact_name || '',
             submission_contact_email: submission.email || '',

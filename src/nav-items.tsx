@@ -121,7 +121,7 @@ export const navItems = [
 
   // Editor routes
   {
-    title: "דאשבורד עורך",
+    title: "Editor Dashboard",
     to: "/editor",
     icon: <HomeIcon className="h-4 w-4" />,
     page: <EditorDashboardPage />,

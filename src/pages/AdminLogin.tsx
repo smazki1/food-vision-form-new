@@ -40,8 +40,8 @@ const AdminLogin: React.FC = () => {
         
         console.log("[AdminLogin useEffect] Role loaded:", role);
         if (role === 'editor') {
-          console.log("[AdminLogin useEffect] User has editor role, redirecting to editor dashboard");
-          navigate("/editor/dashboard");
+                  console.log("[AdminLogin useEffect] User has editor role, redirecting to editor dashboard");
+        navigate("/editor");
         } else if (role === 'admin') {
           console.log("[AdminLogin useEffect] User has admin role, redirecting to admin dashboard");
           navigate("/admin/dashboard");
@@ -111,7 +111,7 @@ const AdminLogin: React.FC = () => {
         toast.success("התחברת בהצלחה");
         
         if (roleData?.role === 'editor') {
-          navigate("/editor/dashboard");
+          navigate("/editor");
         } else {
           navigate("/admin/dashboard");
         }

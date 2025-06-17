@@ -50,7 +50,7 @@ export function useAllSubmissions() {
         created_at: item.uploaded_at,
         edit_count: Array.isArray(item.edit_history) ? item.edit_history.length : 0,
         internal_team_notes: '',
-        target_completion_date: null,
+  
         priority: 'Medium',
         submission_contact_name: '',
         submission_contact_email: '',

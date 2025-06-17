@@ -1,4 +1,3 @@
-
 import React from "react";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { Calendar, Edit, Clock, AlertCircle } from "lucide-react";
@@ -12,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useMaxEdits } from "../hooks/useMaxEdits";
+import { formatDate } from "@/utils/formatDate";
 
 interface ProcessingInfoTabProps {
   submission: Submission;
@@ -23,8 +23,10 @@ export const ProcessingInfoTab: React.FC<ProcessingInfoTabProps> = ({ submission
   const currentEditCount = submission.edit_count || 0;
   
   // Calculate days remaining until target completion date
-  const daysRemaining = submission.target_completion_date 
-    ? differenceInDays(new Date(submission.target_completion_date), new Date())
+    const deadline = submission.uploaded_at ? 
+    new Date(new Date(submission.uploaded_at).getTime() + 3 * 24 * 60 * 60 * 1000) : null;
+  const daysRemaining = deadline
+    ? differenceInDays(deadline, new Date())
     : null;
     
   const isOverdue = daysRemaining !== null && daysRemaining < 0;
@@ -58,13 +60,13 @@ export const ProcessingInfoTab: React.FC<ProcessingInfoTabProps> = ({ submission
             }`} />
           </CardHeader>
           <CardContent>
-            {submission.target_completion_date ? (
+            {deadline ? (
               <>
                 <div className={`text-xl font-bold ${
                   isOverdue ? "text-red-500" : 
                   isNearDeadline ? "text-amber-500" : ""
                 }`}>
-                  {format(parseISO(submission.target_completion_date), "dd/MM/yyyy")}
+                  {format(deadline, "dd/MM/yyyy")}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {isOverdue ? (

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut } from "lucide-react";
@@ -17,7 +16,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({ onLogout }) => {
       <div className="flex h-full flex-col border-r bg-background">
         <div className="flex h-14 items-center border-b px-4">
           <Link
-            to="/editor/dashboard"
+            to="/editor"
             className="flex items-center gap-2 font-semibold"
           >
             <img
@@ -25,7 +24,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({ onLogout }) => {
               alt="Food Vision AI"
               className="h-6 w-6"
             />
-            <span>Food Vision AI - עורך</span>
+            <span>Food Vision AI - Editor</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-2">
@@ -56,7 +55,7 @@ const EditorSidebar: React.FC<EditorSidebarProps> = ({ onLogout }) => {
             onClick={onLogout}
           >
             <LogOut className="h-4 w-4" />
-            <span>התנתקות</span>
+            <span>Logout</span>
           </Button>
         </div>
       </div>

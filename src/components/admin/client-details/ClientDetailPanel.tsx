@@ -25,7 +25,8 @@ import {
   Building,
   Calendar,
   AlertTriangle,
-  DollarSign
+  DollarSign,
+  Eye
 } from 'lucide-react';
 
 // Import the components we created
@@ -36,6 +37,7 @@ import { ClientPackageManagement } from './ClientPackageManagement';
 import { ClientActivityNotes } from './ClientActivityNotes';
 import { ClientPaymentStatus } from './ClientPaymentStatus';
 import { ClientCostTracking } from './ClientCostTracking';
+import CustomerReviewPageTab from './CustomerReviewPageTab';
 
 // Import existing hooks
 import { useClients } from '@/hooks/useClients';
@@ -294,7 +296,7 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
         <div className="container mx-auto px-4 py-6">
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview" className="flex items-center gap-1">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">פרטים</span>
@@ -318,6 +320,10 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
             <TabsTrigger value="design" className="flex items-center gap-1">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">עיצוב</span>
+            </TabsTrigger>
+            <TabsTrigger value="customer-review" className="flex items-center gap-1">
+              <Eye className="h-4 w-4" />
+              <span className="hidden sm:inline">עמוד לקוח</span>
             </TabsTrigger>
           </TabsList>
 
@@ -541,6 +547,10 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
 
             <TabsContent value="design">
               <ClientDesignSettings key={client.client_id} clientId={client.client_id} client={client} />
+            </TabsContent>
+
+            <TabsContent value="customer-review">
+              <CustomerReviewPageTab key={client.client_id} clientId={client.client_id} />
             </TabsContent>
           </ScrollArea>
         </Tabs>

@@ -87,8 +87,8 @@ export const optimizedAuthService = {
         };
       }
 
-      // RPC returns an array, take first result
-      const authData: UserAuthData = Array.isArray(data) ? data[0] : data;
+      // RPC returns JSON directly with different field names
+      const authData = data;
       
       if (!authData) {
         console.warn('[OPTIMIZED_AUTH] Auth data is null/undefined');
@@ -102,10 +102,10 @@ export const optimizedAuthService = {
       }
       
       const result = {
-        role: authData.user_role as UserRole,
-        clientId: authData.client_id,
-        restaurantName: authData.restaurant_name || null,
-        hasLinkedClientRecord: authData.has_client_record
+        role: authData.role as UserRole,
+        clientId: authData.clientId,
+        restaurantName: null, // Not returned by current RPC
+        hasLinkedClientRecord: authData.hasLinkedClientRecord
       };
 
       // Cache the result for 30 minutes (increased from 10 minutes) to handle token refreshes better
@@ -186,8 +186,8 @@ export const optimizedAuthService = {
         };
       }
 
-      // RPC returns JSON directly, not an array
-      const authData: UserAuthData = data as UserAuthData;
+      // RPC returns JSON directly with different field names
+      const authData = data;
       
       if (!authData) {
         console.warn('[OPTIMIZED_AUTH] Auth data is null/undefined during silent refresh');
@@ -201,10 +201,10 @@ export const optimizedAuthService = {
       }
       
       const result = {
-        role: authData.user_role as UserRole,
-        clientId: authData.client_id,
-        restaurantName: authData.restaurant_name || null,
-        hasLinkedClientRecord: authData.has_client_record
+        role: authData.role as UserRole,
+        clientId: authData.clientId,
+        restaurantName: null, // Not returned by current RPC
+        hasLinkedClientRecord: authData.hasLinkedClientRecord
       };
 
       // Update cache with fresh data

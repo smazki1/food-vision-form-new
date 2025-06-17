@@ -56,7 +56,6 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
           final_approval_timestamp,
           internal_team_notes,
           assigned_editor_id,
-          target_completion_date,
           priority,
           created_lead_id,
           submission_contact_name,

@@ -4,7 +4,7 @@ import { Home, FileText } from "lucide-react";
 export const editorNavItems = [
   {
     title: "דף הבית",
-    href: "/editor/dashboard",
+    href: "/editor",
     icon: Home
   },
   {
