@@ -39,9 +39,10 @@ export const defaultSections: DashboardSection[] = [
   { id: "leadFunnel", title: "משפך לידים", visible: true, defaultOrder: 2, order: 2 },
   { id: "leadSource", title: "לידים לפי מקור", visible: true, defaultOrder: 3, order: 3 },
   { id: "clientsOverview", title: "סקירת לקוחות", visible: true, defaultOrder: 4, order: 4 },
-  { id: "submissionQueue", title: "מנות בעיבוד", visible: true, defaultOrder: 5, order: 5 },
-  { id: "editorPerformance", title: "ביצועי עורכים", visible: true, defaultOrder: 6, order: 6 },
-  { id: "packageUtilization", title: "ניצול חבילות", visible: true, defaultOrder: 7, order: 7 }
+  { id: "clientSubmissionStats", title: "סטטיסטיקות הגשות לקוחות", visible: true, defaultOrder: 5, order: 5 },
+  { id: "submissionQueue", title: "מנות בעיבוד", visible: true, defaultOrder: 6, order: 6 },
+  { id: "editorPerformance", title: "ביצועי עורכים", visible: true, defaultOrder: 7, order: 7 },
+  { id: "packageUtilization", title: "ניצול חבילות", visible: true, defaultOrder: 8, order: 8 }
 ];
 
 const DASHBOARD_SETTINGS_KEY = "food-vision-admin-dashboard-settings";

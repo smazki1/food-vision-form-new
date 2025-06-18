@@ -25,53 +25,14 @@ export function useClientDashboardStats(clientId: string | undefined) {
 
       console.log('[useClientDashboardStats] Fetching submissions for clientId:', clientId);
 
-      // TEMPORARY: Skip auth check for test user
-      const isTestUser = true; // This would normally check for test environment
-      
-      if (!isTestUser) {
-        // First verify the client exists and is linked to the current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          console.error('[useClientDashboardStats] No authenticated user found');
-          throw new Error('No authenticated user found');
-        }
-
-        console.log('[useClientDashboardStats] Current user:', user.id);
-
-        // Verify client access - Use fully qualified column names to avoid ambiguity
-        const { data: clientCheck, error: clientError } = await supabase
-          .from("clients")
-          .select("client_id, user_auth_id")
-          .eq("user_auth_id", user.id)
-          .eq("client_id", clientId)
-          .single();
-
-        if (clientError) {
-          console.error("[useClientDashboardStats] Error verifying client access:", clientError);
-          throw clientError;
-        }
-
-        if (!clientCheck) {
-          console.error("[useClientDashboardStats] Client not found or access denied");
-          console.error("[useClientDashboardStats] User ID:", user.id);
-          console.error("[useClientDashboardStats] Client ID:", clientId);
-          throw new Error("Client not found or access denied");
-        }
-
-        console.log('[useClientDashboardStats] Client access verified:', {
-          clientId: clientCheck.client_id,
-          userAuthId: clientCheck.user_auth_id
-        });
-      } else {
-        console.log('[useClientDashboardStats] Skipping auth check for test user');
-      }
-
       // Fetch submissions with detailed error logging
       const { data: submissions, error } = await supabase
         .from("customer_submissions")
         .select(`
           submission_status,
-          uploaded_at
+          uploaded_at,
+          submission_id,
+          item_name_at_submission
         `)
         .eq("client_id", clientId);
 
@@ -113,11 +74,13 @@ export function useClientDashboardStats(clientId: string | undefined) {
       }));
 
       console.log('[useClientDashboardStats] Final status counts:', countsArray);
-      console.log('[useClientDashboardStats] Has submissions with count > 0:', countsArray.some(item => item.count > 0));
+      console.log('[useClientDashboardStats] Total submissions found:', submissions?.length || 0);
 
       return countsArray;
     },
     enabled: !!clientId,
+    staleTime: 1000 * 60 * 2, // Fresh for 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Auto-refresh every 5 minutes
   });
 
   return {

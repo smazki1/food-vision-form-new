@@ -9,6 +9,7 @@ import { ClientsOverview } from "@/components/admin/dashboard/ClientsOverview";
 import { SubmissionQueue } from "@/components/admin/dashboard/SubmissionQueue";
 import { EditorPerformance } from "@/components/admin/dashboard/EditorPerformance";
 import { PackageUtilization } from "@/components/admin/dashboard/PackageUtilization";
+import { ClientSubmissionStatsOverview } from "@/components/admin/dashboard/ClientSubmissionStatsOverview";
 import { DashboardSearch } from "@/components/admin/dashboard/DashboardSearch";
 import { DashboardSettings } from "@/components/admin/dashboard/DashboardSettings";
 import { Users, CreditCard, LineChart, ShoppingBag, Clock } from "lucide-react";
@@ -102,6 +103,10 @@ const Dashboard: React.FC = () => {
             data={stats?.packageUtilization || []}
             loading={isLoading}
           />
+        );
+      case "clientSubmissionStats":
+        return (
+          <ClientSubmissionStatsOverview />
         );
       default:
         return null;
