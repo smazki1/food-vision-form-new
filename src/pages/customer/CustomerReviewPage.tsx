@@ -158,7 +158,7 @@ const CustomerReviewPage: React.FC = () => {
                   <div className="bg-white rounded-lg p-4 shadow-sm">
                     <div className="flex items-center justify-center mb-2">
                       <Image className="h-5 w-5 text-blue-600 ml-1" />
-                      <span className="text-sm font-medium text-gray-600">תמונות מעובדות</span>
+                      <span className="text-sm font-medium text-gray-600">תמונות מוכנות</span>
                     </div>
                     <div className="text-2xl font-bold text-blue-600">
                       {submissions.reduce((total, sub) => total + (sub.processed_image_urls?.length || 0), 0)}
