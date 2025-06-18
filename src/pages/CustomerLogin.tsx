@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BrandHeader from '@/components/customer-login/BrandHeader';
@@ -12,8 +11,8 @@ const CustomerLogin = () => {
   const navigate = useNavigate();
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   
-  const redirectToUpload = () => {
-    navigate('/public-upload');
+  const redirectToPayment = () => {
+    window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u6852ff887?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
   };
   
   const goToLogin = () => {
@@ -80,7 +79,7 @@ const CustomerLogin = () => {
             
             {/* Enhanced Main CTA Button with warm gradient */}
             <Button 
-              onClick={redirectToUpload}
+              onClick={redirectToPayment}
               className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6"
               style={{
                 boxShadow: '0 10px 30px rgba(245, 158, 11, 0.4)'
