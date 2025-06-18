@@ -5,7 +5,7 @@ const FeaturesGrid = () => {
   const features = [
     { icon: Check, text: "3-5 מנות נבחרות מהתפריט", color: "bg-[#8b1e3f]" },
     { icon: Award, text: "10 תמונות איכותיות מוכנות לפרסום", color: "bg-[#f3752b]" },
-    { icon: Clock, text: "מסירה תוך 72 שעות", color: "bg-[#8b1e3f]" },
+    { icon: Clock, text: "מסירה תוך 48 שעות", color: "bg-[#8b1e3f]" },
     { icon: Sparkles, text: "זיכוי מלא לחבילה מתקדמת", color: "bg-[#f3752b]" }
   ];
 
