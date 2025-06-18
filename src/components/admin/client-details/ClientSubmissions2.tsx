@@ -834,10 +834,12 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
     }
   };
   
-  // Calculate stats from real data
-  const inProgressCount = submissionStats?.byStatus?.['בתהליך'] || submissionStats?.byStatus?.['בעיבוד'] || 0;
-  const waitingCount = submissionStats?.byStatus?.['ממתינה לעיבוד'] || submissionStats?.byStatus?.['ממתין'] || 0;
-  const completedCount = submissionStats?.byStatus?.['הושלמה ואושרה'] || submissionStats?.byStatus?.['הושלם'] || 0;
+  // Calculate individual status counts from real data
+  const pendingCount = submissionStats?.byStatus?.['ממתינה לעיבוד'] || 0;
+  const inProgressCount = submissionStats?.byStatus?.['בעיבוד'] || 0;
+  const readyCount = submissionStats?.byStatus?.['מוכנה להצגה'] || 0;
+  const feedbackCount = submissionStats?.byStatus?.['הערות התקבלו'] || 0;
+  const completedCount = submissionStats?.byStatus?.['הושלמה ואושרה'] || 0;
 
   // Mock image data for now - TODO: Replace with real image data from selected submission
   const originalImages = [
@@ -1025,24 +1027,36 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   return (
     <div className="space-y-6" dir="rtl">
       
-      {/* Header Stats (3 squares) - Real Data */}
-      <div className="grid grid-cols-3 gap-6">
+      {/* Header Stats (5 cards) - Individual Status Counts */}
+      <div className="grid grid-cols-5 gap-4">
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-blue-600">{inProgressCount}</div>
-            <div className="text-sm text-gray-600">בביצוע</div>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-gray-600">{pendingCount}</div>
+            <div className="text-xs text-gray-600">ממתינות לעיבוד</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-orange-600">{waitingCount}</div>
-            <div className="text-sm text-gray-600">ממתינות</div>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-blue-600">{inProgressCount}</div>
+            <div className="text-xs text-gray-600">בעיבוד</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-6 text-center">
-            <div className="text-3xl font-bold text-green-600">{completedCount}</div>
-            <div className="text-sm text-gray-600">הושלמו</div>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">{readyCount}</div>
+            <div className="text-xs text-gray-600">מוכנות להצגה</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-orange-600">{feedbackCount}</div>
+            <div className="text-xs text-gray-600">הערות התקבלו</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <div className="text-2xl font-bold text-green-600">{completedCount}</div>
+            <div className="text-xs text-gray-600">הושלמו ואושרו</div>
           </CardContent>
         </Card>
       </div>

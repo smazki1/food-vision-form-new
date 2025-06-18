@@ -130,10 +130,10 @@ export const useClientSubmissionStats = (clientId: string) => {
         const type = submission.item_type || 'unknown';
         stats.byType[type] = (stats.byType[type] || 0) + 1;
         
-        // Count processed vs pending
-        if (status === 'הושלם' || status === 'מאושר') {
+        // Count processed vs pending - include מוכנה להצגה as processed since servings are deducted
+        if (status === 'הושלמה ואושרה' || status === 'מוכנה להצגה' || status === 'הושלם' || status === 'מאושר') {
           stats.processed++;
-        } else if (status === 'בעיבוד' || status === 'ממתין לעיבוד') {
+        } else if (status === 'בעיבוד' || status === 'ממתינה לעיבוד' || status === 'ממתין לעיבוד') {
           stats.pending++;
         }
       });
