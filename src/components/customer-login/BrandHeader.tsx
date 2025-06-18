@@ -44,7 +44,7 @@ const BrandHeader = () => {
             חסכו 80% מעלויות צילום
           </div>
           <p className="text-lg font-semibold leading-relaxed">
-            <span className="text-yellow-100 font-bold text-xl">ללא צלם וללא סטודיו<br />תוך 72 שעות בלבד</span>
+            <span className="text-yellow-100 font-bold text-xl">ללא צלם וללא סטודיו<br />תוך 48 שעות בלבד</span>
           </p>
         </div>
         
