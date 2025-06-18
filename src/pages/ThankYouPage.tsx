@@ -1,4 +1,3 @@
-
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Phone, Clock, Sparkles, Camera, MessageCircle, FileText, Palette } from 'lucide-react';
@@ -14,18 +13,6 @@ const ThankYouPage = () => {
 
   const nextSteps = [
     {
-      icon: CheckCircle,
-      title: "התשלום התקבל בהצלחה",
-      description: "הכל מוכן להתחלה!",
-      color: "text-green-600 bg-green-100"
-    },
-    {
-      icon: Phone,
-      title: "נתקשר אליכם מחר",
-      description: "שיחת אפיון קצרה (15 דקות)",
-      color: "text-[#8b1e3f] bg-[#8b1e3f]/10"
-    },
-    {
       icon: Sparkles,
       title: "נתחיל להפיק את התמונות",
       description: "המערכת שלנו תתחיל לעבוד",
@@ -33,7 +20,7 @@ const ThankYouPage = () => {
     },
     {
       icon: Clock,
-      title: "תוצאות תוך 48-72 שעות",
+      title: "תוצאות תוך 48 שעות",
       description: "תמונות מקצועיות מוכנות לפרסום",
       color: "text-blue-600 bg-blue-100"
     }
@@ -117,32 +104,6 @@ const ThankYouPage = () => {
                 </p>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Preparation Section */}
-        <div className="mb-12">
-          <h3 className="text-2xl font-bold text-[#8b1e3f] mb-8 text-center">
-            בינתיים, תוכלו להכין:
-          </h3>
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-white/50">
-            <div className="space-y-6">
-              {preparationItems.map((item, index) => (
-                <div key={index} className="flex items-start gap-4 p-4 bg-gradient-to-r from-slate-50 to-white rounded-xl border border-slate-100 hover:border-[#8b1e3f]/30 transition-colors">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-[#f3752b] to-[#ff6b35] text-white rounded-full flex items-center justify-center">
-                    <item.icon className="w-6 h-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="text-lg font-bold text-[#8b1e3f] mb-2">
-                      {item.title}
-                    </h4>
-                    <p className="text-slate-600 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
