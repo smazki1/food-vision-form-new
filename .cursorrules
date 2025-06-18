@@ -475,7 +475,7 @@ const navigateComparisonOriginal = (direction: 'prev' | 'next') => {
 **Layout Structure**:
 ```
 [Processed Images - Left] | [Original Images - Right]
-     (תמונות מעובדות)     |      (תמונות מקור)
+     (תמונות מוכנות)     |      (תמונות מקור)
      bg-gray-800          |      bg-gray-900
 ```
 
@@ -573,7 +573,7 @@ useEffect(() => {
     
     {/* After - Processed Images */}
     <div className="bg-gray-50 rounded-lg p-6">
-      <h3>אחרי - תמונות מעובדות</h3>
+                <h3>אחרי - תמונות מוכנות</h3>
       <Badge>{currentProcessedIndex + 1} / {submission.processed_image_urls.length}</Badge>
       
       <div className="relative">

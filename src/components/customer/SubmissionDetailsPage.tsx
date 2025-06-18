@@ -99,13 +99,13 @@ export function SubmissionDetailsPage() {
       const statusSuccess = await updateSubmissionStatus("הערות התקבלו");
       
       if (statusSuccess) {
-        toast({
-          title: "בקשת עריכה נשלחה",
-          description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
-        });
-        setEditNote("");
-        setEditDialogOpen(false);
-      } else {
+      toast({
+        title: "בקשת עריכה נשלחה",
+        description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
+      });
+      setEditNote("");
+      setEditDialogOpen(false);
+    } else {
         toast({
           title: "שגיאה בעדכון סטטוס",
           description: "ההערה נשמרה אך הסטטוס לא עודכן",
@@ -340,7 +340,7 @@ export function SubmissionDetailsPage() {
   // Check if this submission can be edited
   const canRequestEdit = submission.submission_status === "מוכנה להצגה";
   
-  // Check if this submission can be approved  
+  // Check if this submission can be approved
   const canApprove = submission.submission_status === "מוכנה להצגה";
   
   // Check if images can be downloaded or shared
@@ -556,7 +556,7 @@ export function SubmissionDetailsPage() {
 
       <Tabs defaultValue="main" className="w-full">
         <TabsList className="grid grid-cols-2 w-full max-w-md mb-4">
-          <TabsTrigger value="main">תמונות מעובדות</TabsTrigger>
+                          <TabsTrigger value="main">תמונות מוכנות</TabsTrigger>
           <TabsTrigger value="editHistory">היסטוריית עריכות</TabsTrigger>
         </TabsList>
         
@@ -566,19 +566,19 @@ export function SubmissionDetailsPage() {
             {/* Side by side image comparison - single images with navigation */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-none">
               {/* Processed Images - Left Side */}
-              <Card>
+          <Card>
                 <CardHeader className="pb-3 sm:pb-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <CardTitle className="text-right text-lg sm:text-xl">תמונות מעובדות</CardTitle>
+                    <CardTitle className="text-right text-lg sm:text-xl">תמונות מוכנות</CardTitle>
                     {hasProcessedImages && (
                       <Badge variant="outline" className="w-fit text-sm">
                         {currentProcessedIndex + 1} / {submission.processed_image_urls.length}
                       </Badge>
                     )}
                   </div>
-                </CardHeader>
+            </CardHeader>
                 <CardContent className="p-3 sm:p-6">
-                  {hasProcessedImages ? (
+              {hasProcessedImages ? (
                                           <div className="relative group">
                         <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                           <img
@@ -615,7 +615,7 @@ export function SubmissionDetailsPage() {
                     </div>
                   ) : (
                     <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
-                      <p className="text-gray-500">אין תמונות מעובדות</p>
+                      <p className="text-gray-500">אין תמונות מוכנות</p>
                     </div>
                   )}
                 </CardContent>
@@ -648,16 +648,16 @@ export function SubmissionDetailsPage() {
                       {/* Navigation arrows for original images */}
                       {submission.original_image_urls.length > 1 && (
                         <>
-                          <Button
-                            variant="secondary"
+                        <Button 
+                          variant="secondary" 
                             size="sm"
                             className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
                             onClick={() => navigateOriginalImage('prev')}
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="secondary"
+                          <Button 
+                            variant="secondary" 
                             size="sm"
                             className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
                             onClick={() => navigateOriginalImage('next')}
@@ -665,10 +665,10 @@ export function SubmissionDetailsPage() {
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </>
-                      )}
+                        )}
                       
 
-                    </div>
+                      </div>
                   ) : (
                     <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                       <p className="text-gray-500">אין תמונות מקור</p>
@@ -676,23 +676,23 @@ export function SubmissionDetailsPage() {
                   )}
                 </CardContent>
               </Card>
-            </div>
-
+                                  </div>
+                                
             {/* Fullscreen Comparison Button */}
             {hasProcessedImages && submission.original_image_urls && submission.original_image_urls.length > 0 && (
               <div className="flex justify-center px-4 sm:px-0">
-                <Button 
+                                    <Button 
                   onClick={openFullscreenComparison}
-                  variant="outline"
+                                        variant="outline" 
                   size="lg"
                   className="gap-2 w-full sm:w-auto text-base sm:text-sm py-3 sm:py-2"
-                >
+                                      >
                   <Maximize className="h-5 w-5" />
                   השוואה מלאה
-                </Button>
+                                      </Button>
               </div>
-            )}
-
+                                    )}
+                                    
             {/* Comments Section */}
             <Card>
               <CardHeader className="pb-3 sm:pb-6">
@@ -708,7 +708,7 @@ export function SubmissionDetailsPage() {
                     <div className="space-y-2">
                       <Skeleton className="h-16 w-full" />
                       <Skeleton className="h-16 w-full" />
-                    </div>
+                                  </div>
                   ) : messages.length > 0 ? (
                     messages.map((message) => (
                       <div key={message.message_id} className="bg-gray-50 p-3 rounded-lg">
@@ -717,9 +717,9 @@ export function SubmissionDetailsPage() {
                           <span className="text-xs text-muted-foreground">
                             {formatDate(message.timestamp)}
                           </span>
-                        </div>
+                                </div>
                         <p className="text-sm">{message.content}</p>
-                      </div>
+                              </div>
                     ))
                   ) : (
                     <p className="text-muted-foreground text-center py-4">אין הודעות עדיין</p>
@@ -734,17 +734,17 @@ export function SubmissionDetailsPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     className="flex-1 min-h-[80px]"
                   />
-                  <Button
+                        <Button 
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim()}
                     className="self-start sm:self-end w-full sm:w-auto py-3 sm:py-2"
-                  >
+                        >
                     <Send className="h-4 w-4 ml-2 sm:ml-0" />
                     <span className="sm:hidden">שלח הודעה</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                        </Button>
+                      </div>
+            </CardContent>
+          </Card>
           </div>
         </TabsContent>
         
@@ -805,7 +805,7 @@ export function SubmissionDetailsPage() {
         imageUrl={imageToShare || ''}
         itemName={submission.item_name_at_submission}
       />
-      </div>
+              </div>
     </div>
   );
 }

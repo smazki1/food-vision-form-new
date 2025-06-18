@@ -452,7 +452,14 @@ export const useSubmissionComments = (submissionId: string) => {
 };
 
 /**
- * Helper function to automatically deduct servings when submission is approved (customer version)
+ * Helper function to check if status requires serving deduction
+ */
+function isServingDeductionStatus(status: string): boolean {
+  return status === 'מוכנה להצגה' || status === 'הושלמה ואושרה';
+}
+
+/**
+ * Helper function to automatically deduct servings when submission reaches completion stages (customer version)
  */
 async function handleCustomerAutomaticServingDeduction(submissionId: string, submissionData: any) {
   try {
@@ -483,7 +490,7 @@ async function handleCustomerAutomaticServingDeduction(submissionId: string, sub
 
     // Deduct one serving
     const newServingsCount = currentServings - 1;
-    const notes = `ניכוי אוטומטי בעקבות אישור עבודה: ${submissionData.item_name_at_submission}`;
+    const notes = `ניכוי אוטומטי בעקבות התקדמות עבודה: ${submissionData.item_name_at_submission}`;
 
     // Update client servings with audit trail
     await updateClientServings(clientId, newServingsCount, notes);
@@ -527,8 +534,8 @@ export const useUpdateSubmissionStatus = () => {
 
       if (updateError) throw updateError;
 
-      // Automatic serving deduction when submission is approved
-      if (status === "הושלמה ואושרה") {
+      // Automatic serving deduction when submission reaches completion stages
+      if (isServingDeductionStatus(status)) {
         await handleCustomerAutomaticServingDeduction(submissionId, updatedSubmission);
       }
 

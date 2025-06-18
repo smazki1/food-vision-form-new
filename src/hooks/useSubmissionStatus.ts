@@ -5,7 +5,14 @@ import { toast } from "sonner";
 import { updateClientServings } from "@/api/clientApi";
 
 /**
- * Helper function to automatically deduct servings when submission is approved
+ * Helper function to check if status requires serving deduction
+ */
+function isServingDeductionStatus(status: string): boolean {
+  return status === 'מוכנה להצגה' || status === 'הושלמה ואושרה';
+}
+
+/**
+ * Helper function to automatically deduct servings when submission reaches completion stages
  */
 async function handleAutomaticServingDeduction(submissionId: string, submissionData: any) {
   try {
@@ -36,7 +43,7 @@ async function handleAutomaticServingDeduction(submissionId: string, submissionD
 
     // Deduct one serving
     const newServingsCount = currentServings - 1;
-    const notes = `ניכוי אוטומטי בעקבות אישור עבודה: ${submissionData.item_name_at_submission}`;
+    const notes = `ניכוי אוטומטי בעקבות התקדמות עבודה: ${submissionData.item_name_at_submission}`;
 
     // Update client servings with audit trail
     await updateClientServings(clientId, newServingsCount, notes);
@@ -158,11 +165,11 @@ export const useSubmissionStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
       
       // Handle serving changes based on status transitions
-      if (newStatus === 'הושלמה ואושרה' && previousStatus !== 'הושלמה ואושרה') {
-        // Changing TO approved status - deduct serving
+      if (isServingDeductionStatus(newStatus) && !isServingDeductionStatus(previousStatus)) {
+        // Changing TO completion status (מוכנה להצגה or הושלמה ואושרה) - deduct serving
         await handleAutomaticServingDeduction(submissionId, data);
-      } else if (previousStatus === 'הושלמה ואושרה' && newStatus !== 'הושלמה ואושרה') {
-        // Changing FROM approved status to something else - restore serving
+      } else if (isServingDeductionStatus(previousStatus) && !isServingDeductionStatus(newStatus)) {
+        // Changing FROM completion status to something else - restore serving
         await handleAutomaticServingRestoration(submissionId, data);
       }
 

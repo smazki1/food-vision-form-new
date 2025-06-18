@@ -22,7 +22,7 @@ const ProcessedImagesSection: React.FC<ProcessedImagesSectionProps> = ({
 }) => {
   return (
     <div>
-      <h3 className="text-lg font-medium mb-2">תמונות מעובדות</h3>
+      <h3 className="text-lg font-medium mb-2">תמונות מוכנות</h3>
       <ProcessedImagesGrid
         processedImageUrls={processedImageUrls}
         mainProcessedImageUrl={mainProcessedImageUrl}

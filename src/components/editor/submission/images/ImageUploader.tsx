@@ -55,7 +55,7 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUploaded }) => {
     <div className="mt-4 space-y-4">
       <div className="flex flex-col gap-2">
         <label htmlFor="image-upload" className="text-sm font-medium">
-          העלאת תמונות מעובדות:
+          העלאת תמונות מוכנות:
         </label>
         <input
           id="image-upload"

@@ -29,7 +29,7 @@ const ImageQualityGuide: React.FC<ImageQualityGuideProps> = ({
           </Alert>
         </div>
       ) : (
-        <p className="text-muted-foreground">אין תמונות מעובדות לבדיקה</p>
+        <p className="text-muted-foreground">אין תמונות מוכנות לבדיקה</p>
       )}
     </div>
   );

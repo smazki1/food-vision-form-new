@@ -221,7 +221,7 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
             <CardHeader className="bg-gray-50">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Sparkles className="h-5 w-5" />
-                תמונות מעובדות
+                                      תמונות מוכנות
                 <Badge variant="outline">
                   {submission.processed_image_urls?.length || 0}
                 </Badge>
@@ -274,7 +274,7 @@ export const SubmissionDetailsRedesigned: React.FC = () => {
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
                       <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                       <p className="text-sm text-gray-600">גרור תמונות או לחץ להעלאה</p>
-                      <p className="text-xs text-gray-500 mt-1">להוספת תמונות מעובדות</p>
+                      <p className="text-xs text-gray-500 mt-1">להוספת תמונות מוכנות</p>
                     </div>
                   </div>
                 )}

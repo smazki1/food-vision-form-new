@@ -141,7 +141,7 @@ const ImagesTabContent = ({
           <div className="space-y-6">
             <Alert className="bg-muted">
               <Info className="h-4 w-4" />
-              <AlertTitle>העלאת תמונות מעובדות</AlertTitle>
+              <AlertTitle>העלאת תמונות מוכנות</AlertTitle>
               <AlertDescription>
                 העלה את התמונות המעובדות סופית שתרצה להציג ללקוח. הלקוח יוכל לאשר את התמונות או לבקש עריכות נוספות.
                 <ul className="list-disc list-inside mt-2 space-y-1">
@@ -279,10 +279,10 @@ const ImagesTabContent = ({
       
       <Separator className="my-8" />
         
-      <h2 className="text-xl font-semibold">תצוגה מקדימה של תמונות מעובדות</h2>
+              <h2 className="text-xl font-semibold">תצוגה מקדימה של תמונות מוכנות</h2>
           {!hasProcessedImages ? (
             <div className="text-center py-10">
-              <p className="text-muted-foreground">אין תמונות מעובדות להצגה</p>
+              <p className="text-muted-foreground">אין תמונות מוכנות להצגה</p>
             </div>
           ) : (
             <div className="space-y-6">

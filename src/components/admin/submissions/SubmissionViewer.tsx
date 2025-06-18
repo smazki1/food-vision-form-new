@@ -677,7 +677,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-purple-600" />
-                      <h3 className="font-semibold">אחרי - תמונות מעובדות</h3>
+                      <h3 className="font-semibold">אחרי - תמונות מוכנות</h3>
                       {submission.processed_image_urls && submission.processed_image_urls.length > 0 && (
                         <Badge variant="outline">
                           {currentProcessedIndex + 1} / {submission.processed_image_urls.length}
@@ -780,7 +780,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                         <div className="w-full max-w-sm space-y-4">
                           <div className="text-center">
                             <Upload className="h-8 w-8 text-gray-400 mb-2 mx-auto" />
-                            <span className="text-gray-500 text-sm">אין תמונות מעובדות</span>
+                            <span className="text-gray-500 text-sm">אין תמונות מוכנות</span>
                           </div>
                           
                           {/* Quick Upload Controls */}
@@ -854,7 +854,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <span className="text-gray-500">אין תמונות מעובדות</span>
+                        <span className="text-gray-500">אין תמונות מוכנות</span>
                       )}
                     </div>
                   )}
@@ -905,7 +905,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-purple-600" />
-                      <h3 className="font-semibold">תמונות מעובדות</h3>
+                      <h3 className="font-semibold">תמונות מוכנות</h3>
                     </div>
                     {viewMode === 'admin' && (
                       <Button

@@ -409,7 +409,7 @@ const FullscreenComparison: React.FC<{
           {/* Processed Images Side - Left */}
           <div className="flex-1 relative flex items-center justify-center bg-gray-800">
             <div className="absolute top-4 left-4 z-10 text-white text-sm bg-black/50 px-3 py-1 rounded">
-              תמונות מעובדות
+                                      תמונות מוכנות
             </div>
             
             {processedImages.length > 0 ? (
@@ -452,7 +452,7 @@ const FullscreenComparison: React.FC<{
             ) : (
               <div className="text-white text-center">
                 <ImageIcon className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p>אין תמונות מעובדות</p>
+                <p>אין תמונות מוכנות</p>
               </div>
             )}
           </div>
@@ -1362,7 +1362,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                   {/* Processed Images */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-medium">תמונות מעובדות</h3>
+                      <h3 className="font-medium">תמונות מוכנות</h3>
                       <span className="text-sm text-gray-500">
                         {submissions[selectedSubmission].processed_image_urls?.length || 0} תמונות
                       </span>
@@ -1484,8 +1484,8 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                             {getCommentsByType('editor_note').length}
                           </Badge>
                         </TabsTrigger>
-                      </TabsList>
-
+                    </TabsList>
+                    
                       {/* Comment Input */}
                       <div className="mt-4 space-y-3">
                         <div className="bg-blue-50 rounded-lg p-3">
@@ -1497,7 +1497,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                               {activeCommentTab === 'editor_note' && 'הערה לעורך - רק עורכים יוכלו לראות'}
                             </span>
                           </div>
-                          <Textarea
+                      <Textarea
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder={`כתוב הערה ${activeCommentTab === 'admin_internal' ? 'פנימית' : 
@@ -1513,7 +1513,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                           </Button>
                         </div>
                       </div>
-
+                    
                       <TabsContent value={activeCommentTab} className="mt-4">
                         <div className="space-y-3 max-h-96 overflow-y-auto">
                           {getCommentsByType(activeCommentTab).map((comment) => (
@@ -1536,8 +1536,8 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                             </div>
                           )}
                         </div>
-                      </TabsContent>
-                    </Tabs>
+                    </TabsContent>
+                  </Tabs>
                 </div>
 
                 {/* LORA Details */}
@@ -1623,10 +1623,10 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium">הועלו תמונות מעובדות</span>
+                          <span className="text-sm font-medium">הועלו תמונות מוכנות</span>
                           <span className="text-xs text-gray-500">13/06/2025 14:30</span>
                         </div>
-                        <p className="text-xs text-gray-600">הועלו 2 תמונות מעובדות חדשות עבור חמבורגר טרופי</p>
+                                                  <p className="text-xs text-gray-600">הועלו 2 תמונות מוכנות חדשות עבור חמבורגר טרופי</p>
                       </div>
                     </div>
                     

@@ -542,15 +542,15 @@ const SubmissionsPage = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">תמונות מעובדות</label>
+                <label className="text-sm font-medium mb-1 block">תמונות מוכנות</label>
                 <Select value={filters.hasProcessedImages} onValueChange={(value) => setFilters({...filters, hasProcessedImages: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">הכול</SelectItem>
-                    <SelectItem value="yes">עם תמונות מעובדות</SelectItem>
-                    <SelectItem value="no">ללא תמונות מעובדות</SelectItem>
+                    <SelectItem value="yes">עם תמונות מוכנות</SelectItem>
+                                          <SelectItem value="no">ללא תמונות מוכנות</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

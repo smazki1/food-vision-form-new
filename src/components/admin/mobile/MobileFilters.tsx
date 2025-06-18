@@ -51,7 +51,7 @@ export const MobileFilters: React.FC<MobileFiltersProps> = ({
       case 'status': return 'סטטוס';
       case 'itemType': return 'סוג פריט';
       case 'dateRange': return 'תאריך';
-      case 'hasProcessedImages': return 'תמונות מעובדות';
+              case 'hasProcessedImages': return 'תמונות מוכנות';
       case 'hasBrandingMaterials': return 'חומרי מיתוג';
       case 'hasReferenceExamples': return 'דוגמאות';
       default: return key;

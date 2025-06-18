@@ -20,7 +20,7 @@ const ProcessedImagesGrid: React.FC<ProcessedImagesGridProps> = ({
   if (!processedImageUrls?.length) {
     return (
       <div className="aspect-square bg-muted rounded-md flex items-center justify-center">
-        <p className="text-muted-foreground">אין תמונות מעובדות</p>
+        <p className="text-muted-foreground">אין תמונות מוכנות</p>
       </div>
     );
   }

@@ -15,22 +15,22 @@ export type Message = {
 export async function getSubmissionMessages(submissionId: string): Promise<Message[]> {
   try {
     // Use submission_comments table with proper mapping
-    const { data, error } = await supabase
+  const { data, error } = await supabase
       .from("submission_comments")
-      .select("*")
-      .eq("submission_id", submissionId)
+    .select("*")
+    .eq("submission_id", submissionId)
       .in("comment_type", ["client_visible"])
       .order("created_at", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching messages:", error);
+  if (error) {
+    console.error("Error fetching messages:", error);
       // If table doesn't exist, return empty array
       if (error.code === '42P01') {
         console.warn('submission_comments table does not exist - returning empty messages');
         return [];
       }
-      throw error;
-    }
+    throw error;
+  }
 
     // Map submission_comments to Message format
     return (data || []).map(comment => ({
