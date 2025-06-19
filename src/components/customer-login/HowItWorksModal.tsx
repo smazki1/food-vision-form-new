@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -155,7 +154,7 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
               מוכנים לטעום?
             </h3>
             <Button
-              onClick={() => window.open('/public-upload', '_blank')}
+              onClick={() => window.open('https://app.icount.co.il/m/7f0d1/c12db4pa6u6853abb77?utm_source=iCount&utm_medium=paypage&utm_campaign=166', '_blank')}
               className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg font-bold rounded-2xl flex items-center gap-3 mx-auto mb-4"
             >
               <Sparkles className="w-6 h-6" />
