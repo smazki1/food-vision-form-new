@@ -293,3 +293,55 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
     reference_image_urls: drink.reference_image_urls
   })) as DrinkDetailsForTab[];
 }
+
+// Get client remaining servings
+export async function getClientRemainingServings(clientId: string): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('remaining_servings')
+      .eq('client_id', clientId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching client remaining servings:", error);
+      throw error;
+    }
+
+    return data?.remaining_servings || 0;
+  } catch (error) {
+    console.error("Exception in getClientRemainingServings:", error);
+    throw error;
+  }
+}
+
+// Create batch submissions
+export async function createBatchSubmissions(
+  clientId: string, 
+  items: Array<{ originalItemId: string; itemType: "dish" | "cocktail" | "drink"; itemName: string }>
+): Promise<void> {
+  try {
+    const submissions = items.map(item => ({
+      client_id: clientId,
+      original_item_id: item.originalItemId,
+      item_type: item.itemType,
+      item_name_at_submission: item.itemName,
+      submission_status: 'ממתינה לעיבוד' as SubmissionStatus,
+      uploaded_at: new Date().toISOString()
+    }));
+
+    const { error } = await supabase
+      .from('customer_submissions')
+      .insert(submissions);
+
+    if (error) {
+      console.error("Error creating batch submissions:", error);
+      throw error;
+    }
+
+    console.log(`Successfully created ${submissions.length} batch submissions for client ${clientId}`);
+  } catch (error) {
+    console.error("Exception in createBatchSubmissions:", error);
+    throw error;
+  }
+}
