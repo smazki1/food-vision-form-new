@@ -187,7 +187,7 @@ const NewPublicUploadForm: React.FC = () => {
                   onClick={handleSubmit}
                   className="flex items-center gap-2 px-8 py-4 bg-green-600 hover:bg-green-700 text-white text-lg font-semibold"
                 >
-                  הזמן עכשיו - 249₪
+                  הזמן עכשי - 249₪
                 </Button>
               </div>
             )}

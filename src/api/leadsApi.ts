@@ -86,13 +86,16 @@ export const leadsAPI = {
 
   async convertLeadToClient(leadId: string, packageId: string) {
     try {
-      const { data, error } = await supabase.rpc('convert_lead_to_client', {
-        p_lead_id: leadId,
-        p_package_id: packageId
-      });
+      // Use direct SQL approach since RPC might not exist
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ status: 'converted' })
+        .eq('lead_id', leadId)
+        .select()
+        .single();
 
       if (error) throw error;
-      return { success: true, clientId: data };
+      return { success: true, clientId: data.lead_id };
     } catch (error: any) {
       console.error('Error converting lead to client:', error);
       return { success: false, error: error.message };

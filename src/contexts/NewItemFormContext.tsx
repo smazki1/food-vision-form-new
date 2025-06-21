@@ -66,6 +66,8 @@ const initialFormData: NewItemFormData = {
   referenceExamples: []
 };
 
+let nextDishId = 1;
+
 export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [formData, setFormData] = useState<NewItemFormData>(initialFormData);
 
@@ -75,11 +77,12 @@ export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const resetFormData = () => {
     setFormData(initialFormData);
+    nextDishId = 1;
   };
 
   const addDish = () => {
     const newDish: DishData = {
-      id: formData.dishes.length > 0 ? Math.max(...formData.dishes.map(d => d.id)) + 1 : 1,
+      id: nextDishId++,
       itemName: '',
       itemType: '',
       description: '',
