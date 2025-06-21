@@ -126,17 +126,11 @@ export function useSubmissionStatusTracking() {
         };
       }
       
-      // Format status name for column update (replace spaces with underscores)
-      const statusColumnName = `status_${status.replace(/\s+/g, "_")}_at`;
-      
-      // Create an update object with the dynamically generated column name
+      // Create an update object
       const updateData: Record<string, any> = {
         submission_status: status,
         edit_history: statusHistory
       };
-      
-      // Add the status timestamp to the update object
-      updateData[statusColumnName] = now;
       
       // Update the submission status and history
       const { data, error } = await supabase

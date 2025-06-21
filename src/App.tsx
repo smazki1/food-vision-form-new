@@ -20,6 +20,7 @@ import SmartUploadPage from "@/pages/SmartUploadPage";
 import ThankYouPage from "@/pages/ThankYouPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
+import CustomerUploadPage from "@/pages/customer/CustomerUploadPage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
 import { SubmissionDetailsPage as CustomerSubmissionDetailsPage } from "@/components/customer/SubmissionDetailsPage";
@@ -160,6 +161,7 @@ const App = () => (
               <Route path="/customer/auth" element={<CustomerAuthPage />} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
+              <Route path="/customer/upload" element={<CustomerRoute><CustomerUploadPage /></CustomerRoute>} />
               <Route path="/customer/submissions" element={<CustomerRoute><CustomerSubmissionsPage /></CustomerRoute>} />
               <Route path="/customer/submissions/:submissionId" element={<CustomerRoute><CustomerSubmissionDetailsPage /></CustomerRoute>} />
 

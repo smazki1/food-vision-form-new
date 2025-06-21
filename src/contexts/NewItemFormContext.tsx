@@ -108,7 +108,7 @@ export const NewItemFormProvider: React.FC<NewItemFormProviderProps> = ({ childr
   };
 
   const addDish = (): string => {
-    let newId: string;
+    let newId: string = '';
     
     setFormData(prevData => {
       newId = (prevData.dishes.length + 1).toString();
@@ -120,7 +120,7 @@ export const NewItemFormProvider: React.FC<NewItemFormProviderProps> = ({ childr
       };
     });
     
-    return newId!;
+    return newId;
   };
 
   const removeDish = (dishId: string) => {

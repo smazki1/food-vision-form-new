@@ -63,11 +63,41 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
       )}
 
       {/* Navigation Buttons Row */}
-      <div className={cn(
-        "flex justify-center gap-4",
-        formSteps.length === 1 || isFirstStep ? "justify-center" : "justify-center"
-      )}>
-        {shouldShowPrevious && (
+      {!isLastStep && (
+        <div className={cn(
+          "flex justify-center gap-4",
+          formSteps.length === 1 || isFirstStep ? "justify-center" : "justify-center"
+        )}>
+          {shouldShowPrevious && (
+            <Button 
+              variant="outline"
+              onClick={onPrevious} 
+              disabled={isSubmitting || isCreatingClient}
+              className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
+            >
+              הקודם
+            </Button>
+          )}
+          <Button 
+            onClick={onNext} 
+            disabled={isSubmitting || isCreatingClient}
+            className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full bg-[#F3752B] hover:bg-[#F3752B]/90"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                שולח...
+              </>
+            ) : 
+              (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
+            }
+          </Button>
+        </div>
+      )}
+
+      {/* Previous button only for last step */}
+      {isLastStep && shouldShowPrevious && (
+        <div className="flex justify-center">
           <Button 
             variant="outline"
             onClick={onPrevious} 
@@ -76,28 +106,8 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
           >
             הקודם
           </Button>
-        )}
-        <Button 
-          onClick={isLastStep ? onMainSubmit : onNext} 
-          disabled={isSubmitting || isCreatingClient}
-          className={cn("min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full",
-            isLastStep 
-            ? "bg-[#8B1E3F] hover:bg-[#8B1E3F]/90" 
-            : "bg-[#F3752B] hover:bg-[#F3752B]/90"
-          )}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              שולח...
-            </>
-          ) : 
-            isLastStep ? 
-              'שלח הגשה' : 
-              (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
-          }
-        </Button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

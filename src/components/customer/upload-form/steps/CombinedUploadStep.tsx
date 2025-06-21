@@ -7,26 +7,111 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { StepProps } from '../FoodVisionUploadForm';
-import { UploadCloud, Trash2, AlertTriangle, Sparkles, FileImage, ChevronDown } from 'lucide-react';
+import { UploadCloud, Trash2, AlertTriangle, Sparkles, FileImage, ChevronDown, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
-  const { formData, updateFormData } = useNewItemForm();
+  const { formData, updateFormData, addDish, updateDish, getDish, removeDish } = useNewItemForm();
   const errors = externalErrors || {};
-  const [checklist, setChecklist] = useState({
-    imageQuality: false,
-    composition: false,
-    colors: false
-  });
+  const [activeDishId, setActiveDishId] = useState('1');
+  const [expandedDishes, setExpandedDishes] = useState<Set<string>>(new Set(['1']));
+
+    // Update current dish data when formData changes
+  useEffect(() => {
+    if (activeDishId) {
+      updateDish(activeDishId, {
+        itemName: formData.itemName,
+        itemType: formData.itemType,
+        description: formData.description,
+        specialNotes: formData.specialNotes,
+        referenceImages: formData.referenceImages
+      });
+    }
+  }, [formData.itemName, formData.itemType, formData.description, formData.specialNotes, formData.referenceImages, activeDishId, updateDish]);
+
+  // Ensure new dishes are properly expanded
+  useEffect(() => {
+    if (activeDishId && !expandedDishes.has(activeDishId)) {
+      setExpandedDishes(new Set([activeDishId]));
+    }
+  }, [activeDishId, expandedDishes]);
+
+  const handleAddAnotherDish = () => {
+    const newDishId = addDish();
+    
+    // Immediately set the new dish as active and expanded
+    setActiveDishId(newDishId);
+    setExpandedDishes(new Set([newDishId]));
+    
+    // Update form with empty data for new dish
+    updateFormData({
+      itemName: '',
+      itemType: '',
+      description: '',
+      specialNotes: '',
+      referenceImages: []
+    });
+  };
+
+  const handleDishToggle = (dishId: string) => {
+    const isExpanded = expandedDishes.has(dishId);
+    
+    if (isExpanded) {
+      // Collapse this dish
+      const newExpanded = new Set(expandedDishes);
+      newExpanded.delete(dishId);
+      setExpandedDishes(newExpanded);
+    } else {
+      // Expand this dish and collapse others
+      setExpandedDishes(new Set([dishId]));
+      setActiveDishId(dishId);
+      
+      // Load dish data into form
+      const dishData = getDish(dishId);
+      if (dishData) {
+        updateFormData({
+          itemName: dishData.itemName,
+          itemType: dishData.itemType,
+          description: dishData.description,
+          specialNotes: dishData.specialNotes,
+          referenceImages: dishData.referenceImages
+        });
+      }
+    }
+  };
+
+  const handleRemoveDish = (dishId: string) => {
+    removeDish(dishId);
+    
+    // If we're removing the active dish, switch to another dish
+    if (dishId === activeDishId) {
+      const remainingDishes = formData.dishes.filter(d => d.id !== dishId);
+      if (remainingDishes.length > 0) {
+        const newActiveDish = remainingDishes[0];
+        setActiveDishId(newActiveDish.id);
+        setExpandedDishes(new Set([newActiveDish.id]));
+        
+        // Load the new active dish data
+        updateFormData({
+          itemName: newActiveDish.itemName,
+          itemType: newActiveDish.itemType,
+          description: newActiveDish.description,
+          specialNotes: newActiveDish.specialNotes,
+          referenceImages: newActiveDish.referenceImages
+        });
+      }
+    }
+  };
+
+  const showAddButton = formData.referenceImages.length > 0;
+
   const inputRef = useRef<HTMLDivElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredSuggestions, setFilteredSuggestions] = useState<string[]>([]);
 
-  // Popular item type suggestions
+  // Basic item type suggestions
   const itemTypeSuggestions = [
-    'מנה', 'שתיה', 'קוקטייל', 'צמיד', 'שרשרת', 'כוסות', 'צלחות', 
-    'תכשיטים', 'קאפקייק', 'עוגיות', 'לחם', 'פיצה', 'סלט', 'מרק',
-    'קינוח', 'רוטב', 'דגים', 'בשר', 'עוף', 'ממתקים'
+    'מנה', 'משקה', 'קינוח', 'אחר'
   ];
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
@@ -122,22 +207,52 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
   }, []);
 
   return (
-    <div className="space-y-8" dir="rtl">
-      <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <Sparkles className="w-8 h-8 text-primary ml-2" />
-          <FileImage className="w-8 h-8 text-primary" />
-        </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-          פרטי העלאה
-        </h2>
-        <p className="text-gray-600 mb-8">
-          הזינו את פרטי הפריט והעלו תמונות איכותיות
-        </p>
-      </div>
+    <div className="space-y-4" dir="rtl">
 
-      {/* Item Details Section */}
-      <div className="bg-primary/5 p-6 rounded-xl border border-primary/20">
+      {/* Dish Accordions */}
+      {formData.dishes.map((dish) => (
+        <div key={dish.id} className="border border-gray-200 rounded-xl overflow-hidden">
+          {/* Dish Header */}
+          <button
+            type="button"
+            onClick={() => handleDishToggle(dish.id)}
+            className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <ChevronDown 
+                className={`w-5 h-5 text-gray-600 transition-transform duration-200 ${
+                  expandedDishes.has(dish.id) ? 'rotate-180' : ''
+                }`} 
+              />
+              <span className="font-medium text-gray-800">
+                מנה {dish.id}: {dish.itemName || 'מנה חדשה'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">
+                {dish.referenceImages.length} תמונות
+              </span>
+              {parseInt(dish.id) > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveDish(dish.id);
+                  }}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                >
+                  הסר
+                </Button>
+              )}
+            </div>
+          </button>
+
+          {/* Dish Content */}
+          {expandedDishes.has(dish.id) && dish.id === activeDishId && (
+            <div className="p-6 space-y-6">
+              {/* Item Details Section */}
+              <div className="bg-primary/5 p-6 rounded-xl border border-primary/20">
         <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <Sparkles className="w-6 h-6 text-primary ml-2" />
           פרטי הפריט
@@ -155,6 +270,9 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
             iconPosition="right"
             required
           />
+          {errors?.itemName && (
+            <p className="text-xs text-red-500 mt-1">{errors.itemName}</p>
+          )}
 
           <div className="space-y-3 relative">
             <Label className="text-base font-medium text-gray-700">
@@ -169,7 +287,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
                 onChange={handleItemTypeChange}
                 onFocus={handleInputFocus}
                 onBlur={handleInputBlur}
-                placeholder="לדוגמה: מנה, שתיה, צמיד, כוסות..."
+                placeholder="לדוגמה: מנה, משקה, קינוח, אחר..."
                 maxLength={50}
                 className={cn(
                   "w-full px-4 py-3 text-base border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20",
@@ -220,7 +338,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
           <IconTextarea
             id="description"
             name="description"
-            label="מרכיבים עיקריים (אופציונלי)"
+            label="כתבו את המרכיבים המרכזיים שאסור לפספס במנה"
             value={formData.description}
             onChange={handleChange}
             placeholder="פרטו את המרכיבים העיקריים של הפריט"
@@ -248,31 +366,23 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
           העלאת תמונות
         </h3>
 
-        {/* Photography Tips Section */}
-        <div className="bg-blue-50 p-6 rounded-xl border border-blue-200 mb-6">
-          <h4 className="text-lg font-medium text-blue-800 mb-4 flex items-center">
-            💡 טיפים לצילום מושלם
+        {/* Important Information Section */}
+        <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 mb-6">
+          <h4 className="text-lg font-medium text-yellow-800 mb-4 flex items-center">
+            חשוב לדעת:
           </h4>
-          <div className="space-y-3 text-blue-700">
+          <div className="space-y-3 text-yellow-700">
             <div className="flex items-start gap-3">
-              <span className="text-blue-500 font-bold">•</span>
-              <p className="text-sm">וודאו שהתמונה ברורה ומוארת היטב - אור טבעי הוא הטוב ביותר</p>
+              <span className="text-yellow-600 font-bold">•</span>
+              <p className="text-sm"><strong>מה שאתם מעלים = מה שאתם מקבלים (בעיצוב מקצועי)</strong></p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-blue-500 font-bold">•</span>
-              <p className="text-sm">מרכזו את המנה בפוקוס ובמרכז התמונה</p>
+              <span className="text-yellow-600 font-bold">•</span>
+              <p className="text-sm">אנחנו משפרים את התמונה של המנות שלכם, לא את המנות עצמן. המנה בתמונה שלכם = המנה בתוצאה הסופית.</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-blue-500 font-bold">•</span>
-              <p className="text-sm">השתמשו ברקע נקי ופשוט שלא יסיח את הדעת מהמנה</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-blue-500 font-bold">•</span>
-              <p className="text-sm">צלמו מכמה זוויות שונות להצגה מגוונת של המנה</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-blue-500 font-bold">•</span>
-              <p className="text-sm">ודאו שהצבעים חיים ומושכים - זה מה שמושך לקוחות!</p>
+              <span className="text-yellow-600 font-bold">•</span>
+              <p className="text-sm">לתוצאה הטובה ביותר, וודאו שהמנה בתמונה נראית כמו שאתם רוצים להציג ללקוחות - אנחנו נדאג לתאורה מקצועית, רקע מושלם ועיצוב מדהים.</p>
             </div>
           </div>
         </div>
@@ -332,35 +442,59 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
           </div>
         )}
 
-        {formData.referenceImages.length > 0 && (
-          <div className="space-y-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
-            <h4 className="text-lg font-medium text-gray-700 mb-4">בדיקת איכות מהירה:</h4>
-            <div className="space-y-3">
-              {[
-                { id: "imageQuality", label: "התמונה ברורה ומוארת היטב" },
-                { id: "composition", label: "המנה ממורכזת ובפוקוס" },
-                { id: "colors", label: "הצבעים חיים ומושכים" }
-              ].map(item => (
-                <div key={item.id} className="flex items-center space-x-2 rtl:space-x-reverse">
-                  <Checkbox
-                    id={item.id}
-                    checked={checklist[item.id as keyof typeof checklist]}
-                    onCheckedChange={(checked) => 
-                      setChecklist(prev => ({ ...prev, [item.id]: checked as boolean }))
-                    }
-                    className="h-5 w-5 rounded border-gray-400 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                  />
-                  <label
-                    htmlFor={item.id}
-                    className="text-sm md:text-base text-gray-700 leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    {item.label}
-                  </label>
-                </div>
-              ))}
+
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      ))}
+
+      {/* Add Another Dish Button */}
+      {showAddButton && (
+        <div className="text-center">
+          <Button
+            type="button"
+            onClick={handleAddAnotherDish}
+            className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 mx-auto"
+          >
+            <Plus className="w-5 h-5" />
+            הוספת מנה נוספת
+          </Button>
+        </div>
+      )}
+
+      {/* Contact Details Section */}
+      <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+          <Sparkles className="w-6 h-6 text-primary ml-2" />
+          פרטי יצירת קשר
+        </h3>
+        
+        <div className="space-y-6">
+          <IconInput
+            id="restaurantName"
+            name="restaurantName"
+            label="שם המסעדה / העסק"
+            value={formData.restaurantName}
+            onChange={handleChange}
+            placeholder="לדוגמה: מסעדת השף הקטן"
+            error={errors?.restaurantName}
+            iconPosition="right"
+            required
+          />
+
+          <IconInput
+            id="submitterName"
+            name="submitterName"
+            label="שם איש הקשר"
+            value={formData.submitterName}
+            onChange={handleChange}
+            placeholder="שם מלא של המגיש"
+            error={errors?.submitterName}
+            iconPosition="right"
+            required
+          />
+        </div>
       </div>
     </div>
   );

@@ -59,7 +59,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
     }
   };
 
-  const canSubmit = remainingDishes === undefined || remainingDishes > 0;
+  // For customer upload form, we don't need to check package limits
+  // Users can submit even if remainingDishes is 0 since they can purchase more dishes
+  const canSubmit = true;
 
   return (
     <div className="space-y-8 animate-fade-in" dir="rtl">
@@ -77,7 +79,7 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
       {!clientId && restaurantName && (
         <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.1s' }}>
           <div className="flex items-center mb-4 justify-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center ml-4 shadow-md">
               <Building2 className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-xl font-bold text-[#8B1E3F]">פרטי המסעדה</h3>
@@ -90,91 +92,86 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
         </section>
       )}
 
-      {/* Item Details Section */}
+      {/* All Dishes Section */}
       <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.2s' }}>
         <div className="flex items-center mb-4 justify-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center ml-4 shadow-md">
             <ItemIcon className="h-5 w-5 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-[#8B1E3F]">פרטי הפריט</h3>
-        </div>
-        <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-          <dl className="space-y-1">
-            <ReviewItem label="שם הפריט" value={itemName} isMissing={!itemName} />
-            <ReviewItem label="סוג הפריט" value={getItemTypeDisplay(itemType)} isMissing={!itemType} />
-            <ReviewItem label="תיאור/מרכיבים" value={description} />
-            <ReviewItem label="הערות מיוחדות" value={specialNotes} />
-          </dl>
-        </div>
-      </section>
-
-      {/* Uploaded Images Section */}
-      <section className="space-y-4 animate-slide-in-right" style={{ animationDelay: '0.3s' }}>
-        <div className="flex items-center mb-4 justify-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#F3752B] to-[#E6661F] rounded-full flex items-center justify-center mr-3 shadow-md">
-            <ImageIcon className="h-5 w-5 text-white" />
-          </div>
           <h3 className="text-xl font-bold text-[#8B1E3F]">
-            תמונות שהועלו 
+            כל המנות שהועלו
             <span className="inline-flex items-center justify-center w-8 h-8 bg-[#8B1E3F] text-white text-sm font-bold rounded-full mr-2">
-              {referenceImages.length}
+              {formData.dishes.length}
             </span>
           </h3>
         </div>
-        <div className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-          {referenceImages.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
-              {referenceImages.map((file, index) => (
-                <div key={index} className="group relative bg-gray-50 rounded-xl shadow-sm overflow-hidden border-2 border-gray-100 aspect-video hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"> 
-                  <img 
-                    src={URL.createObjectURL(file)} 
-                    alt={`תצוגה מקדימה ${index + 1}`} 
-                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    onLoad={() => URL.revokeObjectURL(file.name)}
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs p-3">
-                    <div className="truncate font-medium">{file.name}</div>
-                  </div>
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {index + 1}
-                  </div>
+        
+        {formData.dishes.map((dish, dishIndex) => (
+          <div key={dish.id} className="bg-white rounded-2xl border-2 border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300 mb-6">
+            <div className="border-b border-gray-200 pb-4 mb-4">
+              <h4 className="text-lg font-bold text-[#8B1E3F] mb-2">מנה {dish.id}</h4>
+            </div>
+            
+            {/* Dish Details */}
+            <dl className="space-y-1 mb-6">
+              <ReviewItem label="שם הפריט" value={dish.itemName} isMissing={!dish.itemName} />
+              <ReviewItem label="סוג הפריט" value={getItemTypeDisplay(dish.itemType)} isMissing={!dish.itemType} />
+              <ReviewItem label="תיאור/מרכיבים" value={dish.description} />
+              <ReviewItem label="הערות מיוחדות" value={dish.specialNotes} />
+            </dl>
+
+            {/* Dish Images */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5 text-[#8B1E3F]" />
+                <span className="font-medium text-[#8B1E3F]">
+                  תמונות ({dish.referenceImages.length})
+                </span>
+              </div>
+              
+              {dish.referenceImages.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
+                  {dish.referenceImages.map((file, index) => (
+                    <div key={index} className="group relative bg-gray-50 rounded-xl shadow-sm overflow-hidden border-2 border-gray-100 aspect-video hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"> 
+                      <img 
+                        src={URL.createObjectURL(file)} 
+                        alt={`מנה ${dish.id} - תמונה ${index + 1}`} 
+                        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                        onLoad={() => URL.revokeObjectURL(file.name)}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs p-3">
+                        <div className="truncate font-medium">{file.name}</div>
+                      </div>
+                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                        {index + 1}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-8">
+                  <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">לא הועלו תמונות למנה זו</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">לא הועלו תמונות</p>
-            </div>
-          )}
-        </div>
+          </div>
+        ))}
       </section>
 
-      {/* Submission Cost / Package Info Alert */}
+      {/* Submission Info Alert */}
       <div className="animate-slide-in-right" style={{ animationDelay: '0.4s' }}>
         <Alert 
-          variant={remainingDishes !== undefined && remainingDishes <= 0 ? "destructive" : "default"} 
-          className={cn(
-            "p-6 rounded-2xl border-2 shadow-lg transition-all duration-300 hover:shadow-xl",
-            remainingDishes !== undefined && remainingDishes <= 0 
-              ? "bg-red-50 border-red-200 text-red-800"
-              : (remainingDishes !== undefined && remainingDishes > 0 && remainingDishes <= 5 
-                  ? "bg-orange-50 border-orange-200 text-orange-800"
-                  : "bg-blue-50 border-blue-200 text-blue-800") 
-        )}>
+          variant="default"
+          className="p-6 rounded-2xl border-2 shadow-lg transition-all duration-300 hover:shadow-xl bg-blue-50 border-blue-200 text-blue-800"
+        >
           <InfoIcon className="h-6 w-6" />
-          <AlertDescription className="text-base font-medium mr-3"> 
-            {remainingDishes !== undefined && remainingDishes <= 0 ? (
-              <>הגשה זו לא תתאפשר. <strong>לא נותרו לכם מנות בחבילה הנוכחית ({packageName || 'לא ידועה'}).</strong></>
-            ) : (
-              <>
-                הגשה זו תנצל מנה אחת מהחבילה שלכם.
-                {remainingDishes !== undefined && (
-                  <div className="mt-2 text-sm opacity-80">
-                    נותרו לכם {remainingDishes} מנות נוספות
-                  </div>
-                )}
-              </>
+          <AlertDescription className="text-base font-medium ml-3"> 
+            הגשה זו תישלח לעיבוד מיידי.
+            {remainingDishes !== undefined && remainingDishes > 0 && (
+              <div className="mt-2 text-sm opacity-80">
+                נותרו לכם {remainingDishes} מנות נוספות בחבילה
+              </div>
             )}
           </AlertDescription>
         </Alert>

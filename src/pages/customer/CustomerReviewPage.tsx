@@ -195,30 +195,21 @@ const CustomerReviewPage: React.FC = () => {
                   <img 
                     src={submission.main_processed_image_url} 
                     alt={submission.item_name_at_submission}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleViewSubmission(submission.submission_id)}
                   />
                 ) : submission.original_image_urls?.[0] ? (
                   <img 
                     src={submission.original_image_urls[0]} 
                     alt={submission.item_name_at_submission}
-                    className="w-full h-64 object-cover"
+                    className="w-full h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => handleViewSubmission(submission.submission_id)}
                   />
                 ) : (
                   <div className="w-full h-64 bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-500">תמונה לא זמינה</span>
                   </div>
                 )}
-                
-                {/* Hover overlay with view button */}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button 
-                    onClick={() => handleViewSubmission(submission.submission_id)}
-                    className="bg-white text-black hover:bg-gray-100"
-                  >
-                    <Eye className="ml-2 h-4 w-4" />
-                    צפייה בפרטים
-                  </Button>
-                </div>
               </div>
               
               <CardContent className="p-4">

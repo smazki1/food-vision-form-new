@@ -99,13 +99,13 @@ export function SubmissionDetailsPage() {
       const statusSuccess = await updateSubmissionStatus("הערות התקבלו");
       
       if (statusSuccess) {
-      toast({
-        title: "בקשת עריכה נשלחה",
-        description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
-      });
-      setEditNote("");
-      setEditDialogOpen(false);
-    } else {
+        toast({
+          title: "בקשת עריכה נשלחה",
+          description: "בקשת העריכה שלכם התקבלה ותטופל בקרוב",
+        });
+        setEditNote("");
+        setEditDialogOpen(false);
+      } else {
         toast({
           title: "שגיאה בעדכון סטטוס",
           description: "ההערה נשמרה אך הסטטוס לא עודכן",
@@ -263,8 +263,6 @@ export function SubmissionDetailsPage() {
     setLightboxCurrentIndex(0);
   };
 
-
-
   // Fullscreen comparison navigation functions
   const navigateComparisonProcessed = (direction: 'prev' | 'next') => {
     if (!submission.processed_image_urls || submission.processed_image_urls.length === 0) return;
@@ -334,13 +332,11 @@ export function SubmissionDetailsPage() {
     );
   }
 
-  // Check if the submission has processed images
+  // Check if this submission has processed images
   const hasProcessedImages = submission.processed_image_urls && submission.processed_image_urls.length > 0;
   
-  // Check if this submission can be edited
-  const canRequestEdit = submission.submission_status === "מוכנה להצגה";
-  
-  // Check if this submission can be approved
+  // Check if this submission can be edited or approved
+  const canRequestEdit = ["מוכנה להצגה", "הערות התקבלו"].includes(submission.submission_status);
   const canApprove = submission.submission_status === "מוכנה להצגה";
   
   // Check if images can be downloaded or shared
@@ -795,8 +791,6 @@ export function SubmissionDetailsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-
 
       {/* Share Dialog */}
       <ShareDialog 

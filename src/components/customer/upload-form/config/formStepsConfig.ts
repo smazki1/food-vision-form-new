@@ -24,6 +24,14 @@ const validateRestaurantDetails = (formData: NewItemFormData): Record<string, st
 
 const validateCombinedUpload = (formData: NewItemFormData): Record<string, string> => {
   const errors: Record<string, string> = {};
+  
+  // Validate required fields
+  if (!formData.restaurantName?.trim()) {
+    errors.restaurantName = 'שם המסעדה הוא שדה חובה';
+  }
+  if (!formData.submitterName?.trim()) {
+    errors.submitterName = 'שם איש הקשר הוא שדה חובה';
+  }
   if (!formData.itemName?.trim()) {
     errors.itemName = 'שם הפריט הוא שדה חובה';
   }
@@ -36,6 +44,7 @@ const validateCombinedUpload = (formData: NewItemFormData): Record<string, strin
   if (formData.referenceImages.length > 10) {
     errors.referenceImages = 'ניתן להעלות עד 10 תמונות';
   }
+  
   return errors;
 };
 
