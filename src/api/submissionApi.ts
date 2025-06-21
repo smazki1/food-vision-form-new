@@ -1,7 +1,34 @@
 import { supabase } from "@/integrations/supabase/client";
 import { FoodItem } from "@/types/food-vision";
 import { Client } from "@/types/client";
-import { DishDetailsForTab, CocktailDetailsForTab, DrinkDetailsForTab } from "@/types/food-vision";
+
+// Define missing types locally
+export interface DishDetailsForTab {
+  id: string;
+  name: string;
+  description: string;
+  ingredients?: string;
+  special_notes?: string;
+  processed_image_urls?: string[];
+}
+
+export interface CocktailDetailsForTab {
+  id: string;
+  name: string;
+  description: string;
+  ingredients?: string;
+  special_notes?: string;
+  processed_image_urls?: string[];
+}
+
+export interface DrinkDetailsForTab {
+  id: string;
+  name: string;
+  description: string;
+  ingredients?: string;
+  special_notes?: string;
+  processed_image_urls?: string[];
+}
 
 export type SubmissionStatus = 
   | "ממתינה לעיבוד" 

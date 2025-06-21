@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, fireEvent, waitFor, act } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
 import WireframeTest from '@/pages/wireframe-test';

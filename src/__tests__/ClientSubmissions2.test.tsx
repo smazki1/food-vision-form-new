@@ -1,4 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, fireEvent, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi, describe, test, expect, beforeEach } from 'vitest';
 import { ClientSubmissions2 } from '@/components/admin/client-details/ClientSubmissions2';

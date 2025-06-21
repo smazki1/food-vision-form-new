@@ -35,7 +35,7 @@ export const submissionsAPI = {
       );
 
       // 2. שמירת הנתונים
-      const { data: rpcData, error: rpcError } = await supabase.rpc('public_submit_item_by_restaurant_name', { // Assuming this RPC exists
+      const { data: rpcData, error: rpcError } = await supabase.rpc('public_submit_item_by_restaurant_name', { // Using existing RPC function
         p_restaurant_name: formData.restaurantName,
         p_contact_name: formData.contactName,
         p_phone: formData.phone,  // עכשיו משתמשים בשם השדה הנכון
