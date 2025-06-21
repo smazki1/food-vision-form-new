@@ -18,7 +18,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
     if (errors[field]) clearErrors();
   };
 
-  const handleImageUpload = (dishId: number, files: FileList | null) => {
+  const handleImageUpload = (dishId: string, files: FileList | null) => {
     if (!files) return;
     
     const newFiles = Array.from(files);
@@ -29,7 +29,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
     }
   };
 
-  const removeImage = (dishId: number, imageIndex: number) => {
+  const removeImage = (dishId: string, imageIndex: number) => {
     const dish = formData.dishes.find(d => d.id === dishId);
     if (dish) {
       const updatedImages = dish.referenceImages.filter((_, index) => index !== imageIndex);
@@ -37,7 +37,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
     }
   };
 
-  const handleDishChange = (dishId: number, field: string, value: string) => {
+  const handleDishChange = (dishId: string, field: string, value: string) => {
     updateDish(dishId, { [field]: value });
     if (errors[`dish-${dishId}-${field}`]) clearErrors();
   };
@@ -45,69 +45,66 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#333333] mb-4">פרטי העסק והעלאת מנות</h1>
-        <p className="text-gray-600">הזינו את פרטי העסק והעלו את המנות שלכם</p>
+        <h1 className="text-3xl font-bold text-[#333333] mb-4">העלאת מנות</h1>
+        <p className="text-gray-600">העלו את המנות שלכם וקבלו תמונות מקצועיות</p>
       </div>
 
-      {/* Contact Information */}
-      <div className="bg-gray-50 p-6 rounded-xl space-y-4">
-        <h3 className="text-xl font-semibold text-[#333333] mb-4">פרטי התקשרות</h3>
+      {/* Important Information Box */}
+      <div className="bg-gradient-to-r from-[#8B1E3F]/10 to-[#F3752B]/10 border-2 border-[#8B1E3F]/20 rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="bg-[#F3752B] text-white rounded-full p-2">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-bold text-[#8B1E3F]">חשוב לדעת:</h3>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">שם העסק *</label>
-            <input
-              type="text"
-              value={formData.restaurantName}
-              onChange={(e) => handleContactChange('restaurantName', e.target.value)}
-              className={cn(
-                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
-                errors.restaurantName ? "border-red-500" : "border-gray-300"
-              )}
-              placeholder="שם המסעדה או העסק"
-            />
-            {errors.restaurantName && <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>}
+        <div className="space-y-3 text-gray-700 mb-6">
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
+            <p className="font-medium">מה שאתם מעלים = מה שאתם מקבלים (בעיצוב מקצועי)</p>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">שם איש קשר *</label>
-            <input
-              type="text"
-              value={formData.submitterName}
-              onChange={(e) => handleContactChange('submitterName', e.target.value)}
-              className={cn(
-                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
-                errors.submitterName ? "border-red-500" : "border-gray-300"
-              )}
-              placeholder="שם מלא"
-            />
-            {errors.submitterName && <p className="text-red-500 text-xs mt-1">{errors.submitterName}</p>}
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
+            <p className="font-medium">אנחנו משפרים את התמונה של המנות שלכם, לא את המנות עצמן. המנה בתמונה שלכם = המנה בתוצאה הסופית.</p>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">טלפון *</label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleContactChange('phone', e.target.value)}
-              className={cn(
-                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
-                errors.phone ? "border-red-500" : "border-gray-300"
-              )}
-              placeholder="050-1234567"
-            />
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
+            <p className="font-medium">לתוצאה הטובה ביותר, וודאו שהמנה בתמונה נראית כמו שאתם רוצים להציג ללקוחות - אנחנו נדאג לתאורה מקצועית, רקע מושלם ועיצוב מדהים.</p>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">אימייל</label>
-            <input
-              type="email"
-              value={formData.email || ''}
-              onChange={(e) => handleContactChange('email', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent"
-              placeholder="email@example.com"
-            />
+        {/* Before/After Example */}
+        <div className="bg-white rounded-lg p-4 shadow-sm">
+          <h4 className="text-lg font-semibold text-center text-[#333333] mb-4">דוגמה לפני ואחרי:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="text-center">
+              <div className="relative mb-3">
+                <img 
+                  src="/lovable-uploads/IMG_D76A6032ABB8-1.jpeg" 
+                  alt="תמונה לפני עיבוד" 
+                  className="w-full h-48 object-cover rounded-lg shadow-md"
+                />
+                <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  לפני
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">התמונה המקורית שהעלה הלקוח</p>
+            </div>
+            <div className="text-center">
+              <div className="relative mb-3">
+                <img 
+                  src="/lovable-uploads/26889960-2 (2).jpg" 
+                  alt="תמונה אחרי עיבוד" 
+                  className="w-full h-48 object-cover rounded-lg shadow-md"
+                />
+                <div className="absolute top-2 right-2 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                  אחרי
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">התוצאה המקצועית שלנו</p>
+            </div>
           </div>
         </div>
       </div>
@@ -268,6 +265,69 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
         ))}
 
         {errors.dishes && <p className="text-red-500 text-sm">{errors.dishes}</p>}
+      </div>
+
+      {/* Contact Information - Moved to bottom */}
+      <div className="bg-gray-50 p-6 rounded-xl space-y-4">
+        <h3 className="text-xl font-semibold text-[#333333] mb-4">פרטי התקשרות</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">שם העסק *</label>
+            <input
+              type="text"
+              value={formData.restaurantName}
+              onChange={(e) => handleContactChange('restaurantName', e.target.value)}
+              className={cn(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
+                errors.restaurantName ? "border-red-500" : "border-gray-300"
+              )}
+              placeholder="שם המסעדה או העסק"
+            />
+            {errors.restaurantName && <p className="text-red-500 text-xs mt-1">{errors.restaurantName}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">שם איש קשר *</label>
+            <input
+              type="text"
+              value={formData.submitterName}
+              onChange={(e) => handleContactChange('submitterName', e.target.value)}
+              className={cn(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
+                errors.submitterName ? "border-red-500" : "border-gray-300"
+              )}
+              placeholder="שם מלא"
+            />
+            {errors.submitterName && <p className="text-red-500 text-xs mt-1">{errors.submitterName}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">טלפון *</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleContactChange('phone', e.target.value)}
+              className={cn(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent",
+                errors.phone ? "border-red-500" : "border-gray-300"
+              )}
+              placeholder="050-1234567"
+            />
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">אימייל</label>
+            <input
+              type="email"
+              value={formData.email || ''}
+              onChange={(e) => handleContactChange('email', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent"
+              placeholder="email@example.com"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

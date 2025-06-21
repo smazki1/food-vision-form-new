@@ -12,7 +12,7 @@ const CustomerLogin = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   
   const redirectToPayment = () => {
-    window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u6852ff887?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
+    navigate('/public-upload');
   };
   
   const goToLogin = () => {
