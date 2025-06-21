@@ -1,12 +1,12 @@
 
 import React from 'react';
-import PublicFoodVisionUploadForm from '@/components/public/upload-form/PublicFoodVisionUploadForm';
 import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
+import NewPublicUploadForm from '@/components/public/upload-form/NewPublicUploadForm';
 
 const PublicUploadPage: React.FC = () => {
   return (
     <NewItemFormProvider>
-      <PublicFoodVisionUploadForm />
+      <NewPublicUploadForm />
     </NewItemFormProvider>
   );
 };

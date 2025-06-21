@@ -1,25 +1,35 @@
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface DishData {
-  id: string;
-  itemType: string;
+  id: number;
   itemName: string;
+  itemType: string;
   description: string;
-  specialNotes: string;
+  specialNotes?: string;
   referenceImages: File[];
-  brandingMaterials: File[];
-  referenceExamples: File[];
-  isCustomItemType: boolean;
-  customItemType: string;
-  qualityConfirmed: boolean;
 }
 
 export interface NewItemFormData {
+  // Contact Information
   restaurantName: string;
   submitterName: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  // Legacy single dish fields (maintained for compatibility)
+  phone: string;
+  email?: string;
+
+  // Multiple Dishes
+  dishes: DishData[];
+
+  // Category and Style Selection
+  selectedCategory?: string;
+  selectedStyle?: string;
+  customStyle?: {
+    inspirationImages: File[];
+    brandingMaterials: File[];
+    instructions: string;
+  };
+
+  // Legacy fields for backward compatibility
   itemName: string;
   itemType: string;
   description: string;
@@ -27,135 +37,95 @@ export interface NewItemFormData {
   referenceImages: File[];
   brandingMaterials: File[];
   referenceExamples: File[];
-  // New multiple dishes support
-  dishes: DishData[];
-  itemsQuantityRange: string;
-  estimatedImagesNeeded: string;
-  primaryImageUsage: string;
-  isNewBusiness?: boolean;
-  // Business type detection for features
-  isLead?: boolean; // true if this is a lead (first time), false if registered business
+  category?: string;
 }
 
 interface NewItemFormContextType {
   formData: NewItemFormData;
   updateFormData: (updates: Partial<NewItemFormData>) => void;
   resetFormData: () => void;
-  // New methods for dishes management
-  addDish: () => string; // Returns new dish ID
-  removeDish: (dishId: string) => void;
-  updateDish: (dishId: string, updates: Partial<DishData>) => void;
-  getDish: (dishId: string) => DishData | undefined;
+  addDish: () => void;
+  removeDish: (dishId: number) => void;
+  updateDish: (dishId: number, updates: Partial<DishData>) => void;
 }
 
 const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
 
-export const useNewItemForm = (): NewItemFormContextType => {
-  const context = useContext(NewItemFormContext);
-  if (context === undefined) {
-    throw new Error('useNewItemForm must be used within a NewItemFormProvider');
-  }
-  return context;
-};
-
-interface NewItemFormProviderProps {
-  children: ReactNode;
-}
-
-const createInitialDish = (id: string): DishData => ({
-  id,
-  itemType: '',
-  itemName: '',
-  description: '',
-  specialNotes: '',
-  referenceImages: [],
-  brandingMaterials: [],
-  referenceExamples: [],
-  isCustomItemType: false,
-  customItemType: '',
-  qualityConfirmed: false
-});
-
 const initialFormData: NewItemFormData = {
   restaurantName: '',
   submitterName: '',
-  contactEmail: '',
-  contactPhone: '',
-  // Legacy fields
+  phone: '',
+  email: '',
+  dishes: [],
   itemName: '',
   itemType: '',
   description: '',
   specialNotes: '',
   referenceImages: [],
   brandingMaterials: [],
-  referenceExamples: [],
-  // Multiple dishes
-  dishes: [createInitialDish('1')],
-  itemsQuantityRange: '',
-  estimatedImagesNeeded: '',
-  primaryImageUsage: ''
+  referenceExamples: []
 };
 
-export const NewItemFormProvider: React.FC<NewItemFormProviderProps> = ({ children }) => {
+export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [formData, setFormData] = useState<NewItemFormData>(initialFormData);
 
   const updateFormData = (updates: Partial<NewItemFormData>) => {
-    setFormData(prevData => ({ ...prevData, ...updates }));
+    setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const resetFormData = () => {
     setFormData(initialFormData);
   };
 
-  const addDish = (): string => {
-    let newId: string = '';
-    
-    setFormData(prevData => {
-      newId = (prevData.dishes.length + 1).toString();
-      const newDish = createInitialDish(newId);
-      
-      return {
-        ...prevData,
-        dishes: [...prevData.dishes, newDish]
-      };
-    });
-    
-    return newId;
-  };
-
-  const removeDish = (dishId: string) => {
-    setFormData(prevData => ({
-      ...prevData,
-      dishes: prevData.dishes.filter(dish => dish.id !== dishId)
+  const addDish = () => {
+    const newDish: DishData = {
+      id: formData.dishes.length > 0 ? Math.max(...formData.dishes.map(d => d.id)) + 1 : 1,
+      itemName: '',
+      itemType: '',
+      description: '',
+      specialNotes: '',
+      referenceImages: []
+    };
+    setFormData(prev => ({
+      ...prev,
+      dishes: [...prev.dishes, newDish]
     }));
   };
 
-  const updateDish = (dishId: string, updates: Partial<DishData>) => {
-    setFormData(prevData => ({
-      ...prevData,
-      dishes: prevData.dishes.map(dish => 
+  const removeDish = (dishId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      dishes: prev.dishes.filter(dish => dish.id !== dishId)
+    }));
+  };
+
+  const updateDish = (dishId: number, updates: Partial<DishData>) => {
+    setFormData(prev => ({
+      ...prev,
+      dishes: prev.dishes.map(dish => 
         dish.id === dishId ? { ...dish, ...updates } : dish
       )
     }));
   };
 
-  const getDish = (dishId: string): DishData | undefined => {
-    return formData.dishes.find(dish => dish.id === dishId);
-  };
-
-  const value: NewItemFormContextType = {
-    formData,
-    updateFormData,
-    resetFormData,
-    addDish,
-    removeDish,
-    updateDish,
-    getDish
-  };
-
   return (
-    <NewItemFormContext.Provider value={value}>
+    <NewItemFormContext.Provider value={{
+      formData,
+      updateFormData,
+      resetFormData,
+      addDish,
+      removeDish,
+      updateDish
+    }}>
       {children}
     </NewItemFormContext.Provider>
   );
+};
+
+export const useNewItemForm = () => {
+  const context = useContext(NewItemFormContext);
+  if (context === undefined) {
+    throw new Error('useNewItemForm must be used within a NewItemFormProvider');
+  }
+  return context;
 };
