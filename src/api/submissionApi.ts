@@ -149,7 +149,13 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
     }
 
     console.log('[getClientSubmissions] Successfully fetched', data?.length || 0, 'submissions');
-    return data as Submission[];
+    return data.map((item: any) => ({
+      ...item,
+      edit_count: item.edit_count || 0,
+      internal_team_notes: item.internal_team_notes || null,
+      priority: item.priority || null,
+      created_at: item.created_at || item.uploaded_at
+    })) as Submission[];
   } catch (error) {
     console.error('[getClientSubmissions] Exception, trying basic version:', error);
     try {

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
-import { Check, Clock, Shield, CreditCard } from 'lucide-react';
+import { Check, Clock, Shield, CreditCard, Star, Sparkles, Timer, Award } from 'lucide-react';
 
 interface PaymentSummaryStepProps {
   errors: Record<string, string>;
@@ -50,136 +50,193 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
     return styles[styleId as keyof typeof styles] || styleId;
   };
 
+  const handlePaymentRedirect = () => {
+    const PAYMENT_URL = "https://app.icount.co.il/m/c2d28/c12db4pa2u68489a290?utm_source=iCount&utm_medium=paypage&utm_campaign=162";
+    window.location.href = PAYMENT_URL;
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#333333] mb-4">סיכום וביצוע תשלום</h1>
-        <p className="text-gray-600">בדקו את הפרטים ובצעו תשלום לביצוע ההזמנה</p>
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Sparkles className="w-8 h-8 text-[#F3752B]" />
+          <h1 className="text-4xl font-bold text-[#333333]">סיכום וביצוע תשלום</h1>
+          <Sparkles className="w-8 h-8 text-[#F3752B]" />
+        </div>
+        <p className="text-xl text-gray-600">בדקו את הפרטים ובצעו תשלום לביצוע ההזמנה</p>
       </div>
 
       {/* Order Summary */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-[#333333] mb-4">סיכום ההזמנה</h3>
+      <div className="bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-2xl p-8 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
+          <Award className="w-6 h-6 text-[#8B1E3F]" />
+          <h3 className="text-2xl font-bold text-[#333333]">סיכום ההזמנה</h3>
+        </div>
         
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-gray-600">שם העסק:</span>
-            <span className="font-medium">{formData.restaurantName}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">שם העסק:</span>
+              <span className="font-bold text-[#333333]">{formData.restaurantName}</span>
+            </div>
+            
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">איש קשר:</span>
+              <span className="font-bold text-[#333333]">{formData.submitterName}</span>
+            </div>
+            
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">טלפון:</span>
+              <span className="font-bold text-[#333333]">{formData.phone}</span>
+            </div>
           </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">איש קשר:</span>
-            <span className="font-medium">{formData.submitterName}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">טלפון:</span>
-            <span className="font-medium">{formData.phone}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">מספר מנות:</span>
-            <span className="font-medium">{dishCount} מנות</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">קטגוריה:</span>
-            <span className="font-medium">{getCategoryName(selectedCategory || '')}</span>
-          </div>
-          
-          <div className="flex justify-between">
-            <span className="text-gray-600">סגנון:</span>
-            <span className="font-medium">
-              {customStyle ? 'סגנון מותאם אישית' : getStyleName(selectedStyle || '')}
-            </span>
+
+          <div className="space-y-4">
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">מספר מנות:</span>
+              <span className="font-bold text-[#8B1E3F] text-lg">{dishCount} מנות</span>
+            </div>
+            
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">קטגוריה:</span>
+              <span className="font-bold text-[#333333]">{getCategoryName(selectedCategory || '')}</span>
+            </div>
+            
+            <div className="flex justify-between items-center py-2 border-b border-gray-200">
+              <span className="text-gray-600 font-medium">סגנון:</span>
+              <span className="font-bold text-[#333333]">
+                {customStyle ? 'סגנון מותאם אישית' : getStyleName(selectedStyle || '')}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* What You Get */}
-      <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-green-800 mb-4">מה תקבלו</h3>
+      <div className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-2xl p-8 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
+          <Star className="w-6 h-6 text-emerald-600" />
+          <h3 className="text-2xl font-bold text-emerald-800">מה תקבלו</h3>
+        </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">תמונות מקצועיות לכל המנות</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Check className="w-6 h-6 text-emerald-600" />
+            </div>
+            <span className="text-emerald-800 font-semibold text-lg">תמונות מקצועיות לכל המנות</span>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">עיצוב מותאם לשימוש שלכם</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Check className="w-6 h-6 text-emerald-600" />
+            </div>
+            <span className="text-emerald-800 font-semibold text-lg">עיצוב מותאם לשימוש שלכם</span>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">קבצים באיכות גבוהה</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Check className="w-6 h-6 text-emerald-600" />
+            </div>
+            <span className="text-emerald-800 font-semibold text-lg">קבצים באיכות גבוהה</span>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">זמן אספקה מהיר</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Check className="w-6 h-6 text-emerald-600" />
+            </div>
+            <span className="text-emerald-800 font-semibold text-lg">זמן אספקה מהיר</span>
           </div>
         </div>
       </div>
 
       {/* Timeline */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-blue-800 mb-4">מה קורה הלאה?</h3>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
+          <Timer className="w-6 h-6 text-blue-600" />
+          <h3 className="text-2xl font-bold text-blue-800">מה קורה הלאה?</h3>
+        </div>
         
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">תוך 24 שעות - נתחיל לעבוד על התמונות</span>
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-bold text-blue-800 text-lg">תוך 24 שעות</div>
+              <div className="text-blue-700">נתחיל לעבוד על התמונות</div>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">תוך 2-3 ימי עבודה - תקבלו את התמונות הראשונות</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-bold text-blue-800 text-lg">תוך 2-3 ימי עבודה</div>
+              <div className="text-blue-700">תקבלו את התמונות הראשונות</div>
+            </div>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">עד 7 ימי עבודה - כל התמונות יהיו מוכנות</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <Clock className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <div className="font-bold text-blue-800 text-lg">עד 7 ימי עבודה</div>
+              <div className="text-blue-700">כל התמונות יהיו מוכנות</div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Guarantee */}
-      <div className="bg-orange-50 border border-orange-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-orange-800 mb-4">הערבות שלנו</h3>
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200 rounded-2xl p-8 shadow-lg">
+        <div className="flex items-center gap-3 mb-6">
+          <Shield className="w-6 h-6 text-orange-600" />
+          <h3 className="text-2xl font-bold text-orange-800">הערבות שלנו</h3>
+        </div>
         
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">החזר כספי מלא אם לא מרוצים</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <Shield className="w-6 h-6 text-orange-600" />
+            </div>
+            <span className="text-orange-800 font-semibold">החזר כספي מלא אם לא מרוצים</span>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">249₪ זיכוי לחבילה הבאה</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <Shield className="w-6 h-6 text-orange-600" />
+            </div>
+            <span className="text-orange-800 font-semibold">249₪ זיכוי לחבילה הבאה</span>
           </div>
           
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">שירות לקוחות מהיר ומקצועי</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <Shield className="w-6 h-6 text-orange-600" />
+            </div>
+            <span className="text-orange-800 font-semibold">שירות לקוחות מהיר ומקצועי</span>
           </div>
         </div>
       </div>
 
-      {/* Price and Payment */}
-      <div className="bg-[#8B1E3F] text-white rounded-xl p-6 text-center">
-        <h3 className="text-2xl font-bold mb-2">249₪</h3>
-        <p className="text-lg mb-4">חבילת ניסיון מיוחדת</p>
-        <p className="text-sm opacity-90 mb-6">כולל עיבוד מקצועי לכל המנות + זיכוי מלא לחבילה הבאה</p>
-        
-        <Button
-          size="lg"
-          className="bg-[#F3752B] hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold"
-        >
-          <CreditCard className="w-5 h-5 mr-2" />
-          בצע תשלום - 249₪
-        </Button>
+      {/* Single Payment Button */}
+      <div className="text-center">
+        <div className="bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-2xl p-8 shadow-2xl">
+          <h3 className="text-3xl font-bold text-white mb-4">249₪</h3>
+          <p className="text-white text-lg mb-8 opacity-90">חבילת ניסיון מיוחדת - כולל עיבוד מקצועי לכל המנות</p>
+          
+          <Button
+            onClick={handlePaymentRedirect}
+            size="lg"
+            className="bg-[#F3752B] hover:bg-orange-600 text-white px-16 py-6 text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            <CreditCard className="w-6 h-6 mr-3" />
+            בצע תשלום - 249₪
+          </Button>
+        </div>
       </div>
     </div>
   );
