@@ -183,7 +183,7 @@ const ItemDetailsStep: React.FC<StepProps> = ({ errors: externalErrors, clearExt
           <IconTextarea
             id="description"
             name="description"
-            label="מרכיבים עיקריים (אופציונלי)"
+            label="כתבו את המרכיבים המרכזיים שאסור לפספס במנה"
             value={formData.description}
             onChange={handleChange}
             placeholder="פרטו את המרכיבים העיקריים של הפריט"

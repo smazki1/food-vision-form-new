@@ -195,6 +195,28 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
         />
       </div>
 
+      {/* Important Information Section */}
+      <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 mb-6">
+        <h4 className="text-lg font-medium text-yellow-800 mb-4 flex items-center">
+          <Lightbulb className="w-5 h-5 ml-2" />
+          חשוב לדעת:
+        </h4>
+        <div className="space-y-3 text-yellow-700">
+          <div className="flex items-start gap-3">
+            <span className="text-yellow-600 font-bold">•</span>
+            <p className="text-sm"><strong>מה שאתם מעלים = מה שאתם מקבלים (בעיצוב מקצועי)</strong></p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-yellow-600 font-bold">•</span>
+            <p className="text-sm">אנחנו משפרים את התמונה של המנות שלכם, לא את המנות עצמן. המנה בתמונה שלכם = המנה בתוצאה הסופית.</p>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-yellow-600 font-bold">•</span>
+            <p className="text-sm">לתוצאה הטובה ביותר, וודאו שהמנה בתמונה נראית כמו שאתם רוצים להציג ללקוחות - אנחנו נדאג לתאורה מקצועית, רקע מושלם ועיצוב מדהים.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Image Upload */}
       <div className="space-y-4">
         <Label className="text-sm font-medium text-gray-700">תמונות המנה *</Label>

@@ -2,12 +2,17 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface DishData {
-  id: number;
-  itemName: string;
+  id: string;
   itemType: string;
+  itemName: string;
   description: string;
-  specialNotes?: string;
+  specialNotes: string;
   referenceImages: File[];
+  brandingMaterials: File[];
+  referenceExamples: File[];
+  isCustomItemType: boolean;
+  customItemType: string;
+  qualityConfirmed: boolean;
 }
 
 export interface NewItemFormData {
@@ -44,19 +49,34 @@ interface NewItemFormContextType {
   formData: NewItemFormData;
   updateFormData: (updates: Partial<NewItemFormData>) => void;
   resetFormData: () => void;
-  addDish: () => void;
-  removeDish: (dishId: number) => void;
-  updateDish: (dishId: number, updates: Partial<DishData>) => void;
+  addDish: () => string;
+  removeDish: (dishId: string) => void;
+  updateDish: (dishId: string, updates: Partial<DishData>) => void;
+  getDish: (dishId: string) => DishData | undefined;
 }
 
 const NewItemFormContext = createContext<NewItemFormContextType | undefined>(undefined);
+
+const createInitialDish = (id: string): DishData => ({
+  id,
+  itemType: '',
+  itemName: '',
+  description: '',
+  specialNotes: '',
+  referenceImages: [],
+  brandingMaterials: [],
+  referenceExamples: [],
+  isCustomItemType: false,
+  customItemType: '',
+  qualityConfirmed: false
+});
 
 const initialFormData: NewItemFormData = {
   restaurantName: '',
   submitterName: '',
   phone: '',
   email: '',
-  dishes: [],
+  dishes: [createInitialDish('1')],
   itemName: '',
   itemType: '',
   description: '',
@@ -65,8 +85,6 @@ const initialFormData: NewItemFormData = {
   brandingMaterials: [],
   referenceExamples: []
 };
-
-let nextDishId = 1;
 
 export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [formData, setFormData] = useState<NewItemFormData>(initialFormData);
@@ -77,38 +95,42 @@ export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   const resetFormData = () => {
     setFormData(initialFormData);
-    nextDishId = 1;
   };
 
-  const addDish = () => {
-    const newDish: DishData = {
-      id: nextDishId++,
-      itemName: '',
-      itemType: '',
-      description: '',
-      specialNotes: '',
-      referenceImages: []
-    };
-    setFormData(prev => ({
-      ...prev,
-      dishes: [...prev.dishes, newDish]
+  const addDish = (): string => {
+    let newId: string = '';
+    
+    setFormData(prevData => {
+      newId = (prevData.dishes.length + 1).toString();
+      const newDish = createInitialDish(newId);
+      
+      return {
+        ...prevData,
+        dishes: [...prevData.dishes, newDish]
+      };
+    });
+    
+    return newId;
+  };
+
+  const removeDish = (dishId: string) => {
+    setFormData(prevData => ({
+      ...prevData,
+      dishes: prevData.dishes.filter(dish => dish.id !== dishId)
     }));
   };
 
-  const removeDish = (dishId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      dishes: prev.dishes.filter(dish => dish.id !== dishId)
-    }));
-  };
-
-  const updateDish = (dishId: number, updates: Partial<DishData>) => {
-    setFormData(prev => ({
-      ...prev,
-      dishes: prev.dishes.map(dish => 
+  const updateDish = (dishId: string, updates: Partial<DishData>) => {
+    setFormData(prevData => ({
+      ...prevData,
+      dishes: prevData.dishes.map(dish => 
         dish.id === dishId ? { ...dish, ...updates } : dish
       )
     }));
+  };
+
+  const getDish = (dishId: string): DishData | undefined => {
+    return formData.dishes.find(dish => dish.id === dishId);
   };
 
   return (
@@ -118,7 +140,8 @@ export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ childre
       resetFormData,
       addDish,
       removeDish,
-      updateDish
+      updateDish,
+      getDish
     }}>
       {children}
     </NewItemFormContext.Provider>
