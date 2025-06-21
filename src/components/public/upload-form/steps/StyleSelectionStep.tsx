@@ -101,43 +101,96 @@ const ImageLightbox: React.FC<{
 
 const stylesByCategory = {
   delivery: [
-    { id: 'white-bg', name: 'רקע לבן', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' }
+    { 
+      id: 'light-bg', 
+      name: 'רקע בהיר', 
+      description: 'קלאסי ומומלץ', 
+      preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' 
+    },
+    { 
+      id: 'dark-bg', 
+      name: 'רקע כהה', 
+      description: 'פרימיום ואלגנטי', 
+      preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' 
+    },
+    { 
+      id: 'wood-bg', 
+      name: 'רקע עץ', 
+      description: 'חמים וביתי', 
+      preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' 
+    },
+    { 
+      id: 'colorful-bg', 
+      name: 'רקע צבעוני', 
+      description: 'מודרני ובולט', 
+      preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' 
+    }
   ],
   social: [
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'facebook-wide', name: 'Facebook רחב', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'tiktok-vertical', name: 'TikTok אנכי', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' }
+    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'facebook-wide', name: 'Facebook רחב', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'tiktok-vertical', name: 'TikTok אנכי', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
   ],
   menu: [
-    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'digital-screen', name: 'מסך דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' }
+    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'digital-screen', name: 'מסך דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
   ],
   marketing: [
-    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' }
+    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
   ],
   all: [
-    { id: 'white-bg', name: 'רקע לבן', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' },
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/fe01098f-59b9-4d84-b387-deaace6bc703.png' },
-    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/c50a1c5c-2fa9-4fdc-aa84-00665a402a8e.png' },
-    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/26889960-2 (2).jpg' },
-    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/IMG_D76A6032ABB8-1.jpeg' },
-    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/dfeff3bf-b175-483f-9dca-6d0692f52432.png' },
-    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/8c083378-a07b-471b-a45f-68c496fa099f.png' },
-    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/2afb683b-feda-4b83-897e-15fd3bab53b4.png' },
-    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/9f3cbbc2-d21d-46aa-a455-196f08dbe887.png' }
+    { id: 'light-bg', name: 'רקע בהיר', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' },
+    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' },
+    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
+    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
+    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
+    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
   ]
+};
+
+interface ImageZoomModalProps {
+  imageUrl: string;
+  styleName: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ imageUrl, styleName, isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75" onClick={onClose}>
+      <div className="relative max-w-4xl max-h-4xl p-4">
+        <button
+          onClick={onClose}
+          className="absolute -top-2 -right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <img
+          src={imageUrl}
+          alt={styleName}
+          className="max-w-full max-h-full object-contain rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <div className="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white px-4 py-2 rounded-lg">
+          <h3 className="font-semibold">{styleName}</h3>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearErrors }) => {
@@ -205,118 +258,129 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
   };
 
   const handleFileUpload = (field: 'inspirationImages' | 'brandingMaterials', files: FileList | null) => {
-    if (!files || !formData.customStyle) return;
-    
-    const newFiles = Array.from(files);
-    const currentFiles = formData.customStyle[field] || [];
-    const updatedFiles = [...currentFiles, ...newFiles];
-    
-    handleCustomStyleChange(field, updatedFiles);
+    if (files && formData.customStyle) {
+      const newFiles = Array.from(files);
+      handleCustomStyleChange(field, [...formData.customStyle[field], ...newFiles]);
+    }
+  };
+
+  const handleZoomImage = (imageUrl: string, styleName: string) => {
+    console.log('handleZoomImage called:', { imageUrl, styleName });
+    setLightboxImage({
+      url: imageUrl,
+      title: styleName,
+      description: 'תצוגה מקדימה של הסגנון'
+    });
   };
 
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#333333] mb-4">בחירת סגנון עיצוב</h1>
-        <p className="text-gray-600">בחרו את הסגנון שהכי מתאים לכם או יצרו סגנון מותאם אישית</p>
+        <h2 className="text-3xl font-bold text-[#333333] mb-4">
+          בחר את הסגנון המועדף עליך
+        </h2>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          כל סגנון מותאם במיוחד לשימוש שבחרת. לחץ על התמונות כדי להציג אותן במסך מלא
+        </p>
       </div>
 
-      {/* Predefined Styles - Improved Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {/* Style Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {currentStyles.map((style) => (
           <div
             key={style.id}
-            onClick={() => handleStyleSelect(style.id)}
             className={cn(
-              "group relative overflow-hidden rounded-xl cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl",
-              "border-2",
+              "relative group cursor-pointer rounded-xl overflow-hidden shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105",
               formData.selectedStyle === style.id
-                ? "border-[#F3752B] ring-2 ring-[#F3752B]/20"
-                : "border-gray-200 hover:border-gray-300"
+                ? "ring-4 ring-[#f3752b] shadow-2xl scale-105"
+                : "hover:ring-2 hover:ring-[#f3752b]/50"
             )}
+            onClick={() => handleStyleSelect(style.id)}
           >
-            {/* Full Background Image */}
-            <div className="aspect-square relative overflow-hidden">
+            {/* Background Image */}
+            <div className="relative h-64 sm:h-72 lg:h-80 overflow-hidden">
               <img
                 src={style.preview}
                 alt={style.name}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                onError={(e) => {
+                  console.error('Image failed to load:', style.preview);
+                  e.currentTarget.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNTAgMTAwQzEyNy45IDEwMCAxMTAgMTE3LjkgMTEwIDE0MFMxMjcuOSAxODAgMTUwIDE4MFMxOTAgMTYyLjEgMTkwIDE0MFMxNzIuMSAxMDAgMTUwIDEwMFoiIGZpbGw9IiNEMUQ1REIiLz4KPHBhdGggZD0iTTEzMCAxMzBIMTcwVjE1MEgxMzBWMTMwWiIgZmlsbD0iI0Y5RkFGQiIvPgo8L3N2Zz4K';
+                }}
               />
               
-              {/* Zoom Indicator */}
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent" />
+              
+              {/* Zoom Button */}
               <button
                 type="button"
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 transition-all duration-200 opacity-100 z-10 pointer-events-auto"
                 onClick={(e) => {
-                  console.log('ZOOM BUTTON CLICKED!', style.name);
+                  console.log('Zoom button clicked for:', style.name);
                   e.stopPropagation();
                   e.preventDefault();
-                  handleImageClick(e, style);
+                  handleZoomImage(style.preview, style.name);
                 }}
                 onMouseDown={(e) => {
-                  console.log('ZOOM BUTTON MOUSE DOWN!');
+                  console.log('Zoom button mouse down for:', style.name);
                   e.stopPropagation();
+                  e.preventDefault();
+                  handleZoomImage(style.preview, style.name);
                 }}
-                className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white p-3 rounded-full opacity-100 transition-all duration-300 hover:bg-black/80 hover:scale-110 z-10 pointer-events-auto"
-                aria-label="הגדל תמונה"
-                style={{ pointerEvents: 'auto' }}
+                aria-label={`הגדל תמונה של ${style.name}`}
               >
-                <ZoomIn className="w-5 h-5" />
+                <ZoomIn className="w-5 h-5 text-white" />
               </button>
-
-              {/* Selected Indicator */}
+              
+              {/* Selection Indicator */}
               {formData.selectedStyle === style.id && (
-                <div className="absolute top-3 left-3 bg-[#F3752B] text-white px-3 py-1 rounded-full text-sm font-medium">
+                <div className="absolute top-4 left-4 bg-[#f3752b] text-white px-3 py-1 rounded-full text-sm font-semibold">
                   נבחר
                 </div>
               )}
+            </div>
 
-              {/* Semi-transparent Text Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent p-4">
-                <h3 className="font-bold text-white text-lg mb-1 drop-shadow-sm">{style.name}</h3>
-                <p className="text-white/90 text-sm drop-shadow-sm">{style.description}</p>
-              </div>
-
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-[#F3752B]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            {/* Content */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+              <h3 className="text-xl font-bold mb-2">{style.name}</h3>
+              <p className="text-sm opacity-90">{style.description}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Custom Style Option */}
+      {/* Custom Style Section */}
       <div className="border-t pt-8">
-        <div
-          onClick={handleCustomStyleToggle}
-          className={cn(
-            "group p-6 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02]",
-            formData.customStyle
-              ? "border-[#F3752B] bg-orange-50 ring-2 ring-[#F3752B]/20"
-              : "border-gray-200 hover:border-gray-300"
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-semibold text-[#333333] mb-2 group-hover:text-[#F3752B] transition-colors">
-                🎨 סגנון מותאם אישית
-              </h3>
-              <p className="text-gray-600">העלו תמונות השראה וחומרי מיתוג ותנו הוראות מפורטות</p>
-            </div>
-            {formData.customStyle && (
-              <div className="bg-[#F3752B] text-white px-3 py-1 rounded-full text-sm font-medium">
-                פעיל
-              </div>
-            )}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-2xl font-bold text-[#333333] mb-2">סגנון מותאם אישית</h3>
+            <p className="text-gray-600">רוצה משהו מיוחד? צור סגנון משלך</p>
           </div>
+          <button
+            type="button"
+            onClick={handleCustomStyleToggle}
+            className={cn(
+              "px-6 py-3 rounded-lg font-semibold transition-all duration-200",
+              formData.customStyle
+                ? "bg-[#f3752b] text-white hover:bg-[#e56b26]"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            )}
+          >
+            {formData.customStyle ? "ביטול סגנון מותאם" : "צור סגנון מותאם"}
+          </button>
         </div>
 
         {formData.customStyle && (
-          <div className="mt-6 space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-200">
+          <div className="bg-gray-50 rounded-xl p-6 space-y-6">
             {/* Inspiration Images */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">תמונות השראה</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-gray-600 mb-2">העלו תמונות של סגנונות שאהבתם</p>
+              <label className="block text-lg font-semibold text-[#333333] mb-3">
+                תמונות השראה
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#f3752b] transition-colors">
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 mb-2">גרור קבצים לכאן או לחץ לבחירה</p>
                 <input
                   type="file"
                   multiple
@@ -325,91 +389,85 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
                   className="hidden"
                   id="inspiration-upload"
                 />
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('inspiration-upload')?.click()}
-                  className="bg-[#F3752B] hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                <label
+                  htmlFor="inspiration-upload"
+                  className="inline-block bg-[#f3752b] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-[#e56b26] transition-colors"
                 >
-                  בחר קבצים
-                </button>
+                  בחר תמונות
+                </label>
               </div>
               {formData.customStyle.inspirationImages.length > 0 && (
-                <div className="grid grid-cols-3 gap-3 mt-4">
-                  {formData.customStyle.inspirationImages.map((file, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`השראה ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-shadow"
-                      />
-                    </div>
-                  ))}
+                <div className="mt-3 text-sm text-gray-600">
+                  נבחרו {formData.customStyle.inspirationImages.length} תמונות
                 </div>
               )}
             </div>
 
             {/* Branding Materials */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">חומרי מיתוג (לוגו, פונטים)</label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-gray-600 mb-2">העלו לוגו, פונטים או חומרי מיתוג אחרים</p>
+              <label className="block text-lg font-semibold text-[#333333] mb-3">
+                חומרי מיתוג
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#f3752b] transition-colors">
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 mb-2">לוגו, צבעי המותג, פונטים</p>
                 <input
                   type="file"
                   multiple
-                  accept="image/*,.pdf,.ai,.psd"
+                  accept="image/*,.pdf"
                   onChange={(e) => handleFileUpload('brandingMaterials', e.target.files)}
                   className="hidden"
                   id="branding-upload"
                 />
-                <button
-                  type="button"
-                  onClick={() => document.getElementById('branding-upload')?.click()}
-                  className="bg-[#F3752B] hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                <label
+                  htmlFor="branding-upload"
+                  className="inline-block bg-[#f3752b] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-[#e56b26] transition-colors"
                 >
                   בחר קבצים
-                </button>
+                </label>
               </div>
               {formData.customStyle.brandingMaterials.length > 0 && (
-                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-700 font-medium">
-                    ✓ {formData.customStyle.brandingMaterials.length} קבצים נבחרו
-                  </p>
+                <div className="mt-3 text-sm text-gray-600">
+                  נבחרו {formData.customStyle.brandingMaterials.length} קבצים
                 </div>
               )}
             </div>
 
             {/* Instructions */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">הוראות מפורטות</label>
+              <label className="block text-lg font-semibold text-[#333333] mb-3">
+                הוראות מיוחדות
+              </label>
               <textarea
                 value={formData.customStyle.instructions}
                 onChange={(e) => handleCustomStyleChange('instructions', e.target.value)}
+                placeholder="תאר את הסגנון הרצוי, צבעים מועדפים, אווירה וכל פרט שיעזור לנו ליצור בדיוק מה שאתה מחפש..."
+                className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#f3752b] focus:border-transparent resize-none"
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#F3752B] focus:border-transparent transition-all"
-                placeholder="תארו את הסגנון הרצוי, צבעים, רקעים, סגנון צילום וכל פרט חשוב אחר..."
               />
             </div>
           </div>
         )}
       </div>
 
+      {/* Error Display */}
       {errors.selectedStyle && (
-        <div className="text-center p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 font-medium">{errors.selectedStyle}</p>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600 font-semibold">{errors.selectedStyle}</p>
         </div>
       )}
 
-      {/* Lightbox Modal - Render outside main container */}
-      {lightboxImage && (
-        <ImageLightbox
-          isOpen={true}
-          imageUrl={lightboxImage.url}
-          title={lightboxImage.title}
-          description={lightboxImage.description}
-          onClose={() => setLightboxImage(null)}
-        />
-      )}
+      {/* Lightbox Modal */}
+      <ImageLightbox
+        isOpen={!!lightboxImage}
+        imageUrl={lightboxImage?.url || ''}
+        title={lightboxImage?.title || ''}
+        description={lightboxImage?.description || ''}
+        onClose={() => {
+          console.log('Closing lightbox');
+          setLightboxImage(null);
+        }}
+      />
     </div>
   );
 };

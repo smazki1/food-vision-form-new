@@ -90,7 +90,7 @@ describe('App Routing Tests', () => {
 
     test('renders public upload page at /public-upload', () => {
       render(<TestWrapper initialEntries={['/public-upload']} />);
-      expect(screen.getByText('Public Upload Page')).toBeInTheDocument();
+      expect(screen.getByText('Public Upload Form')).toBeInTheDocument();
     });
 
     test('renders customer dashboard at /customer/dashboard', () => {
@@ -284,4 +284,4 @@ describe('App Routing Tests', () => {
       expect(screen.getByText('Customer Home')).toBeInTheDocument();
     });
   });
-}); 
+});

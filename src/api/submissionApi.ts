@@ -1,33 +1,29 @@
-import { supabase } from "@/integrations/supabase/client";
-import { FoodItem } from "@/types/food-vision";
-import { Client } from "@/types/client";
 
-// Define missing types locally
+import { supabase } from "@/integrations/supabase/client";
+
+// Define types locally to avoid import errors
 export interface DishDetailsForTab {
   id: string;
   name: string;
   description: string;
-  ingredients?: string;
-  special_notes?: string;
-  processed_image_urls?: string[];
+  notes?: string;
+  reference_image_urls?: string[];
 }
 
 export interface CocktailDetailsForTab {
   id: string;
   name: string;
   description: string;
-  ingredients?: string;
-  special_notes?: string;
-  processed_image_urls?: string[];
+  notes?: string;
+  reference_image_urls?: string[];
 }
 
 export interface DrinkDetailsForTab {
   id: string;
   name: string;
   description: string;
-  ingredients?: string;
-  special_notes?: string;
-  processed_image_urls?: string[];
+  notes?: string;
+  reference_image_urls?: string[];
 }
 
 export type SubmissionStatus = 
@@ -37,45 +33,7 @@ export type SubmissionStatus =
   | "הערות התקבלו" 
   | "הושלמה ואושרה";
 
-export interface SubmissionData {
-  submission_id: string;
-  client_id: string;
-  item_type: string;
-  item_name_at_submission: string;
-  submission_status: string;
-  uploaded_at: string;
-  processed_at?: string;
-  final_approval_timestamp?: string;
-  assigned_editor_id?: string;
-  original_image_urls: string[];
-  processed_image_urls?: string[];
-  main_processed_image_url?: string;
-  edit_history: Record<string, any>;
-}
-
-export interface SubmissionFormData {
-  restaurantName: string;
-  itemName: string;
-  itemType: string;
-  description?: string;
-  specialNotes?: string;
-  referenceImages: File[];
-  submitterName?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-}
-
-export interface CreateSubmissionResponse {
-  submission_id: string;
-  client_id: string;
-  itemType: string;
-  itemName: string;
-  submissionStatus: string;
-  uploadedAt: string;
-  originalImageUrls: string[];
-}
-
-export type Submission = {
+export interface Submission {
   submission_id: string;
   client_id: string;
   original_item_id: string;
@@ -96,25 +54,22 @@ export type Submission = {
   created_lead_id?: string | null;
   lead_id?: string | null;
   created_at: string;
-  // Additional file types for enhanced submissions
   branding_material_urls?: string[] | null;
   reference_example_urls?: string[] | null;
   description?: string | null;
-  // Contact information fields
   restaurant_name?: string | null;
   contact_name?: string | null;
   email?: string | null;
   phone?: string | null;
   processed_at?: string | null;
-  // Related data
   clients?: { restaurant_name: string; contact_name: string; email: string; phone: string };
   leads?: { restaurant_name: string; contact_name: string; email: string; phone: string };
   submission_contact_name?: string | null;
   submission_contact_email?: string | null;
   submission_contact_phone?: string | null;
-};
+}
 
-// Get all submissions for a client - fallback version with basic columns only
+// Get all submissions for a client - basic version
 export async function getClientSubmissionsBasic(clientId: string): Promise<Submission[]> {
   console.log('[getClientSubmissionsBasic] Fetching basic submissions for client:', clientId);
   
@@ -144,11 +99,10 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
 
     console.log('[getClientSubmissionsBasic] Successfully fetched', data?.length || 0, 'basic submissions');
     
-    // Fill in missing fields with defaults
     const submissions = data.map((item: any) => ({
       submission_id: item.submission_id,
       client_id: item.client_id,
-      original_item_id: '', // Default empty
+      original_item_id: '',
       item_type: item.item_type,
       item_name_at_submission: item.item_name_at_submission,
       assigned_package_id_at_submission: undefined,
@@ -162,7 +116,6 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
       final_approval_timestamp: null,
       internal_team_notes: null,
       assigned_editor_id: null,
-
       priority: null,
       created_lead_id: null,
       lead_id: null,
@@ -184,7 +137,6 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
   console.log('[getClientSubmissions] Fetching submissions for client:', clientId);
   
   try {
-    // Try the full version first, fallback to basic if it fails
     const { data, error } = await supabase
       .from("customer_submissions")
       .select("*")
@@ -193,7 +145,6 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
 
     if (error) {
       console.error("Error fetching client submissions, trying basic version:", error);
-      // Fallback to basic version
       return await getClientSubmissionsBasic(clientId);
     }
 
@@ -201,7 +152,6 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
     return data as Submission[];
   } catch (error) {
     console.error('[getClientSubmissions] Exception, trying basic version:', error);
-    // Fallback to basic version
     try {
       return await getClientSubmissionsBasic(clientId);
     } catch (fallbackError) {
@@ -211,7 +161,7 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
   }
 }
 
-// Create a new submission for a dish, cocktail, or drink
+// Create a new submission
 export async function createSubmission(
   clientId: string,
   originalItemId: string,
@@ -239,55 +189,10 @@ export async function createSubmission(
   return data as Submission;
 }
 
-// Create batch submissions for multiple items
-export async function createBatchSubmissions(
-  clientId: string,
-  items: Array<{
-    originalItemId: string;
-    itemType: string;
-    itemName: string;
-  }>,
-  packageId?: string
-): Promise<void> {
-  const submissionRecords = items.map(item => ({
-    client_id: clientId,
-    original_item_id: item.originalItemId,
-    item_type: item.itemType,
-    item_name_at_submission: item.itemName,
-    assigned_package_id_at_submission: packageId
-  }));
-
-  const { error } = await supabase
-    .from("customer_submissions")
-    .insert(submissionRecords);
-
-  if (error) {
-    console.error("Error creating batch submissions:", error);
-    throw error;
-  }
-}
-
-// Get remaining servings for a client
-export async function getClientRemainingServings(clientId: string): Promise<number> {
-  const { data, error } = await supabase
-    .from("clients")
-    .select("remaining_servings")
-    .eq("client_id", clientId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching client remaining servings:", error);
-    throw error;
-  }
-
-  return data.remaining_servings;
-}
-
+// Get unique submitted dish details for client
 export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {
-  // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
-
-  // 2. Filter for dish submissions and get unique dish IDs, excluding empty/null values
+  
   const dishIds = [
     ...new Set(
       submissions
@@ -300,11 +205,9 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
     return [];
   }
 
-  // 3. Fetch details for these unique dishes
-  // Make sure the select query matches the fields in DishDetailsForTab
   const { data: dishesData, error: dishesError } = await supabase
-    .from('dishes') // Assuming 'dishes' is your dishes table name
-    .select('dish_id, name, ingredients, description, notes, reference_image_urls')
+    .from('dishes')
+    .select('dish_id, name, description, notes, reference_image_urls')
     .in('dish_id', dishIds);
 
   if (dishesError) {
@@ -312,14 +215,19 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
     throw dishesError;
   }
 
-  return (dishesData || []) as DishDetailsForTab[];
+  return (dishesData || []).map(dish => ({
+    id: dish.dish_id,
+    name: dish.name,
+    description: dish.description,
+    notes: dish.notes,
+    reference_image_urls: dish.reference_image_urls
+  })) as DishDetailsForTab[];
 }
 
+// Get unique submitted cocktail details for client
 export async function getUniqueSubmittedCocktailDetailsForClient(clientId: string): Promise<CocktailDetailsForTab[]> {
-  // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
-
-  // 2. Filter for cocktail submissions and get unique cocktail IDs, excluding empty/null values
+  
   const cocktailIds = [
     ...new Set(
       submissions
@@ -332,11 +240,9 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
     return [];
   }
 
-  // 3. Fetch details for these unique cocktails
-  // Assuming 'cocktails' is your cocktails table name
   const { data: cocktailsData, error: cocktailsError } = await supabase
     .from('cocktails') 
-    .select('cocktail_id, name, ingredients, description, notes, reference_image_urls')
+    .select('cocktail_id, name, description, notes, reference_image_urls')
     .in('cocktail_id', cocktailIds);
 
   if (cocktailsError) {
@@ -344,14 +250,19 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
     throw cocktailsError;
   }
 
-  return (cocktailsData || []) as CocktailDetailsForTab[];
+  return (cocktailsData || []).map(cocktail => ({
+    id: cocktail.cocktail_id,
+    name: cocktail.name,
+    description: cocktail.description,
+    notes: cocktail.notes,
+    reference_image_urls: cocktail.reference_image_urls
+  })) as CocktailDetailsForTab[];
 }
 
+// Get unique submitted drink details for client
 export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string): Promise<DrinkDetailsForTab[]> {
-  // 1. Get all submissions for the client
   const submissions = await getClientSubmissions(clientId);
-
-  // 2. Filter for drink submissions and get unique drink IDs, excluding empty/null values
+  
   const drinkIds = [
     ...new Set(
       submissions
@@ -364,11 +275,9 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
     return [];
   }
 
-  // 3. Fetch details for these unique drinks
-  // Assuming 'drinks' is your drinks table name
   const { data: drinksData, error: drinksError } = await supabase
     .from('drinks') 
-    .select('drink_id, name, ingredients, description, notes, reference_image_urls') // Ensure fields match DrinkDetailsForTab
+    .select('drink_id, name, description, notes, reference_image_urls')
     .in('drink_id', drinkIds);
 
   if (drinksError) {
@@ -376,5 +285,11 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
     throw drinksError;
   }
 
-  return (drinksData || []) as DrinkDetailsForTab[];
+  return (drinksData || []).map(drink => ({
+    id: drink.drink_id,
+    name: drink.name,
+    description: drink.description,
+    notes: drink.notes,
+    reference_image_urls: drink.reference_image_urls
+  })) as DrinkDetailsForTab[];
 }
