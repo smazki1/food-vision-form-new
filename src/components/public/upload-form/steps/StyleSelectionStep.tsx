@@ -35,6 +35,12 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'רקע עץ',
         image: '/lovable-uploads/רקע עץ.png',
         description: 'חם וביתי'
+      },
+      {
+        id: 'colorful-bg',
+        name: 'רקע צבעוני',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'חיוני ובולט'
       }
     ],
     social: [
@@ -55,6 +61,12 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'Facebook רחב',
         image: '/lovable-uploads/צבעוני.png',
         description: 'פורמט רחב לפייסבוק'
+      },
+      {
+        id: 'tiktok-vertical',
+        name: 'TikTok אנכי',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'פורמט אנכי לטיקטוק'
       }
     ],
     menu: [
@@ -75,6 +87,12 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'מסך דיגיטלי',
         image: '/lovable-uploads/רקע עץ.png',
         description: 'מותאם למסכי הזמנה'
+      },
+      {
+        id: 'print-menu',
+        name: 'תפריט מודפס',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'מותאם לתפריט מודפס'
       }
     ],
     marketing: [
@@ -95,6 +113,12 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'סגנון פוסטר',
         image: '/lovable-uploads/כהה.png',
         description: 'עיצוב דרמטי לפוסטרים'
+      },
+      {
+        id: 'brochure-style',
+        name: 'סגנון חוברת',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'מותאם לחוברות פרסום'
       }
     ],
     all: [
@@ -118,7 +142,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       },
       {
         id: 'colorful-bg',
-        name: 'רקע צבעוני',
+        name: 'רקع צבעוני',
         image: '/lovable-uploads/צבעוני.png',
         description: 'חיוני ובולט'
       },
@@ -139,6 +163,12 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'Facebook רחב',
         image: '/lovable-uploads/צבעוני.png',
         description: 'פורמט רחב לפייסבוק'
+      },
+      {
+        id: 'tiktok-vertical',
+        name: 'TikTok אנכי',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'פורמט אנכי לטיקטוק'
       },
       {
         id: 'menu-clean',
@@ -163,12 +193,6 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         name: 'באנר פרסומי',
         image: '/lovable-uploads/צבעוני.png',
         description: 'עיצוב בולט לפרסום'
-      },
-      {
-        id: 'flyer-style',
-        name: 'סגנון עלון',
-        image: '/lovable-uploads/לבן.png',
-        description: 'מותאם לעלוני פרסום'
       }
     ]
   };
@@ -179,7 +203,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
   const handleStyleSelect = (styleId: string) => {
     updateFormData({
       selectedStyle: styleId,
-      customStyle: ''
+      customStyle: undefined
     });
     setShowComments(true);
     clearErrors();
