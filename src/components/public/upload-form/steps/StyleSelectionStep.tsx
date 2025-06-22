@@ -21,7 +21,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'dark-bg',
         name: 'רקע כהה',
-        image: '/lovable-uploads/כהה.png',
+        image: '/lovable-uploads/1e4647a0-37e0-48c6-a75e-914c461d682f.png',
         description: 'אלגנטי ומודרני'
       },
       {
@@ -33,7 +33,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'colorful-bg',
         name: 'רקע צבעוני',
-        image: '/lovable-uploads/צבעוני.png',
+        image: '/lovable-uploads/70e6f48e-fc5e-49ec-939d-a73951210a94.png',
         description: 'חיוני ובולט'
       },
       {
@@ -47,19 +47,19 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'atmosphere',
         name: 'אווירה',
-        image: '/lovable-uploads/אווירה.jpg',
+        image: '/lovable-uploads/be6c1f5c-cbf9-4561-8c33-a09c74e2255f.png',
         description: 'יוצר אווירה מיוחדת'
       },
       {
         id: 'marketing',
         name: 'שיווקי',
-        image: '/lovable-uploads/שיווקי.jpg',
+        image: '/lovable-uploads/8d620120-9895-4fa9-81cd-3694b4bb638d.png',
         description: 'מותאם לשיווק ברשתות'
       },
       {
         id: 'elegant',
         name: 'אלגנט',
-        image: '/lovable-uploads/אלגנט.png',
+        image: '/lovable-uploads/31fa48cb-1c38-4542-8ecd-96a4392929c2.png',
         description: 'עיצוב אלגנטי ומתוחכם'
       }
     ],
@@ -119,7 +119,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'dark-bg',
         name: 'רקע כהה',
-        image: '/lovable-uploads/כהה.png',
+        image: '/lovable-uploads/1e4647a0-37e0-48c6-a75e-914c461d682f.png',
         description: 'אלגנטי ומודרני'
       },
       {
@@ -131,7 +131,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'colorful-bg',
         name: 'רקע צבעוני',
-        image: '/lovable-uploads/צבעוני.png',
+        image: '/lovable-uploads/70e6f48e-fc5e-49ec-939d-a73951210a94.png',
         description: 'חיוני ובולט'
       },
       {
@@ -143,19 +143,19 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'atmosphere',
         name: 'אווירה',
-        image: '/lovable-uploads/אווירה.jpg',
+        image: '/lovable-uploads/be6c1f5c-cbf9-4561-8c33-a09c74e2255f.png',
         description: 'יוצר אווירה מיוחדת'
       },
       {
         id: 'marketing',
         name: 'שיווקי',
-        image: '/lovable-uploads/שיווקי.jpg',
+        image: '/lovable-uploads/8d620120-9895-4fa9-81cd-3694b4bb638d.png',
         description: 'מותאם לשיווק ברשתות'
       },
       {
         id: 'elegant',
         name: 'אלגנט',
-        image: '/lovable-uploads/אלגנט.png',
+        image: '/lovable-uploads/31fa48cb-1c38-4542-8ecd-96a4392929c2.png',
         description: 'עיצוב אלגנטי ומתוחכם'
       },
       {
