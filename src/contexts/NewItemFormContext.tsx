@@ -28,6 +28,7 @@ export interface NewItemFormData {
   // Category and Style Selection
   selectedCategory?: string;
   selectedStyle?: string;
+  designNotes?: string; // Notes for selected style
   customStyle?: {
     inspirationImages: File[];
     brandingMaterials: File[];
@@ -135,13 +136,13 @@ export const NewItemFormProvider: React.FC<{ children: ReactNode }> = ({ childre
 
   return (
     <NewItemFormContext.Provider value={{
-      formData,
-      updateFormData,
-      resetFormData,
-      addDish,
-      removeDish,
-      updateDish,
-      getDish
+    formData,
+    updateFormData,
+    resetFormData,
+    addDish,
+    removeDish,
+    updateDish,
+    getDish
     }}>
       {children}
     </NewItemFormContext.Provider>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { cn } from '@/lib/utils';
@@ -36,7 +35,7 @@ const categories = [
   {
     id: 'all',
     title: '🎨 כל הסגנונות',
-    subtitle: 'מציג את כל 12 הסגנונות הזמינים',
+    subtitle: 'מציג את כל 16 הסגנונות הזמינים',
     description: 'גישה לכל הסגנונות הזמינים במערכת'
   }
 ];

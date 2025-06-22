@@ -73,7 +73,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
             <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
             <p className="font-medium">לתוצאה הטובה ביותר, וודאו שהמנה בתמונה נראית כמו שאתם רוצים להציג ללקוחות - אנחנו נדאג לתאורה מקצועית, רקע מושלם ועיצוב מדהים.</p>
           </div>
-        </div>
+          </div>
 
         {/* Before/After Example */}
         <div className="bg-white rounded-lg p-4 shadow-sm">

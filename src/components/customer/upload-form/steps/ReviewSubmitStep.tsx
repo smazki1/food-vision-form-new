@@ -130,31 +130,31 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
               </div>
               
               {dish.referenceImages.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"> 
                   {dish.referenceImages.map((file, index) => (
-                    <div key={index} className="group relative bg-gray-50 rounded-xl shadow-sm overflow-hidden border-2 border-gray-100 aspect-video hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"> 
-                      <img 
-                        src={URL.createObjectURL(file)} 
+                <div key={index} className="group relative bg-gray-50 rounded-xl shadow-sm overflow-hidden border-2 border-gray-100 aspect-video hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"> 
+                  <img 
+                    src={URL.createObjectURL(file)} 
                         alt={`מנה ${dish.id} - תמונה ${index + 1}`} 
-                        className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                        onLoad={() => URL.revokeObjectURL(file.name)}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs p-3">
-                        <div className="truncate font-medium">{file.name}</div>
-                      </div>
-                      <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
-                        {index + 1}
-                      </div>
-                    </div>
-                  ))}
+                    className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    onLoad={() => URL.revokeObjectURL(file.name)}
+                  />
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white text-xs p-3">
+                    <div className="truncate font-medium">{file.name}</div>
+                  </div>
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-bold px-2 py-1 rounded-full">
+                    {index + 1}
+                  </div>
                 </div>
-              ) : (
+              ))}
+            </div>
+          ) : (
                 <div className="text-center py-8">
                   <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
                   <p className="text-gray-500 text-sm">לא הועלו תמונות למנה זו</p>
-                </div>
-              )}
             </div>
+          )}
+        </div>
           </div>
         ))}
       </section>
@@ -169,9 +169,9 @@ const ReviewSubmitStep: React.FC<ReviewSubmitStepProps> = ({ errors, onFinalSubm
           <AlertDescription className="text-base font-medium ml-3"> 
             הגשה זו תישלח לעיבוד מיידי.
             {remainingDishes !== undefined && remainingDishes > 0 && (
-              <div className="mt-2 text-sm opacity-80">
+                  <div className="mt-2 text-sm opacity-80">
                 נותרו לכם {remainingDishes} מנות נוספות בחבילה
-              </div>
+                  </div>
             )}
           </AlertDescription>
         </Alert>

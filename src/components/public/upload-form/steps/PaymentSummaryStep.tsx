@@ -3,13 +3,16 @@ import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
 import { Check, Clock, Shield, CreditCard } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PaymentSummaryStepProps {
   errors: Record<string, string>;
   clearErrors: () => void;
+  onPrevious?: () => void;
+  onSubmit?: () => Promise<void>;
 }
 
-const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors }) => {
+const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors, onPrevious, onSubmit }) => {
   const { formData } = useNewItemForm();
 
   const selectedCategory = formData.selectedCategory;
@@ -167,19 +170,40 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
         </div>
       </div>
 
-      {/* Price and Payment */}
-      <div className="bg-[#8B1E3F] text-white rounded-xl p-6 text-center">
-        <h3 className="text-2xl font-bold mb-2">249₪</h3>
-        <p className="text-lg mb-4">חבילת ניסיון מיוחדת</p>
-        <p className="text-sm opacity-90 mb-6">כולל עיבוד מקצועי לכל המנות + זיכוי מלא לחבילה הבאה</p>
-        
+      {/* Payment Button */}
+      <div className="text-center space-y-4">
         <Button
           size="lg"
           className="bg-[#F3752B] hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold"
+          onClick={() => {
+            if (onSubmit) {
+              onSubmit();
+            } else {
+              // Fallback for testing
+              toast.info('מעבד את ההגשה...');
+              setTimeout(() => {
+                toast.success('ההזמנה נשלחה בהצלחה!');
+                window.location.href = '/thank-you';
+              }, 1000);
+            }
+          }}
         >
           <CreditCard className="w-5 h-5 mr-2" />
           בצע תשלום - 249₪
         </Button>
+        
+        {/* Back Button */}
+        {onPrevious && (
+          <div>
+            <Button
+              onClick={onPrevious}
+              variant="outline"
+              className="px-6 py-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+            >
+              חזרה אחורה
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

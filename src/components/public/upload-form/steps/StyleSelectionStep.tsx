@@ -105,58 +105,86 @@ const stylesByCategory = {
       id: 'light-bg', 
       name: 'רקע בהיר', 
       description: 'קלאסי ומומלץ', 
-      preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' 
+      preview: '/lovable-uploads/לבן.png' 
     },
     { 
       id: 'dark-bg', 
       name: 'רקע כהה', 
       description: 'פרימיום ואלגנטי', 
-      preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' 
+      preview: '/lovable-uploads/כהה.png' 
     },
     { 
       id: 'wood-bg', 
       name: 'רקע עץ', 
       description: 'חמים וביתי', 
-      preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' 
+      preview: '/lovable-uploads/רקע עץ.png' 
     },
     { 
       id: 'colorful-bg', 
       name: 'רקע צבעוני', 
       description: 'מודרני ובולט', 
-      preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' 
+      preview: '/lovable-uploads/צבעוני.png' 
     }
   ],
   social: [
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'facebook-wide', name: 'Facebook רחב', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'tiktok-vertical', name: 'TikTok אנכי', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
+    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/לבן.png' },
+    { id: 'instagram-story', name: 'Instagram סטורי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/כהה.png' },
+    { id: 'facebook-post', name: 'Facebook פוסט', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'tiktok-style', name: 'TikTok סגנון', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/צבעוני.png' }
   ],
   menu: [
-    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'digital-screen', name: 'מסך דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
+    { id: 'digital-menu', name: 'תפריט דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/לבן.png' },
+    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/כהה.png' },
+    { id: 'board-menu', name: 'תפריט לוח', description: 'מותאם ללוחות', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'tablet-menu', name: 'תפריט טאבלט', description: 'מותאם לטאבלטים', preview: '/lovable-uploads/צבעוני.png' }
   ],
   marketing: [
-    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
+    { 
+      id: 'shouting', 
+      name: 'צעקני', 
+      description: 'בולט ומושך תשומת לב', 
+      preview: '/style-images/marketing/bold.jpg' 
+    },
+    { 
+      id: 'seasonal', 
+      name: 'עונתי', 
+      description: 'מותאם לעונות השנה', 
+      preview: '/style-images/marketing/seasonal.jpg' 
+    },
+    { 
+      id: 'appetizing', 
+      name: 'מגרה', 
+      description: 'מעורר תיאבון', 
+      preview: '/style-images/marketing/appetizing.jpg' 
+    },
+    { 
+      id: 'luxury', 
+      name: 'יוקרתי', 
+      description: 'אלגנטי ומפואר', 
+      preview: '/style-images/marketing/luxury.jpg' 
+    }
   ],
   all: [
-    { id: 'light-bg', name: 'רקע בהיר', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' },
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'story-vertical', name: 'Stories אנכי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'menu-clean', name: 'תפריט נקי', description: 'מינימליסטי וברור', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'menu-elegant', name: 'תפריט אלגנטי', description: 'מעוצב ומקצועי', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' },
-    { id: 'ad-banner', name: 'באנר פרסומי', description: 'מותאם למודעות', preview: '/lovable-uploads/e4149abd-96e4-4cc3-a8d3-6008629f0db1.png' },
-    { id: 'flyer-style', name: 'סגנון עלון', description: 'מותאם לעלונים', preview: '/lovable-uploads/84d2b702-0e3e-4049-a905-ba420884ba6e.png' },
-    { id: 'poster-style', name: 'סגנון פוסטר', description: 'מותאם לפוסטרים', preview: '/lovable-uploads/013f53c9-a06b-4e06-9aaa-f61d28c27fc1.png' },
-    { id: 'brochure-style', name: 'סגנון חוברת', description: 'מותאם לחוברות', preview: '/lovable-uploads/d1590bd1-95c0-4df9-a3a6-dea1e4be15ff.png' }
+    // Delivery styles (4)
+    { id: 'light-bg', name: 'רקע בהיר', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/לבן.png' },
+    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/כהה.png' },
+    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/צבעוני.png' },
+    // Social media styles (4)
+    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/לבן.png' },
+    { id: 'instagram-story', name: 'Instagram סטורי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/כהה.png' },
+    { id: 'facebook-post', name: 'Facebook פוסט', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'tiktok-style', name: 'TikTok סגנון', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/צבעוני.png' },
+    // Menu styles (4)
+    { id: 'digital-menu', name: 'תפריט דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/לבן.png' },
+    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/כהה.png' },
+    { id: 'board-menu', name: 'תפריט לוח', description: 'מותאם ללוחות', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'tablet-menu', name: 'תפריט טאבלט', description: 'מותאם לטאבלטים', preview: '/lovable-uploads/צבעוני.png' },
+    // Marketing styles (4)
+    { id: 'shouting', name: 'צעקני', description: 'בולט ומושך תשומת לב', preview: '/style-images/marketing/bold.jpg' },
+    { id: 'seasonal', name: 'עונתי', description: 'מותאם לעונות השנה', preview: '/style-images/marketing/seasonal.jpg' },
+    { id: 'appetizing', name: 'מגרה', description: 'מעורר תיאבון', preview: '/style-images/marketing/appetizing.jpg' },
+    { id: 'luxury', name: 'יוקרתי', description: 'אלגנטי ומפואר', preview: '/style-images/marketing/luxury.jpg' }
   ]
 };
 
@@ -259,7 +287,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
 
   const handleFileUpload = (field: 'inspirationImages' | 'brandingMaterials', files: FileList | null) => {
     if (files && formData.customStyle) {
-      const newFiles = Array.from(files);
+    const newFiles = Array.from(files);
       handleCustomStyleChange(field, [...formData.customStyle[field], ...newFiles]);
     }
   };
@@ -350,6 +378,25 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         ))}
       </div>
 
+      {/* Design Notes Section - Shows when a style is selected */}
+      {formData.selectedStyle && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <label className="block text-lg font-semibold text-[#333333] mb-3">
+            הערות מיוחדות לעיצוב
+          </label>
+          <textarea
+            value={formData.designNotes || ''}
+            onChange={(e) => updateFormData({ designNotes: e.target.value })}
+            placeholder="לדוגמה: אשמח שזה יהיה בזווית תקריב, עם דגש על הגבינה הנמסה, בסגנון דומה לתמונת הרקע שבחרתי..."
+            className="w-full p-4 border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#f3752b] focus:border-transparent resize-none bg-white"
+            rows={3}
+          />
+          <p className="text-sm text-blue-600 mt-2">
+            ספר לנו איך תרצה שהתמונה תיראה - זווית צילום, דגשים מיוחדים, אווירה וכל פרט שחשוב לך
+          </p>
+        </div>
+      )}
+
       {/* Custom Style Section */}
       <div className="border-t pt-8">
         <div className="flex items-center justify-between mb-6">
@@ -359,14 +406,14 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
           </div>
           <button
             type="button"
-            onClick={handleCustomStyleToggle}
-            className={cn(
+          onClick={handleCustomStyleToggle}
+          className={cn(
               "px-6 py-3 rounded-lg font-semibold transition-all duration-200",
-              formData.customStyle
+            formData.customStyle
                 ? "bg-[#f3752b] text-white hover:bg-[#e56b26]"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            )}
-          >
+          )}
+        >
             {formData.customStyle ? "ביטול סגנון מותאם" : "צור סגנון מותאם"}
           </button>
         </div>

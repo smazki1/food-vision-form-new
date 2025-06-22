@@ -137,21 +137,54 @@ export const useClientUpdate = () => {
 
 // Specific hook for updating client status
 export const useClientStatusUpdate = () => {
-  const updateClient = useClientUpdate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ clientId, status }: { clientId: string; status: string }) => {
-      return updateClient.mutateAsync({
-        clientId,
-        updates: { client_status: status }
+      console.log('[useClientStatusUpdate] Updating client status:', clientId, status);
+      
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          client_status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('client_id', clientId);
+
+      if (error) {
+        console.error('[useClientStatusUpdate] Database error:', error);
+        throw error;
+      }
+
+      return { clientId, status };
+    },
+
+    onSuccess: (data) => {
+      // Update all client caches optimistically
+      const allCaches = queryClient.getQueryCache().getAll();
+      const clientCaches = allCaches.filter(cache => {
+        const key = cache.queryKey;
+        return (
+          (Array.isArray(key) && key[0] === 'clients_simplified') ||
+          (Array.isArray(key) && key[0] === 'clients_list_for_admin')
+        );
+      });
+
+      clientCaches.forEach(cache => {
+        queryClient.setQueryData(cache.queryKey, (old: Client[] | undefined) => {
+          if (!old) return old;
+          return old.map(client => 
+            client.client_id === data.clientId 
+              ? { ...client, client_status: data.status, updated_at: new Date().toISOString() }
+              : client
+          );
+        });
       });
     },
-    onSuccess: () => {
-      // No additional cache invalidation needed - parent hook handles everything
-      toast.success('סטטוס הלקוח עודכן בהצלחה');
-    },
+
     onError: (error: any) => {
-      toast.error(`שגיאה בעדכון סטטוס הלקוח: ${error.message}`);
+      console.error('[useClientStatusUpdate] Mutation error:', error);
+      toast.error('שגיאה בעדכון סטטוס הלקוח');
     }
   });
 };
@@ -191,6 +224,146 @@ export const useClientPaymentUpdate = () => {
     },
     onError: (error: any) => {
       toast.error(`שגיאה בעדכון פרטי התשלום: ${error.message}`);
+    }
+  });
+};
+
+export const useDeleteClient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    onMutate: async (clientId: string) => {
+      console.log('[useDeleteClient] Starting optimistic update for client:', clientId);
+      
+      // Optimistically remove client from all caches immediately
+      const allCaches = queryClient.getQueryCache().getAll();
+      const clientCaches = allCaches.filter(cache => {
+        const key = cache.queryKey;
+        return (
+          (Array.isArray(key) && key[0] === 'clients_simplified') ||
+          (Array.isArray(key) && key[0] === 'clients_list_for_admin') ||
+          (Array.isArray(key) && key[0] === 'clients')
+        );
+      });
+
+      // Snapshot previous values for rollback
+      const previousCaches = clientCaches.map(cache => ({
+        queryKey: cache.queryKey,
+        data: cache.state.data
+      }));
+
+      // Remove client immediately from all caches
+      clientCaches.forEach(cache => {
+        queryClient.setQueryData(cache.queryKey, (old: any[] | undefined) => {
+          if (!old) return old;
+          return old.filter((client: any) => client.client_id !== clientId);
+        });
+      });
+
+      return { previousCaches };
+    },
+    mutationFn: async (clientId: string) => {
+      console.log('[useDeleteClient] Deleting client:', clientId);
+      
+      // Check if client has submissions (for warning purposes only)
+      const { data: submissions, error: submissionsError } = await supabase
+        .from('customer_submissions')
+        .select('submission_id')
+        .eq('client_id', clientId);
+
+      if (submissionsError) {
+        console.error('[useDeleteClient] Error checking submissions:', submissionsError);
+        throw submissionsError;
+      }
+
+      // Handle submissions - delete them first to avoid foreign key constraint
+      if (submissions && submissions.length > 0) {
+        console.log(`[useDeleteClient] Found ${submissions.length} submissions. Deleting them first...`);
+        
+        // Delete all submissions for this client
+        const { error: deleteSubmissionsError } = await supabase
+          .from('customer_submissions')
+          .delete()
+          .eq('client_id', clientId);
+
+        if (deleteSubmissionsError) {
+          console.error('[useDeleteClient] Error deleting submissions:', deleteSubmissionsError);
+          throw deleteSubmissionsError;
+        }
+        
+        console.log('[useDeleteClient] Successfully deleted all submissions');
+      }
+
+      // Check if client has a current package assigned
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('current_package_id')
+        .eq('client_id', clientId)
+        .single();
+
+      if (clientError) {
+        console.error('[useDeleteClient] Error checking client package:', clientError);
+        throw clientError;
+      }
+
+      // Clean up related data before deletion
+      console.log('[useDeleteClient] Cleaning up related data...');
+      await Promise.all([
+        supabase.from('dishes').delete().eq('client_id', clientId),
+        supabase.from('cocktails').delete().eq('client_id', clientId), 
+        supabase.from('drinks').delete().eq('client_id', clientId)
+      ]);
+
+      // Delete the client
+      console.log('[useDeleteClient] Deleting client from database...');
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('client_id', clientId);
+
+      if (error) {
+        console.error('[useDeleteClient] Error deleting client:', error);
+        throw error;
+      }
+      
+      console.log('[useDeleteClient] Client deleted successfully');
+      return clientId;
+    },
+    onSuccess: (deletedClientId) => {
+      console.log('[useDeleteClient] Delete mutation successful, updating caches');
+      
+      // Update all client caches optimistically - same pattern as other client hooks
+      const allCaches = queryClient.getQueryCache().getAll();
+      const clientCaches = allCaches.filter(cache => {
+        const key = cache.queryKey;
+        return (
+          (Array.isArray(key) && key[0] === 'clients_simplified') ||
+          (Array.isArray(key) && key[0] === 'clients_list_for_admin') ||
+          (Array.isArray(key) && key[0] === 'clients')
+        );
+      });
+
+      // Remove the deleted client from all relevant caches
+      clientCaches.forEach(cache => {
+        queryClient.setQueryData(cache.queryKey, (old: any[] | undefined) => {
+          if (!old) return old;
+          return old.filter((client: any) => client.client_id !== deletedClientId);
+        });
+      });
+      
+      toast.success('הלקוח נמחק בהצלחה מהמערכת');
+    },
+    onError: (error: any, clientId: string, context: any) => {
+      console.error('[useDeleteClient] Delete mutation failed, rolling back:', error);
+      
+      // Rollback optimistic updates if deletion failed
+      if (context?.previousCaches) {
+        context.previousCaches.forEach(({ queryKey, data }: any) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
+      toast.error(`שגיאה במחיקת הלקוח: ${error.message}`);
     }
   });
 }; 

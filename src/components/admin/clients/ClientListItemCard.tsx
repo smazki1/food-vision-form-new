@@ -3,10 +3,21 @@ import { Client } from '@/types/client'; // Assuming this path is correct
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Assuming Avatar components are available
-import { Briefcase, Users, Package, Star, AlertTriangle, CheckCircle2, XCircle, Archive, RotateCcw } from 'lucide-react'; // Example icons
+import { Briefcase, Users, Package, Star, AlertTriangle, CheckCircle2, XCircle, Archive, RotateCcw, Trash2 } from 'lucide-react'; // Example icons
 import { ClientDetailPanel } from '@/components/admin/client-details/ClientDetailPanel';
-import { useClientStatusUpdate } from '@/hooks/useClientUpdate';
+import { useClientStatusUpdate, useDeleteClient } from '@/hooks/useClientUpdate';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ClientListItemCardProps {
   client: Client;
@@ -62,6 +73,7 @@ export const ClientListItemCard: React.FC<ClientListItemCardProps> = ({ client }
   const { initials, color } = getAvatarData(client.restaurant_name);
   const statusInfo = getStatusInfo(client.client_status);
   const clientStatusUpdate = useClientStatusUpdate();
+  const deleteClient = useDeleteClient();
 
   const handleRowClick = () => {
     setShowDetailPanel(true);
@@ -82,6 +94,15 @@ export const ClientListItemCard: React.FC<ClientListItemCardProps> = ({ client }
       toast.success(`לקוח "${client.restaurant_name}" ${actionText} בהצלחה`);
     } catch (error) {
       console.error('Error updating client status:', error);
+      // Error toast is handled by the hook
+    }
+  };
+
+  const handleDeleteClick = async () => {
+    try {
+      await deleteClient.mutateAsync(client.client_id);
+    } catch (error) {
+      console.error('Error deleting client:', error);
       // Error toast is handled by the hook
     }
   };
@@ -122,31 +143,77 @@ export const ClientListItemCard: React.FC<ClientListItemCardProps> = ({ client }
         </div>
       </div>
       
-      <Button 
-        variant="outline" 
-        size="sm" 
-        onClick={handleArchiveClick}
-        disabled={clientStatusUpdate.isPending}
-        className={
-          client.client_status === 'ארכיון' 
-            ? "text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700 whitespace-nowrap"
-            : "text-orange-600 border-orange-600 hover:bg-orange-50 hover:text-orange-700 whitespace-nowrap"
-        }
-      >
-        {clientStatusUpdate.isPending ? (
-          "מעבד..."
-        ) : client.client_status === 'ארכיון' ? (
-          <>
-            <RotateCcw className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
-            החזר
-          </>
-        ) : (
-          <>
-            <Archive className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
-            ארכיון
-          </>
-        )}
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleArchiveClick}
+          disabled={clientStatusUpdate.isPending}
+          className={
+            client.client_status === 'ארכיון' 
+              ? "text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700 whitespace-nowrap"
+              : "text-orange-600 border-orange-600 hover:bg-orange-50 hover:text-orange-700 whitespace-nowrap"
+          }
+        >
+          {clientStatusUpdate.isPending ? (
+            "מעבד..."
+          ) : client.client_status === 'ארכיון' ? (
+            <>
+              <RotateCcw className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+              החזר
+            </>
+          ) : (
+            <>
+              <Archive className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+              ארכיון
+            </>
+          )}
+        </Button>
+
+        {/* Delete button - visible for all clients */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={deleteClient.isPending}
+              className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700 whitespace-nowrap"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {deleteClient.isPending ? (
+                "מוחק..."
+              ) : (
+                <>
+                  <Trash2 className="w-3 h-3 mr-1 rtl:ml-1 rtl:mr-0" />
+                  מחק
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>מחיקת לקוח מהמערכת</AlertDialogTitle>
+              <AlertDialogDescription>
+                פעולה זו תמחק לצמיתות את הלקוח "{client.restaurant_name}" מהמערכת.
+                <br />
+                <strong>כל ההגשות וההיסטוריה יימחקו ללא אפשרות שחזור.</strong>
+                <br />
+                <br />
+                האם אתה בטוח שברצונך להמשיך?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>בטל</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteClick}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                מחק לצמיתות
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
 
       {/* Client Detail Panel */}

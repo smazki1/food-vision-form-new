@@ -192,7 +192,7 @@ export async function createSubmission(
 // Get unique submitted dish details for client
 export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
-  
+
   const dishIds = [
     ...new Set(
       submissions
@@ -227,7 +227,7 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
 // Get unique submitted cocktail details for client
 export async function getUniqueSubmittedCocktailDetailsForClient(clientId: string): Promise<CocktailDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
-  
+
   const cocktailIds = [
     ...new Set(
       submissions
@@ -262,7 +262,7 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
 // Get unique submitted drink details for client
 export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string): Promise<DrinkDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
-  
+
   const drinkIds = [
     ...new Set(
       submissions

@@ -15,6 +15,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
   const errors = externalErrors || {};
   const [activeDishId, setActiveDishId] = useState('1');
   const [expandedDishes, setExpandedDishes] = useState<Set<string>>(new Set(['1']));
+  const [qualityConfirmed, setQualityConfirmed] = useState(false);
 
     // Update current dish data when formData changes
   useEffect(() => {
@@ -36,12 +37,24 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
     }
   }, [activeDishId, expandedDishes]);
 
+  // Load quality confirmation state from localStorage
+  useEffect(() => {
+    const savedQualityConfirmed = localStorage.getItem('imageQualityConfirmed');
+    if (savedQualityConfirmed === 'true') {
+      setQualityConfirmed(true);
+    }
+  }, []);
+
   const handleAddAnotherDish = () => {
     const newDishId = addDish();
     
     // Immediately set the new dish as active and expanded
     setActiveDishId(newDishId);
     setExpandedDishes(new Set([newDishId]));
+    
+    // Reset quality confirmation state
+    setQualityConfirmed(false);
+    localStorage.setItem('imageQualityConfirmed', 'false');
     
     // Update form with empty data for new dish
     updateFormData({
@@ -103,7 +116,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
     }
   };
 
-  const showAddButton = formData.referenceImages.length > 0;
+  // Remove the old showAddButton logic as we're using the new toggle pattern
 
   const inputRef = useRef<HTMLDivElement>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -210,7 +223,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
     <div className="space-y-4" dir="rtl">
 
       {/* Dish Accordions */}
-      {formData.dishes.map((dish) => (
+      {formData.dishes && formData.dishes.map((dish) => (
         <div key={dish.id} className="border border-gray-200 rounded-xl overflow-hidden">
           {/* Dish Header */}
           <button
@@ -227,7 +240,7 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
               <span className="font-medium text-gray-800">
                 מנה {dish.id}: {dish.itemName || 'מנה חדשה'}
               </span>
-            </div>
+        </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">
                 {dish.referenceImages.length} תמונות
@@ -245,14 +258,14 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
                   הסר
                 </Button>
               )}
-            </div>
+      </div>
           </button>
 
           {/* Dish Content */}
           {expandedDishes.has(dish.id) && dish.id === activeDishId && (
             <div className="p-6 space-y-6">
-              {/* Item Details Section */}
-              <div className="bg-primary/5 p-6 rounded-xl border border-primary/20">
+      {/* Item Details Section */}
+      <div className="bg-primary/5 p-6 rounded-xl border border-primary/20">
         <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
           <Sparkles className="w-6 h-6 text-primary ml-2" />
           פרטי הפריט
@@ -442,26 +455,67 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
           </div>
         )}
 
-
+        {/* Quality Confirmation and Add Another Dish Toggle */}
+        {formData.referenceImages.length > 0 && (
+          <div className="space-y-6">
+            {/* Quality Confirmation Checkbox */}
+            <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+              <div className="flex items-start space-x-3 space-x-reverse">
+                <Checkbox
+                  id="qualityConfirmation"
+                  checked={qualityConfirmed}
+                  onCheckedChange={(checked) => {
+                    const isChecked = checked === true;
+                    setQualityConfirmed(isChecked);
+                    // Store in localStorage for persistence
+                    localStorage.setItem('imageQualityConfirmed', isChecked.toString());
+                  }}
+                />
+                <div className="space-y-1">
+                  <Label 
+                    htmlFor="qualityConfirmation"
+                    className="text-sm font-medium text-blue-800 cursor-pointer"
+                  >
+                    וידאתי שהתמונות ברורות ומובנות
+                  </Label>
+                  <p className="text-xs text-blue-600">
+                    תמונות ברורות ומובנות מבטיחות תוצאות טובות יותר
+                  </p>
+                </div>
               </div>
+            </div>
+
+            {/* Add Another Dish Toggle Section */}
+            {qualityConfirmed && (
+              <div className="bg-green-50 p-6 rounded-xl border border-green-200">
+                <div className="text-center space-y-4">
+                  <h4 className="text-lg font-semibold text-green-800">
+                    רוצים להעלות מנה נוספת?
+                  </h4>
+                  <p className="text-green-700 text-sm">
+                    תוכלו להעלות מנה נוספת עם תמונות ופרטים נפרדים
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleAddAnotherDish}
+                    className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 mx-auto"
+                  >
+                    <Plus className="w-5 h-5" />
+                    הוספת מנה נוספת
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+                </div>
             </div>
           )}
         </div>
       ))}
 
-      {/* Add Another Dish Button */}
-      {showAddButton && (
-        <div className="text-center">
-          <Button
-            type="button"
-            onClick={handleAddAnotherDish}
-            className="bg-[#F3752B] hover:bg-[#F3752B]/90 text-white font-semibold px-6 py-3 rounded-lg flex items-center gap-2 mx-auto"
-          >
-            <Plus className="w-5 h-5" />
-            הוספת מנה נוספת
-          </Button>
-        </div>
-      )}
+
 
       {/* Contact Details Section */}
       <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">

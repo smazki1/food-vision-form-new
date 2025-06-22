@@ -607,7 +607,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   const [showCosts, setShowCosts] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState(0);
   const [showBackgroundImages, setShowBackgroundImages] = useState(false);
-  const [showSubmissionDetails, setShowSubmissionDetails] = useState(false);
+
   
   // Lightbox state
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -1554,78 +1554,131 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                   </Tabs>
                 </div>
 
-                {/* LORA Details */}
-                <div>
-                  <h3 className="font-medium mb-3">פרטי LORA</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input 
-                      placeholder="שם LORA" 
-                      value={loraDetails.lora_name}
-                      onChange={(e) => updateLoraField('lora_name', e.target.value)}
-                      disabled={isLoraSaving}
-                    />
-                    <Input 
-                      placeholder="מזהה LORA" 
-                      value={loraDetails.lora_id}
-                      onChange={(e) => updateLoraField('lora_id', e.target.value)}
-                      disabled={isLoraSaving}
-                    />
-                    <Input 
-                      placeholder="קישור LORA" 
-                      className="col-span-2" 
-                      value={loraDetails.lora_link}
-                      onChange={(e) => updateLoraField('lora_link', e.target.value)}
-                      disabled={isLoraSaving}
-                    />
-                    <Textarea 
-                      placeholder="Prompt קבוע" 
-                      className="col-span-2 min-h-[60px]" 
-                      value={loraDetails.fixed_prompt}
-                      onChange={(e) => updateLoraField('fixed_prompt', e.target.value)}
-                      disabled={isLoraSaving}
-                    />
-                  </div>
-                  {isLoraSaving && <div className="text-xs text-gray-500 mt-2">שומר פרטי LORA...</div>}
-                </div>
-
-                <Separator />
-
-                {/* Collapsible Submission Details */}
-                <div>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setShowSubmissionDetails(!showSubmissionDetails)}
-                    className="w-full justify-between p-0 h-auto"
-                  >
-                    <span className="font-medium">פרטי הגשה ולקוח</span>
-                    {showSubmissionDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                  
-                  {showSubmissionDetails && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <div className="font-medium">פרטי לקוח</div>
-                          <div className="text-gray-600 mt-1">שם: {client.restaurant_name}</div>
-                          <div className="text-gray-600">טלפון: {client.phone}</div>
-                        </div>
-                        <div>
-                          <div className="font-medium">פרטי הגשה</div>
-                          <div className="text-gray-600 mt-1">תאריך: 13/06/2025</div>
-                          <div className="text-gray-600">סטטוס: בתהליך</div>
+                {/* Client & Submission Details + LORA Details - Side by Side */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Client & Submission Details Panel */}
+                  <div>
+                    <h3 className="font-medium mb-3">פרטי הגשה ולקוח</h3>
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      {/* Submission Details */}
+                      <div>
+                        <h4 className="font-medium text-sm mb-2 text-blue-600">פרטי המנה</h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-700">שם המנה:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.item_name_at_submission || 'לא זמין'}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">סוג המנה:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.item_type || 'לא זמין'}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">תיאור המנה:</span>
+                            <p className="mt-1 text-gray-600 whitespace-pre-wrap">{submissions[selectedSubmission]?.description || 'אין תיאור'}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">הערות מיוחדות:</span>
+                            <p className="mt-1 text-gray-600 whitespace-pre-wrap">
+                              {submissions[selectedSubmission]?.ingredients?.length > 0 
+                                ? submissions[selectedSubmission].ingredients.join(', ')
+                                : 'אין הערות מיוחדות'
+                              }
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="mt-4">
-                        <div className="font-medium text-sm mb-2">היסטוריית סטטוס</div>
-                        <div className="space-y-1 text-xs text-gray-600">
-                          <div>• נקלט - 13/06/2025 09:30</div>
-                          <div>• בתהליך - 13/06/2025 10:15</div>
+
+                      <Separator />
+
+                      {/* Client Contact Details */}
+                      <div>
+                        <h4 className="font-medium text-sm mb-2 text-green-600">פרטי התקשורת</h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-700">שם המסעדה:</span>
+                            <span className="mr-2">{client.restaurant_name}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">איש קשר:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.contact_name || client.contact_name || 'לא זמין'}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">אימייל:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.email || client.email || 'לא זמין'}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">טלפון:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.phone || client.phone || 'לא זמין'}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Submission Metadata */}
+                      <div>
+                        <h4 className="font-medium text-sm mb-2 text-purple-600">מידע נוסף</h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-gray-700">תאריך הגשה:</span>
+                            <span className="mr-2">
+                              {submissions[selectedSubmission]?.uploaded_at 
+                                ? new Date(submissions[selectedSubmission].uploaded_at).toLocaleDateString('he-IL')
+                                : 'לא זמין'
+                              }
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">סטטוס נוכחי:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.submission_status || 'לא זמין'}</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-gray-700">קטגוריה:</span>
+                            <span className="mr-2">{submissions[selectedSubmission]?.category || 'לא זמין'}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* LORA Details Panel */}
+                  <div>
+                    <h3 className="font-medium mb-3">פרטי LORA</h3>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input 
+                          placeholder="שם LORA" 
+                          value={loraDetails.lora_name}
+                          onChange={(e) => updateLoraField('lora_name', e.target.value)}
+                          disabled={isLoraSaving}
+                        />
+                        <Input 
+                          placeholder="מזהה LORA" 
+                          value={loraDetails.lora_id}
+                          onChange={(e) => updateLoraField('lora_id', e.target.value)}
+                          disabled={isLoraSaving}
+                        />
+                        <Input 
+                          placeholder="קישור LORA" 
+                          className="col-span-2" 
+                          value={loraDetails.lora_link}
+                          onChange={(e) => updateLoraField('lora_link', e.target.value)}
+                          disabled={isLoraSaving}
+                        />
+                        <Textarea 
+                          placeholder="Prompt קבוע" 
+                          className="col-span-2 min-h-[60px]" 
+                          value={loraDetails.fixed_prompt}
+                          onChange={(e) => updateLoraField('fixed_prompt', e.target.value)}
+                          disabled={isLoraSaving}
+                        />
+                      </div>
+                      {isLoraSaving && <div className="text-xs text-gray-500 mt-2">שומר פרטי LORA...</div>}
+                    </div>
+                  </div>
                 </div>
+
+
 
                 <Separator />
 

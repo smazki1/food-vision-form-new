@@ -46,3 +46,6 @@ export type SubmissionStatus = typeof SUBMISSION_STATUSES[SubmissionStatusKey];
 
 // Image view mode types
 export type ImageViewMode = 'grid' | 'gallery' | 'comparison';
+
+// Submission comment types
+export type SubmissionCommentType = 'admin_internal' | 'client_visible' | 'editor_note';

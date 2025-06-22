@@ -64,35 +64,35 @@ const FormNavigationButtons: React.FC<FormNavigationButtonsProps> = ({
 
       {/* Navigation Buttons Row */}
       {!isLastStep && (
-        <div className={cn(
-          "flex justify-center gap-4",
-          formSteps.length === 1 || isFirstStep ? "justify-center" : "justify-center"
-        )}>
-          {shouldShowPrevious && (
-            <Button 
-              variant="outline"
-              onClick={onPrevious} 
-              disabled={isSubmitting || isCreatingClient}
-              className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
-            >
-              הקודם
-            </Button>
-          )}
+      <div className={cn(
+        "flex justify-center gap-4",
+        formSteps.length === 1 || isFirstStep ? "justify-center" : "justify-center"
+      )}>
+        {shouldShowPrevious && (
           <Button 
-            onClick={onNext} 
+            variant="outline"
+            onClick={onPrevious} 
             disabled={isSubmitting || isCreatingClient}
-            className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full bg-[#F3752B] hover:bg-[#F3752B]/90"
+            className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                שולח...
-              </>
-            ) : 
-              (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
-            }
+            הקודם
           </Button>
-        </div>
+        )}
+        <Button 
+            onClick={onNext} 
+          disabled={isSubmitting || isCreatingClient}
+            className="min-w-[120px] md:min-w-[140px] py-2 md:py-3 rounded-full bg-[#F3752B] hover:bg-[#F3752B]/90"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              שולח...
+            </>
+          ) : 
+              (currentStepId === 1 && !clientId) ? 'שמור והמשך' : 'הבא'
+          }
+        </Button>
+      </div>
       )}
 
       {/* Previous button only for last step */}
