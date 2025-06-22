@@ -23,9 +23,11 @@ const NewPublicUploadForm: React.FC = () => {
   const { formData, updateFormData, resetFormData } = useNewItemForm();
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     resetFormData();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const validateStep = (step: number): boolean => {

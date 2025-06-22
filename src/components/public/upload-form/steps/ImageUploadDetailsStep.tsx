@@ -73,10 +73,6 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
             <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
             <p className="text-sm sm:text-base font-medium">אנחנו משפרים את התמונה של המנות שלכם/ן, לא את המנות עצמן. המנה בתמונה שלכם/ן = המנה בתוצאה הסופית.</p>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
-            <p className="text-sm sm:text-base font-medium">לתוצאה הטובה ביותר, וודאו שהמנה בתמונה נראית כמו שאתם/ן רוצים/ות להציג ללקוחות - אנחנו נדאג לתאורה מקצועית, רקע מושלם ועיצוב מדהים.</p>
-          </div>
         </div>
 
         {/* Mobile-Optimized Before/After Example */}
@@ -109,80 +105,6 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
               </div>
               <p className="text-sm sm:text-base text-gray-700 font-semibold">התוצאה המקצועית שלנו</p>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile-Optimized Contact Information */}
-      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 sm:p-8 shadow-lg border-2 border-purple-200">
-        <div className="flex items-center gap-3 mb-4 sm:mb-6">
-          <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full shadow-lg">
-            <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <h3 className="text-xl sm:text-2xl font-bold text-[#333333]">פרטי קשר</h3>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-          <div>
-            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">שם העסק *</label>
-            <input
-              type="text"
-              value={formData.restaurantName}
-              onChange={(e) => handleContactChange('restaurantName', e.target.value)}
-              className={cn(
-                "w-full px-4 sm:px-5 py-3 sm:py-4 border-2 rounded-xl focus:ring-4 focus:ring-[#F3752B]/20 focus:border-[#F3752B] transition-all duration-300 text-base sm:text-lg",
-                errors.restaurantName ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
-              )}
-              placeholder="לדוגמה: פיצה בר"
-            />
-            {errors.restaurantName && <p className="text-red-500 text-sm mt-2 font-medium">{errors.restaurantName}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">שם איש הקשר *</label>
-            <input
-              type="text"
-              value={formData.submitterName}
-              onChange={(e) => handleContactChange('submitterName', e.target.value)}
-              className={cn(
-                "w-full px-4 sm:px-5 py-3 sm:py-4 border-2 rounded-xl focus:ring-4 focus:ring-[#F3752B]/20 focus:border-[#F3752B] transition-all duration-300 text-base sm:text-lg",
-                errors.submitterName ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
-              )}
-              placeholder="לדוגמה: דני כהן"
-            />
-            {errors.submitterName && <p className="text-red-500 text-sm mt-2 font-medium">{errors.submitterName}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">טלפון *</label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleContactChange('phone', e.target.value)}
-              className={cn(
-                "w-full px-4 sm:px-5 py-3 sm:py-4 border-2 rounded-xl focus:ring-4 focus:ring-[#F3752B]/20 focus:border-[#F3752B] transition-all duration-300 text-base sm:text-lg",
-                errors.phone ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
-              )}
-              placeholder="לדוגמה: 050-1234567"
-            />
-            {errors.phone && <p className="text-red-500 text-sm mt-2 font-medium">{errors.phone}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2 sm:mb-3">אימייל *</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleContactChange('email', e.target.value)}
-              className={cn(
-                "w-full px-4 sm:px-5 py-3 sm:py-4 border-2 rounded-xl focus:ring-4 focus:ring-[#F3752B]/20 focus:border-[#F3752B] transition-all duration-300 text-base sm:text-lg",
-                errors.email ? "border-red-500 bg-red-50" : "border-gray-300 hover:border-gray-400"
-              )}
-              placeholder="לדוגמה: danny@pizza-bar.co.il"
-            />
-            {errors.email && <p className="text-red-500 text-sm mt-2 font-medium">{errors.email}</p>}
           </div>
         </div>
       </div>
@@ -352,6 +274,99 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Contact Information Section - Moved to bottom */}
+      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-3xl p-6 sm:p-8 shadow-lg border border-purple-200">
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <svg className="w-6 h-6 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-2xl sm:text-3xl font-bold text-[#333333]">פרטי איש קשר</h3>
+            <p className="text-purple-600 text-sm sm:text-base">נשמח להכיר</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+          <div>
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              שם מלא *
+            </label>
+            <input
+              type="text"
+              value={formData.submitterName}
+              onChange={(e) => handleContactChange('submitterName', e.target.value)}
+              className={cn(
+                "w-full px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 touch-manipulation",
+                "focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none",
+                "bg-white/80 backdrop-blur-sm",
+                errors.submitterName ? "border-red-500" : "border-purple-200 hover:border-purple-300"
+              )}
+              placeholder="הכניסו את שמכם/ן המלא"
+            />
+            {errors.submitterName && (
+              <p className="text-red-500 text-sm mt-1">{errors.submitterName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              טלפון *
+            </label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleContactChange('phone', e.target.value)}
+              className={cn(
+                "w-full px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 touch-manipulation",
+                "focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none",
+                "bg-white/80 backdrop-blur-sm",
+                errors.phone ? "border-red-500" : "border-purple-200 hover:border-purple-300"
+              )}
+              placeholder="05X-XXXXXXX"
+            />
+            {errors.phone && (
+              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+            )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              אימייל *
+            </label>
+            <input
+              type="email"
+              value={formData.email || ''}
+              onChange={(e) => handleContactChange('email', e.target.value)}
+              className={cn(
+                "w-full px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 touch-manipulation",
+                "focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none",
+                "bg-white/80 backdrop-blur-sm",
+                errors.email ? "border-red-500" : "border-purple-200 hover:border-purple-300"
+              )}
+              placeholder="your@email.com"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+            )}
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
+              שם העסק
+            </label>
+            <input
+              type="text"
+              value={formData.restaurantName}
+              onChange={(e) => handleContactChange('restaurantName', e.target.value)}
+              className="w-full px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg border-2 border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none transition-all duration-200 bg-white/80 backdrop-blur-sm hover:border-purple-300 touch-manipulation"
+              placeholder="שם המסעדה או העסק (אופציונלי)"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -114,16 +114,8 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
             size="lg"
             className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 touch-manipulation"
             onClick={() => {
-              if (onSubmit) {
-                onSubmit();
-              } else {
-                // Fallback for testing
-                toast.info('מעבד את ההגשה...');
-                setTimeout(() => {
-                  toast.success('ההזמנה נשלחה בהצלחה!');
-                  window.location.href = '/thank-you';
-                }, 1000);
-              }
+              // Redirect to iCount payment page
+              window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
             }}
           >
             כן, אני רוצה את התמונות!
