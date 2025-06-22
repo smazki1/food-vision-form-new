@@ -158,7 +158,9 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
       lead_id: item.lead_id || null,
       submission_contact_name: item.submission_contact_name || null,
       submission_contact_email: item.submission_contact_email || null,
-      submission_contact_phone: item.submission_contact_phone || null
+      submission_contact_phone: item.submission_contact_phone || null,
+      original_item_id: item.original_item_id || '',
+      assigned_package_id_at_submission: item.assigned_package_id_at_submission || undefined
     })) as Submission[];
   } catch (error) {
     console.error('[getClientSubmissions] Exception, trying basic version:', error);

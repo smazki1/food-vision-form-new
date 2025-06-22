@@ -16,32 +16,165 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
   const { formData, updateFormData } = useNewItemForm();
   const [showComments, setShowComments] = useState(false);
 
-  const styleOptions = [
-    {
-      id: 'white-bg',
-      name: 'רקע לבן',
-      image: '/lovable-uploads/לבן.png',
-      description: 'עיצוב נקי ומינימליסטי'
-    },
-    {
-      id: 'dark-bg',
-      name: 'רקע כהה',
-      image: '/lovable-uploads/כהה.png',
-      description: 'אלגנטי ומודרני'
-    },
-    {
-      id: 'wood-bg',
-      name: 'רקע עץ',
-      image: '/lovable-uploads/רקע עץ.png',
-      description: 'חם וביתי'
-    },
-    {
-      id: 'colorful-bg',
-      name: 'רקע צבעוני',
-      image: '/lovable-uploads/צבעוני.png',
-      description: 'חיוני ובולט'
-    }
-  ];
+  const allStyleOptions = {
+    delivery: [
+      {
+        id: 'white-bg',
+        name: 'רקע לבן',
+        image: '/lovable-uploads/לבן.png',
+        description: 'עיצוב נקי ומינימליסטי'
+      },
+      {
+        id: 'dark-bg',
+        name: 'רקע כהה',
+        image: '/lovable-uploads/כהה.png',
+        description: 'אלגנטי ומודרני'
+      },
+      {
+        id: 'wood-bg',
+        name: 'רקע עץ',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'חם וביתי'
+      }
+    ],
+    social: [
+      {
+        id: 'instagram-square',
+        name: 'Instagram מרובע',
+        image: '/lovable-uploads/לבן.png',
+        description: 'פורמט מרובע מושלם לאינסטגרם'
+      },
+      {
+        id: 'story-vertical',
+        name: 'Stories אנכי',
+        image: '/lovable-uploads/כהה.png',
+        description: 'פורמט אנכי לסטוריז'
+      },
+      {
+        id: 'facebook-wide',
+        name: 'Facebook רחב',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'פורמט רחב לפייסבוק'
+      }
+    ],
+    menu: [
+      {
+        id: 'menu-clean',
+        name: 'תפריט נקי',
+        image: '/lovable-uploads/לבן.png',
+        description: 'עיצוב נקי לתפריט'
+      },
+      {
+        id: 'menu-elegant',
+        name: 'תפריט אלגנטי',
+        image: '/lovable-uploads/כהה.png',
+        description: 'עיצוב אלגנטי לתפריט'
+      },
+      {
+        id: 'digital-screen',
+        name: 'מסך דיגיטלי',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'מותאם למסכי הזמנה'
+      }
+    ],
+    marketing: [
+      {
+        id: 'ad-banner',
+        name: 'באנר פרסומי',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'עיצוב בולט לפרסום'
+      },
+      {
+        id: 'flyer-style',
+        name: 'סגנון עלון',
+        image: '/lovable-uploads/לבן.png',
+        description: 'מותאם לעלוני פרסום'
+      },
+      {
+        id: 'poster-style',
+        name: 'סגנון פוסטר',
+        image: '/lovable-uploads/כהה.png',
+        description: 'עיצוב דרמטי לפוסטרים'
+      }
+    ],
+    all: [
+      {
+        id: 'white-bg',
+        name: 'רקע לבן',
+        image: '/lovable-uploads/לבן.png',
+        description: 'עיצוב נקי ומינימליסטי'
+      },
+      {
+        id: 'dark-bg',
+        name: 'רקע כהה',
+        image: '/lovable-uploads/כהה.png',
+        description: 'אלגנטי ומודרני'
+      },
+      {
+        id: 'wood-bg',
+        name: 'רקע עץ',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'חם וביתי'
+      },
+      {
+        id: 'colorful-bg',
+        name: 'רקע צבעוני',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'חיוני ובולט'
+      },
+      {
+        id: 'instagram-square',
+        name: 'Instagram מרובע',
+        image: '/lovable-uploads/לבן.png',
+        description: 'פורמט מרובע מושלם לאינסטגרם'
+      },
+      {
+        id: 'story-vertical',
+        name: 'Stories אנכי',
+        image: '/lovable-uploads/כהה.png',
+        description: 'פורמט אנכי לסטוריז'
+      },
+      {
+        id: 'facebook-wide',
+        name: 'Facebook רחב',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'פורמט רחב לפייסבוק'
+      },
+      {
+        id: 'menu-clean',
+        name: 'תפריט נקי',
+        image: '/lovable-uploads/לבן.png',
+        description: 'עיצוב נקי לתפריט'
+      },
+      {
+        id: 'menu-elegant',
+        name: 'תפריט אלגנטי',
+        image: '/lovable-uploads/כהה.png',
+        description: 'עיצוב אלגנטי לתפריט'
+      },
+      {
+        id: 'digital-screen',
+        name: 'מסך דיגיטלי',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'מותאם למסכי הזמנה'
+      },
+      {
+        id: 'ad-banner',
+        name: 'באנר פרסומי',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'עיצוב בולט לפרסום'
+      },
+      {
+        id: 'flyer-style',
+        name: 'סגנון עלון',
+        image: '/lovable-uploads/לבן.png',
+        description: 'מותאם לעלוני פרסום'
+      }
+    ]
+  };
+
+  const selectedCategory = formData.selectedCategory || 'delivery';
+  const styleOptions = allStyleOptions[selectedCategory as keyof typeof allStyleOptions] || allStyleOptions.delivery;
 
   const handleStyleSelect = (styleId: string) => {
     updateFormData({
@@ -92,7 +225,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       </div>
 
       {/* Style Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {styleOptions.map((style) => (
           <div
             key={style.id}
