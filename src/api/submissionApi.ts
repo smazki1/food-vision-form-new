@@ -146,20 +146,39 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
 
     console.log('[getClientSubmissions] Successfully fetched', data?.length || 0, 'submissions');
     return data.map((item: any) => ({
-      ...item,
+      submission_id: item.submission_id,
+      client_id: item.client_id,
+      original_item_id: item.original_item_id || '',
+      item_type: item.item_type,
+      item_name_at_submission: item.item_name_at_submission,
+      assigned_package_id_at_submission: item.assigned_package_id_at_submission || undefined,
+      submission_status: item.submission_status,
+      uploaded_at: item.uploaded_at,
+      original_image_urls: item.original_image_urls,
+      processed_image_urls: item.processed_image_urls,
+      main_processed_image_url: item.main_processed_image_url,
+      edit_history: item.edit_history,
       edit_count: item.edit_count || 0,
-      internal_team_notes: item.internal_team_notes || null,
-      priority: item.priority || null,
-      created_at: item.created_at || item.uploaded_at,
       final_approval_timestamp: item.final_approval_timestamp || null,
+      internal_team_notes: item.internal_team_notes || null,
       assigned_editor_id: item.assigned_editor_id || null,
+      priority: item.priority || null,
       created_lead_id: item.created_lead_id || null,
       lead_id: item.lead_id || null,
+      created_at: item.created_at || item.uploaded_at,
+      branding_material_urls: item.branding_material_urls || null,
+      reference_example_urls: item.reference_example_urls || null,
+      description: item.description || null,
+      restaurant_name: item.restaurant_name || null,
+      contact_name: item.contact_name || null,
+      email: item.email || null,
+      phone: item.phone || null,
+      processed_at: item.processed_at || null,
+      clients: item.clients,
+      leads: item.leads,
       submission_contact_name: item.submission_contact_name || null,
       submission_contact_email: item.submission_contact_email || null,
-      submission_contact_phone: item.submission_contact_phone || null,
-      original_item_id: item.original_item_id || '',
-      assigned_package_id_at_submission: item.assigned_package_id_at_submission || undefined
+      submission_contact_phone: item.submission_contact_phone || null
     })) as Submission[];
   } catch (error) {
     console.error('[getClientSubmissions] Exception, trying basic version:', error);
