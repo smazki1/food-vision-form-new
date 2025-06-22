@@ -167,7 +167,7 @@ const DishFormSection: React.FC<DishFormSectionProps> = ({ dish, errors = {}, on
           id={`description-${dish.id}`}
           icon={<CheckCircle />}
           label=""
-          placeholder="תארו את המנה - רכיבים, טעמים, סגנון הגשה..."
+          placeholder="כתבו את המרכיבים המרכזיים שאסור לפספס במנה"
           name="description"
           value={dish.description}
           onChange={handleChange}

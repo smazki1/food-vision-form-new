@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
-import { Check, Clock, Shield, CreditCard } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PaymentSummaryStepProps {
@@ -54,10 +54,15 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-12">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-[#333333] mb-4">סיכום וביצוע תשלום</h1>
-        <p className="text-gray-600">בדקו את הפרטים ובצעו תשלום לביצוע ההזמנה</p>
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-6 shadow-lg">
+          <CreditCard className="w-10 h-10 text-white" />
+        </div>
+        <h1 className="text-4xl font-bold text-[#333333] mb-4">סיכום וביצוע תשלום</h1>
+        <p className="text-gray-600 text-xl max-w-2xl mx-auto leading-relaxed">
+          בדקו את הפרטים ובצעו תשלום לביצוע ההזמנה - חבילת הטעימות שלכם כמעט מוכנה!
+        </p>
       </div>
 
       {/* Order Summary */}
@@ -99,114 +104,57 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
         </div>
       </div>
 
-      {/* What You Get */}
-      <div className="bg-green-50 border border-green-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-green-800 mb-4">מה תקבלו</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">תמונות מקצועיות לכל המנות</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">עיצוב מותאם לשימוש שלכם</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">קבצים באיכות גבוהה</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Check className="w-5 h-5 text-green-600" />
-            <span className="text-green-800">זמן אספקה מהיר</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Timeline */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-blue-800 mb-4">מה קורה הלאה?</h3>
-        
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">תוך 24 שעות - נתחיל לעבוד על התמונות</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">תוך 2-3 ימי עבודה - תקבלו את התמונות הראשונות</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-800">עד 7 ימי עבודה - כל התמונות יהיו מוכנות</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Guarantee */}
-      <div className="bg-orange-50 border border-orange-200 rounded-xl p-6">
-        <h3 className="text-xl font-semibold text-orange-800 mb-4">הערבות שלנו</h3>
-        
-        <div className="space-y-3">
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">החזר כספי מלא אם לא מרוצים</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">249₪ זיכוי לחבילה הבאה</span>
-          </div>
-          
-          <div className="flex items-center space-x-3 rtl:space-x-reverse">
-            <Shield className="w-5 h-5 text-orange-600" />
-            <span className="text-orange-800">שירות לקוחות מהיר ומקצועי</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Payment Button */}
-      <div className="text-center space-y-4">
-        <Button
-          size="lg"
-          className="bg-[#F3752B] hover:bg-orange-600 text-white px-12 py-4 text-lg font-semibold"
-          onClick={() => {
-            if (onSubmit) {
-              onSubmit();
-            } else {
-              // Fallback for testing
-              toast.info('מעבד את ההגשה...');
-              setTimeout(() => {
-                toast.success('ההזמנה נשלחה בהצלחה!');
-                window.location.href = '/thank-you';
-              }, 1000);
-            }
-          }}
-        >
-          <CreditCard className="w-5 h-5 mr-2" />
-          בצע תשלום - 249₪
-        </Button>
-        
-        {/* Back Button */}
-        {onPrevious && (
-          <div>
-            <Button
-              onClick={onPrevious}
-              variant="outline"
-              className="px-6 py-2 border-gray-300 text-gray-600 hover:bg-gray-50"
-            >
-              חזרה אחורה
-            </Button>
-          </div>
-        )}
+
+      {/* Payment Section */}
+      <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border-2 border-green-200 shadow-lg">
+        <div className="text-center mb-8">
+          <h3 className="text-3xl font-bold text-green-800 mb-2">מוכנים להתחיל?</h3>
+        </div>
+
+        <div className="text-center space-y-6">
+          <Button
+            size="lg"
+            className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-16 py-6 text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
+            onClick={() => {
+              if (onSubmit) {
+                onSubmit();
+              } else {
+                // Fallback for testing
+                toast.info('מעבד את ההגשה...');
+                setTimeout(() => {
+                  toast.success('ההזמנה נשלחה בהצלחה!');
+                  window.location.href = '/thank-you';
+                }, 1000);
+              }
+            }}
+          >
+            <CreditCard className="w-6 h-6 mr-3" />
+            המשך לתשלום
+          </Button>
+          
+          {/* Back Button */}
+          {onPrevious && (
+            <div>
+              <Button
+                onClick={onPrevious}
+                variant="outline"
+                size="lg"
+                className="px-8 py-4 border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold"
+              >
+                חזרה לעריכה
+              </Button>
+            </div>
+          )}
+
+
+        </div>
       </div>
     </div>
   );
 };
 
 export default PaymentSummaryStep;
+

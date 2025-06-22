@@ -43,6 +43,9 @@ const NewPublicUploadForm: React.FC = () => {
         if (!formData.phone?.trim()) {
           newErrors.phone = 'מספר טלפון הוא שדה חובה';
         }
+        if (!formData.email?.trim()) {
+          newErrors.email = 'אימייל הוא שדה חובה';
+        }
         if (formData.dishes.length === 0) {
           newErrors.dishes = 'יש להעלות לפחות מנה אחת';
         }
@@ -242,42 +245,59 @@ const NewPublicUploadForm: React.FC = () => {
   const CurrentStepComponent = STEPS[currentStep - 1].component;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100" dir="rtl">
-      {/* Progress Bar */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            {STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors",
-                  currentStep >= step.id 
-                    ? 'bg-[#8B1E3F] text-white' 
-                    : 'bg-gray-200 text-gray-600'
-                )}>
-                  {step.id}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50" dir="rtl">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200/50">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold text-[#8B1E3F] mb-2">חבילת טעימות</h1>
+            <p className="text-gray-600 text-lg">10-12 תמונות מעוצבות מקצועיות תוך 48 שעות</p>
+          </div>
+          
+          {/* Enhanced Progress Bar */}
+          <div className="relative">
+            <div className="flex items-center justify-center">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div className="flex flex-col items-center">
+                    <div className={cn(
+                      "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 shadow-lg",
+                      currentStep >= step.id 
+                        ? 'bg-gradient-to-r from-[#8B1E3F] to-[#A52A44] text-white scale-110 shadow-[#8B1E3F]/30' 
+                        : currentStep === step.id - 1
+                        ? 'bg-gradient-to-r from-[#F3752B] to-[#FF8B47] text-white'
+                        : 'bg-white text-gray-400 border-2 border-gray-200'
+                    )}>
+                      {currentStep > step.id ? '✓' : step.id}
+                    </div>
+                    <span className={cn(
+                      "mt-3 text-sm font-semibold transition-colors text-center max-w-20",
+                      currentStep >= step.id 
+                        ? 'text-[#8B1E3F]' 
+                        : 'text-gray-500'
+                    )}>
+                      {step.name}
+                    </span>
+                  </div>
+                  {index < STEPS.length - 1 && (
+                    <div className={cn(
+                      "w-16 h-1 mx-4 rounded-full transition-colors duration-300",
+                      currentStep > step.id 
+                        ? 'bg-gradient-to-r from-[#8B1E3F] to-[#A52A44]' 
+                        : 'bg-gray-200'
+                    )} />
+                  )}
                 </div>
-                <span className={cn(
-                  "mr-2 text-sm font-medium transition-colors",
-                  currentStep >= step.id 
-                    ? 'text-[#8B1E3F]' 
-                    : 'text-gray-500'
-                )}>
-                  {step.name}
-                </span>
-                {index < STEPS.length - 1 && (
-                  <ChevronLeft className="h-4 w-4 text-gray-400 mx-4" />
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-8 md:p-12">
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
+          <div className="p-8 md:p-16">
             {currentStep === 4 ? (
               <PaymentSummaryStep 
                 errors={errors}
@@ -291,33 +311,35 @@ const NewPublicUploadForm: React.FC = () => {
               clearErrors={() => setErrors({})}
             />
             )}
+          </div>
 
-            {/* Navigation Buttons */}
-            {currentStep < 4 && (
-              <div className="flex justify-between items-center mt-12 pt-8 border-t border-gray-100">
-                {currentStep > 1 ? (
+          {/* Enhanced Navigation */}
+          {currentStep < 4 && (
+            <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-8 md:px-16 py-8">
+              <div className="flex justify-center items-center gap-6">
+                {currentStep > 1 && (
                   <Button
                     onClick={handlePrevious}
                     variant="outline"
-                    className="flex items-center gap-2 px-6 py-3 border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F]/10"
+                    size="lg"
+                    className="flex items-center gap-3 px-8 py-4 border-2 border-[#8B1E3F] text-[#8B1E3F] hover:bg-[#8B1E3F] hover:text-white transition-all duration-300 rounded-xl font-semibold shadow-lg hover:shadow-xl"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                     הקודם
                   </Button>
-                ) : <div />}
+                )}
                 
                 <Button
                   onClick={handleNext}
-                  className="flex items-center gap-2 px-8 py-3 bg-[#F3752B] hover:bg-orange-600 text-white"
+                  size="lg"
+                  className="flex items-center gap-3 px-12 py-4 bg-gradient-to-r from-[#F3752B] to-[#FF8B47] hover:from-[#E56B26] hover:to-[#F3752B] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
                   הבא
-                  <ChevronLeft className="w-4 h-4" />
+                  <ChevronLeft className="w-5 h-5" />
                 </Button>
               </div>
-            )}
-
-
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

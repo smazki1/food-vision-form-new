@@ -24,37 +24,60 @@ const ImageLightbox: React.FC<{
     return null;
   }
   
+  const handleClose = () => {
+    // Restore scroll position
+    const scrollY = document.body.style.top;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    if (scrollY) {
+      window.scrollTo(0, parseInt(scrollY) * -1);
+    }
+    onClose();
+  };
+  
   console.log('ImageLightbox rendering modal...');
 
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      onClose();
+      handleClose();
     }
   };
 
   React.useEffect(() => {
-    const handleEscKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
     if (isOpen) {
-      document.addEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'hidden';
-    }
+      const handleEscKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          handleClose();
+        }
+      };
 
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen, onClose]);
+      // Store current scroll position and lock scroll
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      
+      document.addEventListener('keydown', handleEscKey);
+      
+      return () => {
+        document.removeEventListener('keydown', handleEscKey);
+        
+        // Restore scroll
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      };
+    }
+  }, [isOpen]);
 
   return createPortal(
     <div 
@@ -69,14 +92,14 @@ const ImageLightbox: React.FC<{
       {/* Modal Content */}
       <div className="relative max-w-5xl max-h-[95vh] w-full">
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors z-10 bg-black/30 rounded-full p-2 hover:bg-black/50"
           aria-label="סגור"
         >
           <X className="w-6 h-6" />
         </button>
         
-        <div className="bg-white rounded-lg overflow-hidden shadow-2xl max-h-[95vh] flex flex-col">
+        <div className="relative max-w-5xl max-h-[95vh] w-full">
           <div className="flex-1 overflow-hidden">
             <img
               src={imageUrl}
@@ -88,7 +111,7 @@ const ImageLightbox: React.FC<{
               }}
             />
           </div>
-          <div className="p-6 border-t bg-white">
+          <div className="p-6 border-t bg-white text-right" dir="rtl">
             <h3 className="text-2xl font-bold text-[#333333] mb-2">{title}</h3>
             <p className="text-gray-600">{description}</p>
           </div>
@@ -103,88 +126,88 @@ const stylesByCategory = {
   delivery: [
     { 
       id: 'light-bg', 
-      name: 'רקע בהיר', 
-      description: 'קלאסי ומומלץ', 
+      name: 'רקע נקי קלאסי', 
+      description: 'רקע לבן נקי שגורם למנה שלך לבלוט בבירור מוחלט. מושלם לכל סוגי האוכל ועובד מעולה בכל האפליקציות.', 
       preview: '/lovable-uploads/לבן.png' 
     },
     { 
       id: 'dark-bg', 
-      name: 'רקע כהה', 
-      description: 'פרימיום ואלגנטי', 
+      name: 'רקע כהה דרמטי', 
+      description: 'יוצר ניגודיות חזקה שמעצימה את הצבעים של המנה ומעניקה מראה פרימיום שבולט בין המתחרים באפליקציות המשלוחים.', 
       preview: '/lovable-uploads/כהה.png' 
     },
     { 
       id: 'wood-bg', 
-      name: 'רקע עץ', 
-      description: 'חמים וביתי', 
+      name: 'רקע טבעי ארטיזני', 
+      description: 'מעביר תחושה של מלאכת יד ואיכות - רקע טבעי עם כלים איכותיים שמתאים למסעדות שרוצות להעביר מקצועיות ואותנטיות.', 
       preview: '/lovable-uploads/רקע עץ.png' 
     },
     { 
       id: 'colorful-bg', 
-      name: 'רקע צבעוני', 
-      description: 'מודרני ובולט', 
+      name: 'צבעוני ומושך', 
+      description: 'רקעים צבעוניים שמבליטים את החיוניות של המנה ויוצרים אנרגיה חיובית. מתאים למותגים צעירים ואוכל מהנה כמו סושי וקינוחים.', 
       preview: '/lovable-uploads/צבעוני.png' 
     }
   ],
   social: [
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/לבן.png' },
-    { id: 'instagram-story', name: 'Instagram סטורי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/כהה.png' },
-    { id: 'facebook-post', name: 'Facebook פוסט', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/רקע עץ.png' },
-    { id: 'tiktok-style', name: 'TikTok סגנון', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/צבעוני.png' }
+    { id: 'appetite', name: 'מקצועי ונקי', description: 'פוקוס מלא על המנה - ללא הסחות דעת, רק המוצר במיטבו. מתאים למותגים רציניים שרוצים להדגיש איכות ומקצועיות.', preview: '/style-images/social/Appetite' },
+    { id: 'eye-catching', name: 'אמנותי ומרהיב', description: 'הופך כל מנה ליצירת אמנות - עיצוב מושלם עם סידור מדויק שנועד לעצור גלילה ולזכות בלייקים ושיתופים מיידיים.', preview: '/style-images/social/EyeCatching.png' },
+    { id: 'luxurious', name: 'אלגנטי ויוקרתי', description: 'מנות שנראות כמו ממסעדת מישלן - סגנון מתוחכם עם אווירה רומנטית שמעביר איכות גבוהה ומושך קהל יעד איכותי.', preview: '/style-images/social/Luxurious' },
+    { id: 'special', name: 'אינסטגרמי ומתוק', description: 'הסגנון הכי ויראלי - רקעים חלומיים עם צבעים רכים שמושלמים לסטוריז ופוסטים שאנשים רוצים לשתף.', preview: '/style-images/social/Special' }
   ],
   menu: [
-    { id: 'digital-menu', name: 'תפריט דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/לבן.png' },
-    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/כהה.png' },
-    { id: 'board-menu', name: 'תפריט לוח', description: 'מותאם ללוחות', preview: '/lovable-uploads/רקע עץ.png' },
-    { id: 'tablet-menu', name: 'תפריט טאבלט', description: 'מותאם לטאבלטים', preview: '/lovable-uploads/צבעוני.png' }
+    { id: 'clean-simple', name: 'חוף ים ונופש', description: 'אווירת חוף ים עם רקע טבעי מטושטש שיוצר תחושה של חופשה ורגיעה. מושלם למסעדות חוף, בתי קפה ומקומות עם אווירה נינוחה', preview: '/style-images/menu/Clean&Simple' },
+    { id: 'elegant-sophisticated', name: 'נקי ופשוט', description: 'רקע לבן אחיד שמבטיח שהלקוח רואה בדיוק מה הוא מזמין - ללא הפרעות, ללא בלבול. מושלם לתפריטים דיגיטליים ומודפסים.', preview: '/style-images/menu/Elegant&Sophisticated' },
+    { id: 'fresh-summery', name: 'קייצי ורענן', description: 'רקע כחול שמיים שמעביר תחושה של רעננות וקלילות קיץ. מתאים בעיקר למשקים, גלידות ואוכל קל וטרי.', preview: '/style-images/menu/Fresh&Summery' },
+    { id: 'homey-warm', name: 'טבעי וחם', description: 'רקע עץ טבעי שמעביר תחושה של איכות ואותנטיות. מתאים למסעדות שרוצות להדגיש מקורות טבעיים ואוכל אמיתי.', preview: '/style-images/menu/Homey&Warm' }
   ],
   marketing: [
     { 
       id: 'shouting', 
-      name: 'צעקני', 
-      description: 'בולט ומושך תשומת לב', 
+      name: 'יוקרתי ונקי', 
+      description: 'רקע לבן מינימליסטי עם סידור מושלם שמדגיש איכות ומקצועיות. מתאים למותגים פרימיום שרוצים להעביר רמה גבוהה וטעם מעולה.', 
       preview: '/style-images/marketing/bold.jpg' 
     },
     { 
       id: 'seasonal', 
-      name: 'עונתי', 
-      description: 'מותאם לעונות השנה', 
+      name: 'חגיגי ומסורתי', 
+      description: 'אווירה חמה ומסורתית עם פרטים עשירים שמעבירה תחושה של בית ומשפחה. אידיאלי לפרסום אירועים, חגים ומוצרים מסורתיים.', 
       preview: '/style-images/marketing/seasonal.jpg' 
     },
     { 
       id: 'appetizing', 
-      name: 'מגרה', 
-      description: 'מעורר תיאבון', 
+      name: 'דרמטי ומעורר תיאבון', 
+      description: 'רקע כהה עם תאורה דרמטית שיוצרת ניגודיות חזקה ומעצימה את הצבעים של המנה. מושלם למודעות שצריכות לעצור את הצופה ולעורר תיאבון מיידי.', 
       preview: '/style-images/marketing/appetizing.jpg' 
     },
     { 
       id: 'luxury', 
-      name: 'יוקרתי', 
-      description: 'אלגנטי ומפואר', 
+      name: 'מודרני ומתוחכם', 
+      description: 'סגנון עכשווי עם רקע אלגנטי ופוקוס חד על המוצר. מושלם לקמפיינים של מותגים מודרניים שמתמקדים בחדשנות ועיצוב עכשווי.', 
       preview: '/style-images/marketing/luxury.jpg' 
     }
   ],
   all: [
     // Delivery styles (4)
-    { id: 'light-bg', name: 'רקע בהיר', description: 'קלאסי ומומלץ', preview: '/lovable-uploads/לבן.png' },
-    { id: 'dark-bg', name: 'רקע כהה', description: 'פרימיום ואלגנטי', preview: '/lovable-uploads/כהה.png' },
-    { id: 'wood-bg', name: 'רקע עץ', description: 'חמים וביתי', preview: '/lovable-uploads/רקע עץ.png' },
-    { id: 'colorful-bg', name: 'רקע צבעוני', description: 'מודרני ובולט', preview: '/lovable-uploads/צבעוני.png' },
+    { id: 'light-bg', name: 'רקע נקי קלאסי', description: 'רקע לבן נקי שגורם למנה שלך לבלוט בבירור מוחלט. מושלם לכל סוגי האוכל ועובד מעולה בכל האפליקציות.', preview: '/lovable-uploads/לבן.png' },
+    { id: 'dark-bg', name: 'רקע כהה דרמטי', description: 'יוצר ניגודיות חזקה שמעצימה את הצבעים של המנה ומעניקה מראה פרימיום שבולט בין המתחרים באפליקציות המשלוחים.', preview: '/lovable-uploads/כהה.png' },
+    { id: 'wood-bg', name: 'רקע טבעי ארטיזני', description: 'מעביר תחושה של מלאכת יד ואיכות - רקע טבעי עם כלים איכותיים שמתאים למסעדות שרוצות להעביר מקצועיות ואותנטיות.', preview: '/lovable-uploads/רקע עץ.png' },
+    { id: 'colorful-bg', name: 'צבעוני ומושך', description: 'רקעים צבעוניים שמבליטים את החיוניות של המנה ויוצרים אנרגיה חיובית. מתאים למותגים צעירים ואוכל מהנה כמו סושי וקינוחים.', preview: '/lovable-uploads/צבעוני.png' },
     // Social media styles (4)
-    { id: 'instagram-square', name: 'Instagram מרובע', description: 'מותאם לפוסטים', preview: '/lovable-uploads/לבן.png' },
-    { id: 'instagram-story', name: 'Instagram סטורי', description: 'מותאם לסטוריז', preview: '/lovable-uploads/כהה.png' },
-    { id: 'facebook-post', name: 'Facebook פוסט', description: 'מותאם לפייסבוק', preview: '/lovable-uploads/רקע עץ.png' },
-    { id: 'tiktok-style', name: 'TikTok סגנון', description: 'מותאם לטיקטוק', preview: '/lovable-uploads/צבעוני.png' },
+    { id: 'appetite', name: 'מקצועי ונקי', description: 'פוקוס מלא על המנה - ללא הסחות דעת, רק המוצר במיטבו. מתאים למותגים רציניים שרוצים להדגיש איכות ומקצועיות.', preview: '/style-images/social/Appetite' },
+    { id: 'eye-catching', name: 'אמנותי ומרהיב', description: 'הופך כל מנה ליצירת אמנות - עיצוב מושלם עם סידור מדויק שנועד לעצור גלילה ולזכות בלייקים ושיתופים מיידיים.', preview: '/style-images/social/EyeCatching.png' },
+    { id: 'luxurious', name: 'אלגנטי ויוקרתי', description: 'מנות שנראות כמו ממסעדת מישלן - סגנון מתוחכם עם אווירה רומנטית שמעביר איכות גבוהה ומושך קהל יעד איכותי.', preview: '/style-images/social/Luxurious' },
+    { id: 'special', name: 'אינסטגרמי ומתוק', description: 'הסגנון הכי ויראלי - רקעים חלומיים עם צבעים רכים שמושלמים לסטוריז ופוסטים שאנשים רוצים לשתף.', preview: '/style-images/social/Special' },
     // Menu styles (4)
-    { id: 'digital-menu', name: 'תפריט דיגיטלי', description: 'מותאם למסכים', preview: '/lovable-uploads/לבן.png' },
-    { id: 'print-menu', name: 'תפריט מודפס', description: 'מותאם להדפסה', preview: '/lovable-uploads/כהה.png' },
-    { id: 'board-menu', name: 'תפריט לוח', description: 'מותאם ללוחות', preview: '/lovable-uploads/רקע עץ.png' },
-    { id: 'tablet-menu', name: 'תפריט טאבלט', description: 'מותאם לטאבלטים', preview: '/lovable-uploads/צבעוני.png' },
+    { id: 'clean-simple', name: 'חוף ים ונופש', description: 'אווירת חוף ים עם רקע טבעי מטושטש שיוצר תחושה של חופשה ורגיעה. מושלם למסעדות חוף, בתי קפה ומקומות עם אווירה נינוחה', preview: '/style-images/menu/Clean&Simple' },
+    { id: 'elegant-sophisticated', name: 'נקי ופשוט', description: 'רקע לבן אחיד שמבטיח שהלקוח רואה בדיוק מה הוא מזמין - ללא הפרעות, ללא בלבול. מושלם לתפריטים דיגיטליים ומודפסים.', preview: '/style-images/menu/Elegant&Sophisticated' },
+    { id: 'fresh-summery', name: 'קייצי ורענן', description: 'רקע כחול שמיים שמעביר תחושה של רעננות וקלילות קיץ. מתאים בעיקר למשקים, גלידות ואוכל קל וטרי.', preview: '/style-images/menu/Fresh&Summery' },
+    { id: 'homey-warm', name: 'טבעי וחם', description: 'רקע עץ טבעי שמעביר תחושה של איכות ואותנטיות. מתאים למסעדות שרוצות להדגיש מקורות טבעיים ואוכל אמיתי.', preview: '/style-images/menu/Homey&Warm' },
     // Marketing styles (4)
-    { id: 'shouting', name: 'צעקני', description: 'בולט ומושך תשומת לב', preview: '/style-images/marketing/bold.jpg' },
-    { id: 'seasonal', name: 'עונתי', description: 'מותאם לעונות השנה', preview: '/style-images/marketing/seasonal.jpg' },
-    { id: 'appetizing', name: 'מגרה', description: 'מעורר תיאבון', preview: '/style-images/marketing/appetizing.jpg' },
-    { id: 'luxury', name: 'יוקרתי', description: 'אלגנטי ומפואר', preview: '/style-images/marketing/luxury.jpg' }
+    { id: 'shouting', name: 'יוקרתי ונקי', description: 'רקע לבן מינימליסטי עם סידור מושלם שמדגיש איכות ומקצועיות. מתאים למותגים פרימיום שרוצים להעביר רמה גבוהה וטעם מעולה.', preview: '/style-images/marketing/bold.jpg' },
+    { id: 'seasonal', name: 'חגיגי ומסורתי', description: 'אווירה חמה ומסורתית עם פרטים עשירים שמעבירה תחושה של בית ומשפחה. אידיאלי לפרסום אירועים, חגים ומוצרים מסורתיים.', preview: '/style-images/marketing/seasonal.jpg' },
+    { id: 'appetizing', name: 'דרמטי ומעורר תיאבון', description: 'רקע כהה עם תאורה דרמטית שיוצרת ניגודיות חזקה ומעצימה את הצבעים של המנה. מושלם למודעות שצריכות לעצור את הצופה ולעורר תיאבון מיידי.', preview: '/style-images/marketing/appetizing.jpg' },
+    { id: 'luxury', name: 'מודרני ומתוחכם', description: 'סגנון עכשווי עם רקע אלגנטי ופוקוס חד על המוצר. מושלם לקמפיינים של מותגים מודרניים שמתמקדים בחדשנות ועיצוב עכשווי.', preview: '/style-images/marketing/luxury.jpg' }
   ]
 };
 
@@ -287,17 +310,29 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
 
   const handleFileUpload = (field: 'inspirationImages' | 'brandingMaterials', files: FileList | null) => {
     if (files && formData.customStyle) {
-    const newFiles = Array.from(files);
+      const newFiles = Array.from(files);
       handleCustomStyleChange(field, [...formData.customStyle[field], ...newFiles]);
+    }
+  };
+
+  const removeFile = (field: 'inspirationImages' | 'brandingMaterials', index: number) => {
+    if (formData.customStyle) {
+      const updatedFiles = [...formData.customStyle[field]];
+      updatedFiles.splice(index, 1);
+      handleCustomStyleChange(field, updatedFiles);
     }
   };
 
   const handleZoomImage = (imageUrl: string, styleName: string) => {
     console.log('handleZoomImage called:', { imageUrl, styleName });
+    
+    // Find the style object to get its description
+    const style = currentStyles.find(s => s.name === styleName);
+    
     setLightboxImage({
       url: imageUrl,
       title: styleName,
-      description: 'תצוגה מקדימה של הסגנון'
+      description: style?.description || 'תצוגה מקדימה של הסגנון'
     });
   };
 
@@ -337,9 +372,6 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
                 }}
               />
               
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-transparent" />
-              
               {/* Zoom Button */}
               <button
                 type="button"
@@ -370,9 +402,8 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
             </div>
 
             {/* Content */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+            <div className="absolute bottom-0 left-0 right-0 p-6 text-white bg-gradient-to-t from-black/80 via-black/40 to-transparent">
               <h3 className="text-xl font-bold mb-2">{style.name}</h3>
-              <p className="text-sm opacity-90">{style.description}</p>
             </div>
           </div>
         ))}
@@ -382,17 +413,17 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {formData.selectedStyle && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
           <label className="block text-lg font-semibold text-[#333333] mb-3">
-            הערות מיוחדות לעיצוב
+            התאמות לעיצוב
           </label>
           <textarea
             value={formData.designNotes || ''}
             onChange={(e) => updateFormData({ designNotes: e.target.value })}
-            placeholder="לדוגמה: אשמח שזה יהיה בזווית תקריב, עם דגש על הגבינה הנמסה, בסגנון דומה לתמונת הרקע שבחרתי..."
+            placeholder="זה המקום לכתוב אם את/ה רוצה לשנות משהו בסגנון - צבע רקע, הוספת לוגו, זווית מיוחדת או כל דבר אחר..."
             className="w-full p-4 border border-blue-300 rounded-lg focus:ring-2 focus:ring-[#f3752b] focus:border-transparent resize-none bg-white"
             rows={3}
           />
           <p className="text-sm text-blue-600 mt-2">
-            ספר לנו איך תרצה שהתמונה תיראה - זווית צילום, דגשים מיוחדים, אווירה וכל פרט שחשוב לך
+            אנחנו נתאים בשבילך!
           </p>
         </div>
       )}
@@ -444,8 +475,28 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
                 </label>
               </div>
               {formData.customStyle.inspirationImages.length > 0 && (
-                <div className="mt-3 text-sm text-gray-600">
-                  נבחרו {formData.customStyle.inspirationImages.length} תמונות
+                <div className="mt-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    {formData.customStyle.inspirationImages.map((file, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`השראה ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeFile('inspirationImages', index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    נבחרו {formData.customStyle.inspirationImages.length} תמונות
+                  </div>
                 </div>
               )}
             </div>
@@ -474,8 +525,37 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
                 </label>
               </div>
               {formData.customStyle.brandingMaterials.length > 0 && (
-                <div className="mt-3 text-sm text-gray-600">
-                  נבחרו {formData.customStyle.brandingMaterials.length} קבצים
+                <div className="mt-4">
+                  <div className="space-y-2">
+                    {formData.customStyle.brandingMaterials.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                            {file.type.includes('image') ? (
+                              <img
+                                src={URL.createObjectURL(file)}
+                                alt={file.name}
+                                className="w-full h-full object-cover rounded"
+                              />
+                            ) : (
+                              <Upload className="w-5 h-5 text-gray-400" />
+                            )}
+                          </div>
+                          <span className="text-sm text-gray-700 truncate max-w-xs">{file.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeFile('brandingMaterials', index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-sm text-gray-600">
+                    נבחרו {formData.customStyle.brandingMaterials.length} קבצים
+                  </div>
                 </div>
               )}
             </div>
