@@ -40,7 +40,7 @@ export const submissionsAPI = {
         p_item_name: formData.itemName,
         p_description: formData.description,
         p_category: formData.category || '',
-        p_image_urls: JSON.stringify(imageUrls)
+        p_reference_image_urls: imageUrls
       });
 
       if (rpcError) throw rpcError;

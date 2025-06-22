@@ -216,21 +216,16 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
         </div>
       </div>
 
-      {/* Payment Section */}
+      {/* Payment Button */}
       <div className="text-center">
-        <div className="bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-2xl p-8 shadow-2xl">
-          <h3 className="text-3xl font-bold text-white mb-4">249₪</h3>
-          <p className="text-white text-lg mb-8 opacity-90">חבילת ניסיון מיוחדת</p>
-          
-          <Button
-            onClick={handlePaymentRedirect}
-            size="lg"
-            className="bg-[#F3752B] hover:bg-orange-600 text-white px-16 py-6 text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-          >
-            <CreditCard className="w-6 h-6 mr-3" />
-            בצע תשלום - 249₪
-          </Button>
-        </div>
+        <Button
+          onClick={handlePaymentRedirect}
+          size="lg"
+          className="bg-[#F3752B] hover:bg-orange-600 text-white px-16 py-6 text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+        >
+          <CreditCard className="w-6 h-6 mr-3" />
+          בצע תשלום - 249₪
+        </Button>
       </div>
 
       {/* Navigation */}

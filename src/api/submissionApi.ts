@@ -1,6 +1,6 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
-// Define types locally to avoid import errors
 export interface DishDetailsForTab {
   id: string;
   name: string;
@@ -68,7 +68,6 @@ export interface Submission {
   submission_contact_phone?: string | null;
 }
 
-// Get all submissions for a client - basic version
 export async function getClientSubmissionsBasic(clientId: string): Promise<Submission[]> {
   console.log('[getClientSubmissionsBasic] Fetching basic submissions for client:', clientId);
   
@@ -131,7 +130,6 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
   }
 }
 
-// Get all submissions for a client
 export async function getClientSubmissions(clientId: string): Promise<Submission[]> {
   console.log('[getClientSubmissions] Fetching submissions for client:', clientId);
   
@@ -173,7 +171,6 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
   }
 }
 
-// Create a new submission
 export async function createSubmission(
   clientId: string,
   originalItemId: string,
@@ -201,7 +198,6 @@ export async function createSubmission(
   return data as Submission;
 }
 
-// Get unique submitted dish details for client
 export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
   
@@ -236,7 +232,6 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
   })) as DishDetailsForTab[];
 }
 
-// Get unique submitted cocktail details for client
 export async function getUniqueSubmittedCocktailDetailsForClient(clientId: string): Promise<CocktailDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
   
@@ -271,7 +266,6 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
   })) as CocktailDetailsForTab[];
 }
 
-// Get unique submitted drink details for client
 export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string): Promise<DrinkDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
   
@@ -306,7 +300,6 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
   })) as DrinkDetailsForTab[];
 }
 
-// Get client remaining servings
 export async function getClientRemainingServings(clientId: string): Promise<number> {
   try {
     const { data, error } = await supabase
@@ -327,7 +320,6 @@ export async function getClientRemainingServings(clientId: string): Promise<numb
   }
 }
 
-// Create batch submissions
 export async function createBatchSubmissions(
   clientId: string, 
   items: Array<{ originalItemId: string; itemType: "dish" | "cocktail" | "drink"; itemName: string }>
