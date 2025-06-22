@@ -1,5 +1,5 @@
-import { render } from '@testing-library/react';
-import { screen } from '@testing-library/dom';
+
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
@@ -137,8 +137,6 @@ describe('App Routing Tests', () => {
 
   describe('Route Protection', () => {
     test('customer auth routes are wrapped with PublicOnlyRoute', () => {
-      // Since we mocked PublicOnlyRoute to just render children,
-      // we verify the routes render correctly
       render(<TestWrapper initialEntries={['/customer-login']} />);
       expect(screen.getByText('Customer Login')).toBeInTheDocument();
 
@@ -157,7 +155,6 @@ describe('App Routing Tests', () => {
 
   describe('Navigation Flow Integration', () => {
     test('all customer authentication flow routes are accessible', () => {
-      // Test the full flow of routes that our feature uses
       const routes = [
         '/customer-login',
         '/customer/auth', 
@@ -168,20 +165,15 @@ describe('App Routing Tests', () => {
 
       routes.forEach(route => {
         const { unmount } = render(<TestWrapper initialEntries={[route]} />);
-        // Each route should render without crashing
         expect(document.body).toBeInTheDocument();
         unmount();
       });
     });
 
     test('customer auth route exists and is properly configured', () => {
-      // This specifically tests our new route addition
       render(<TestWrapper initialEntries={['/customer/auth']} />);
       
-      // Should render the customer auth page
       expect(screen.getByText('Customer Auth Page')).toBeInTheDocument();
-      
-      // Should not show any error or 404 content
       expect(screen.queryByText('404')).not.toBeInTheDocument();
       expect(screen.queryByText('Not Found')).not.toBeInTheDocument();
     });
@@ -189,10 +181,7 @@ describe('App Routing Tests', () => {
 
   describe('Error Handling', () => {
     test('handles invalid routes gracefully', () => {
-      // Test with non-existent route
       render(<TestWrapper initialEntries={['/non-existent-route']} />);
-      
-      // Should not crash the app
       expect(document.body).toBeInTheDocument();
     });
 
@@ -214,9 +203,8 @@ describe('App Routing Tests', () => {
 
   describe('Route Consistency', () => {
     test('customer routes follow consistent pattern', () => {
-      // All customer routes should start with /customer
       const customerRoutes = [
-        '/customer-login', // Exception: public route
+        '/customer-login',
         '/customer/auth',
         '/customer/dashboard', 
         '/customer/home'
@@ -230,7 +218,6 @@ describe('App Routing Tests', () => {
     });
 
     test('auth routes are properly separated', () => {
-      // Auth-related routes should be distinct
       const authRoutes = [
         '/admin-login',
         '/customer-login',
@@ -254,7 +241,6 @@ describe('App Routing Tests', () => {
       const endTime = performance.now();
       const renderTime = endTime - startTime;
       
-      // Should render quickly (under 50ms for simple routing)
       expect(renderTime).toBeLessThan(50);
     });
 
@@ -271,8 +257,6 @@ describe('App Routing Tests', () => {
   describe('Integration with Browser History', () => {
     test('routes work with browser back/forward simulation', () => {
       render(<TestWrapper initialEntries={['/customer-login', '/customer/auth']} />);
-      
-      // Should render the last route in the history
       expect(screen.getByText('Customer Auth Page')).toBeInTheDocument();
     });
 

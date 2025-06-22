@@ -1,7 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
-// Define types locally to avoid import errors
 export interface DishDetailsForTab {
   id: string;
   name: string;
@@ -69,7 +67,6 @@ export interface Submission {
   submission_contact_phone?: string | null;
 }
 
-// Get all submissions for a client - basic version
 export async function getClientSubmissionsBasic(clientId: string): Promise<Submission[]> {
   console.log('[getClientSubmissionsBasic] Fetching basic submissions for client:', clientId);
   
@@ -119,7 +116,7 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
       priority: null,
       created_lead_id: null,
       lead_id: null,
-      created_at: item.created_at,
+      created_at: item.created_at || item.uploaded_at,
       submission_contact_name: null,
       submission_contact_email: null,
       submission_contact_phone: null
@@ -132,7 +129,6 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
   }
 }
 
-// Get all submissions for a client
 export async function getClientSubmissions(clientId: string): Promise<Submission[]> {
   console.log('[getClientSubmissions] Fetching submissions for client:', clientId);
   
@@ -149,7 +145,41 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
     }
 
     console.log('[getClientSubmissions] Successfully fetched', data?.length || 0, 'submissions');
-    return data as Submission[];
+    return data.map((item: any) => ({
+      submission_id: item.submission_id,
+      client_id: item.client_id,
+      original_item_id: item.original_item_id || '',
+      item_type: item.item_type,
+      item_name_at_submission: item.item_name_at_submission,
+      assigned_package_id_at_submission: item.assigned_package_id_at_submission || undefined,
+      submission_status: item.submission_status,
+      uploaded_at: item.uploaded_at,
+      original_image_urls: item.original_image_urls,
+      processed_image_urls: item.processed_image_urls,
+      main_processed_image_url: item.main_processed_image_url,
+      edit_history: item.edit_history,
+      edit_count: item.edit_count || 0,
+      final_approval_timestamp: item.final_approval_timestamp || null,
+      internal_team_notes: item.internal_team_notes || null,
+      assigned_editor_id: item.assigned_editor_id || null,
+      priority: item.priority || null,
+      created_lead_id: item.created_lead_id || null,
+      lead_id: item.lead_id || null,
+      created_at: item.created_at || item.uploaded_at,
+      branding_material_urls: item.branding_material_urls || null,
+      reference_example_urls: item.reference_example_urls || null,
+      description: item.description || null,
+      restaurant_name: item.restaurant_name || null,
+      contact_name: item.contact_name || null,
+      email: item.email || null,
+      phone: item.phone || null,
+      processed_at: item.processed_at || null,
+      clients: item.clients,
+      leads: item.leads,
+      submission_contact_name: item.submission_contact_name || null,
+      submission_contact_email: item.submission_contact_email || null,
+      submission_contact_phone: item.submission_contact_phone || null
+    })) as Submission[];
   } catch (error) {
     console.error('[getClientSubmissions] Exception, trying basic version:', error);
     try {
@@ -161,7 +191,6 @@ export async function getClientSubmissions(clientId: string): Promise<Submission
   }
 }
 
-// Create a new submission
 export async function createSubmission(
   clientId: string,
   originalItemId: string,
@@ -189,7 +218,6 @@ export async function createSubmission(
   return data as Submission;
 }
 
-// Get unique submitted dish details for client
 export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
 
@@ -207,8 +235,8 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
 
   const { data: dishesData, error: dishesError } = await supabase
     .from('dishes')
-    .select('dish_id, name, description, notes, reference_image_urls')
-    .in('dish_id', dishIds);
+    .select('id, name, description, notes, reference_image_urls')
+    .in('id', dishIds);
 
   if (dishesError) {
     console.error("Error fetching unique submitted dish details:", dishesError);
@@ -216,7 +244,7 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
   }
 
   return (dishesData || []).map(dish => ({
-    id: dish.dish_id,
+    id: dish.id,
     name: dish.name,
     description: dish.description,
     notes: dish.notes,
@@ -224,7 +252,6 @@ export async function getUniqueSubmittedDishDetailsForClient(clientId: string): 
   })) as DishDetailsForTab[];
 }
 
-// Get unique submitted cocktail details for client
 export async function getUniqueSubmittedCocktailDetailsForClient(clientId: string): Promise<CocktailDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
 
@@ -242,8 +269,8 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
 
   const { data: cocktailsData, error: cocktailsError } = await supabase
     .from('cocktails') 
-    .select('cocktail_id, name, description, notes, reference_image_urls')
-    .in('cocktail_id', cocktailIds);
+    .select('id, name, description, notes, reference_image_urls')
+    .in('id', cocktailIds);
 
   if (cocktailsError) {
     console.error("Error fetching unique submitted cocktail details:", cocktailsError);
@@ -251,7 +278,7 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
   }
 
   return (cocktailsData || []).map(cocktail => ({
-    id: cocktail.cocktail_id,
+    id: cocktail.id,
     name: cocktail.name,
     description: cocktail.description,
     notes: cocktail.notes,
@@ -259,7 +286,6 @@ export async function getUniqueSubmittedCocktailDetailsForClient(clientId: strin
   })) as CocktailDetailsForTab[];
 }
 
-// Get unique submitted drink details for client
 export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string): Promise<DrinkDetailsForTab[]> {
   const submissions = await getClientSubmissions(clientId);
 
@@ -277,8 +303,8 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
 
   const { data: drinksData, error: drinksError } = await supabase
     .from('drinks') 
-    .select('drink_id, name, description, notes, reference_image_urls')
-    .in('drink_id', drinkIds);
+    .select('id, name, description, notes, reference_image_urls')
+    .in('id', drinkIds);
 
   if (drinksError) {
     console.error("Error fetching unique submitted drink details:", drinksError);
@@ -286,7 +312,7 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
   }
 
   return (drinksData || []).map(drink => ({
-    id: drink.drink_id,
+    id: drink.id,
     name: drink.name,
     description: drink.description,
     notes: drink.notes,
@@ -294,7 +320,6 @@ export async function getUniqueSubmittedDrinkDetailsForClient(clientId: string):
   })) as DrinkDetailsForTab[];
 }
 
-// Get client remaining servings
 export async function getClientRemainingServings(clientId: string): Promise<number> {
   try {
     const { data, error } = await supabase
@@ -315,7 +340,6 @@ export async function getClientRemainingServings(clientId: string): Promise<numb
   }
 }
 
-// Create batch submissions
 export async function createBatchSubmissions(
   clientId: string, 
   items: Array<{ originalItemId: string; itemType: "dish" | "cocktail" | "drink"; itemName: string }>

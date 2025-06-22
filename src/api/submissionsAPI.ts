@@ -36,14 +36,11 @@ export const submissionsAPI = {
       const { data: rpcData, error: rpcError } = await supabase.rpc('public_submit_item_by_restaurant_name', {
         p_restaurant_name: formData.restaurantName,
         p_contact_name: formData.contactName,
-        p_phone: formData.phone,
-        p_email: formData.email,
         p_item_type: formData.itemType,
         p_item_name: formData.itemName,
         p_description: formData.description,
-        p_special_notes: formData.specialNotes || '',
         p_category: formData.category || '',
-        p_image_urls: JSON.stringify(imageUrls)
+        p_reference_image_urls: imageUrls
       });
 
       if (rpcError) throw rpcError;
