@@ -82,7 +82,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
             <div className="text-center">
               <div className="relative mb-3 sm:mb-4">
                 <img 
-                  src="/lovable-uploads/IMG_D76A6032ABB8-1.jpeg" 
+                  src="/lovable-uploads/CleanShot 2025-06-22 at 21.29.33@2x.png" 
                   alt="תמונה לפני עיבוד" 
                   className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
                 />
@@ -95,7 +95,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
             <div className="text-center">
               <div className="relative mb-3 sm:mb-4">
                 <img 
-                  src="/lovable-uploads/26889960-2 (2).jpg" 
+                  src="/lovable-uploads/בורגר.png" 
                   alt="תמונה אחרי עיבוד" 
                   className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
                 />
