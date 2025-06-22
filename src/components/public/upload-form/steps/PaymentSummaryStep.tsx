@@ -112,7 +112,7 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
         <div className="text-center space-y-4 sm:space-y-6">
           <Button
             size="lg"
-            className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 sm:px-16 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 touch-manipulation"
+            className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 touch-manipulation"
             onClick={() => {
               if (onSubmit) {
                 onSubmit();
@@ -126,7 +126,6 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
               }
             }}
           >
-            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 mr-3" />
             כן, אני רוצה את התמונות!
           </Button>
           
