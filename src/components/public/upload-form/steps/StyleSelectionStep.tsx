@@ -20,25 +20,25 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'dark-bg',
         name: 'רקע כהה',
-        image: '/lovable-uploads/1e4647a0-37e0-48c6-a75e-914c461d682f.png',
+        image: '/style-images/delivery/dark-bg.png',
         description: 'אלגנטי ומודרני'
       },
       {
         id: 'white-bg',
         name: 'רקע לבן',
-        image: '/lovable-uploads/לבן.png',
+        image: '/style-images/delivery/white-bg.png',
         description: 'עיצוב נקי ומינימליסטי'
       },
       {
         id: 'colorful-bg',
         name: 'רקע צבעוני',
-        image: '/lovable-uploads/70e6f48e-fc5e-49ec-939d-a73951210a94.png',
+        image: '/style-images/delivery/colorful-bg.png',
         description: 'חיוני ובולט'
       },
       {
         id: 'wood-bg',
         name: 'רקע עץ',
-        image: '/lovable-uploads/רקע עץ.png',
+        image: '/style-images/delivery/wood-bg.png',
         description: 'חם וביתי'
       }
     ],
@@ -46,19 +46,19 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'atmosphere',
         name: 'אווירה',
-        image: '/lovable-uploads/be6c1f5c-cbf9-4561-8c33-a09c74e2255f.png',
+        image: '/style-images/social/atmosphere.png',
         description: 'יוצר אווירה מיוחדת'
       },
       {
         id: 'marketing',
         name: 'שיווקי',
-        image: '/lovable-uploads/8d620120-9895-4fa9-81cd-3694b4bb638d.png',
+        image: '/style-images/social/marketing.png',
         description: 'מותאם לשיווק ברשתות'
       },
       {
         id: 'elegant',
         name: 'אלגנט',
-        image: '/lovable-uploads/31fa48cb-1c38-4542-8ecd-96a4392929c2.png',
+        image: '/style-images/social/elegant.png',
         description: 'עיצוב אלגנטי ומתוחכם'
       }
     ],
@@ -66,25 +66,25 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'sea',
         name: 'ים',
-        image: '/lovable-uploads/8081ae70-1035-4a59-864b-a1963cd24c43.png',
+        image: '/style-images/menu/sea.png',
         description: 'רקע ים רגוע'
       },
       {
         id: 'wood-table',
         name: 'שולחן עץ',
-        image: '/lovable-uploads/eba0f747-8c59-4187-8502-5e3499f303c0.png',
+        image: '/style-images/menu/wood-table.png',
         description: 'שולחן עץ טבעי'
       },
       {
         id: 'summer',
         name: 'קיצי',
-        image: '/lovable-uploads/023230ea-be80-4d63-ba02-d78099f875c7.png',
+        image: '/style-images/menu/summer.png',
         description: 'עיצוב קיצי וצבעוני'
       },
       {
         id: 'realistic-closeup',
         name: 'תקריב ריאליסטי',
-        image: '/lovable-uploads/ff3b2363-6304-49ac-88bc-d49d593a4173.png',
+        image: '/style-images/menu/realistic-closeup.png',
         description: 'תקריב ריאליסטי של האוכל'
       }
     ],
@@ -92,25 +92,25 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'appetizing',
         name: 'מגרה',
-        image: '/lovable-uploads/25b6ed83-5bc5-4f15-b1fc-85634b223c61.png',
+        image: '/style-images/marketing/appetizing.png',
         description: 'עיצוב מגרה תיאבון'
       },
       {
         id: 'bold',
         name: 'צעקני',
-        image: '/lovable-uploads/c01bc50f-e64a-4dc9-9b08-5e6e3cce7401.png',
+        image: '/style-images/marketing/bold.png',
         description: 'עיצוב בולט וצעקני'
       },
       {
         id: 'seasonal',
         name: 'עונתי',
-        image: '/lovable-uploads/59d2e657-6817-4fd1-9ba4-9031c7ab4249.png',
+        image: '/style-images/marketing/seasonal.png',
         description: 'מותאם לעונה'
       },
       {
         id: 'luxury',
         name: 'יוקרתי',
-        image: '/lovable-uploads/e015b56a-2de9-405c-8b4f-f531b10c743a.png',
+        image: '/style-images/marketing/luxury.png',
         description: 'עיצוב יוקרתי ומפנק'
       }
     ],
@@ -119,77 +119,95 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'dark-bg',
         name: 'רקע כהה',
-        image: '/lovable-uploads/1e4647a0-37e0-48c6-a75e-914c461d682f.png',
+        image: '/style-images/delivery/dark-bg.png',
         description: 'אלגנטי ומודרני'
       },
       {
         id: 'white-bg',
         name: 'רקע לבן',
-        image: '/lovable-uploads/לבן.png',
+        image: '/style-images/delivery/white-bg.png',
         description: 'עיצוב נקי ומינימליסטי'
       },
       {
         id: 'colorful-bg',
         name: 'רקע צבעוני',
-        image: '/lovable-uploads/70e6f48e-fc5e-49ec-939d-a73951210a94.png',
+        image: '/style-images/delivery/colorful-bg.png',
         description: 'חיוני ובולט'
       },
       {
         id: 'wood-bg',
         name: 'רקע עץ',
-        image: '/lovable-uploads/רקע עץ.png',
+        image: '/style-images/delivery/wood-bg.png',
         description: 'חם וביתי'
       },
       // Social styles
       {
         id: 'atmosphere',
         name: 'אווירה',
-        image: '/lovable-uploads/be6c1f5c-cbf9-4561-8c33-a09c74e2255f.png',
+        image: '/style-images/social/atmosphere.png',
         description: 'יוצר אווירה מיוחדת'
       },
       {
         id: 'marketing',
         name: 'שיווקי',
-        image: '/lovable-uploads/8d620120-9895-4fa9-81cd-3694b4bb638d.png',
+        image: '/style-images/social/marketing.png',
         description: 'מותאם לשיווק ברשתות'
       },
       {
         id: 'elegant',
         name: 'אלגנט',
-        image: '/lovable-uploads/31fa48cb-1c38-4542-8ecd-96a4392929c2.png',
+        image: '/style-images/social/elegant.png',
         description: 'עיצוב אלגנטי ומתוחכם'
       },
       // Menu styles
       {
         id: 'sea',
         name: 'ים',
-        image: '/lovable-uploads/8081ae70-1035-4a59-864b-a1963cd24c43.png',
+        image: '/style-images/menu/sea.png',
         description: 'רקע ים רגוע'
       },
       {
         id: 'wood-table',
         name: 'שולחן עץ',
-        image: '/lovable-uploads/eba0f747-8c59-4187-8502-5e3499f303c0.png',
+        image: '/style-images/menu/wood-table.png',
         description: 'שולחן עץ טבעי'
       },
       {
         id: 'summer',
         name: 'קיצי',
-        image: '/lovable-uploads/023230ea-be80-4d63-ba02-d78099f875c7.png',
+        image: '/style-images/menu/summer.png',
         description: 'עיצוב קיצי וצבעוני'
       },
       {
         id: 'realistic-closeup',
         name: 'תקריב ריאליסטי',
-        image: '/lovable-uploads/ff3b2363-6304-49ac-88bc-d49d593a4173.png',
+        image: '/style-images/menu/realistic-closeup.png',
         description: 'תקריב ריאליסטי של האוכל'
       },
       // Marketing styles
       {
         id: 'appetizing',
         name: 'מגרה',
-        image: '/lovable-uploads/25b6ed83-5bc5-4f15-b1fc-85634b223c61.png',
+        image: '/style-images/marketing/appetizing.png',
         description: 'עיצוב מגרה תיאבון'
+      },
+      {
+        id: 'bold',
+        name: 'צעקני',
+        image: '/style-images/marketing/bold.png',
+        description: 'עיצוב בולט וצעקני'
+      },
+      {
+        id: 'seasonal',
+        name: 'עונתי',
+        image: '/style-images/marketing/seasonal.png',
+        description: 'מותאם לעונה'
+      },
+      {
+        id: 'luxury',
+        name: 'יוקרתי',
+        image: '/style-images/marketing/luxury.png',
+        description: 'עיצוב יוקרתי ומפנק'
       }
     ]
   };
