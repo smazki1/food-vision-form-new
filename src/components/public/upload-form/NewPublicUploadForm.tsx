@@ -45,7 +45,7 @@ const NewPublicUploadForm: React.FC = () => {
           newErrors.phone = 'מספר טלפון הוא שדה חובה';
         }
         if (!formData.email?.trim()) {
-          newErrors.email = 'אימייל הוא שדה חובה';
+          newErrors.email = 'מייל הוא שדה חובה';
         }
         if (formData.dishes.length === 0) {
           newErrors.dishes = 'יש להעלות לפחות מנה אחת';
@@ -75,6 +75,10 @@ const NewPublicUploadForm: React.FC = () => {
           newErrors.selectedStyle = 'יש לבחור סגנון עיצוב';
         }
         break;
+      case 4:
+        // Step 4 is payment step - no additional validation needed
+        // All validation was done in previous steps
+        break;
     }
 
     setErrors(newErrors);
@@ -101,7 +105,9 @@ const NewPublicUploadForm: React.FC = () => {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called, validating step 4...');
     if (validateStep(4)) {
+      console.log('Step 4 validation passed, starting submission process...');
       try {
         console.log('Submitting public form data:', formData);
         
@@ -109,21 +115,25 @@ const NewPublicUploadForm: React.FC = () => {
         
         // Process first dish
         const dish = formData.dishes[0];
+        console.log('Processing dish:', dish);
         
         // Upload files first
         const uploadedImageUrls: string[] = [];
         if (dish.referenceImages && dish.referenceImages.length > 0) {
+          console.log(`Uploading ${dish.referenceImages.length} images...`);
           for (const file of dish.referenceImages) {
             const fileExtension = file.name.split('.').pop();
             const uniqueFileName = `${uuidv4()}.${fileExtension}`;
             const sanitizedItemType = sanitizePathComponent(dish.itemType);
             const filePath = `public-uploads/${Date.now()}/${sanitizedItemType}/${uniqueFileName}`;
             
+            console.log(`Uploading file to path: ${filePath}`);
             const { error: uploadError } = await supabase.storage
               .from('food-vision-images')
               .upload(filePath, file);
               
             if (uploadError) {
+              console.error('Upload error:', uploadError);
               throw new Error(`שגיאה בהעלאת קובץ: ${uploadError.message}`);
             }
             
@@ -133,19 +143,28 @@ const NewPublicUploadForm: React.FC = () => {
               
             if (publicUrlData?.publicUrl) {
               uploadedImageUrls.push(publicUrlData.publicUrl);
+              console.log('Successfully uploaded image:', publicUrlData.publicUrl);
             }
           }
         }
 
+        console.log('All images uploaded successfully. Total URLs:', uploadedImageUrls.length);
+
         // Check if client exists or create new one
         let clientId: string;
         
+        console.log('Checking for existing client with restaurant name:', formData.restaurantName);
         // Check existing client
-        const { data: existingClient } = await supabase
+        const { data: existingClient, error: clientCheckError } = await supabase
           .from('clients')
           .select('client_id, current_package_id, remaining_servings, remaining_images')
           .eq('restaurant_name', formData.restaurantName)
           .single();
+          
+        if (clientCheckError && clientCheckError.code !== 'PGRST116') {
+          console.error('Error checking existing client:', clientCheckError);
+          throw new Error(`שגיאה בבדיקת לקוח קיים: ${clientCheckError.message}`);
+        }
           
         if (existingClient) {
           clientId = existingClient.client_id;
@@ -153,6 +172,7 @@ const NewPublicUploadForm: React.FC = () => {
           
           // If existing client doesn't have a package, assign trial package
           if (!existingClient.current_package_id) {
+            console.log('Assigning trial package to existing client...');
             const trialPackageId = '28fc2f96-5742-48f3-8c77-c9766752ff6b'; // חבילת ניסיון 249₪
             
             const { error: updateError } = await supabase
@@ -178,6 +198,7 @@ const NewPublicUploadForm: React.FC = () => {
           const placeholderAuthId = uuidv4(); // Placeholder since we don't have auth user
           const trialPackageId = '28fc2f96-5742-48f3-8c77-c9766752ff6b'; // חבילת ניסיון 249₪
           
+          console.log('Creating new client with ID:', clientId);
           const { error: clientError } = await supabase
             .from('clients')
             .insert({
@@ -203,32 +224,37 @@ const NewPublicUploadForm: React.FC = () => {
 
         // Create submission linked to client
         const submissionId = uuidv4();
+        console.log('Creating submission with ID:', submissionId);
+        const submissionData = {
+          submission_id: submissionId,
+          client_id: clientId,
+          item_name_at_submission: dish.itemName,
+          item_type: dish.itemType,
+          submission_status: 'ממתינה לעיבוד',
+          original_image_urls: uploadedImageUrls,
+          uploaded_at: new Date().toISOString(),
+          restaurant_name: formData.restaurantName,
+          contact_name: formData.submitterName,
+          email: formData.email || null,
+          phone: formData.phone,
+          description: dish.description || null,
+          category: formData.selectedCategory || null,
+          selected_style: formData.selectedStyle || null,
+          design_notes: formData.designNotes || null,
+          custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
+        };
+        
+        console.log('Submission data to insert:', submissionData);
         const { error: submissionError } = await supabase
           .from('customer_submissions')
-          .insert({
-            submission_id: submissionId,
-            client_id: clientId,
-            item_name_at_submission: dish.itemName,
-            item_type: dish.itemType,
-            submission_status: 'ממתינה לעיבוד',
-            original_image_urls: uploadedImageUrls,
-            uploaded_at: new Date().toISOString(),
-            restaurant_name: formData.restaurantName,
-            contact_name: formData.submitterName,
-            email: formData.email || null,
-            phone: formData.phone,
-            description: dish.description || null,
-            category: formData.selectedCategory || null,
-            selected_style: formData.selectedStyle || null,
-            design_notes: formData.designNotes || null,
-            custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
-          });
+          .insert(submissionData);
 
         if (submissionError) {
           console.error('Submission error:', submissionError);
           throw new Error(`Database error: ${submissionError.message}`);
         }
 
+        console.log('Submission created successfully!');
         toast.success('ההזמנה נשלחה בהצלחה! חבילת הניסיון 249₪ הוקצתה אוטומטית');
         console.log('Form submitted successfully');
         
@@ -242,8 +268,11 @@ const NewPublicUploadForm: React.FC = () => {
         
       } catch (error: any) {
         console.error('Error:', error);
-        toast.error('אנא נסו שוב');
+        toast.error(`שגיאה: ${error.message || 'אנא נסו שוב'}`);
       }
+    } else {
+      console.log('Step 4 validation failed. Current errors:', errors);
+      toast.error('אנא תקנו את השגיאות המסומנות');
     }
   };
 

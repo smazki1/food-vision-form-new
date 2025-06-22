@@ -114,8 +114,14 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
             size="lg"
             className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 touch-manipulation"
             onClick={() => {
-              // Redirect to iCount payment page
-              window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
+              // Save submission in background and redirect after brief delay
+              if (onSubmit) {
+                onSubmit().catch(error => console.error('Background submission error:', error));
+              }
+              // Small delay to ensure submission starts before redirect
+              setTimeout(() => {
+                window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
+              }, 500);
             }}
           >
             כן, אני רוצה את התמונות!
