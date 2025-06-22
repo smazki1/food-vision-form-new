@@ -106,14 +106,15 @@ const NewPublicUploadForm: React.FC = () => {
 
   const handleSubmit = async () => {
     console.log('handleSubmit called, validating step 4...');
+    console.log('Current formData:', formData);
+    
     if (validateStep(4)) {
       console.log('Step 4 validation passed, starting submission process...');
+      setIsSubmitting(true);
       try {
         console.log('Submitting public form data:', formData);
         
-        toast.info('מעבד את ההגשה...');
-        
-        // Process first dish
+        // Process first dish silently
         const dish = formData.dishes[0];
         console.log('Processing dish:', dish);
         
@@ -255,23 +256,21 @@ const NewPublicUploadForm: React.FC = () => {
         }
 
         console.log('Submission created successfully!');
-        toast.success('ההזמנה נשלחה בהצלחה! חבילת הניסיון 249₪ הוקצתה אוטומטית');
-        console.log('Form submitted successfully');
-        
-        // Clear form data
+        // Don't show success message or redirect to thank-you
+        // Just clear form data silently
         resetFormData();
         
-        // Redirect to thank you page
-        setTimeout(() => {
-          window.location.href = '/thank-you';
-        }, 1000);
+        // Let the payment button handle the redirect
+        console.log('Form submitted successfully, ready for payment redirect');
         
       } catch (error: any) {
-        console.error('Error:', error);
+        console.error('Error in handleSubmit:', error);
         toast.error(`שגיאה: ${error.message || 'אנא נסו שוב'}`);
+        setIsSubmitting(false);
       }
     } else {
       console.log('Step 4 validation failed. Current errors:', errors);
+      console.log('Form data that failed validation:', formData);
       toast.error('אנא תקנו את השגיאות המסומנות');
     }
   };

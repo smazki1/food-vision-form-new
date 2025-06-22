@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PaymentSummaryStepProps {
@@ -13,6 +13,7 @@ interface PaymentSummaryStepProps {
 
 const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors, onPrevious, onSubmit }) => {
   const { formData } = useNewItemForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedCategory = formData.selectedCategory;
   const selectedStyle = formData.selectedStyle;
@@ -113,18 +114,32 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
           <Button
             size="lg"
             className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 sm:px-12 py-4 sm:py-6 text-lg sm:text-2xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 touch-manipulation"
-            onClick={() => {
-              // Save submission in background and redirect after brief delay
-              if (onSubmit) {
-                onSubmit().catch(error => console.error('Background submission error:', error));
+            onClick={async () => {
+              if (isSubmitting) return;
+              setIsSubmitting(true);
+              
+              try {
+                // Save submission and wait for it to complete
+                if (onSubmit) {
+                  await onSubmit();
+                  // Only redirect after successful submission
+                  window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
+                }
+              } catch (error) {
+                console.error('Submission error:', error);
+                setIsSubmitting(false);
               }
-              // Small delay to ensure submission starts before redirect
-              setTimeout(() => {
-                window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
-              }, 500);
             }}
+            disabled={isSubmitting}
           >
-            כן, אני רוצה את התמונות!
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                מעבד את ההזמנה...
+              </>
+            ) : (
+              'כן, אני רוצה את התמונות!'
+            )}
           </Button>
           
           {/* Mobile-Optimized Back Button */}
