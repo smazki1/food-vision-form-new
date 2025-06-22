@@ -121,10 +121,10 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
           {/* Tasting package */}
           <div className="bg-gradient-to-r from-[#f3752b]/10 to-[#f3752b]/5 border-2 border-[#f3752b] rounded-3xl p-8">
             <h3 className="text-2xl font-bold text-[#f3752b] mb-6 text-center">
-              חבילת הטעימה (250₪):
+              חבילת הטעימה (249₪):
             </h3>
             <p className="text-lg text-slate-700 leading-relaxed text-center">
-              במקום להחליט בעיוורון - תבדקו איך המערכת עובדת עם המנות שלכם. 3-5 מנות מעוצבות, תראו תוצאות, תחליטו אם להמשיך. 
+              במקום להחליט בעיוורון - תבדקו איך המערכת עובדת עם המנות שלכם. 1-3 מנות מעוצבות, תראו תוצאות, תחליטו אם להמשיך. 
               <br /><br />
               <strong>כמו לנסות לפני קנייה + זיכוי מלא.</strong>
             </p>
@@ -140,7 +140,7 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
                 כמה פעמים השנה אתם צריכים תמונות חדשות? כמה זה עולה עכשיו?
               </p>
               <p className="text-lg text-purple-700">
-                ב-250₪ אתם קונים פתרון לבעיה הבאה שתהיה לכם - במקום לשלם 3,000₪ לצלם או להיתקע עם תמונות ישנות.
+                ב-249₪ אתם קונים פתרון לבעיה הבאה שתהיה לכם - במקום לשלם 3,000₪ לצלם או להיתקע עם תמונות ישנות.
               </p>
               <p className="text-xl font-bold text-purple-800">
                 זה לא עוד כלי - זה העתיד של התוכן הויזואלי במסעדות - והוא כבר כאן. מוכנים לטעום?
@@ -154,7 +154,10 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
               מוכנים לטעום?
             </h3>
             <Button
-              onClick={() => window.open('https://app.icount.co.il/m/7f0d1/c12db4pa6u6853abb77?utm_source=iCount&utm_medium=paypage&utm_campaign=166', '_blank')}
+              onClick={() => {
+                onOpenChange(false);
+                window.location.href = '/public-upload';
+              }}
               className="bg-green-500 hover:bg-green-600 text-white px-8 py-4 text-lg font-bold rounded-2xl flex items-center gap-3 mx-auto mb-4"
             >
               <Sparkles className="w-6 h-6" />
