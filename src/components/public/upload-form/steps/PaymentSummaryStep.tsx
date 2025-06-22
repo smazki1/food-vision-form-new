@@ -2,14 +2,15 @@
 import React from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
-import { Check, Clock, Shield, CreditCard, Star, Sparkles, Timer, Award } from 'lucide-react';
+import { Check, Clock, Shield, CreditCard, Star, Sparkles, Timer, Award, ChevronRight } from 'lucide-react';
 
 interface PaymentSummaryStepProps {
   errors: Record<string, string>;
   clearErrors: () => void;
+  onBack?: () => void;
 }
 
-const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors }) => {
+const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors, onBack }) => {
   const { formData } = useNewItemForm();
 
   const selectedCategory = formData.selectedCategory;
@@ -132,7 +133,7 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
             <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
               <Check className="w-6 h-6 text-emerald-600" />
             </div>
-            <span className="text-emerald-800 font-semibold text-lg">עיצוב מותאם לשימוש שלכם</span>
+            <span className="text-emerald-800 font-semibold text-lg">עיצוב מקצועי ומותאם</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -155,7 +156,7 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 shadow-lg">
         <div className="flex items-center gap-3 mb-6">
           <Timer className="w-6 h-6 text-blue-600" />
-          <h3 className="text-2xl font-bold text-blue-800">מה קורה הלאה?</h3>
+          <h3 className="text-2xl font-bold text-blue-800">לוח זמנים</h3>
         </div>
         
         <div className="space-y-6">
@@ -198,35 +199,28 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
           <h3 className="text-2xl font-bold text-orange-800">הערבות שלנו</h3>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
               <Shield className="w-6 h-6 text-orange-600" />
             </div>
-            <span className="text-orange-800 font-semibold">החזר כספي מלא אם לא מרוצים</span>
+            <span className="text-orange-800 font-semibold">שביעות רצון מלאה או החזר כספי</span>
           </div>
           
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
               <Shield className="w-6 h-6 text-orange-600" />
             </div>
-            <span className="text-orange-800 font-semibold">249₪ זיכוי לחבילה הבאה</span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-              <Shield className="w-6 h-6 text-orange-600" />
-            </div>
-            <span className="text-orange-800 font-semibold">שירות לקוחות מהיר ומקצועי</span>
+            <span className="text-orange-800 font-semibold">תמיכה מקצועית לאורך כל הדרך</span>
           </div>
         </div>
       </div>
 
-      {/* Single Payment Button */}
+      {/* Payment Section */}
       <div className="text-center">
         <div className="bg-gradient-to-br from-[#8B1E3F] to-[#7A1B37] rounded-2xl p-8 shadow-2xl">
           <h3 className="text-3xl font-bold text-white mb-4">249₪</h3>
-          <p className="text-white text-lg mb-8 opacity-90">חבילת ניסיון מיוחדת - כולל עיבוד מקצועי לכל המנות</p>
+          <p className="text-white text-lg mb-8 opacity-90">חבילת ניסיון מיוחדת</p>
           
           <Button
             onClick={handlePaymentRedirect}
@@ -237,6 +231,20 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
             בצע תשלום - 249₪
           </Button>
         </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-center mt-8">
+        {onBack && (
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="px-8 py-3 text-gray-700 border-gray-300 hover:bg-gray-50 rounded-full"
+          >
+            <ChevronRight className="w-4 h-4 mr-2" />
+            חזור
+          </Button>
+        )}
       </div>
     </div>
   );
