@@ -67,11 +67,11 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
         <div className="space-y-2 sm:space-y-3 text-gray-700 mb-4 sm:mb-6">
           <div className="flex items-start gap-3">
             <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
-            <p className="text-sm sm:text-base font-medium">מה שאתם/ן מעלים/ות = מה שאתם/ן מקבלים/ות (בעיצוב מקצועי)</p>
+            <p className="text-sm sm:text-base font-medium">מה שאתם מעלים = מה שאתם מקבלים (בעיצוב מקצועי)</p>
           </div>
           <div className="flex items-start gap-3">
             <div className="w-2 h-2 bg-[#F3752B] rounded-full mt-2 flex-shrink-0"></div>
-            <p className="text-sm sm:text-base font-medium">אנחנו משפרים את התמונה של המנות שלכם/ן, לא את המנות עצמן. המנה בתמונה שלכם/ן = המנה בתוצאה הסופית.</p>
+            <p className="text-sm sm:text-base font-medium">אנחנו משפרים את התמונה של המנות שלכם, לא את המנות עצמן. המנה בתמונה שלכם = המנה בתוצאה הסופית.</p>
           </div>
         </div>
 
@@ -112,8 +112,8 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
       {/* Mobile-Optimized Dishes Section */}
       <div className="space-y-6 sm:space-y-8">
         <div className="text-center">
-          <h3 className="text-2xl sm:text-3xl font-bold text-[#333333] mb-3 sm:mb-4">המנות שלכם/ן</h3>
-          <p className="text-gray-600 text-base sm:text-lg mb-4 sm:mb-6 px-4">הוסיפו את המנות שברצונכם/ן לעצב</p>
+          <h3 className="text-2xl sm:text-3xl font-bold text-[#333333] mb-3 sm:mb-4">המנות שלכם</h3>
+          <p className="text-gray-600 text-base sm:text-lg mb-4 sm:mb-6 px-4">הוסיפו את המנות שברצונכם לעצב</p>
           <Button
             type="button"
             onClick={addDish}
@@ -223,7 +223,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
 
             {/* Mobile-Optimized Image Upload Section */}
             <div>
-              <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-3 sm:mb-4">תמונות המנה * (עד 5 תמונות)</label>
+              <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-3 sm:mb-4">תמונות המנה (בין 5-12 תמונות)</label>
               
               <div className="space-y-4">
                 {/* Upload Button */}
@@ -335,7 +335,7 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
 
           <div className="sm:col-span-2">
             <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
-              אימייל *
+              מייל *
             </label>
             <input
               type="email"
@@ -356,14 +356,14 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
 
           <div className="sm:col-span-2">
             <label className="block text-sm sm:text-base font-semibold text-gray-700 mb-2">
-              שם העסק
+              שם העסק *
             </label>
             <input
               type="text"
               value={formData.restaurantName}
               onChange={(e) => handleContactChange('restaurantName', e.target.value)}
               className="w-full px-4 sm:px-5 py-3 sm:py-4 text-base sm:text-lg border-2 border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none transition-all duration-200 bg-white/80 backdrop-blur-sm hover:border-purple-300 touch-manipulation"
-              placeholder="שם המסעדה או העסק (אופציונלי)"
+              placeholder="שם המסעדה או העסק"
             />
           </div>
         </div>

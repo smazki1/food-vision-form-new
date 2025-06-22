@@ -143,7 +143,7 @@ const RestaurantDetailsStep: React.FC<PublicStepProps> = ({ errors }) => {
           <div className="space-y-2 group animate-fade-in">
             <Label htmlFor="contactEmail" className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               <Mail className="w-5 h-5 text-[#8B1E3F]" />
-              כתובת אימייל *
+              כתובת מייל *
             </Label>
             <Input
               id="contactEmail"
