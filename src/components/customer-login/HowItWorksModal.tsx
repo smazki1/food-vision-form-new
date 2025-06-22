@@ -14,7 +14,7 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" dir="rtl">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold text-[#8b1e3f] text-center mb-2">
+          <DialogTitle className="text-3xl font-bold text-[#8b1e3f] text-center mb-2 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl border border-[#f3752b]/30 shadow-lg mx-auto inline-block">
             מה זה בעצם Food Vision?
           </DialogTitle>
         </DialogHeader>
@@ -51,7 +51,7 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
 
           {/* How it works */}
           <div>
-            <h3 className="text-2xl font-bold text-[#8b1e3f] mb-6 text-center flex items-center justify-center gap-3">
+            <h3 className="text-2xl font-bold text-[#8b1e3f] mb-6 text-center flex items-center justify-center gap-3 bg-white/90 backdrop-blur-sm px-6 py-3 rounded-2xl border border-[#f3752b]/30 shadow-lg mx-auto inline-block">
               <Settings className="w-8 h-8" />
               איך זה עובד:
             </h3>
@@ -82,8 +82,8 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
                   icon: <Database className="w-6 h-6" /> 
                 }
               ].map((item, index) => (
-                <div key={index} className="flex items-start gap-4 p-6 bg-gradient-to-r from-slate-50 to-white rounded-xl border-2 border-slate-200 hover:border-[#8b1e3f]/30 transition-colors">
-                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-[#8b1e3f] to-[#a91e4f] text-white rounded-full flex items-center justify-center font-bold text-lg">
+                <div key={index} className="flex items-start gap-4 p-6 bg-white/95 backdrop-blur-sm rounded-xl border-2 border-[#f3752b]/20 hover:border-[#f3752b]/50 transition-colors shadow-lg">
+                  <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-[#8b1e3f] to-[#a91e4f] text-white rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                     {item.step}
                   </div>
                   <div className="flex-1">
@@ -119,8 +119,8 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
           </div>
 
           {/* Tasting package */}
-          <div className="bg-gradient-to-r from-[#f3752b]/10 to-[#f3752b]/5 border-2 border-[#f3752b] rounded-3xl p-8">
-            <h3 className="text-2xl font-bold text-[#f3752b] mb-6 text-center">
+          <div className="bg-white/95 backdrop-blur-sm border-2 border-[#f3752b] rounded-3xl p-8 shadow-xl">
+            <h3 className="text-2xl font-bold text-[#8b1e3f] mb-6 text-center">
               חבילת הטעימה (249₪):
             </h3>
             <p className="text-lg text-slate-700 leading-relaxed text-center">

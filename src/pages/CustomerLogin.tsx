@@ -51,9 +51,9 @@ const CustomerLogin = () => {
       {/* Floating geometric elements with warm colors */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-20 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-20 right-20 w-40 h-40 bg-amber-400/30 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-orange-400/25 rounded-full blur-xl"></div>
-        <div className="absolute top-1/3 right-1/3 w-28 h-28 bg-yellow-400/20 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-20 right-20 w-40 h-40 bg-purple-400/30 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-blue-400/25 rounded-full blur-xl"></div>
+        <div className="absolute top-1/3 right-1/3 w-28 h-28 bg-purple-300/20 rounded-full blur-2xl"></div>
       </div>
 
       <WhatsAppButton onClick={openWhatsApp} />
@@ -80,9 +80,9 @@ const CustomerLogin = () => {
             {/* Enhanced Main CTA Button with warm gradient */}
             <Button 
               onClick={redirectToPayment}
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6"
+              className="w-full bg-gradient-to-r from-[#8b1e3f] to-[#f3752b] hover:from-[#7a1b37] hover:to-[#e56b26] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6"
               style={{
-                boxShadow: '0 10px 30px rgba(245, 158, 11, 0.4)'
+                boxShadow: '0 10px 30px rgba(139, 30, 63, 0.4)'
               }}
             >
               <span className="relative z-10">קבלו תמונות מקצועיות לעסק שלכם</span>
@@ -94,7 +94,7 @@ const CustomerLogin = () => {
               <Button
                 onClick={() => setShowHowItWorks(true)}
                 variant="ghost"
-                className="w-auto px-8 text-amber-700 hover:text-amber-800 hover:bg-white/60 backdrop-blur-sm py-3 text-base font-medium rounded-xl transition-all duration-300 min-h-[44px] border border-white/40 hover:border-amber-200/60"
+                className="w-auto px-8 text-[#8b1e3f] hover:text-[#7a1b37] bg-white/85 hover:bg-white/95 backdrop-blur-sm py-3 text-base font-bold rounded-xl transition-all duration-300 min-h-[44px] border-2 border-[#f3752b]/40 hover:border-[#f3752b] shadow-xl"
               >
                 איך זה עובד?
               </Button>
