@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
@@ -67,25 +66,25 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'sea',
         name: 'ים',
-        image: '/lovable-uploads/ים.jpg',
+        image: '/lovable-uploads/8081ae70-1035-4a59-864b-a1963cd24c43.png',
         description: 'רקע ים רגוע'
       },
       {
         id: 'wood-table',
         name: 'שולחן עץ',
-        image: '/lovable-uploads/שולחן עץ.png',
+        image: '/lovable-uploads/eba0f747-8c59-4187-8502-5e3499f303c0.png',
         description: 'שולחן עץ טבעי'
       },
       {
         id: 'summer',
         name: 'קיצי',
-        image: '/lovable-uploads/קיצי.jpg',
+        image: '/lovable-uploads/023230ea-be80-4d63-ba02-d78099f875c7.png',
         description: 'עיצוב קיצי וצבעוני'
       },
       {
         id: 'realistic-closeup',
         name: 'תקריב ריאליסטי',
-        image: '/lovable-uploads/תקריב ריאטליסטי.jpg',
+        image: '/lovable-uploads/ff3b2363-6304-49ac-88bc-d49d593a4173.png',
         description: 'תקריב ריאליסטי של האוכל'
       }
     ],
@@ -93,29 +92,30 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
       {
         id: 'appetizing',
         name: 'מגרה',
-        image: '/lovable-uploads/מגרה.jpg',
+        image: '/lovable-uploads/25b6ed83-5bc5-4f15-b1fc-85634b223c61.png',
         description: 'עיצוב מגרה תיאבון'
       },
       {
         id: 'bold',
         name: 'צעקני',
-        image: '/lovable-uploads/צעקני.jpg',
+        image: '/lovable-uploads/c01bc50f-e64a-4dc9-9b08-5e6e3cce7401.png',
         description: 'עיצוב בולט וצעקני'
       },
       {
         id: 'seasonal',
         name: 'עונתי',
-        image: '/lovable-uploads/עונתי.jpg',
+        image: '/lovable-uploads/59d2e657-6817-4fd1-9ba4-9031c7ab4249.png',
         description: 'מותאם לעונה'
       },
       {
         id: 'luxury',
         name: 'יוקרתי',
-        image: '/lovable-uploads/יוקרתי.jpg',
+        image: '/lovable-uploads/e015b56a-2de9-405c-8b4f-f531b10c743a.png',
         description: 'עיצוב יוקרתי ומפנק'
       }
     ],
     all: [
+      // Delivery styles
       {
         id: 'dark-bg',
         name: 'רקע כהה',
@@ -140,6 +140,7 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         image: '/lovable-uploads/רקע עץ.png',
         description: 'חם וביתי'
       },
+      // Social styles
       {
         id: 'atmosphere',
         name: 'אווירה',
@@ -158,53 +159,37 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         image: '/lovable-uploads/31fa48cb-1c38-4542-8ecd-96a4392929c2.png',
         description: 'עיצוב אלגנטי ומתוחכם'
       },
+      // Menu styles
       {
         id: 'sea',
         name: 'ים',
-        image: '/lovable-uploads/ים.jpg',
+        image: '/lovable-uploads/8081ae70-1035-4a59-864b-a1963cd24c43.png',
         description: 'רקע ים רגוע'
       },
       {
         id: 'wood-table',
         name: 'שולחן עץ',
-        image: '/lovable-uploads/שולחן עץ.png',
+        image: '/lovable-uploads/eba0f747-8c59-4187-8502-5e3499f303c0.png',
         description: 'שולחן עץ טבעי'
       },
       {
         id: 'summer',
         name: 'קיצי',
-        image: '/lovable-uploads/קיצי.jpg',
+        image: '/lovable-uploads/023230ea-be80-4d63-ba02-d78099f875c7.png',
         description: 'עיצוב קיצי וצבעוני'
       },
       {
         id: 'realistic-closeup',
         name: 'תקריב ריאליסטי',
-        image: '/lovable-uploads/תקריב ריאטליסטי.jpg',
+        image: '/lovable-uploads/ff3b2363-6304-49ac-88bc-d49d593a4173.png',
         description: 'תקריב ריאליסטי של האוכל'
       },
+      // Marketing styles
       {
         id: 'appetizing',
         name: 'מגרה',
-        image: '/lovable-uploads/מגרה.jpg',
+        image: '/lovable-uploads/25b6ed83-5bc5-4f15-b1fc-85634b223c61.png',
         description: 'עיצוב מגרה תיאבון'
-      },
-      {
-        id: 'bold',
-        name: 'צעקני',
-        image: '/lovable-uploads/צעקני.jpg',
-        description: 'עיצוב בולט וצעקני'
-      },
-      {
-        id: 'seasonal',
-        name: 'עונתי',
-        image: '/lovable-uploads/עונתי.jpg',
-        description: 'מותאם לעונה'
-      },
-      {
-        id: 'luxury',
-        name: 'יוקרתי',
-        image: '/lovable-uploads/יוקרתי.jpg',
-        description: 'עיצוב יוקרתי ומפנק'
       }
     ]
   };
