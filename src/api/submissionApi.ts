@@ -117,7 +117,7 @@ export async function getClientSubmissionsBasic(clientId: string): Promise<Submi
       priority: null,
       created_lead_id: null,
       lead_id: null,
-      created_at: item.created_at,
+      created_at: item.created_at || item.uploaded_at,
       submission_contact_name: null,
       submission_contact_email: null,
       submission_contact_phone: null

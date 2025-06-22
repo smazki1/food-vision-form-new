@@ -19,109 +19,109 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
   const allStyleOptions = {
     delivery: [
       {
-        id: 'white-bg',
-        name: 'רקע לבן',
-        image: '/lovable-uploads/לבן.png',
-        description: 'עיצוב נקי ומינימליסטי'
-      },
-      {
         id: 'dark-bg',
         name: 'רקע כהה',
         image: '/lovable-uploads/כהה.png',
         description: 'אלגנטי ומודרני'
       },
       {
-        id: 'wood-bg',
-        name: 'רקע עץ',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'חם וביתי'
+        id: 'white-bg',
+        name: 'רקע לבן',
+        image: '/lovable-uploads/לבן.png',
+        description: 'עיצוב נקי ומינימליסטי'
       },
       {
         id: 'colorful-bg',
         name: 'רקע צבעוני',
         image: '/lovable-uploads/צבעוני.png',
         description: 'חיוני ובולט'
+      },
+      {
+        id: 'wood-bg',
+        name: 'רקע עץ',
+        image: '/lovable-uploads/רקע עץ.png',
+        description: 'חם וביתי'
       }
     ],
     social: [
       {
-        id: 'instagram-square',
-        name: 'Instagram מרובע',
-        image: '/lovable-uploads/לבן.png',
-        description: 'פורמט מרובע מושלם לאינסטגרם'
+        id: 'atmosphere',
+        name: 'אווירה',
+        image: '/lovable-uploads/אווירה.jpg',
+        description: 'יוצר אווירה מיוחדת'
       },
       {
-        id: 'story-vertical',
-        name: 'Stories אנכי',
-        image: '/lovable-uploads/כהה.png',
-        description: 'פורמט אנכי לסטוריז'
+        id: 'marketing',
+        name: 'שיווקי',
+        image: '/lovable-uploads/שיווקי.jpg',
+        description: 'מותאם לשיווק ברשתות'
       },
       {
-        id: 'facebook-wide',
-        name: 'Facebook רחב',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'פורמט רחב לפייסבוק'
-      },
-      {
-        id: 'tiktok-vertical',
-        name: 'TikTok אנכי',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'פורמט אנכי לטיקטוק'
+        id: 'elegant',
+        name: 'אלגנט',
+        image: '/lovable-uploads/אלגנט.png',
+        description: 'עיצוב אלגנטי ומתוחכם'
       }
     ],
     menu: [
       {
-        id: 'menu-clean',
-        name: 'תפריט נקי',
-        image: '/lovable-uploads/לבן.png',
-        description: 'עיצוב נקי לתפריט'
+        id: 'sea',
+        name: 'ים',
+        image: '/lovable-uploads/ים.jpg',
+        description: 'רקע ים רגוע'
       },
       {
-        id: 'menu-elegant',
-        name: 'תפריט אלגנטי',
-        image: '/lovable-uploads/כהה.png',
-        description: 'עיצוב אלגנטי לתפריט'
+        id: 'wood-table',
+        name: 'שולחן עץ',
+        image: '/lovable-uploads/שולחן עץ.png',
+        description: 'שולחן עץ טבעי'
       },
       {
-        id: 'digital-screen',
-        name: 'מסך דיגיטלי',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'מותאם למסכי הזמנה'
+        id: 'summer',
+        name: 'קיצי',
+        image: '/lovable-uploads/קיצי.jpg',
+        description: 'עיצוב קיצי וצבעוני'
       },
       {
-        id: 'print-menu',
-        name: 'תפריט מודפס',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'מותאם לתפריט מודפס'
+        id: 'realistic-closeup',
+        name: 'תקריב ריאליסטי',
+        image: '/lovable-uploads/תקריב ריאטליסטי.jpg',
+        description: 'תקריב ריאליסטי של האוכל'
       }
     ],
     marketing: [
       {
-        id: 'ad-banner',
-        name: 'באנר פרסומי',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'עיצוב בולט לפרסום'
+        id: 'appetizing',
+        name: 'מגרה',
+        image: '/lovable-uploads/מגרה.jpg',
+        description: 'עיצוב מגרה תיאבון'
       },
       {
-        id: 'flyer-style',
-        name: 'סגנון עלון',
-        image: '/lovable-uploads/לבן.png',
-        description: 'מותאם לעלוני פרסום'
+        id: 'bold',
+        name: 'צעקני',
+        image: '/lovable-uploads/צעקני.jpg',
+        description: 'עיצוב בולט וצעקני'
       },
       {
-        id: 'poster-style',
-        name: 'סגנון פוסטר',
-        image: '/lovable-uploads/כהה.png',
-        description: 'עיצוב דרמטי לפוסטרים'
+        id: 'seasonal',
+        name: 'עונתי',
+        image: '/lovable-uploads/עונתי.jpg',
+        description: 'מותאם לעונה'
       },
       {
-        id: 'brochure-style',
-        name: 'סגנון חוברת',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'מותאם לחוברות פרסום'
+        id: 'luxury',
+        name: 'יוקרתי',
+        image: '/lovable-uploads/יוקרתי.jpg',
+        description: 'עיצוב יוקרתי ומפנק'
       }
     ],
     all: [
+      {
+        id: 'dark-bg',
+        name: 'רקע כהה',
+        image: '/lovable-uploads/כהה.png',
+        description: 'אלגנטי ומודרני'
+      },
       {
         id: 'white-bg',
         name: 'רקע לבן',
@@ -129,10 +129,10 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         description: 'עיצוב נקי ומינימליסטי'
       },
       {
-        id: 'dark-bg',
-        name: 'רקע כהה',
-        image: '/lovable-uploads/כהה.png',
-        description: 'אלגנטי ומודרני'
+        id: 'colorful-bg',
+        name: 'רקע צבעוני',
+        image: '/lovable-uploads/צבעוני.png',
+        description: 'חיוני ובולט'
       },
       {
         id: 'wood-bg',
@@ -141,58 +141,70 @@ const StyleSelectionStep: React.FC<StyleSelectionStepProps> = ({ errors, clearEr
         description: 'חם וביתי'
       },
       {
-        id: 'colorful-bg',
-        name: 'רקع צבעוני',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'חיוני ובולט'
+        id: 'atmosphere',
+        name: 'אווירה',
+        image: '/lovable-uploads/אווירה.jpg',
+        description: 'יוצר אווירה מיוחדת'
       },
       {
-        id: 'instagram-square',
-        name: 'Instagram מרובע',
-        image: '/lovable-uploads/לבן.png',
-        description: 'פורמט מרובע מושלם לאינסטגרם'
+        id: 'marketing',
+        name: 'שיווקי',
+        image: '/lovable-uploads/שיווקי.jpg',
+        description: 'מותאם לשיווק ברשתות'
       },
       {
-        id: 'story-vertical',
-        name: 'Stories אנכי',
-        image: '/lovable-uploads/כהה.png',
-        description: 'פורמט אנכי לסטוריז'
+        id: 'elegant',
+        name: 'אלגנט',
+        image: '/lovable-uploads/אלגנט.png',
+        description: 'עיצוב אלגנטי ומתוחכם'
       },
       {
-        id: 'facebook-wide',
-        name: 'Facebook רחב',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'פורמט רחב לפייסבוק'
+        id: 'sea',
+        name: 'ים',
+        image: '/lovable-uploads/ים.jpg',
+        description: 'רקע ים רגוע'
       },
       {
-        id: 'tiktok-vertical',
-        name: 'TikTok אנכי',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'פורמט אנכי לטיקטוק'
+        id: 'wood-table',
+        name: 'שולחן עץ',
+        image: '/lovable-uploads/שולחן עץ.png',
+        description: 'שולחן עץ טבעי'
       },
       {
-        id: 'menu-clean',
-        name: 'תפריט נקי',
-        image: '/lovable-uploads/לבן.png',
-        description: 'עיצוב נקי לתפריט'
+        id: 'summer',
+        name: 'קיצי',
+        image: '/lovable-uploads/קיצי.jpg',
+        description: 'עיצוב קיצי וצבעוני'
       },
       {
-        id: 'menu-elegant',
-        name: 'תפריט אלגנטי',
-        image: '/lovable-uploads/כהה.png',
-        description: 'עיצוב אלגנטי לתפריט'
+        id: 'realistic-closeup',
+        name: 'תקריב ריאליסטי',
+        image: '/lovable-uploads/תקריב ריאטליסטי.jpg',
+        description: 'תקריב ריאליסטי של האוכל'
       },
       {
-        id: 'digital-screen',
-        name: 'מסך דיגיטלי',
-        image: '/lovable-uploads/רקע עץ.png',
-        description: 'מותאם למסכי הזמנה'
+        id: 'appetizing',
+        name: 'מגרה',
+        image: '/lovable-uploads/מגרה.jpg',
+        description: 'עיצוב מגרה תיאבון'
       },
       {
-        id: 'ad-banner',
-        name: 'באנר פרסומי',
-        image: '/lovable-uploads/צבעוני.png',
-        description: 'עיצוב בולט לפרסום'
+        id: 'bold',
+        name: 'צעקני',
+        image: '/lovable-uploads/צעקני.jpg',
+        description: 'עיצוב בולט וצעקני'
+      },
+      {
+        id: 'seasonal',
+        name: 'עונתי',
+        image: '/lovable-uploads/עונתי.jpg',
+        description: 'מותאם לעונה'
+      },
+      {
+        id: 'luxury',
+        name: 'יוקרתי',
+        image: '/lovable-uploads/יוקרתי.jpg',
+        description: 'עיצוב יוקרתי ומפנק'
       }
     ]
   };
