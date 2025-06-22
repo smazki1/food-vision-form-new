@@ -30,6 +30,9 @@ export interface CustomerSubmission {
   submission_status: string;
   original_image_urls: string[];
   processed_image_urls: string[];
+  selected_style: string | null;
+  design_notes: string | null;
+  custom_style_data: string | null;
 }
 
 // Submission status definitions

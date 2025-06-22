@@ -1675,6 +1675,47 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                       </div>
                       {isLoraSaving && <div className="text-xs text-gray-500 mt-2">שומר פרטי LORA...</div>}
                     </div>
+
+                    {/* Style Information Section */}
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <h4 className="font-medium text-sm mb-3 text-purple-600">פרטי סגנון ועיצוב</h4>
+                      <div className="space-y-3 p-4 bg-purple-50 rounded-lg">
+                        <div>
+                          <span className="font-medium text-sm text-gray-700">קטגוריה נבחרת:</span>
+                          <span className="mr-2 text-sm">
+                            {submissions[selectedSubmission]?.category || 'לא זמין'}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium text-sm text-gray-700">סגנון נבחר:</span>
+                          <span className="mr-2 text-sm">
+                            {submissions[selectedSubmission]?.selected_style || 'לא זמין'}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium text-sm text-gray-700">הערות סגנון:</span>
+                          <div className="mt-1">
+                            <p className="text-sm whitespace-pre-wrap">
+                              {submissions[selectedSubmission]?.design_notes || 'אין הערות סגנון'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Custom Style Data (if exists) */}
+                        {submissions[selectedSubmission]?.custom_style_data && (
+                          <div>
+                            <span className="font-medium text-sm text-gray-700">סגנון מותאם אישית:</span>
+                            <div className="mt-1">
+                              <p className="text-sm text-gray-600">
+                                נתונים מותאמים אישית זמינים
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

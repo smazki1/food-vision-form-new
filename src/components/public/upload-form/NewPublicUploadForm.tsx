@@ -217,7 +217,11 @@ const NewPublicUploadForm: React.FC = () => {
             contact_name: formData.submitterName,
             email: formData.email || null,
             phone: formData.phone,
-            description: dish.description || null
+            description: dish.description || null,
+            category: formData.selectedCategory || null,
+            selected_style: formData.selectedStyle || null,
+            design_notes: formData.designNotes || null,
+            custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
           });
 
         if (submissionError) {
