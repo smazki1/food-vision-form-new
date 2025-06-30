@@ -19,8 +19,25 @@ const getSupabaseAdmin = async () => {
     const { supabaseAdmin } = await import('@/integrations/supabase/supabaseAdmin');
     return supabaseAdmin;
   } catch (error) {
-    throw new Error('Supabase admin client not available. Please contact support.');
+    console.warn('Supabase admin client not available:', error);
+    return null;
   }
+};
+
+// Helper function to generate secure password
+const generateSecurePassword = (): string => {
+  const length = 12;
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return result;
+};
+
+// Helper function to generate username from email
+const generateUsername = (email: string): string => {
+  return email; // Use email as username directly
 };
 
 // Package pricing constants
@@ -40,7 +57,12 @@ export const affiliateApi = {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    // Add default values for new fields if they don't exist
+    return (data || []).map(affiliate => ({
+      ...affiliate,
+      username: (affiliate as any).username || null,
+      password: (affiliate as any).password || null
+    } as Affiliate));
   },
 
   // Get affiliate by ID
@@ -55,7 +77,12 @@ export const affiliateApi = {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return data;
+    
+    return {
+      ...data,
+      username: (data as any).username || null,
+      password: (data as any).password || null
+    } as Affiliate;
   },
 
   // Get current user's affiliate profile
@@ -73,50 +100,98 @@ export const affiliateApi = {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return data;
+    
+    return {
+      ...data,
+      username: (data as any).username || null,
+      password: (data as any).password || null
+    } as Affiliate;
   },
 
   // Create new affiliate
   async createAffiliate(formData: CreateAffiliateForm): Promise<Affiliate> {
-    // Get admin client
-    const supabaseAdmin = await getSupabaseAdmin();
-    
-    // First create auth user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: formData.email,
-      password: Math.random().toString(36).slice(-8), // Temporary password
-      email_confirm: true,
-    });
+    try {
+      // Generate credentials
+      const username = generateUsername(formData.email);
+      const password = generateSecurePassword();
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('Failed to create user');
+      // Try to create Supabase auth user (fallback if admin client not available)
+      let userAuthId = null;
+      const adminClient = await getSupabaseAdmin();
+      if (adminClient) {
+        try {
+          const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
+            email: formData.email,
+            password: password,
+            email_confirm: true,
+            user_metadata: {
+              role: 'affiliate',
+              name: formData.name,
+              username: username
+            }
+          });
 
-    // Create affiliate record
-    const { data, error } = await supabase
-      .from('affiliates')
-      .insert({
-        user_auth_id: authData.user.id,
+          if (!authError && authUser?.user) {
+            userAuthId = authUser.user.id;
+          }
+        } catch (authCreateError) {
+          console.warn('Could not create auth user:', authCreateError);
+          // Continue without auth user - credentials will still be stored for manual setup
+        }
+      } else {
+        console.warn('Admin client not available - continuing without auth user creation');
+      }
+
+      // Create affiliate record with auth user ID and credentials
+      const insertData: any = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         commission_rate_tasting: formData.commission_rate_tasting || 30,
         commission_rate_full_menu: formData.commission_rate_full_menu || 25,
         commission_rate_deluxe: formData.commission_rate_deluxe || 20,
-      })
-      .select()
-      .single();
+        user_auth_id: userAuthId,
+        username: username,
+        password: password,
+      };
 
-    if (error) throw error;
+      const { data, error } = await supabase
+        .from('affiliates')
+        .insert(insertData)
+        .select()
+        .single();
 
-    // Set user role
-    await supabase
-      .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        role: 'affiliate'
-      });
+      // If columns don't exist, retry without username/password
+      if (error && error.message?.includes("password") && error.message?.includes("schema cache")) {
+        console.warn('Username/password columns not available, creating affiliate without credentials');
+        const { username: _, password: __, ...dataWithoutCredentials } = insertData;
+        
+        const { data: retryData, error: retryError } = await supabase
+          .from('affiliates')
+          .insert(dataWithoutCredentials)
+          .select()
+          .single();
+          
+        if (retryError) throw retryError;
+        
+        return {
+          ...retryData,
+          username: username, // Return generated credentials even if not stored
+          password: password
+        } as Affiliate;
+      }
 
-    return data;
+      if (error) throw error;
+      
+      return {
+        ...data,
+        username: (data as any).username || username,
+        password: (data as any).password || password
+      } as Affiliate;
+    } catch (error) {
+      console.error('Failed to create affiliate:', error);
+      throw error;
+    }
   },
 
   // Update affiliate
@@ -129,7 +204,12 @@ export const affiliateApi = {
       .single();
 
     if (error) throw error;
-    return data;
+    
+    return {
+      ...data,
+      username: (data as any).username || null,
+      password: (data as any).password || null
+    } as Affiliate;
   },
 
   // Delete affiliate

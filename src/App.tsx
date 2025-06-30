@@ -186,6 +186,7 @@ const App = () => (
                   <AffiliateRoute>
                     <Routes>
                       <Route index element={<AffiliateDashboardPage />} />
+                      <Route path="dashboard" element={<AffiliateDashboardPage />} />
                     </Routes>
                   </AffiliateRoute>
                 </CurrentUserRoleProvider>

@@ -1,16 +1,14 @@
 import React from 'react';
-import { useAffiliateAuth, useAffiliateDashboard } from '@/hooks/useAffiliate';
+import { useAffiliateAuth } from '@/hooks/useAffiliate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, DollarSign, Package, TrendingUp, TrendingDown, Award } from 'lucide-react';
-import { formatCurrency } from '@/utils/formatters';
+import { Users, DollarSign, Package, Award } from 'lucide-react';
 
 const AffiliateDashboardPage: React.FC = () => {
   const { affiliate, isLoading: authLoading } = useAffiliateAuth();
-  const { data: stats, isLoading: statsLoading } = useAffiliateDashboard(affiliate?.affiliate_id || '');
 
-  if (authLoading || statsLoading) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -31,13 +29,15 @@ const AffiliateDashboardPage: React.FC = () => {
               לא נמצא חשבון שותף. אנא פנה למנהל המערכת.
             </CardDescription>
           </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 text-center">
+              Debug: localStorage data not found or invalid
+            </p>
+          </CardContent>
         </Card>
       </div>
     );
   }
-
-  const earningsChange = stats ? 
-    ((stats.this_month_earnings - stats.last_month_earnings) / Math.max(stats.last_month_earnings, 1)) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
@@ -48,6 +48,12 @@ const AffiliateDashboardPage: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">שלום {affiliate.name}</h1>
               <p className="text-gray-600 mt-1">דאשבורד שותפים - Food Vision AI</p>
+              <p className="text-sm text-gray-500 mt-2">
+                Affiliate ID: {affiliate.affiliate_id}
+              </p>
+              <p className="text-sm text-gray-500">
+                Email: {affiliate.email}
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-green-600 border-green-200">
@@ -58,64 +64,43 @@ const AffiliateDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Total Clients */}
+        {/* Stats Grid - Simplified for now */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">לקוחות פעילים</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.active_clients || 0}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                מתוך {stats?.total_clients || 0} לקוחות בסך הכל
+                בקרוב נוסיף שתתפות נתונים
               </p>
             </CardContent>
           </Card>
 
-          {/* Total Earnings */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">סה"כ עמלות</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats?.total_commissions || 0)}</div>
+              <div className="text-2xl font-bold">₪0</div>
               <p className="text-xs text-muted-foreground">
-                שולם: {formatCurrency(stats?.paid_commissions || 0)}
+                שולם: ₪0
               </p>
             </CardContent>
           </Card>
 
-          {/* Monthly Earnings */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">עמלות החודש</CardTitle>
-              {earningsChange >= 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-red-600" />
-              )}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(stats?.this_month_earnings || 0)}</div>
-              <p className={`text-xs ${earningsChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {earningsChange >= 0 ? '+' : ''}{earningsChange.toFixed(1)}% מהחודש הקודם
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Active Packages */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">חבילות פעילות</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.active_packages || 0}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                נותרו: {stats?.total_dishes_remaining || 0} מנות
+                נותרו: 0 מנות
               </p>
             </CardContent>
           </Card>
@@ -147,90 +132,20 @@ const AffiliateDashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Pending Commissions Alert */}
-        {stats && stats.pending_commissions > 0 && (
-          <Card className="border-orange-200 bg-orange-50">
-            <CardHeader>
-              <CardTitle className="text-orange-800">עמלות ממתינות לתשלום</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-700">
-                    יש לך עמלות בסך {formatCurrency(stats.pending_commissions)} הממתינות לתשלום
-                  </p>
-                  <p className="text-sm text-orange-600 mt-1">
-                    התשלום יתבצע בהתאם להסכם השותפות
-                  </p>
-                </div>
-                <Button variant="outline" className="border-orange-300 text-orange-700 hover:bg-orange-100">
-                  צפה בפרטים
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Clients */}
-          <Card>
-            <CardHeader>
-              <CardTitle>לקוחות אחרונים</CardTitle>
-              <CardDescription>הלקוחות שהצטרפו לאחרונה דרכך</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {/* This would be populated with actual recent clients data */}
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">מסעדת השמן</p>
-                    <p className="text-sm text-gray-600">הצטרף לפני 2 ימים</p>
-                  </div>
-                  <Badge variant="outline">חבילת תפריט מלא</Badge>
-                </div>
-                <div className="text-center py-4 text-gray-500">
-                  <p>אין לקוחות חדשים השבוע</p>
-                  <Button variant="link" size="sm" className="mt-2">
-                    צפה בכל הלקוחות
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Package Usage */}
-          <Card>
-            <CardHeader>
-              <CardTitle>ניצול חבילות</CardTitle>
-              <CardDescription>מצב השימוש בחבילות הפעילות שלך</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {stats && stats.active_packages > 0 ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">מנות נותרות</span>
-                      <span className="text-sm text-gray-600">{stats.total_dishes_remaining}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">תמונות נותרות</span>
-                      <span className="text-sm text-gray-600">{stats.total_images_remaining}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-gray-500">
-                    <Package className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p>אין חבילות פעילות</p>
-                    <Button variant="link" size="sm" className="mt-2">
-                      רכוש חבילה ראשונה
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Debug Info */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-blue-800">מידע להדגבה</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-blue-700">
+              <p>Status: ההתחברות עובדת!</p>
+              <p>Name: {affiliate.name}</p>
+              <p>Email: {affiliate.email}</p>
+              <p>ID: {affiliate.affiliate_id}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

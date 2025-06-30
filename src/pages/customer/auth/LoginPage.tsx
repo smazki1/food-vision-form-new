@@ -22,6 +22,52 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      // First check if this is an affiliate login (using public function to bypass RLS)
+      console.log('Checking affiliate login for email:', email);
+      const { data: affiliateLoginData, error: affiliateLoginError } = await supabase
+        .rpc('verify_affiliate_login' as any, {
+          input_email: email,
+          input_password: password
+        });
+
+      console.log('Affiliate verification result:', { affiliateLoginData, affiliateLoginError });
+
+      const affiliateResults = affiliateLoginData as any[];
+      if (!affiliateLoginError && affiliateResults && affiliateResults.length > 0) {
+        const affiliate = affiliateResults[0];
+        console.log('Affiliate found:', affiliate);
+        
+        if (affiliate.is_valid) {
+          // Store affiliate info in localStorage for the session
+          const sessionData = {
+            affiliate_id: affiliate.affiliate_id,
+            email: affiliate.email,
+            name: affiliate.name
+          };
+          
+          console.log('Storing affiliate session:', sessionData);
+          localStorage.setItem('affiliate_session', JSON.stringify(sessionData));
+          
+          // Verify it was stored
+          const storedSession = localStorage.getItem('affiliate_session');
+          console.log('Verified stored session:', storedSession);
+          
+          console.log('Affiliate login successful, redirecting to dashboard');
+          toast.success('התחברות שותף בוצעה בהצלחה!');
+          navigate('/affiliate/dashboard');
+          setIsLoading(false);
+          return;
+        } else {
+          console.log('Invalid password for affiliate');
+          toast.error('שם משתמש או סיסמה שגויים');
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        console.log('No affiliate found with this email, proceeding with regular auth');
+      }
+
+      // If not affiliate, proceed with regular Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -133,7 +179,13 @@ const LoginPage = () => {
         // Create new lead record
         const { error: newLeadError } = await supabase
           .from('leads')
-          .insert({ email: user.email, status: 'new_login_lead' }); // Add other fields as necessary
+          .insert({ 
+            contact_name: user.email?.split('@')[0] || 'New User',
+            email: user.email,
+            phone: '',
+            restaurant_name: 'New Restaurant',
+            status: 'new_login_lead'
+          });
 
         if (newLeadError) {
           console.error('New Lead Creation Error:', newLeadError);

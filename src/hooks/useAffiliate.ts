@@ -235,13 +235,29 @@ export const useAffiliateDashboard = (affiliateId: string) => {
 
 // Utility hooks
 export const useAffiliateAuth = () => {
-  const { data: affiliate, isLoading, error } = useCurrentAffiliate();
+  const getAffiliateFromSession = () => {
+    try {
+      const affiliateSession = localStorage.getItem('affiliate_session');
+      console.log('Reading affiliate session from localStorage:', affiliateSession);
+      if (affiliateSession) {
+        const parsed = JSON.parse(affiliateSession);
+        console.log('Parsed affiliate session:', parsed);
+        return parsed;
+      }
+    } catch (error) {
+      console.error('Error reading affiliate session:', error);
+    }
+    return null;
+  };
+
+  const affiliate = getAffiliateFromSession();
+  console.log('useAffiliateAuth result:', affiliate);
   
   return {
     affiliate,
     isAffiliate: !!affiliate,
-    isLoading,
-    error,
+    isLoading: false,
+    error: null,
     affiliateId: affiliate?.affiliate_id
   };
 }; 

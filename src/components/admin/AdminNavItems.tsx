@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   BarChart,
   ClipboardList,
+  UserCheck,
 } from "lucide-react";
 
 export const adminNavItems = [
@@ -37,6 +38,11 @@ export const adminNavItems = [
     title: "הגשות",
     href: "/admin/submissions",
     icon: FileSpreadsheet,
+  },
+  {
+    title: "שותפים",
+    href: "/admin/affiliates",
+    icon: UserCheck,
   },
   {
     title: "תור הגשות",

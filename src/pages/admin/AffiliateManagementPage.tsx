@@ -1,22 +1,26 @@
 import React, { useState } from 'react';
-import { useAffiliates, useCreateAffiliate, useDeleteAffiliate } from '@/hooks/useAffiliate';
+import { useAffiliates, useCreateAffiliate, useDeleteAffiliate, useUpdateAffiliate } from '@/hooks/useAffiliate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Users, Plus, Mail, Phone, DollarSign, Settings, Trash2, User } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
-import type { CreateAffiliateForm } from '@/types/affiliate';
+import type { CreateAffiliateForm, Affiliate } from '@/types/affiliate';
 
 const AffiliateManagementPage: React.FC = () => {
   const { data: affiliates, isLoading } = useAffiliates();
   const createAffiliateMutation = useCreateAffiliate();
   const deleteAffiliateMutation = useDeleteAffiliate();
+  const updateAffiliateMutation = useUpdateAffiliate();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
   const [formData, setFormData] = useState<CreateAffiliateForm>({
     name: '',
     email: '',
@@ -25,6 +29,8 @@ const AffiliateManagementPage: React.FC = () => {
     commission_rate_full_menu: 25,
     commission_rate_deluxe: 20,
   });
+
+  const [settingsFormData, setSettingsFormData] = useState<Partial<Affiliate>>({});
 
   const handleCreateAffiliate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +55,37 @@ const AffiliateManagementPage: React.FC = () => {
       await deleteAffiliateMutation.mutateAsync(affiliateId);
     } catch (error) {
       console.error('Failed to delete affiliate:', error);
+    }
+  };
+
+  const handleOpenSettings = (affiliate: Affiliate) => {
+    setSelectedAffiliate(affiliate);
+    setSettingsFormData({
+      name: affiliate.name,
+      email: affiliate.email,
+      phone: affiliate.phone || '',
+      commission_rate_tasting: affiliate.commission_rate_tasting,
+      commission_rate_full_menu: affiliate.commission_rate_full_menu,
+      commission_rate_deluxe: affiliate.commission_rate_deluxe,
+      status: affiliate.status,
+    });
+    setIsSettingsDialogOpen(true);
+  };
+
+  const handleUpdateAffiliate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAffiliate) return;
+
+    try {
+      await updateAffiliateMutation.mutateAsync({
+        affiliateId: selectedAffiliate.affiliate_id,
+        updates: settingsFormData
+      });
+      setIsSettingsDialogOpen(false);
+      setSelectedAffiliate(null);
+      setSettingsFormData({});
+    } catch (error) {
+      console.error('Failed to update affiliate:', error);
     }
   };
 
@@ -178,6 +215,155 @@ const AffiliateManagementPage: React.FC = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* Settings Dialog */}
+        <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+          <DialogContent className="sm:max-w-md" dir="rtl">
+            <DialogHeader>
+              <DialogTitle>עריכת הגדרות שותף</DialogTitle>
+              <DialogDescription>
+                עדכן את פרטי השותף ושיעורי העמלה
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdateAffiliate} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="settings-name">שם מלא *</Label>
+                  <Input
+                    id="settings-name"
+                    value={settingsFormData.name || ''}
+                    onChange={(e) => setSettingsFormData(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                    placeholder="שם השותף"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="settings-email">אימייל *</Label>
+                  <Input
+                    id="settings-email"
+                    type="email"
+                    value={settingsFormData.email || ''}
+                    onChange={(e) => setSettingsFormData(prev => ({ ...prev, email: e.target.value }))}
+                    required
+                    placeholder="email@example.com"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="settings-phone">טלפון</Label>
+                <Input
+                  id="settings-phone"
+                  value={settingsFormData.phone || ''}
+                  onChange={(e) => setSettingsFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="050-123-4567"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="settings-status">סטטוס</Label>
+                <Select
+                  value={settingsFormData.status || 'active'}
+                  onValueChange={(value) => setSettingsFormData(prev => ({ ...prev, status: value as 'active' | 'inactive' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">פעיל</SelectItem>
+                    <SelectItem value="inactive">לא פעיل</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* User Credentials Section */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+                <Label className="text-sm font-medium text-gray-900">פרטי חשבון משתמש</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username" className="text-sm">שם משתמש</Label>
+                    <Input
+                      id="username"
+                      value={selectedAffiliate?.username || 'לא הוגדר'}
+                      readOnly
+                      className="bg-white"
+                      placeholder="שם משתמש יווצר אוטומטית"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm">סיסמה</Label>
+                    <Input
+                      id="password"
+                      value={selectedAffiliate?.password || 'לא הוגדרה'}
+                      readOnly
+                      className="bg-white"
+                      placeholder="סיסמה תיווצר אוטומטית"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  פרטי הכניסה נוצרים אוטומטית בעת יצירת השותף ומיועדים לכניסה למערכת השותפים
+                </p>
+              </div>
+              
+              <div className="space-y-3">
+                <Label>שיעורי עמלה (%)</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="settings-tasting" className="text-sm">טעימות</Label>
+                    <Input
+                      id="settings-tasting"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={settingsFormData.commission_rate_tasting || 0}
+                      onChange={(e) => setSettingsFormData(prev => ({ ...prev, commission_rate_tasting: Number(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="settings-full-menu" className="text-sm">תפריט מלא</Label>
+                    <Input
+                      id="settings-full-menu"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={settingsFormData.commission_rate_full_menu || 0}
+                      onChange={(e) => setSettingsFormData(prev => ({ ...prev, commission_rate_full_menu: Number(e.target.value) }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="settings-deluxe" className="text-sm">דלוקס</Label>
+                    <Input
+                      id="settings-deluxe"
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={settingsFormData.commission_rate_deluxe || 0}
+                      onChange={(e) => setSettingsFormData(prev => ({ ...prev, commission_rate_deluxe: Number(e.target.value) }))}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsSettingsDialogOpen(false)}
+                >
+                  ביטול
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={updateAffiliateMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {updateAffiliateMutation.isPending ? 'מעדכן...' : 'עדכן הגדרות'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Overview */}
@@ -280,7 +466,11 @@ const AffiliateManagementPage: React.FC = () => {
                     </Badge>
                     
                     <div className="flex items-center gap-1">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleOpenSettings(affiliate)}
+                      >
                         <Settings className="w-3 h-3" />
                       </Button>
                       <AlertDialog>

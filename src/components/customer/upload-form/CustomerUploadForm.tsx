@@ -5,12 +5,13 @@ import { useClientPackage } from '@/hooks/useClientPackage';
 import FormProgress from './FormProgress';
 import { useFormNavigation } from './hooks/useFormNavigation';
 import { useFormState } from './hooks/useFormState';
-import { useCustomerFormSubmission } from './hooks/useCustomerFormSubmission';
+import { useEnhancedFormSubmission } from './hooks/useEnhancedFormSubmission';
 import FormLoadingState from './components/FormLoadingState';
 import FormErrorAlert from './components/FormErrorAlert';
 import FormNavigationButtons from './components/FormNavigationButtons';
 import FormErrorDisplay from './components/FormErrorDisplay';
 import CustomerUploadSuccessModal from './components/CustomerUploadSuccessModal';
+import UploadProgressModal from './components/UploadProgressModal';
 import { useNavigate } from 'react-router-dom';
 import { authenticatedSteps } from './config/formStepsConfig';
 
@@ -43,8 +44,12 @@ const CustomerUploadForm: React.FC = () => {
     handleSubmit,
     isSubmitting,
     showSuccessModal,
-    handleCloseSuccessModal
-  } = useCustomerFormSubmission({
+    showProgressModal,
+    progressData,
+    handleCloseSuccessModal,
+    handleCloseProgressModal,
+    handleCancel
+  } = useEnhancedFormSubmission({
     clientId,
     formData,
     remainingDishes,
@@ -164,6 +169,14 @@ const CustomerUploadForm: React.FC = () => {
           />
         </div>
       </main>
+
+      {/* Progress Modal */}
+      <UploadProgressModal
+        isOpen={showProgressModal}
+        onClose={handleCloseProgressModal}
+        onCancel={handleCancel}
+        progressData={progressData}
+      />
 
       {/* Success Modal */}
       <CustomerUploadSuccessModal

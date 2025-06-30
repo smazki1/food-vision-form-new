@@ -7,6 +7,10 @@ export interface Affiliate {
   phone: string | null;
   status: string;
   
+  // User credentials (for admin access)
+  username: string | null;
+  password: string | null;
+  
   // Commission rates
   commission_rate_tasting: number;
   commission_rate_full_menu: number;
