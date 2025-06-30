@@ -12,7 +12,7 @@
 export function formatCurrency(
   value: number | null | undefined,
   locale = 'he-IL',
-  currency = 'USD'
+  currency = 'ILS'
 ): string {
   if (value === null || value === undefined) return '—';
   

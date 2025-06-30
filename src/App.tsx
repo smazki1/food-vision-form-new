@@ -8,6 +8,7 @@ import { UnifiedAuthProvider } from "./providers/UnifiedAuthProvider";
 import { ClientAuthProvider } from "@/providers/ClientAuthProvider";
 import AdminRoute from "@/components/AdminRoute";
 import EditorRoute from "@/components/EditorRoute";
+import AffiliateRoute from "@/components/AffiliateRoute";
 import PublicOnlyRoute from "@/components/PublicOnlyRoute";
 import { CurrentUserRoleProvider } from "@/hooks/useCurrentUserRole";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -32,6 +33,7 @@ import SubmissionProcessingPage from "@/pages/editor/SubmissionProcessingPage";
 import WireframeTest from "@/pages/wireframe-test";
 import React, { Suspense } from "react";
 import EditorSubmissionViewer from "@/pages/editor/EditorSubmissionViewer";
+import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
 
 // Import debug script for testing comments
 import "@/test-comments-debug";
@@ -42,6 +44,7 @@ const ClientsList = React.lazy(() => import("@/pages/admin/ClientsList"));
 const ClientDetails = React.lazy(() => import("@/pages/admin/ClientDetails"));
 const ClientCostsReportPage = React.lazy(() => import("@/pages/admin/clients/costs-report"));
 const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesManagementPage"));
+const AffiliateManagementPage = React.lazy(() => import("@/pages/admin/AffiliateManagementPage"));
 const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
 const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
 const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQueuePage"));
@@ -177,6 +180,17 @@ const App = () => (
                 </CurrentUserRoleProvider>
               } />
 
+              {/* Affiliate routes - protected by AffiliateRoute */}
+              <Route path="/affiliate/*" element={
+                <CurrentUserRoleProvider>
+                  <AffiliateRoute>
+                    <Routes>
+                      <Route index element={<AffiliateDashboardPage />} />
+                    </Routes>
+                  </AffiliateRoute>
+                </CurrentUserRoleProvider>
+              } />
+
               {/* Admin routes - no client auth needed */}
               <Route path="/admin/*" element={
                 <CurrentUserRoleProvider>
@@ -191,6 +205,7 @@ const App = () => (
                 <Route path="clients/costs-report" element={<Suspense fallback={<LoadingSpinner />}><ClientCostsReportPage /></Suspense>} />
                 <Route path="clients/:clientId" element={<Suspense fallback={<LoadingSpinner />}><ClientDetails /></Suspense>} />
                 <Route path="packages" element={<Suspense fallback={<LoadingSpinner />}><PackagesManagementPage /></Suspense>} />
+                <Route path="affiliates" element={<Suspense fallback={<LoadingSpinner />}><AffiliateManagementPage /></Suspense>} />
                 <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />
                 <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
                 <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />

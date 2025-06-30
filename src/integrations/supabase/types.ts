@@ -968,6 +968,257 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_clients: {
+        Row: {
+          affiliate_id: string
+          client_id: string
+          id: string
+          referral_method: string | null
+          referral_source: string | null
+          referred_at: string | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_id: string
+          client_id: string
+          id?: string
+          referral_method?: string | null
+          referral_source?: string | null
+          referred_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          client_id?: string
+          id?: string
+          referral_method?: string | null
+          referral_source?: string | null
+          referred_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clients_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "affiliate_clients_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      affiliate_commissions: {
+        Row: {
+          affiliate_id: string
+          base_amount: number
+          client_id: string
+          commission_amount: number
+          commission_id: string
+          commission_rate: number
+          created_at: string | null
+          package_type: string | null
+          payment_date: string | null
+          payment_notes: string | null
+          payment_status: string | null
+          transaction_type: string
+        }
+        Insert: {
+          affiliate_id: string
+          base_amount: number
+          client_id: string
+          commission_amount: number
+          commission_id?: string
+          commission_rate: number
+          created_at?: string | null
+          package_type?: string | null
+          payment_date?: string | null
+          payment_notes?: string | null
+          payment_status?: string | null
+          transaction_type: string
+        }
+        Update: {
+          affiliate_id?: string
+          base_amount?: number
+          client_id?: string
+          commission_amount?: number
+          commission_id?: string
+          commission_rate?: number
+          created_at?: string | null
+          package_type?: string | null
+          payment_date?: string | null
+          payment_notes?: string | null
+          payment_status?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["affiliate_id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      affiliate_package_allocations: {
+        Row: {
+          affiliate_package_id: string
+          allocated_at: string | null
+          allocated_dishes: number
+          allocated_images: number
+          allocation_id: string
+          client_id: string
+          dishes_used: number | null
+          images_used: number | null
+          status: string | null
+        }
+        Insert: {
+          affiliate_package_id: string
+          allocated_at?: string | null
+          allocated_dishes: number
+          allocated_images: number
+          allocation_id?: string
+          client_id: string
+          dishes_used?: number | null
+          images_used?: number | null
+          status?: string | null
+        }
+        Update: {
+          affiliate_package_id?: string
+          allocated_at?: string | null
+          allocated_dishes?: number
+          allocated_images?: number
+          allocation_id?: string
+          client_id?: string
+          dishes_used?: number | null
+          images_used?: number | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_package_allocations_affiliate_package_id_fkey"
+            columns: ["affiliate_package_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_packages"
+            referencedColumns: ["package_id"]
+          },
+          {
+            foreignKeyName: "affiliate_package_allocations_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["client_id"]
+          },
+        ]
+      }
+      affiliate_packages: {
+        Row: {
+          affiliate_id: string
+          dishes_used: number | null
+          images_used: number | null
+          package_id: string
+          package_type: string
+          purchase_price: number
+          purchased_at: string | null
+          status: string | null
+          total_dishes: number
+          total_images: number
+        }
+        Insert: {
+          affiliate_id: string
+          dishes_used?: number | null
+          images_used?: number | null
+          package_id?: string
+          package_type: string
+          purchase_price: number
+          purchased_at?: string | null
+          status?: string | null
+          total_dishes: number
+          total_images: number
+        }
+        Update: {
+          affiliate_id?: string
+          dishes_used?: number | null
+          images_used?: number | null
+          package_id?: string
+          package_type?: string
+          purchase_price?: number
+          purchased_at?: string | null
+          status?: string | null
+          total_dishes?: number
+          total_images?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_packages_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["affiliate_id"]
+          },
+        ]
+      }
+      affiliates: {
+        Row: {
+          affiliate_id: string
+          commission_rate_deluxe: number | null
+          commission_rate_full_menu: number | null
+          commission_rate_tasting: number | null
+          created_at: string | null
+          email: string
+          name: string
+          phone: string | null
+          status: string | null
+          total_earnings: number | null
+          total_referrals: number | null
+          updated_at: string | null
+          user_auth_id: string | null
+        }
+        Insert: {
+          affiliate_id?: string
+          commission_rate_deluxe?: number | null
+          commission_rate_full_menu?: number | null
+          commission_rate_tasting?: number | null
+          created_at?: string | null
+          email: string
+          name: string
+          phone?: string | null
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_auth_id?: string | null
+        }
+        Update: {
+          affiliate_id?: string
+          commission_rate_deluxe?: number | null
+          commission_rate_full_menu?: number | null
+          commission_rate_tasting?: number | null
+          created_at?: string | null
+          email?: string
+          name?: string
+          phone?: string | null
+          status?: string | null
+          total_earnings?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+          user_auth_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

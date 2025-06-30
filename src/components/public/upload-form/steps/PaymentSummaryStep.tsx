@@ -33,22 +33,26 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
 
   const getStyleName = (styleId: string) => {
     const styles = {
-      'white-bg': 'רקע לבן',
-      'dark-bg': 'רקע כהה',
-      'wood-bg': 'רקע עץ',
-      'colorful-bg': 'רקע צבעוני',
-      'instagram-square': 'Instagram מרובע',
-      'story-vertical': 'Stories אנכי',
-      'facebook-wide': 'Facebook רחב',
-      'tiktok-vertical': 'TikTok אנכי',
-      'menu-clean': 'תפריט נקי',
-      'menu-elegant': 'תפריט אלגנטי',
-      'digital-screen': 'מסך דיגיטלי',
-      'print-menu': 'תפריט מודפס',
-      'ad-banner': 'באנר פרסומי',
-      'flyer-style': 'סגנון עלון',
-      'poster-style': 'סגנון פוסטר',
-      'brochure-style': 'סגנון חוברת'
+      // Delivery styles
+      'light-bg': 'רקע נקי קלאסי',
+      'dark-bg': 'רקע כהה דרמטי',
+      'wood-bg': 'רקע טבעי ארטיזני',
+      'colorful-bg': 'צבעוני ומושך',
+      // Social media styles
+      'appetite': 'מקצועי ונקי',
+      'eye-catching': 'אמנותי ומרהיב',
+      'luxurious': 'אלגנטי ויוקרתי',
+      'special': 'אינסטגרמי ומתוק',
+      // Menu styles
+      'clean-simple': 'חוף ים ונופש',
+      'elegant-sophisticated': 'נקי ופשוט',
+      'fresh-summery': 'קייצי ורענן',
+      'homey-warm': 'טבעי וחם',
+      // Marketing styles
+      'shouting': 'יוקרתי ונקי',
+      'seasonal': 'חגיגי ומסורתי',
+      'appetizing': 'דרמטי ומעורר תיאבון',
+      'luxury': 'מודרני ומתוחכם'
     };
     return styles[styleId as keyof typeof styles] || styleId;
   };

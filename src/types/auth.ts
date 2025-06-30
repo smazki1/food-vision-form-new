@@ -1,7 +1,7 @@
 
 import { User } from "@supabase/supabase-js";
 
-export type UserRole = "admin" | "editor" | "account_manager";
+export type UserRole = "admin" | "editor" | "account_manager" | "affiliate";
 
 export interface UserWithRole extends User {
   role?: UserRole;
