@@ -30,7 +30,7 @@ import { useSubmissionNotes } from '@/hooks/useSubmissionNotes';
 import { useLoraDetails } from '@/hooks/useLoraDetails';
 import { useSubmissionStatus } from '@/hooks/useSubmissionStatus';
 import { StatusSelector } from './StatusSelector';
-import { useAdminSubmissionComments, useAdminAddSubmissionComment } from '@/hooks/useAdminSubmissions';
+import { useAdminSubmissionComments, useAdminAddSubmissionComment, useAdminDeleteSubmission } from '@/hooks/useAdminSubmissions';
 import { SubmissionCommentType } from '@/types/submission';
 import { MessageSquare } from 'lucide-react';
 
@@ -666,6 +666,10 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   const [newComment, setNewComment] = useState('');
   const { data: comments = [] } = useAdminSubmissionComments(currentSubmissionId || '');
   const addCommentMutation = useAdminAddSubmissionComment();
+  
+  // Delete submission functionality
+  const deleteSubmissionMutation = useAdminDeleteSubmission();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   // Timer functionality
   useEffect(() => {
@@ -1024,6 +1028,40 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
     return comments.filter(comment => comment.comment_type === type);
   };
 
+  // Delete submission handlers
+  const handleDeleteClick = (submissionId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent submission selection
+    setConfirmDeleteId(submissionId);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    
+    try {
+      await deleteSubmissionMutation.mutateAsync(confirmDeleteId);
+      
+      // Reset selection if deleted submission was selected
+      const deletedIndex = submissions.findIndex(s => s.submission_id === confirmDeleteId);
+      if (deletedIndex === selectedSubmission) {
+        setSelectedSubmission(0);
+      } else if (deletedIndex < selectedSubmission) {
+        setSelectedSubmission(selectedSubmission - 1);
+      }
+      
+      // Refresh submissions list
+      refetchSubmissions();
+      
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteId(null);
+  };
+
   return (
     <div className="space-y-6" dir="rtl">
       
@@ -1249,21 +1287,36 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                   .map((submission, index) => (
                   <div
                     key={submission.submission_id}
-                    className={`p-3 cursor-pointer border-r-4 ${
+                    className={`p-3 cursor-pointer border-r-4 relative group ${
                       selectedSubmission === index 
                         ? 'bg-blue-50 border-blue-500' 
                         : 'hover:bg-gray-50 border-transparent'
                     }`}
                     onClick={() => setSelectedSubmission(index)}
                   >
-                    <div className="font-medium text-sm">{submission.item_name_at_submission}</div>
-                    <div className="flex items-center justify-between mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {submission.submission_status}
-                      </Badge>
-                      <div className="text-xs text-gray-500">
-                        {submission.original_image_urls?.length || 0} → {submission.processed_image_urls?.length || 0}
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="font-medium text-sm">{submission.item_name_at_submission}</div>
+                        <div className="flex items-center justify-between mt-1">
+                          <Badge variant="outline" className="text-xs">
+                            {submission.submission_status}
+                          </Badge>
+                          <div className="text-xs text-gray-500">
+                            {submission.original_image_urls?.length || 0} → {submission.processed_image_urls?.length || 0}
+                          </div>
+                        </div>
                       </div>
+                      
+                      {/* Delete button - appears on hover */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => handleDeleteClick(submission.submission_id, e)}
+                        disabled={deleteSubmissionMutation.isPending}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -1805,6 +1858,39 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
         onNavigateOriginal={navigateComparisonOriginal}
         onNavigateProcessed={navigateComparisonProcessed}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!confirmDeleteId} onOpenChange={(open) => !open && handleCancelDelete()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>מחיקת הגשה</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-600">
+              האם אתה בטוח שברצונך למחוק את ההגשה הזו?
+            </p>
+            <p className="text-sm text-red-600 mt-2">
+              פעולה זו אינה ניתנת לביטול. כל הנתונים והתמונות הקשורות להגשה יימחקו לצמיתות.
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={handleCancelDelete}
+              disabled={deleteSubmissionMutation.isPending}
+            >
+              ביטול
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={deleteSubmissionMutation.isPending}
+            >
+              {deleteSubmissionMutation.isPending ? 'מוחק...' : 'מחק'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }; 

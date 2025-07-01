@@ -457,4 +457,59 @@ export const useAdminDeleteSubmissionComment = () => {
       toast.error(`שגיאה במחיקת הערה: ${error.message}`);
     }
   });
+};
+
+// Admin-specific hook to delete entire submission (no client restrictions)
+export const useAdminDeleteSubmission = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (submissionId: string) => {
+      console.log('[useAdminDeleteSubmission] Deleting submission:', submissionId);
+      
+      // First delete related comments if they exist
+      try {
+        await supabase
+          .from('submission_comments')
+          .delete()
+          .eq('submission_id', submissionId);
+      } catch (error) {
+        // Ignore if table doesn't exist
+        console.warn('submission_comments table may not exist, continuing with submission deletion');
+      }
+      
+      // Delete the submission
+      const { error } = await supabase
+        .from('customer_submissions')
+        .delete()
+        .eq('submission_id', submissionId);
+
+      if (error) {
+        console.error('[useAdminDeleteSubmission] Database error:', error);
+        throw error;
+      }
+
+      console.log('[useAdminDeleteSubmission] Successfully deleted submission');
+      return submissionId;
+    },
+    onSuccess: (submissionId) => {
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['client-submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-submission', submissionId] });
+      queryClient.invalidateQueries({ queryKey: ['submission', submissionId] });
+      
+      // Remove deleted submission from cache optimistically
+      queryClient.setQueryData(['admin-submissions'], (oldData: any) => {
+        if (!oldData) return oldData;
+        return oldData.filter((submission: any) => submission.submission_id !== submissionId);
+      });
+      
+      toast.success('ההגשה נמחקה בהצלחה');
+    },
+    onError: (error: any) => {
+      console.error('[useAdminDeleteSubmission] Mutation error:', error);
+      toast.error(`שגיאה במחיקת ההגשה: ${error.message}`);
+    }
+  });
 }; 
