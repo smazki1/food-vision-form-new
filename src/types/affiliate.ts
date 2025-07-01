@@ -11,6 +11,9 @@ export interface Affiliate {
   username: string | null;
   password: string | null;
   
+  // Admin notes
+  internal_notes: string | null;
+  
   // Commission rates
   commission_rate_tasting: number;
   commission_rate_full_menu: number;

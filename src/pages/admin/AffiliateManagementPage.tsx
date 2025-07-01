@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Users, Plus, Mail, Phone, DollarSign, Settings, Trash2, User } from 'lucide-react';
+import { Users, Plus, Mail, Phone, DollarSign, Settings, Trash2, User, Eye } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import type { CreateAffiliateForm, Affiliate } from '@/types/affiliate';
+import { AffiliateDetailPanel } from '@/components/admin/AffiliateDetailPanel';
 
 const AffiliateManagementPage: React.FC = () => {
   const { data: affiliates, isLoading } = useAffiliates();
@@ -20,7 +21,9 @@ const AffiliateManagementPage: React.FC = () => {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
+  const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [selectedAffiliate, setSelectedAffiliate] = useState<Affiliate | null>(null);
+  const [selectedAffiliateId, setSelectedAffiliateId] = useState<string | null>(null);
   const [formData, setFormData] = useState<CreateAffiliateForm>({
     name: '',
     email: '',
@@ -70,6 +73,16 @@ const AffiliateManagementPage: React.FC = () => {
       status: affiliate.status,
     });
     setIsSettingsDialogOpen(true);
+  };
+
+  const handleOpenDetailPanel = (affiliateId: string) => {
+    setSelectedAffiliateId(affiliateId);
+    setIsDetailPanelOpen(true);
+  };
+
+  const handleCloseDetailPanel = () => {
+    setIsDetailPanelOpen(false);
+    setSelectedAffiliateId(null);
   };
 
   const handleUpdateAffiliate = async (e: React.FormEvent) => {
@@ -469,7 +482,16 @@ const AffiliateManagementPage: React.FC = () => {
                       <Button 
                         variant="outline" 
                         size="sm"
+                        onClick={() => handleOpenDetailPanel(affiliate.affiliate_id)}
+                        title="הצג פרטים מלאים"
+                      >
+                        <Eye className="w-3 h-3" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
                         onClick={() => handleOpenSettings(affiliate)}
+                        title="הגדרות"
                       >
                         <Settings className="w-3 h-3" />
                       </Button>
@@ -516,6 +538,13 @@ const AffiliateManagementPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Affiliate Detail Panel */}
+      <AffiliateDetailPanel
+        affiliateId={selectedAffiliateId}
+        isOpen={isDetailPanelOpen}
+        onClose={handleCloseDetailPanel}
+      />
     </div>
   );
 };
