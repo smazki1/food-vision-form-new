@@ -573,7 +573,8 @@ export const affiliateDashboardApi = {
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     const this_month_earnings = commissions?.filter(c => 
-      c.payment_status === 'paid' && new Date(c.created_at) >= thisMonthStart
+      c.payment_status === 'paid' && 
+      new Date(c.created_at) >= thisMonthStart
     ).reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
 
     const last_month_earnings = commissions?.filter(c => 
@@ -583,14 +584,189 @@ export const affiliateDashboardApi = {
     ).reduce((sum, c) => sum + Number(c.commission_amount), 0) || 0;
 
     return {
-      total_clients: total_clients || 0,
-      active_clients: active_clients || 0,
       total_earnings,
       pending_commissions,
+      total_clients: total_clients || 0,
+      active_clients: active_clients || 0,
       packages_purchased: packages_purchased || 0,
       packages_remaining,
       this_month_earnings,
       last_month_earnings
     };
+  }
+};
+
+// Affiliate Package Management (similar to client package management)
+export const affiliatePackageManagementApi = {
+  // Assign package to affiliate
+  async assignPackageToAffiliate(packageId: string, affiliateId: string, servings: number, images: number) {
+    try {
+      // Get package details
+      const { data: packageData, error: packageError } = await supabase
+        .from('service_packages')
+        .select('*')
+        .eq('package_id', packageId)
+        .single();
+
+      if (packageError) throw packageError;
+
+      // Update affiliate with package assignment
+      const { data: updatedAffiliate, error: updateError } = await supabase
+        .from('affiliates')
+        .update({
+          current_package_id: packageId,
+          remaining_servings: servings,
+          remaining_images: images
+        })
+        .eq('affiliate_id', affiliateId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Create assigned package record
+      const { error: assignedPackageError } = await supabase
+        .from('affiliate_assigned_packages')
+        .insert({
+          affiliate_id: affiliateId,
+          package_name: packageData.package_name,
+          total_dishes: servings,
+          remaining_dishes: servings,
+          total_images: images,
+          remaining_images: images,
+          package_id: packageId,
+          start_date: new Date().toISOString().split('T')[0],
+          is_active: true
+        });
+
+      if (assignedPackageError) throw assignedPackageError;
+
+      return { success: true, affiliate: updatedAffiliate };
+    } catch (error: any) {
+      console.error('Error assigning package to affiliate:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Update affiliate servings
+  async updateAffiliateServings(affiliateId: string, newServings: number) {
+    try {
+      const { data: updatedAffiliate, error } = await supabase
+        .from('affiliates')
+        .update({ remaining_servings: newServings })
+        .eq('affiliate_id', affiliateId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, affiliate: updatedAffiliate };
+    } catch (error: any) {
+      console.error('Error updating affiliate servings:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Update affiliate images
+  async updateAffiliateImages(affiliateId: string, newImages: number) {
+    try {
+      const { data: updatedAffiliate, error } = await supabase
+        .from('affiliates')
+        .update({ remaining_images: newImages })
+        .eq('affiliate_id', affiliateId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, affiliate: updatedAffiliate };
+    } catch (error: any) {
+      console.error('Error updating affiliate images:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Get affiliate assigned packages
+  async getAffiliateAssignedPackages(affiliateId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('affiliate_assigned_packages')
+        .select('*')
+        .eq('affiliate_id', affiliateId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return { success: true, packages: data || [] };
+    } catch (error: any) {
+      console.error('Error fetching affiliate assigned packages:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Assign package to affiliate with images (similar to client version)
+  async assignPackageToAffiliateWithImages(packageId: string, affiliateId: string, servings: number) {
+    try {
+      // Get package details
+      const { data: packageData, error: packageError } = await supabase
+        .from('service_packages')
+        .select('*')
+        .eq('package_id', packageId)
+        .single();
+
+      if (packageError) throw packageError;
+
+      const totalImages = packageData?.total_images ?? 0;
+      const finalServings = Math.max(1, servings, totalImages);
+      const finalImages = totalImages;
+
+      // Update affiliate
+      const { data: currentAffiliate, error: fetchError } = await supabase
+        .from('affiliates')
+        .select('remaining_servings, remaining_images')
+        .eq('affiliate_id', affiliateId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const newServings = (currentAffiliate.remaining_servings || 0) + finalServings;
+      const newImages = (currentAffiliate.remaining_images || 0) + finalImages;
+
+      const { data: updatedAffiliate, error: updateError } = await supabase
+        .from('affiliates')
+        .update({
+          current_package_id: packageId,
+          remaining_servings: newServings,
+          remaining_images: newImages
+        })
+        .eq('affiliate_id', affiliateId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Create assigned package record
+      const { error: assignedPackageError } = await supabase
+        .from('affiliate_assigned_packages')
+        .insert({
+          affiliate_id: affiliateId,
+          package_name: packageData.package_name,
+          total_dishes: finalServings,
+          remaining_dishes: finalServings,
+          total_images: finalImages,
+          remaining_images: finalImages,
+          package_id: packageId,
+          start_date: new Date().toISOString().split('T')[0],
+          is_active: true
+        });
+
+      if (assignedPackageError) throw assignedPackageError;
+
+      return { success: true, affiliate: updatedAffiliate };
+    } catch (error: any) {
+      console.error('Error assigning package to affiliate with images:', error);
+      return { success: false, error: error.message };
+    }
   }
 }; 

@@ -14,6 +14,13 @@ export interface Affiliate {
   // Admin notes
   internal_notes: string | null;
   
+  // Package Management (similar to clients)
+  current_package_id: string | null;
+  remaining_servings: number;
+  remaining_images: number;
+  consumed_images: number;
+  reserved_images: number;
+  
   // Commission rates
   commission_rate_tasting: number;
   commission_rate_full_menu: number;
@@ -156,4 +163,21 @@ export interface PackageInfo {
   commission_rate: number;
 }
 
-export type AffiliateRole = 'affiliate'; 
+export type AffiliateRole = 'affiliate';
+
+// For direct package assignments to affiliates (similar to client_packages)
+export interface AffiliateAssignedPackage {
+  id: string;
+  affiliate_id: string;
+  package_name: string;
+  total_dishes: number;
+  remaining_dishes: number;
+  total_images: number;
+  remaining_images: number;
+  created_at: string;
+  updated_at: string;
+  package_id: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  is_active: boolean;
+} 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,7 +22,8 @@ import {
   Link,
   Gift,
   Save,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatters';
 import { 
@@ -35,6 +36,7 @@ import {
 } from '@/hooks/useAffiliate';
 import type { Affiliate } from '@/types/affiliate';
 import { toast } from 'sonner';
+import { AffiliatePackageManagement } from './affiliate-details/AffiliatePackageManagement';
 
 interface AffiliateDetailPanelProps {
   affiliateId: string | null;
@@ -127,57 +129,66 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
 
   if (affiliateLoading) {
     return (
-      <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-4xl p-0" dir="rtl">
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-none w-screen h-screen m-0 p-0 rounded-none" dir="rtl">
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">טוען פרטי שותף...</p>
             </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   if (!affiliate) {
     return (
-      <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-4xl p-0" dir="rtl">
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-none w-screen h-screen m-0 p-0 rounded-none" dir="rtl">
           <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">שותף לא נמצא</p>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     );
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-4xl p-0 overflow-y-auto" dir="rtl">
-        <div className="p-6">
-          <SheetHeader className="mb-6">
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-none w-screen h-screen m-0 p-0 rounded-none overflow-y-auto" dir="rtl">
+        {/* Header with close button */}
+        <div className="sticky top-0 z-50 bg-white border-b p-6">
+          <DialogHeader>
             <div className="flex items-center justify-between">
               <div>
-                <SheetTitle className="text-2xl font-bold">{affiliate.name}</SheetTitle>
+                <DialogTitle className="text-2xl font-bold">{affiliate.name}</DialogTitle>
                 <p className="text-muted-foreground mt-1">{affiliate.email}</p>
               </div>
-              <div className="flex items-center gap-2">
-                {getStatusBadge(affiliate.status)}
-                <Select value={affiliate.status} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">פעיל</SelectItem>
-                    <SelectItem value="inactive">לא פעיל</SelectItem>
-                    <SelectItem value="suspended">מושעה</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(affiliate.status)}
+                  <Select value={affiliate.status} onValueChange={handleStatusChange}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">פעיל</SelectItem>
+                      <SelectItem value="inactive">לא פעיל</SelectItem>
+                      <SelectItem value="suspended">מושעה</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button variant="ghost" size="icon" onClick={onClose}>
+                  <X className="h-6 w-6" />
+                </Button>
               </div>
             </div>
-          </SheetHeader>
+          </DialogHeader>
+        </div>
 
+        {/* Content */}
+        <div className="p-6">
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">סקירה</TabsTrigger>
@@ -198,24 +209,10 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                       <div>
                         <p className="text-sm text-muted-foreground">סה"כ עמלות</p>
                         <p className="text-2xl font-bold">
-                          {formatCurrency(dashboardStats?.total_earnings || affiliate.total_earnings)}
+                          {formatCurrency(affiliate.total_earnings || 0)}
                         </p>
                       </div>
                       <DollarSign className="h-8 w-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">עמלות ממתינות</p>
-                        <p className="text-2xl font-bold">
-                          {formatCurrency(dashboardStats?.pending_commissions || 0)}
-                        </p>
-                      </div>
-                      <Clock className="h-8 w-8 text-orange-600" />
                     </div>
                   </CardContent>
                 </Card>
@@ -225,9 +222,7 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-muted-foreground">סה"כ הפניות</p>
-                        <p className="text-2xl font-bold">
-                          {dashboardStats?.total_clients || affiliate.total_referrals}
-                        </p>
+                        <p className="text-2xl font-bold">{affiliate.total_referrals || 0}</p>
                       </div>
                       <Users className="h-8 w-8 text-blue-600" />
                     </div>
@@ -247,55 +242,89 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                     </div>
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">שיעור המרה</p>
+                        <p className="text-2xl font-bold">0%</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Basic Info */}
+              {/* Account Info */}
               <Card>
                 <CardHeader>
-                  <CardTitle>פרטי השותף</CardTitle>
+                  <CardTitle>פרטי חשבון</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>שם מלא</Label>
+                      <Input value={affiliate.name} readOnly />
+                    </div>
+                    <div>
+                      <Label>אימייל</Label>
+                      <Input value={affiliate.email} readOnly />
+                    </div>
                     <div>
                       <Label>טלפון</Label>
-                      <p className="text-sm mt-1">{affiliate.phone || 'לא הוזן'}</p>
+                      <Input value={affiliate.phone || ''} readOnly />
                     </div>
                     <div>
                       <Label>תאריך הצטרפות</Label>
-                      <p className="text-sm mt-1">
-                        {new Date(affiliate.created_at).toLocaleDateString('he-IL')}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label>פרטי כניסה</Label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <p className="text-xs text-muted-foreground">שם משתמש</p>
-                        <p className="text-sm font-mono">{affiliate.username || 'לא הוגדר'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">סיסמה</p>
-                        <p className="text-sm font-mono">{affiliate.password || 'לא הוגדר'}</p>
-                      </div>
+                      <Input 
+                        value={new Date(affiliate.created_at).toLocaleDateString('he-IL')} 
+                        readOnly 
+                      />
                     </div>
                   </div>
 
-                  <div>
-                    <Label>שיעורי עמלה</Label>
-                    <div className="grid grid-cols-3 gap-4 mt-2">
+                  {/* User credentials */}
+                  {affiliate.username && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold mb-2">פרטי התחברות</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label>שם משתמש</Label>
+                          <Input value={affiliate.username} readOnly />
+                        </div>
+                        <div>
+                          <Label>סיסמה</Label>
+                          <Input value={affiliate.password || ''} type="password" readOnly />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Commission rates */}
+                  <div className="mt-6">
+                    <h4 className="font-semibold mb-4">שיעורי עמלה</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <p className="text-xs text-muted-foreground">טעימות</p>
-                        <p className="text-sm font-bold">{affiliate.commission_rate_tasting}%</p>
+                        <Label>חבילת טעימה</Label>
+                        <Input 
+                          value={`${affiliate.commission_rate_tasting}%`} 
+                          readOnly 
+                        />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">תפריט מלא</p>
-                        <p className="text-sm font-bold">{affiliate.commission_rate_full_menu}%</p>
+                        <Label>תפריט מלא</Label>
+                        <Input 
+                          value={`${affiliate.commission_rate_full_menu}%`} 
+                          readOnly 
+                        />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">דלוקס</p>
-                        <p className="text-sm font-bold">{affiliate.commission_rate_deluxe}%</p>
+                        <Label>חבילה מתקדמת</Label>
+                        <Input 
+                          value={`${affiliate.commission_rate_deluxe}%`} 
+                          readOnly 
+                        />
                       </div>
                     </div>
                   </div>
@@ -307,7 +336,7 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
             <TabsContent value="clients" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>רשימת לקוחות ({clients?.length || 0})</CardTitle>
+                  <CardTitle>לקוחות שהופנו ({clients?.length || 0})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {clientsLoading ? (
@@ -319,7 +348,7 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>שם הלקוח</TableHead>
+                          <TableHead>שם לקוח</TableHead>
                           <TableHead>אימייל</TableHead>
                           <TableHead>סטטוס</TableHead>
                           <TableHead>תאריך הפניה</TableHead>
@@ -327,8 +356,8 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {clients.map((client) => (
-                          <TableRow key={client.id}>
+                        {clients.map((client, index) => (
+                          <TableRow key={(client as any).client_id || index}>
                             <TableCell className="font-medium">
                               {(client as any).client?.restaurant_name || 
                                (client as any).client?.contact_name || 
@@ -341,12 +370,12 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                               {getClientStatusBadge(client.status || 'unknown')}
                             </TableCell>
                             <TableCell>
-                              {client.referred_at ? 
-                                new Date(client.referred_at).toLocaleDateString('he-IL') : 
+                              {(client as any).referred_at ? 
+                                new Date((client as any).referred_at).toLocaleDateString('he-IL') : 
                                 'לא זמין'
                               }
                             </TableCell>
-                            <TableCell>{client.referral_source || 'לא צוין'}</TableCell>
+                            <TableCell>{(client as any).referral_source || 'לא צוין'}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -363,81 +392,10 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
 
             {/* Packages Tab */}
             <TabsContent value="packages" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>חבילות השותף ({packages?.length || 0})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {packagesLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">טוען חבילות...</p>
-                    </div>
-                  ) : packages && packages.length > 0 ? (
-                    <div className="space-y-4">
-                      {packages.map((pkg) => (
-                        <Card key={pkg.package_id} className="border-l-4 border-l-blue-500">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div>
-                                <h4 className="font-semibold">{pkg.package_type}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  נרכש ב-{new Date(pkg.purchased_at).toLocaleDateString('he-IL')}
-                                </p>
-                              </div>
-                              <Badge className={pkg.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
-                                {pkg.status === 'active' ? 'פעיל' : 'לא פעיל'}
-                              </Badge>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs text-muted-foreground">מנות</p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold">{pkg.remaining_dishes}</span>
-                                  <span className="text-xs text-muted-foreground">/ {pkg.total_dishes}</span>
-                                  <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                                    <div 
-                                      className="bg-blue-600 h-1.5 rounded-full" 
-                                      style={{ width: `${(pkg.used_dishes / pkg.total_dishes) * 100}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div>
-                                <p className="text-xs text-muted-foreground">תמונות</p>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold">{pkg.remaining_images}</span>
-                                  <span className="text-xs text-muted-foreground">/ {pkg.total_images}</span>
-                                  <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                                    <div 
-                                      className="bg-green-600 h-1.5 rounded-full" 
-                                      style={{ width: `${(pkg.used_images / pkg.total_images) * 100}%` }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="text-sm">
-                                <span className="text-muted-foreground">מחיר רכישה:</span>
-                                <span className="font-bold mr-2">{formatCurrency(pkg.purchase_price)}</span>
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">אין חבילות רכושות</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <AffiliatePackageManagement 
+                affiliateId={affiliate.affiliate_id} 
+                affiliate={affiliate} 
+              />
             </TabsContent>
 
             {/* Commissions Tab */}
@@ -597,15 +555,15 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Eye className="h-5 w-5" />
-                      דוחות מתקדמים
+                      דו"ח ביצועים
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">
-                      דוחות מפורטים על ביצועי השותף
+                      דו"ח מפורט על ביצועי השותף ועמלותיו
                     </p>
                     <Button variant="outline" disabled>
-                      צור דוח
+                      צור דו"ח
                     </Button>
                   </CardContent>
                 </Card>
@@ -613,7 +571,7 @@ export const AffiliateDetailPanel: React.FC<AffiliateDetailPanelProps> = ({
             </TabsContent>
           </Tabs>
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }; 
