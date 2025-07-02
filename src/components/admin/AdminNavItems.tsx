@@ -11,6 +11,7 @@ import {
   BarChart,
   ClipboardList,
   UserCheck,
+  CreditCard,
 } from "lucide-react";
 
 export const adminNavItems = [
@@ -43,6 +44,11 @@ export const adminNavItems = [
     title: "שותפים",
     href: "/admin/affiliates",
     icon: UserCheck,
+  },
+  {
+    title: "אישור תשלומים",
+    href: "/admin/payment-approvals",
+    icon: CreditCard,
   },
   {
     title: "תור הגשות",

@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, DollarSign, Package, Award } from 'lucide-react';
+import { PackagePurchaseDialog } from '@/components/affiliate/PackagePurchaseDialog';
 
 const AffiliateDashboardPage: React.FC = () => {
   const { affiliate, isLoading: authLoading } = useAffiliateAuth();
@@ -116,10 +117,12 @@ const AffiliateDashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-4">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                <Package className="w-4 h-4 mr-2" />
-                רכוש חבילה חדשה
-              </Button>
+              <PackagePurchaseDialog affiliateId={affiliate.affiliate_id}>
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <Package className="w-4 h-4 mr-2" />
+                  רכוש חבילה חדשה
+                </Button>
+              </PackagePurchaseDialog>
               <Button variant="outline" size="lg">
                 <Users className="w-4 h-4 mr-2" />
                 צפה בלקוחות

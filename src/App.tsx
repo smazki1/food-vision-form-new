@@ -34,6 +34,7 @@ import WireframeTest from "@/pages/wireframe-test";
 import React, { Suspense } from "react";
 import EditorSubmissionViewer from "@/pages/editor/EditorSubmissionViewer";
 import AffiliateDashboardPage from "@/pages/affiliate/AffiliateDashboardPage";
+import PurchaseSuccessPage from "@/pages/affiliate/PurchaseSuccessPage";
 
 // Import debug script for testing comments
 import "@/test-comments-debug";
@@ -52,6 +53,7 @@ const LazyAdminSubmissionDetailsPage = React.lazy(() => import("@/pages/admin/Su
 const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
 const AlertsDashboard = React.lazy(() => import("@/pages/admin/AlertsDashboard"));
 const AnalyticsDashboard = React.lazy(() => import("@/pages/admin/AnalyticsDashboard"));
+const PaymentApprovalsPage = React.lazy(() => import("@/pages/admin/PaymentApprovalsPage"));
 
 // Loading component for lazy-loaded routes
 const LoadingSpinner = () => (
@@ -187,6 +189,7 @@ const App = () => (
                     <Routes>
                       <Route index element={<AffiliateDashboardPage />} />
                       <Route path="dashboard" element={<AffiliateDashboardPage />} />
+                      <Route path="purchase-success" element={<PurchaseSuccessPage />} />
                     </Routes>
                   </AffiliateRoute>
                 </CurrentUserRoleProvider>
@@ -214,6 +217,7 @@ const App = () => (
                 <Route path="analytics" element={<Suspense fallback={<LoadingSpinner />}><AnalyticsDashboard /></Suspense>} />
                 <Route path="alerts" element={<Suspense fallback={<LoadingSpinner />}><AlertsDashboard /></Suspense>} />
                 <Route path="leads-test-page" element={<Suspense fallback={<LoadingSpinner />}><LeadsTestPage /></Suspense>} />
+                <Route path="payment-approvals" element={<Suspense fallback={<LoadingSpinner />}><PaymentApprovalsPage /></Suspense>} />
               </Route>
             </Routes>
           </BrowserRouter>
