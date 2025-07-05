@@ -16,7 +16,10 @@ import {
   Download,
   X,
   Plus,
-  FileImage
+  FileImage,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare
 } from 'lucide-react';
 import { Client } from '@/types/client';
 import { toast } from 'sonner';
@@ -30,6 +33,14 @@ interface ReferenceImage {
   uploadedAt: string;
 }
 
+interface FixedPrompt {
+  id: string;
+  title: string;
+  content: string;
+  isVisible: boolean;
+  createdAt: string;
+}
+
 interface ClientDesignSettingsProps {
   clientId: string;
   client: Client;
@@ -40,17 +51,18 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
   client
 }) => {
   const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
+  const [fixedPrompts, setFixedPrompts] = useState<FixedPrompt[]>([]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Load existing reference images for client
+  // Load existing reference images and fixed prompts for client
   React.useEffect(() => {
-    loadReferenceImages();
+    loadClientDesignData();
   }, [clientId]);
 
-  const loadReferenceImages = async () => {
+  const loadClientDesignData = async () => {
     try {
       setIsLoading(true);
       
@@ -62,8 +74,9 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
 
       if (error) throw error;
 
-      // Parse stored reference images from internal_notes
+      // Parse stored data from internal_notes
       let storedImages: ReferenceImage[] = [];
+      let storedPrompts: FixedPrompt[] = [];
       
       if (data?.internal_notes) {
         try {
@@ -76,21 +89,27 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
               title: img.title || img.purpose || '',
             }));
           }
+
+          // Fixed prompts
+          if (parsed.fixedPrompts && Array.isArray(parsed.fixedPrompts)) {
+            storedPrompts = parsed.fixedPrompts;
+          }
         } catch (e) {
-          // Not JSON or no reference images, start fresh
+          // Not JSON or no data, start fresh
         }
       }
 
       setReferenceImages(storedImages);
+      setFixedPrompts(storedPrompts);
     } catch (error) {
-      console.error('Error loading reference images:', error);
-      toast.error('שגיאה בטעינת תמונות הייחוס');
+      console.error('Error loading client design data:', error);
+      toast.error('שגיאה בטעינת נתוני עיצוב');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const saveReferenceImages = async (images: ReferenceImage[]) => {
+  const saveClientDesignData = async (images: ReferenceImage[], prompts: FixedPrompt[]) => {
     try {
       const existingNotes = client.internal_notes || '';
       let notesData: any = {};
@@ -102,6 +121,7 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
       }
       
       notesData.referenceImages = images;
+      notesData.fixedPrompts = prompts;
       
       const { error } = await supabase
         .from('clients')
@@ -114,9 +134,55 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
       if (error) throw error;
       
       setReferenceImages(images);
+      setFixedPrompts(prompts);
     } catch (error) {
-      console.error('Error saving reference images:', error);
-      toast.error('שגיאה בשמירת תמונות הייחוס');
+      console.error('Error saving client design data:', error);
+      toast.error('שגיאה בשמירת נתוני עיצוב');
+    }
+  };
+
+  const saveReferenceImages = async (images: ReferenceImage[]) => {
+    await saveClientDesignData(images, fixedPrompts);
+  };
+
+  const saveFixedPrompts = async (prompts: FixedPrompt[]) => {
+    await saveClientDesignData(referenceImages, prompts);
+  };
+
+  // Fixed Prompts Functions
+  const addFixedPrompt = () => {
+    const newPrompt: FixedPrompt = {
+      id: Date.now().toString(),
+      title: `prompt קבוע ${fixedPrompts.length + 1}`,
+      content: '',
+      isVisible: true,
+      createdAt: new Date().toISOString()
+    };
+    
+    const updatedPrompts = [...fixedPrompts, newPrompt];
+    saveFixedPrompts(updatedPrompts);
+    toast.success('נוסף prompt קבוע חדש');
+  };
+
+  const removeFixedPrompt = (promptId: string) => {
+    const updatedPrompts = fixedPrompts.filter(prompt => prompt.id !== promptId);
+    saveFixedPrompts(updatedPrompts);
+    toast.success('prompt קבוע הוסר בהצלחה');
+  };
+
+  const updateFixedPrompt = (promptId: string, field: keyof FixedPrompt, value: string | boolean) => {
+    const updatedPrompts = fixedPrompts.map(prompt => 
+      prompt.id === promptId 
+        ? { ...prompt, [field]: value }
+        : prompt
+    );
+    saveFixedPrompts(updatedPrompts);
+  };
+
+  const togglePromptVisibility = (promptId: string) => {
+    const prompt = fixedPrompts.find(p => p.id === promptId);
+    if (prompt) {
+      updateFixedPrompt(promptId, 'isVisible', !prompt.isVisible);
     }
   };
 
@@ -412,6 +478,123 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
           ))}
         </div>
       )}
+
+      {/* Fixed Prompts Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Prompts קבועים
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={addFixedPrompt}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              הוסף Prompt
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        
+        <CardContent>
+          {fixedPrompts.length === 0 ? (
+            <div className="text-center py-8">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-medium text-gray-600 mb-2">אין Prompts קבועים עדיין</h3>
+              <p className="text-gray-500 mb-4">התחל על ידי הוספת Prompt קבוע ראשון</p>
+              <Button
+                variant="default"
+                onClick={addFixedPrompt}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                הוסף Prompt קבוע ראשון
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {fixedPrompts.map((prompt, index) => (
+                <Card key={prompt.id} className="border-2 border-gray-200">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={prompt.title}
+                          onChange={(e) => {
+                            const updatedPrompts = fixedPrompts.map(p => 
+                              p.id === prompt.id ? { ...p, title: e.target.value } : p
+                            );
+                            setFixedPrompts(updatedPrompts);
+                          }}
+                          onBlur={(e) => updateFixedPrompt(prompt.id, 'title', e.target.value)}
+                          className="font-medium max-w-xs"
+                          placeholder="שם הPrompt"
+                        />
+                        <Badge variant="outline" className="text-xs">
+                          {new Date(prompt.createdAt).toLocaleDateString('he-IL')}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => togglePromptVisibility(prompt.id)}
+                          className="flex items-center gap-1"
+                        >
+                          {prompt.isVisible ? (
+                            <>
+                              <ChevronUp className="h-4 w-4" />
+                              הסתר
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="h-4 w-4" />
+                              הצג
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFixedPrompt(prompt.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  {prompt.isVisible && (
+                    <CardContent className="pt-0">
+                      <div>
+                        <Label className="font-medium text-gray-700">תוכן הPrompt</Label>
+                        <Textarea
+                          value={prompt.content}
+                          onChange={(e) => {
+                            const updatedPrompts = fixedPrompts.map(p => 
+                              p.id === prompt.id ? { ...p, content: e.target.value } : p
+                            );
+                            setFixedPrompts(updatedPrompts);
+                          }}
+                          onBlur={(e) => updateFixedPrompt(prompt.id, 'content', e.target.value)}
+                          placeholder="הכנס את תוכן הPrompt הקבוע כאן..."
+                          className="mt-1 min-h-[120px]"
+                        />
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Image Lightbox Dialog */}
       {selectedImage && (

@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { useClientSubmissions, useClientSubmissionStats } from '@/hooks/useClientSubmissions';
 import { useSubmissionNotes } from '@/hooks/useSubmissionNotes';
 import { useLoraDetails } from '@/hooks/useLoraDetails';
+import { useClientFixedPrompts } from '@/hooks/useClientFixedPrompts';
 import { useSubmissionStatus } from '@/hooks/useSubmissionStatus';
 import { StatusSelector } from './StatusSelector';
 import { useAdminSubmissionComments, useAdminAddSubmissionComment, useAdminDeleteSubmission } from '@/hooks/useAdminSubmissions';
@@ -657,6 +658,9 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   
   // Use LORA details hook
   const { loraDetails, updateLoraField, isSaving: isLoraSaving } = useLoraDetails(currentSubmissionId);
+  
+  // Use client fixed prompts hook
+  const { combinedPrompt, fixedPrompts, isLoading: isPromptsLoading } = useClientFixedPrompts(clientId);
   
   // Use submission status hook
   const { updateSubmissionStatus, isUpdating: isStatusUpdating } = useSubmissionStatus();
@@ -1718,13 +1722,31 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                           onChange={(e) => updateLoraField('lora_link', e.target.value)}
                           disabled={isLoraSaving}
                         />
-                        <Textarea 
-                          placeholder="Prompt קבוע" 
-                          className="col-span-2 min-h-[60px]" 
-                          value={loraDetails.fixed_prompt}
-                          onChange={(e) => updateLoraField('fixed_prompt', e.target.value)}
-                          disabled={isLoraSaving}
-                        />
+                        <div className="col-span-2">
+                          <div className="text-sm font-medium text-gray-700 mb-2">
+                            Prompts קבועים מעיצוב הלקוח
+                          </div>
+                          {isPromptsLoading ? (
+                            <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded-md">
+                              טוען prompts...
+                            </div>
+                          ) : combinedPrompt ? (
+                            <div className="p-3 bg-gray-50 rounded-md border">
+                              <pre className="text-sm whitespace-pre-wrap text-gray-800 font-mono">
+                                {combinedPrompt}
+                              </pre>
+                              {fixedPrompts.length > 0 && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                  מבוסס על {fixedPrompts.length} prompt{fixedPrompts.length > 1 ? 's' : ''} מהגדרות העיצוב
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 p-3 bg-gray-50 rounded-md border-dashed border-2">
+                              אין prompts קבועים מוגדרים בהגדרות העיצוב של הלקוח
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {isLoraSaving && <div className="text-xs text-gray-500 mt-2">שומר פרטי LORA...</div>}
                     </div>
