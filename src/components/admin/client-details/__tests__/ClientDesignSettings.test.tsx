@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ClientDesignSettings } from '../ClientDesignSettings';
 import { Client } from '@/types/client';
@@ -12,32 +12,27 @@ vi.mock('sonner', () => ({
   }
 }));
 
-// Mock Supabase operations
+// Mock supabase client
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: () => Promise.resolve({
-            data: { internal_notes: '{"referenceImages":[]}' },
-            error: null
-          })
-        })
-      }),
-      update: () => ({
-        eq: () => Promise.resolve({ error: null })
-      })
-    }),
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({ 
+            data: { internal_notes: null }, 
+            error: null 
+          }))
+        }))
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => Promise.resolve({ error: null }))
+      }))
+    })),
     storage: {
-      from: () => ({
-        upload: () => Promise.resolve({ 
-          data: { path: 'test-path' }, 
-          error: null 
-        }),
-        getPublicUrl: () => ({ 
-          data: { publicUrl: 'https://test.com/image.jpg' } 
-        })
-      })
+      from: vi.fn(() => ({
+        upload: vi.fn(() => Promise.resolve({ data: { path: 'test-path' }, error: null })),
+        getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://test-url.com' } }))
+      }))
     }
   }
 }));
@@ -60,8 +55,11 @@ const mockClient: Client = {
   business_type: 'מסעדה',
   address: '123 Test St',
   website_url: 'https://test.com',
-  internal_notes: '{"referenceImages":[]}',
+  internal_notes: '{"referenceImages":[],"fixedPrompts":[]}',
   remaining_servings: 10,
+  remaining_images: 20,
+  consumed_images: 5,
+  reserved_images: 3,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   current_package_id: null,
@@ -111,5 +109,60 @@ describe('ClientDesignSettings', () => {
     
     // Component can be unmounted without errors
     unmount();
+  });
+
+  it('renders fixed prompts section', async () => {
+    render(<ClientDesignSettings clientId="test-client-1" client={mockClient} />);
+    
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByText('Prompts קבועים')).toBeInTheDocument();
+    });
+  });
+
+  it('shows empty state for fixed prompts', async () => {
+    render(<ClientDesignSettings clientId="test-client-1" client={mockClient} />);
+    
+    // Wait for component to load
+    await waitFor(() => {
+      expect(screen.getByText('אין Prompts קבועים עדיין')).toBeInTheDocument();
+    });
+  });
+
+  it('has add prompt button', async () => {
+    render(<ClientDesignSettings clientId="test-client-1" client={mockClient} />);
+    
+    // Wait for component to load
+    await waitFor(() => {
+      const addButton = screen.getByText('הוסף Prompt');
+      expect(addButton).toBeInTheDocument();
+    });
+  });
+
+  it('shows fixed prompts section with proper icons', async () => {
+    render(<ClientDesignSettings clientId="test-client-1" client={mockClient} />);
+    
+    // Wait for component to load
+    await waitFor(() => {
+      const messageSquareIcon = document.querySelector('.lucide-message-square');
+      expect(messageSquareIcon).toBeInTheDocument();
+    });
+  });
+
+  it('renders the main layout structure correctly', async () => {
+    render(<ClientDesignSettings clientId="test-client-1" client={mockClient} />);
+    
+    // Wait for component to load
+    await waitFor(() => {
+      // Check for reference images section
+      expect(screen.getByText('תמונות ייחוס ועיצוב')).toBeInTheDocument();
+      
+      // Check for fixed prompts section
+      expect(screen.getByText('Prompts קבועים')).toBeInTheDocument();
+      
+      // Both sections should be present
+      expect(screen.getByText('הוסף תמונת ייחוס')).toBeInTheDocument();
+      expect(screen.getByText('הוסף Prompt')).toBeInTheDocument();
+    });
   });
 }); 

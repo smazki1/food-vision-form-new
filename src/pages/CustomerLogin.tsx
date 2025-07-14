@@ -77,28 +77,28 @@ const CustomerLogin = () => {
             {/* Pricing Section */}
             <PricingSection />
             
-            {/* Enhanced Main CTA Button with warm gradient */}
-            <Button 
-              onClick={redirectToPayment}
-              className="w-full bg-gradient-to-r from-[#8b1e3f] to-[#f3752b] hover:from-[#7a1b37] hover:to-[#e56b26] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group mb-6"
-              style={{
-                boxShadow: '0 10px 30px rgba(139, 30, 63, 0.4)'
-              }}
-            >
-              <span className="relative z-10">קבלו תמונות מקצועיות לעסק שלכם</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
-            </Button>
-
-            {/* Narrower How It Works Button */}
-            <div className="flex justify-center mb-4">
+            {/* How It Works Button - moved to be primary after subtitle */}
+            <div className="flex justify-center mb-6">
               <Button
                 onClick={() => setShowHowItWorks(true)}
-                variant="ghost"
-                className="w-auto px-8 text-[#8b1e3f] hover:text-[#7a1b37] bg-white/85 hover:bg-white/95 backdrop-blur-sm py-3 text-base font-bold rounded-xl transition-all duration-300 min-h-[44px] border-2 border-[#f3752b]/40 hover:border-[#f3752b] shadow-xl"
+                className="w-full bg-gradient-to-r from-[#8b1e3f] to-[#f3752b] hover:from-[#7a1b37] hover:to-[#e56b26] text-white py-6 px-4 text-lg font-bold rounded-2xl transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-[0.98] border-0 min-h-[60px] relative overflow-hidden group"
+                style={{
+                  boxShadow: '0 10px 30px rgba(139, 30, 63, 0.4)'
+                }}
               >
-                איך זה עובד?
+                <span className="relative z-10">איך זה עובד?</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
               </Button>
             </div>
+
+            {/* Secondary CTA Button */}
+            <Button 
+              onClick={redirectToPayment}
+              variant="outline"
+              className="w-full border-2 border-[#f3752b] text-[#f3752b] hover:bg-[#f3752b] hover:text-white py-4 px-4 text-base font-semibold rounded-2xl transition-all duration-300 min-h-[48px] mb-6"
+            >
+              קבלו תמונות מקצועיות לעסק שלכם
+            </Button>
           </div>
         </div>
 

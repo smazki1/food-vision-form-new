@@ -23,7 +23,7 @@ vi.mock('@/hooks/usePackages', () => ({
         total_servings: 5,
         total_images: 8,
         is_active: true,
-        price: 599 // Add price field
+        price: 499
       }
     ],
     isLoading: false,
@@ -33,44 +33,39 @@ vi.mock('@/hooks/usePackages', () => ({
 
 vi.mock('@/hooks/useAffiliatePackageManagement', () => ({
   useAssignPackageToAffiliateWithImages: () => ({
-    mutateAsync: vi.fn().mockResolvedValue({}),
-    isLoading: false
+    mutateAsync: vi.fn(),
+    isPending: false
   }),
   useUpdateAffiliateServings: () => ({
-    mutate: vi.fn()
+    mutate: vi.fn(),
+    isPending: false
   }),
   useUpdateAffiliateImages: () => ({
-    mutate: vi.fn()
+    mutate: vi.fn(),
+    isPending: false
   }),
   useAffiliateAssignedPackages: () => ({
     data: []
   })
 }));
 
-vi.mock('@/hooks/useDeletePackage', () => ({
-  useDeletePackage: () => ({
-    mutate: vi.fn(),
-    isPending: false
-  })
-}));
-
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({
             data: {
               affiliate_id: 'aff-123',
+              current_package_id: 'pkg-1',
               remaining_servings: 10,
-              remaining_images: 20,
-              current_package_id: 'pkg-1'
+              remaining_images: 20
             },
             error: null
-          })
-        })
-      })
-    })
+          }))
+        }))
+      }))
+    }))
   }
 }));
 
@@ -79,6 +74,10 @@ vi.mock('sonner', () => ({
     success: vi.fn(),
     error: vi.fn()
   }
+}));
+
+vi.mock('@/api/packageApi', () => ({
+  deletePackage: vi.fn()
 }));
 
 describe('AffiliatePackageManagement', () => {
@@ -104,8 +103,8 @@ describe('AffiliatePackageManagement', () => {
     commission_rate_deluxe: 20,
     total_earnings: 1000,
     total_referrals: 15,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   const renderWithProviders = (component: React.ReactElement) => {
@@ -123,11 +122,10 @@ describe('AffiliatePackageManagement', () => {
         mutations: { retry: false },
       },
     });
-    vi.clearAllMocks();
   });
 
   describe('Component Rendering', () => {
-    it('should render status section with correct Hebrew text', () => {
+    it('should render the main component structure', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -135,12 +133,13 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      expect(screen.getByText('מצב חבילות נוכחי')).toBeInTheDocument();
-      expect(screen.getByText('10')).toBeInTheDocument(); // remaining servings
-      expect(screen.getByText('20')).toBeInTheDocument(); // remaining images
+      expect(screen.getByText('חבילה נוכחית')).toBeInTheDocument();
+      expect(screen.getByText('חבילה מוקצית')).toBeInTheDocument();
+      expect(screen.getByText('מנות שנותרו')).toBeInTheDocument();
+      expect(screen.getByText('תמונות שנותרו')).toBeInTheDocument();
     });
 
-    it('should render package assignment section', () => {
+    it('should display affiliate package status correctly', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -148,10 +147,67 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      expect(screen.getByText('הקצאת חבילות')).toBeInTheDocument();
+      expect(screen.getByText('פעיל')).toBeInTheDocument();
+      
+      // Check for the circular displays which contain the numbers
+      const tensElements = screen.getAllByText('10');
+      const twentiesElements = screen.getAllByText('20');
+      
+      // Should have multiple instances (circular display + other references)
+      expect(tensElements.length).toBeGreaterThan(0);
+      expect(twentiesElements.length).toBeGreaterThan(0);
     });
 
-    it('should display package cards with names and prices', () => {
+    it('should show package assignment section', () => {
+      renderWithProviders(
+        <AffiliatePackageManagement 
+          affiliateId="aff-123" 
+          affiliate={mockAffiliate} 
+        />
+      );
+
+      expect(screen.getByText('הקצאת חבילות חדשות')).toBeInTheDocument();
+      expect(screen.getByText('צור חבילה חדשה')).toBeInTheDocument();
+    });
+  });
+
+  describe('Quantity Controls', () => {
+    it('should display quantity adjustment buttons', () => {
+      renderWithProviders(
+        <AffiliatePackageManagement 
+          affiliateId="aff-123" 
+          affiliate={mockAffiliate} 
+        />
+      );
+
+      // Check for minus and plus buttons (there should be 4 total - 2 for servings, 2 for images)
+      const minusButtons = screen.getAllByRole('button').filter(button => 
+        button.querySelector('svg')?.classList.contains('lucide-minus')
+      );
+      const plusButtons = screen.getAllByRole('button').filter(button => 
+        button.querySelector('svg')?.classList.contains('lucide-plus')
+      );
+      
+      expect(minusButtons.length).toBe(2); // One for servings, one for images
+      expect(plusButtons.length).toBe(3); // Two for quantities, one for "צור חבילה חדשה"
+    });
+
+    it('should show circular quantity displays', () => {
+      renderWithProviders(
+        <AffiliatePackageManagement 
+          affiliateId="aff-123" 
+          affiliate={mockAffiliate} 
+        />
+      );
+
+      // Check for circular displays with purple background
+      const circularDisplays = screen.getAllByText('10').concat(screen.getAllByText('20'));
+      expect(circularDisplays.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Package Assignment', () => {
+    it('should display available packages', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -162,10 +218,8 @@ describe('AffiliatePackageManagement', () => {
       expect(screen.getByText('Premium Package')).toBeInTheDocument();
       expect(screen.getByText('Basic Package')).toBeInTheDocument();
     });
-  });
 
-  describe('Status Display', () => {
-    it('should show correct Hebrew labels for stats', () => {
+    it('should display assignment buttons', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -173,44 +227,14 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      expect(screen.getByText('מנות שנותרו')).toBeInTheDocument();
-      expect(screen.getByText('תמונות שנותרו')).toBeInTheDocument();
-      expect(screen.getByText('תמונות שנוצלו')).toBeInTheDocument();
-      expect(screen.getByText('תמונות בשמורה')).toBeInTheDocument();
-    });
-
-    it('should handle zero values gracefully', () => {
-      const affiliateWithZeros = {
-        ...mockAffiliate,
-        remaining_servings: 0,
-        remaining_images: 0
-      };
-
-      renderWithProviders(
-        <AffiliatePackageManagement 
-          affiliateId="aff-123" 
-          affiliate={affiliateWithZeros} 
-        />
-      );
-
-      const zeroTexts = screen.getAllByText('0');
-      expect(zeroTexts.length).toBeGreaterThan(0);
-    });
-
-    it('should show assigned package status', () => {
-      renderWithProviders(
-        <AffiliatePackageManagement 
-          affiliateId="aff-123" 
-          affiliate={mockAffiliate} 
-        />
-      );
-
-      expect(screen.getByText('חבילה מוקצית')).toBeInTheDocument();
+      // Look for "הקצה חבילה" text in assignment buttons
+      const assignButtons = screen.getAllByText('הקצה חבילה');
+      expect(assignButtons.length).toBeGreaterThan(0);
     });
   });
 
   describe('Refresh Functionality', () => {
-    it('should have refresh button', () => {
+    it('should display refresh button', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -218,8 +242,11 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      const refreshButton = screen.getByTitle('רענן נתונים');
-      expect(refreshButton).toBeInTheDocument();
+      // Look for refresh button by icon instead of title
+      const refreshButtons = screen.getAllByRole('button').filter(button => 
+        button.querySelector('svg')?.classList.contains('lucide-refresh-cw')
+      );
+      expect(refreshButtons.length).toBe(1);
     });
 
     it('should handle refresh button click', () => {
@@ -230,29 +257,31 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      const refreshButton = screen.getByTitle('רענן נתונים');
-      fireEvent.click(refreshButton);
-
-      expect(refreshButton).toBeInTheDocument();
+      const refreshButton = screen.getAllByRole('button').find(button => 
+        button.querySelector('svg')?.classList.contains('lucide-refresh-cw')
+      );
+      expect(refreshButton).toBeTruthy();
+      
+      if (refreshButton) {
+        fireEvent.click(refreshButton);
+        // Button should be present and clickable
+        expect(refreshButton).toBeInTheDocument();
+      }
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle null current_package_id gracefully', () => {
-      const affiliateNoPackage = {
-        ...mockAffiliate,
-        current_package_id: null
-      };
-
+      const affiliateWithoutPackage = { ...mockAffiliate, current_package_id: null };
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
-          affiliate={affiliateNoPackage} 
+          affiliate={affiliateWithoutPackage} 
         />
       );
 
-      expect(screen.getByText('מצב חבילות נוכחי')).toBeInTheDocument();
-      expect(screen.getByText('אין חבילה מוקצית')).toBeInTheDocument();
+      expect(screen.getByText('חבילה נוכחית')).toBeInTheDocument();
+      expect(screen.getByText('לא מוקצית')).toBeInTheDocument();
     });
 
     it('should handle empty affiliate ID', () => {
@@ -263,12 +292,12 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      expect(screen.getByText('מצב חבילות נוכחי')).toBeInTheDocument();
+      expect(screen.getByText('חבילה נוכחית')).toBeInTheDocument();
     });
   });
 
-  describe('Package Assignment', () => {
-    it('should display assignment buttons', () => {
+  describe('Statistics Section', () => {
+    it('should display statistics', () => {
       renderWithProviders(
         <AffiliatePackageManagement 
           affiliateId="aff-123" 
@@ -276,25 +305,9 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      // Use getAllByText since there are multiple "הקצה" buttons (one per package)
-      const assignButtons = screen.getAllByText('הקצה');
-      expect(assignButtons.length).toBeGreaterThan(0);
-    });
-
-    it('should handle package assignment clicks', () => {
-      renderWithProviders(
-        <AffiliatePackageManagement 
-          affiliateId="aff-123" 
-          affiliate={mockAffiliate} 
-        />
-      );
-
-      const packageCard = screen.getByText('Premium Package').closest('div[class*="cursor-pointer"]');
-      if (packageCard) {
-        fireEvent.click(packageCard);
-      }
-
-      expect(screen.getByText('Premium Package')).toBeInTheDocument();
+      expect(screen.getByText('סטטיסטיקות')).toBeInTheDocument();
+      expect(screen.getByText('בהגשות:')).toBeInTheDocument();
+      expect(screen.getByText('ממתינות:')).toBeInTheDocument();
     });
   });
 
@@ -307,11 +320,12 @@ describe('AffiliatePackageManagement', () => {
         />
       );
 
-      // Check for key Hebrew terms
-      expect(screen.getByText('מצב חבילות נוכחי')).toBeInTheDocument();
-      expect(screen.getByText('הקצאת חבילות')).toBeInTheDocument();
+      // Check for key Hebrew terms in the new design
+      expect(screen.getByText('חבילה נוכחית')).toBeInTheDocument();
+      expect(screen.getByText('הקצאת חבילות חדשות')).toBeInTheDocument();
       expect(screen.getByText('מנות שנותרו')).toBeInTheDocument();
       expect(screen.getByText('תמונות שנותרו')).toBeInTheDocument();
+      expect(screen.getByText('סטטיסטיקות')).toBeInTheDocument();
     });
   });
-}); 
+});

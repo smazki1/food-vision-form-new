@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Package, Plus, RefreshCw, Edit, CheckCircle, Trash2, AlertCircle, Minus, FileImage, TrendingUp, Image } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Package, Plus, RefreshCw, Edit, CheckCircle, Trash2, AlertCircle, Minus, FileImage, TrendingUp, Image, Clock, Info } from 'lucide-react';
 import { Affiliate } from '@/types/affiliate';
 import { usePackages } from '@/hooks/usePackages';
 import { useQueryClient, useMutation, useQuery } from '@tanstack/react-query';
@@ -46,6 +48,12 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
   const [deleteDialogPackage, setDeleteDialogPackage] = useState<PackageType | null>(null);
   const [editingPackage, setEditingPackage] = useState<PackageType | null>(null);
   
+  // Manual quantity state
+  const [editingServings, setEditingServings] = useState(false);
+  const [editingImages, setEditingImages] = useState(false);
+  const [tempServings, setTempServings] = useState(0);
+  const [tempImages, setTempImages] = useState(0);
+  
   const { packages, isLoading, invalidateCache } = usePackages();
   const queryClient = useQueryClient();
   
@@ -79,12 +87,47 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
   // Use fresh data if available, fallback to prop
   const currentAffiliate = freshAffiliateData || affiliate;
   
-  // Update selected package when current affiliate data changes
+  // Update selected package and temp values when current affiliate data changes
   useEffect(() => {
     if (currentAffiliate?.current_package_id !== selectedPackageId) {
       setSelectedPackageId(currentAffiliate?.current_package_id || null);
     }
-  }, [currentAffiliate?.current_package_id, selectedPackageId]);
+    setTempServings(currentAffiliate?.remaining_servings || 0);
+    setTempImages(currentAffiliate?.remaining_images || 0);
+  }, [currentAffiliate?.current_package_id, currentAffiliate?.remaining_servings, currentAffiliate?.remaining_images, selectedPackageId]);
+
+  // Quantity adjustment functions
+  const adjustServings = (delta: number) => {
+    const newValue = Math.max(0, tempServings + delta);
+    setTempServings(newValue);
+    updateServingsMutation.mutate({ affiliateId, newServings: newValue });
+  };
+
+  const adjustImages = (delta: number) => {
+    const newValue = Math.max(0, tempImages + delta);
+    setTempImages(newValue);
+    updateImagesMutation.mutate({ affiliateId, newImages: newValue });
+  };
+
+  const handleServingsInputChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    setTempServings(numValue);
+  };
+
+  const handleImagesInputChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    setTempImages(numValue);
+  };
+
+  const saveServings = () => {
+    updateServingsMutation.mutate({ affiliateId, newServings: tempServings });
+    setEditingServings(false);
+  };
+
+  const saveImages = () => {
+    updateImagesMutation.mutate({ affiliateId, newImages: tempImages });
+    setEditingImages(false);
+  };
   
   // Direct package assignment handler
   const handleDirectPackageAssignment = async (packageId: string) => {
@@ -194,84 +237,188 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
   return (
     <>
       <div className="space-y-6">
-        {/* Current Status Card */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">מצב חבילות נוכחי</CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refreshAllData}
-                disabled={isRefreshing}
-                title="רענן נתונים"
-              >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              </Button>
+        {/* Header with refresh */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-gray-600" />
+            <h2 className="text-xl font-semibold">חבילה נוכחית</h2>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshAllData}
+            disabled={isRefreshing}
+            className="border-gray-200"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+
+        {/* Current Package Status Card */}
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-6">
+              {/* Active Package Section */}
+              <div>
+                <h3 className="text-lg font-medium mb-4 text-gray-800">חבילה מוקצית</h3>
+                {currentAffiliate.current_package_id ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                      <span className="font-medium text-green-700">פעיל</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      מזהה חבילה: {currentAffiliate.current_package_id.substring(0, 8)}...
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                      <span className="font-medium text-gray-600">לא מוקצית</span>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      יש להקצות חבילה לשותף
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Manual Quantity Controls */}
+              <div>
+                <h3 className="text-lg font-medium mb-4 text-gray-800">מנות שנותרו</h3>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => adjustServings(-5)}
+                    disabled={updateServingsMutation.isPending}
+                    className="w-8 h-8 rounded-full p-0 border-gray-300"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  
+                  <div className="flex items-center">
+                    {editingServings ? (
+                      <Input
+                        value={tempServings}
+                        onChange={(e) => handleServingsInputChange(e.target.value)}
+                        onBlur={saveServings}
+                        onKeyDown={(e) => e.key === 'Enter' && saveServings()}
+                        className="w-16 h-10 text-center text-lg font-bold border-0 bg-purple-100 text-purple-800"
+                        autoFocus
+                      />
+                    ) : (
+                      <div 
+                        className="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center text-xl font-bold cursor-pointer hover:bg-purple-700 transition-colors"
+                        onClick={() => setEditingServings(true)}
+                      >
+                        {currentAffiliate.remaining_servings || 0}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => adjustServings(5)}
+                    disabled={updateServingsMutation.isPending}
+                    className="w-8 h-8 rounded-full p-0 border-gray-300"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  
+                  <div className="text-xs text-gray-500">
+                    <div>-5</div>
+                    <div>+5</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {currentAffiliate.remaining_servings || 0}
+
+            <Separator className="my-6" />
+
+            <div className="grid grid-cols-2 gap-6">
+              {/* Images Section */}
+              <div>
+                <h3 className="text-lg font-medium mb-4 text-gray-800">תמונות שנותרו</h3>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => adjustImages(-5)}
+                    disabled={updateImagesMutation.isPending}
+                    className="w-8 h-8 rounded-full p-0 border-gray-300"
+                  >
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  
+                  <div className="flex items-center">
+                    {editingImages ? (
+                      <Input
+                        value={tempImages}
+                        onChange={(e) => handleImagesInputChange(e.target.value)}
+                        onBlur={saveImages}
+                        onKeyDown={(e) => e.key === 'Enter' && saveImages()}
+                        className="w-16 h-10 text-center text-lg font-bold border-0 bg-purple-100 text-purple-800"
+                        autoFocus
+                      />
+                    ) : (
+                      <div 
+                        className="w-16 h-16 bg-purple-600 text-white rounded-full flex items-center justify-center text-xl font-bold cursor-pointer hover:bg-purple-700 transition-colors"
+                        onClick={() => setEditingImages(true)}
+                      >
+                        {currentAffiliate.remaining_images || 0}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => adjustImages(5)}
+                    disabled={updateImagesMutation.isPending}
+                    className="w-8 h-8 rounded-full p-0 border-gray-300"
+                  >
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                  
+                  <div className="text-xs text-gray-500">
+                    <div>-5</div>
+                    <div>+5</div>
+                  </div>
                 </div>
-                <div className="text-sm text-blue-600">מנות שנותרו</div>
               </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {currentAffiliate.remaining_images || 0}
+
+              {/* Statistics */}
+              <div>
+                <h3 className="text-lg font-medium mb-4 text-gray-800">סטטיסטיקות</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600">בהגשות:</span>
+                    </div>
+                    <span className="font-bold text-blue-600">3</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span className="text-sm text-gray-600">ממתינות:</span>
+                    </div>
+                    <span className="font-bold text-orange-600">3</span>
+                  </div>
                 </div>
-                <div className="text-sm text-green-600">תמונות שנותרו</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">
-                  {currentAffiliate.consumed_images || 0}
-                </div>
-                <div className="text-sm text-purple-600">תמונות שנוצלו</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">
-                  {currentAffiliate.reserved_images || 0}
-                </div>
-                <div className="text-sm text-orange-600">תמונות בשמורה</div>
               </div>
             </div>
-            
-            {currentAffiliate.current_package_id ? (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">חבילה מוקצית</span>
-                </div>
-                <div className="text-xs text-green-600 mt-1">
-                  Package ID: {currentAffiliate.current_package_id}
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-800">אין חבילה מוקצית</span>
-                </div>
-                <div className="text-xs text-yellow-600 mt-1">
-                  יש להקצות חבילה לשותף כדי להתחיל לעבוד
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
 
-        {/* Package Assignment Card */}
-        <Card>
-          <CardHeader className="pb-3">
+        {/* Package Assignment Section */}
+        <Card className="border-0 shadow-md">
+          <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">הקצאת חבילות</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  בחר חבילה להקצאה לשותף
-                </p>
-              </div>
+              <CardTitle className="text-lg">הקצאת חבילות חדשות</CardTitle>
               <Button
                 onClick={() => setIsCreatingPackage(true)}
                 size="sm"
@@ -290,46 +437,46 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
                   .map((pkg) => (
                     <div
                       key={pkg.package_id}
-                      className={`relative p-4 border rounded-lg transition-all cursor-pointer group ${
+                      className={`relative p-4 border rounded-xl transition-all cursor-pointer group hover:shadow-lg ${
                         currentAffiliate.current_package_id === pkg.package_id
-                          ? 'border-green-500 bg-green-50'
-                          : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                          ? 'border-green-500 bg-green-50 shadow-md'
+                          : 'border-gray-200 hover:border-purple-300'
                       }`}
                       onClick={() => !assigningPackageId && handleDirectPackageAssignment(pkg.package_id)}
                     >
                       {/* Loading Overlay */}
                       {assigningPackageId === pkg.package_id && (
-                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-lg">
-                          <div className="flex items-center gap-2 text-blue-600">
-                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                        <div className="absolute inset-0 bg-white/90 flex items-center justify-center rounded-xl">
+                          <div className="flex items-center gap-2 text-purple-600">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
                             <span className="font-medium">מקצה חבילה...</span>
                           </div>
                         </div>
                       )}
                       
                       {/* Package Content */}
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <div className="flex items-start justify-between">
-                          <h3 className="font-semibold text-gray-900">{pkg.package_name}</h3>
+                          <h3 className="font-semibold text-gray-900 text-lg">{pkg.package_name}</h3>
                           {currentAffiliate.current_package_id === pkg.package_id && (
-                            <Badge variant="default" className="bg-green-600">
+                            <Badge className="bg-green-600 text-white">
                               מוקצית
                             </Badge>
                           )}
                         </div>
                         
-                        <div className="text-sm text-gray-600">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 text-gray-600">
                               <Package className="h-4 w-4" />
-                              {pkg.total_servings || 0} מנות
-                            </span>
-                            <span className="flex items-center gap-1">
+                              <span className="text-sm">{pkg.total_servings || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-600">
                               <Image className="h-4 w-4" />
-                              {pkg.total_images ?? 0} תמונות
-                            </span>
+                              <span className="text-sm">{pkg.total_images ?? 0}</span>
+                            </div>
                           </div>
-                          <div className="mt-2 text-lg font-bold text-blue-600">
+                          <div className="text-lg font-bold text-purple-600">
                             ₪{(pkg.price || 0).toLocaleString()}
                           </div>
                         </div>
@@ -339,6 +486,15 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
                             {pkg.description}
                           </p>
                         )}
+
+                        {/* Assign Button */}
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="flex items-center justify-center">
+                            <span className="text-sm font-medium text-purple-600 group-hover:text-purple-700">
+                              הקצה חבילה
+                            </span>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Action Buttons */}
@@ -350,7 +506,7 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
                             e.stopPropagation();
                             handleEditPackage(pkg);
                           }}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 w-8 h-8 p-0"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -362,7 +518,7 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
                             handleDeletePackage(pkg);
                           }}
                           disabled={deleteMutation.isPending && deleteDialogPackage?.package_id === pkg.package_id}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 w-8 h-8 p-0"
                         >
                           {deleteMutation.isPending && deleteDialogPackage?.package_id === pkg.package_id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
@@ -371,24 +527,13 @@ export const AffiliatePackageManagement: React.FC<AffiliatePackageManagementProp
                           )}
                         </Button>
                       </div>
-
-                      {/* Click to Assign Hint */}
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-gray-500">לחץ להקצאת חבילה</span>
-                          <div className="flex items-center gap-1 text-blue-600 group-hover:text-blue-700">
-                            <span className="font-medium">הקצה</span>
-                            <CheckCircle className="h-4 w-4" />
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>לא נמצאו חבילות פעילות במערכת</p>
+              <div className="text-center py-12 text-gray-500">
+                <Package className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p className="text-lg">לא נמצאו חבילות פעילות במערכת</p>
                 <p className="text-sm mt-2">צור חבילה חדשה להתחיל</p>
               </div>
             )}
