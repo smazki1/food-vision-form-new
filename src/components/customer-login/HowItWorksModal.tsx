@@ -21,6 +21,25 @@ const HowItWorksModal = ({ open, onOpenChange, onWhatsAppClick }: HowItWorksModa
         
         <div className="space-y-8 mt-6">
           
+          {/* Video Demo Section */}
+          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-[#f3752b]/30">
+            <h3 className="text-2xl font-bold text-[#8b1e3f] mb-6 text-center">
+              צפו איך זה עובד
+            </h3>
+            <div className="relative w-full max-w-2xl mx-auto">
+              <div className="relative aspect-video rounded-xl overflow-hidden shadow-2xl border-4 border-white/20 backdrop-blur-sm">
+                <iframe
+                  src="https://www.youtube.com/embed/lZfgT59KveI?si=2tOifBLak1fnHK0G"
+                  title="YouTube video player"
+                  className="absolute inset-0 w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            </div>
+          </div>
+          
           {/* What is Food Vision */}
           <div className="bg-gradient-to-r from-[#8b1e3f] to-[#a91e4f] text-white rounded-3xl p-8 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12"></div>
