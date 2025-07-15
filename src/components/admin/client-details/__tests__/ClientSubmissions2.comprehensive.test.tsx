@@ -588,8 +588,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
 
       // Cost section should be collapsed/expanded
       expect(toggleButton).toBeInTheDocument();
+      });
     });
-  });
 
      describe('Image Navigation', () => {
      it('should display image navigation controls', () => {
@@ -619,8 +619,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
        fireEvent.click(firstSubmission);
 
        expect(screen.getByText('השוואה מלאה')).toBeInTheDocument();
-     });
-   });
+      });
+    });
 
      describe('Notes System', () => {
      it('should display notes tabs', () => {
@@ -692,8 +692,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
        fireEvent.change(loraNameInput, { target: { value: 'New LORA' } });
 
        expect(mockUpdateLoraField).toHaveBeenCalled();
-     });
-   });
+    });
+  });
 
      describe('Comments System', () => {
      it('should display comment sections', () => {
@@ -729,8 +729,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
        fireEvent.click(submitButton);
 
        expect(mockMutateAsync).toHaveBeenCalled();
-     });
-   });
+    });
+  });
 
      describe('Delete Functionality', () => {
      it('should show delete button on submission hover', () => {
@@ -828,8 +828,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
      describe('Edge Cases', () => {
      it('should handle missing submission data gracefully', () => {
        (useClientSubmissions as any).mockReturnValue({
-         data: [],
-         isLoading: false,
+        data: [],
+        isLoading: false,
          error: null,
          refetch: vi.fn(),
        });
@@ -842,7 +842,7 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
      it('should handle missing image URLs', () => {
        const submissionsWithoutImages = [
          {
-           ...mockSubmissions[0],
+        ...mockSubmissions[0],
            original_image_urls: null,
            processed_image_urls: null,
          },
@@ -850,8 +850,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
 
        (useClientSubmissions as any).mockReturnValue({
          data: submissionsWithoutImages,
-         isLoading: false,
-         error: null,
+        isLoading: false,
+        error: null,
          refetch: vi.fn(),
        });
 
@@ -877,8 +877,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
 
        // Check if notes section exists
        expect(screen.getByTestId('tab-trigger-self')).toBeInTheDocument();
-     });
-   });
+    });
+  });
 
   describe('Hebrew Language Support', () => {
     it('should display all Hebrew text correctly', () => {
@@ -896,8 +896,8 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
 
       const mainDiv = screen.getByText('הגשות').closest('[dir="rtl"]');
       expect(mainDiv).toHaveAttribute('dir', 'rtl');
+      });
     });
-  });
 
      describe('Integration Testing', () => {
      it('should integrate with all required hooks', () => {
@@ -928,6 +928,6 @@ describe('ClientSubmissions2 - Comprehensive Tests', () => {
        await waitFor(() => {
          expect(mockUpdateSubmissionStatus).toHaveBeenCalledWith('sub-1', 'בעיבוד');
        });
-     });
-   });
+    });
+  });
 }); 
