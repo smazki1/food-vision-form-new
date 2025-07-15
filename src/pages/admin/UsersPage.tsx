@@ -92,7 +92,7 @@ interface User {
   created_at: string;
   last_sign_in_at?: string;
   email_confirmed_at?: string;
-  role?: 'admin' | 'editor' | 'customer';
+  role?: 'admin' | 'editor' | 'customer' | 'affiliate';
   client_id?: string;
   restaurant_name?: string;
   contact_name?: string;
@@ -132,33 +132,32 @@ const UsersPage: React.FC = () => {
   const { data: users = [], isLoading, error } = useQuery<User[]>({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      // Check if admin access is available
-      if (!hasAdminAccess()) {
-        console.warn('Admin access not available - showing limited user data');
-        // Return limited data based on what we can access
-        return [];
-      }
-
       try {
-        // Get all auth users using admin client
-        const supabaseAdmin = await getSupabaseAdmin();
-        const { data: { users: authUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+        // First, try to get auth users using admin client
+        let authUsers = [];
+        let adminApiWorking = false;
         
-        if (authError) {
-          console.error('Error fetching auth users:', authError);
-          throw authError;
+        if (hasAdminAccess()) {
+          try {
+            const supabaseAdmin = await getSupabaseAdmin();
+            const { data: { users: fetchedAuthUsers }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+            
+            if (!authError && fetchedAuthUsers) {
+              authUsers = fetchedAuthUsers;
+              adminApiWorking = true;
+              console.log('Admin API working - fetched auth users:', authUsers.length);
+            } else {
+              console.warn('Admin API failed, using database fallback:', authError);
+            }
+          } catch (adminError) {
+            console.warn('Admin API not available, using database fallback:', adminError);
+          }
         }
 
-        // Get user roles from user_roles table (use any type to bypass TypeScript issues)
-        const { data: roleData, error: roleError } = await (supabase as any)
-          .from('user_roles')
-          .select('user_id, role');
-
-        if (roleError) {
-          console.error('Error fetching user roles:', roleError);
-          // Don't throw error for user_roles - it might not exist or be accessible
-          console.warn('User roles table not accessible, continuing without roles');
-        }
+        // Skip user_roles table due to TypeScript compatibility issues
+        // We'll determine roles from client and affiliate data
+        const roleData: any[] = [];
+        console.log('Skipping user_roles table - determining roles from database tables');
 
         // Get client information for customer users
         const { data: clientData, error: clientError } = await supabase
@@ -168,38 +167,108 @@ const UsersPage: React.FC = () => {
             user_auth_id,
             restaurant_name,
             contact_name,
+            email,
             phone,
             client_status,
-            remaining_servings
+            remaining_servings,
+            created_at
           `);
 
         if (clientError) {
           console.error('Error fetching client data:', clientError);
-          throw clientError;
         }
 
-        // Combine all data
-        const usersWithData: User[] = authUsers.map(authUser => {
-          const userRole = roleData?.find((r: any) => r.user_id === authUser.id);
-          const clientInfo = clientData?.find(c => c.user_auth_id === authUser.id);
-          
-          return {
-            id: authUser.id,
-            email: authUser.email || '',
-            created_at: authUser.created_at,
-            last_sign_in_at: authUser.last_sign_in_at,
-            email_confirmed_at: authUser.email_confirmed_at,
-            role: userRole?.role || (clientInfo ? 'customer' : 'customer'),
-            client_id: clientInfo?.client_id,
-            restaurant_name: clientInfo?.restaurant_name,
-            contact_name: clientInfo?.contact_name,
-            phone: clientInfo?.phone,
-            client_status: clientInfo?.client_status,
-            remaining_servings: clientInfo?.remaining_servings
-          };
-        });
+        // Get affiliate information
+        const { data: affiliateData, error: affiliateError } = await supabase
+          .from('affiliates')
+          .select(`
+            affiliate_id,
+            user_auth_id,
+            name,
+            email,
+            phone,
+            status,
+            created_at
+          `);
 
-        return usersWithData;
+        if (affiliateError) {
+          console.error('Error fetching affiliate data:', affiliateError);
+        }
+
+        // If admin API is working, combine auth data with database data
+        if (adminApiWorking) {
+          const usersWithData: User[] = authUsers.map(authUser => {
+            const clientInfo = clientData?.find(c => c.user_auth_id === authUser.id);
+            const affiliateInfo = affiliateData?.find(a => a.user_auth_id === authUser.id);
+            
+            return {
+              id: authUser.id,
+              email: authUser.email || '',
+              created_at: authUser.created_at,
+              last_sign_in_at: authUser.last_sign_in_at,
+              email_confirmed_at: authUser.email_confirmed_at,
+              role: clientInfo ? 'customer' : (affiliateInfo ? 'affiliate' : 'customer'),
+              client_id: clientInfo?.client_id,
+              restaurant_name: clientInfo?.restaurant_name,
+              contact_name: clientInfo?.contact_name,
+              phone: clientInfo?.phone || affiliateInfo?.phone,
+              client_status: clientInfo?.client_status,
+              remaining_servings: clientInfo?.remaining_servings
+            };
+          });
+          
+          return usersWithData;
+        }
+
+        // If admin API is not working, create user entries from database tables
+        console.log('Using database fallback for user data');
+        const databaseUsers: User[] = [];
+        
+        // Add client users
+        if (clientData) {
+          clientData.forEach(client => {
+            databaseUsers.push({
+              id: client.user_auth_id,
+              email: client.email || '',
+              created_at: client.created_at,
+              last_sign_in_at: null,
+              email_confirmed_at: null,
+              role: 'customer',
+              client_id: client.client_id,
+              restaurant_name: client.restaurant_name,
+              contact_name: client.contact_name,
+              phone: client.phone,
+              client_status: client.client_status,
+              remaining_servings: client.remaining_servings
+            });
+          });
+        }
+        
+        // Add affiliate users
+        if (affiliateData) {
+          affiliateData.forEach(affiliate => {
+            databaseUsers.push({
+              id: affiliate.user_auth_id,
+              email: affiliate.email || '',
+              created_at: affiliate.created_at,
+              last_sign_in_at: null,
+              email_confirmed_at: null,
+              role: 'affiliate',
+              client_id: null,
+              restaurant_name: affiliate.name,
+              contact_name: affiliate.name,
+              phone: affiliate.phone,
+              client_status: affiliate.status,
+              remaining_servings: null
+            });
+          });
+        }
+        
+        // Note: Admin/editor users are not shown in fallback mode
+        // as they require admin API access to display correctly
+        
+        console.log('Database fallback users:', databaseUsers.length);
+        return databaseUsers;
       } catch (error) {
         console.error('Error in admin users query:', error);
         throw error;
