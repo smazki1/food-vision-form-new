@@ -37,7 +37,10 @@ import {
   UserCheck,
   UserX,
   Eye,
-  MoreHorizontal
+  EyeOff,
+  MoreHorizontal,
+  RefreshCw,
+  Copy
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -99,6 +102,7 @@ interface User {
   phone?: string;
   client_status?: string;
   remaining_servings?: number;
+  password_reference?: string;
 }
 
 interface CreateCustomerForm {
@@ -109,6 +113,108 @@ interface CreateCustomerForm {
   phone: string;
   package_id?: string;
 }
+
+interface PasswordDisplayProps {
+  userId: string;
+  password?: string;
+  userEmail: string;
+}
+
+// Password display component with show/hide functionality
+const PasswordDisplay: React.FC<PasswordDisplayProps> = ({ userId, password, userEmail }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleCopyPassword = async () => {
+    if (password) {
+      await navigator.clipboard.writeText(password);
+      toast.success('סיסמה הועתקה ללוח');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setIsResetting(true);
+    try {
+      // Generate new password
+      const newPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+      
+      // Update password in Supabase Auth
+      if (hasAdminAccess()) {
+        const supabaseAdmin = await getSupabaseAdmin();
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          password: newPassword
+        });
+      }
+      
+      // Update password reference in database
+      await supabase
+        .from('user_password_references' as any)
+        .upsert({
+          user_id: userId,
+          password_reference: newPassword,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        });
+      
+      toast.success('סיסמה עודכנה בהצלחה');
+      window.location.reload(); // Refresh to show new password
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast.error('שגיאה בעדכון הסיסמה');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  if (!password) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-gray-400 text-sm">אין סיסמה</span>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleResetPassword}
+          disabled={isResetting}
+        >
+          {isResetting ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="font-mono text-sm">
+        {isVisible ? password : '••••••••'}
+      </div>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => setIsVisible(!isVisible)}
+        className="h-6 w-6 p-0"
+      >
+        {isVisible ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleCopyPassword}
+        className="h-6 w-6 p-0"
+      >
+        <Copy className="h-3 w-3" />
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={handleResetPassword}
+        disabled={isResetting}
+        className="h-6 w-6 p-0"
+      >
+        {isResetting ? <RefreshCw className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+      </Button>
+    </div>
+  );
+};
 
 const UsersPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -195,11 +301,21 @@ const UsersPage: React.FC = () => {
           console.error('Error fetching affiliate data:', affiliateError);
         }
 
+        // Get password references for admin access
+        const { data: passwordData, error: passwordError } = await supabase
+          .from('user_password_references' as any)
+          .select('user_id, password_reference');
+
+        if (passwordError) {
+          console.error('Error fetching password references:', passwordError);
+        }
+
         // If admin API is working, combine auth data with database data
         if (adminApiWorking) {
           const usersWithData: User[] = authUsers.map(authUser => {
             const clientInfo = clientData?.find(c => c.user_auth_id === authUser.id);
             const affiliateInfo = affiliateData?.find(a => a.user_auth_id === authUser.id);
+            const passwordInfo = (passwordData as any)?.find((p: any) => p.user_id === authUser.id);
             
             return {
               id: authUser.id,
@@ -213,7 +329,8 @@ const UsersPage: React.FC = () => {
               contact_name: clientInfo?.contact_name,
               phone: clientInfo?.phone || affiliateInfo?.phone,
               client_status: clientInfo?.client_status,
-              remaining_servings: clientInfo?.remaining_servings
+              remaining_servings: clientInfo?.remaining_servings,
+              password_reference: passwordInfo?.password_reference
             };
           });
           
@@ -227,6 +344,7 @@ const UsersPage: React.FC = () => {
         // Add client users
         if (clientData) {
           clientData.forEach(client => {
+            const passwordInfo = (passwordData as any)?.find((p: any) => p.user_id === client.user_auth_id);
             databaseUsers.push({
               id: client.user_auth_id,
               email: client.email || '',
@@ -239,7 +357,8 @@ const UsersPage: React.FC = () => {
               contact_name: client.contact_name,
               phone: client.phone,
               client_status: client.client_status,
-              remaining_servings: client.remaining_servings
+              remaining_servings: client.remaining_servings,
+              password_reference: passwordInfo?.password_reference
             });
           });
         }
@@ -247,6 +366,7 @@ const UsersPage: React.FC = () => {
         // Add affiliate users
         if (affiliateData) {
           affiliateData.forEach(affiliate => {
+            const passwordInfo = (passwordData as any)?.find((p: any) => p.user_id === affiliate.user_auth_id);
             databaseUsers.push({
               id: affiliate.user_auth_id,
               email: affiliate.email || '',
@@ -259,7 +379,8 @@ const UsersPage: React.FC = () => {
               contact_name: affiliate.name,
               phone: affiliate.phone,
               client_status: affiliate.status,
-              remaining_servings: null
+              remaining_servings: null,
+              password_reference: passwordInfo?.password_reference
             });
           });
         }
@@ -310,6 +431,20 @@ const UsersPage: React.FC = () => {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
+
+      // Store password reference for admin access
+      try {
+        await supabase
+          .from('user_password_references' as any)
+          .insert({
+            user_id: authData.user.id,
+            password_reference: formData.password,
+            created_by: (await supabase.auth.getUser()).data.user?.id
+          });
+      } catch (passwordError) {
+        console.warn('Could not store password reference:', passwordError);
+        // Continue without password reference - this is not critical
+      }
 
       // Create client record
       const { data: clientData, error: clientError } = await supabase
@@ -671,16 +806,17 @@ const UsersPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>פרטי משתמש</TableHead>
-                  <TableHead>תפקיד</TableHead>
-                  <TableHead>סטטוס</TableHead>
-                  <TableHead>פרטי לקוח</TableHead>
-                  <TableHead>תאריך הצטרפות</TableHead>
-                  <TableHead>פעולות</TableHead>
-                </TableRow>
-              </TableHeader>
+                          <TableHeader>
+              <TableRow>
+                <TableHead>פרטי משתמש</TableHead>
+                <TableHead>תפקיד</TableHead>
+                <TableHead>סטטוס</TableHead>
+                <TableHead>פרטי לקוח</TableHead>
+                <TableHead>סיסמה</TableHead>
+                <TableHead>תאריך הצטרפות</TableHead>
+                <TableHead>פעולות</TableHead>
+              </TableRow>
+            </TableHeader>
               <TableBody>
                 {filteredUsers.map(user => (
                   <TableRow key={user.id}>
@@ -715,6 +851,13 @@ const UsersPage: React.FC = () => {
                       ) : (
                         <span className="text-gray-400">-</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <PasswordDisplay 
+                        userId={user.id} 
+                        password={user.password_reference}
+                        userEmail={user.email}
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
