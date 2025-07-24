@@ -248,6 +248,72 @@ export const useEnhancedFormSubmission = ({
           `שומר ${dish.itemName}...`
         );
 
+        // Upload custom style files if they exist
+        let inspirationImageUrls: string[] = [];
+        let brandingMaterialUrls: string[] = [];
+
+        if (formData.customStyle) {
+          // Upload inspiration images
+          if (formData.customStyle.inspirationImages && formData.customStyle.inspirationImages.length > 0) {
+            const inspirationUploadPromises = formData.customStyle.inspirationImages.map(async (file: File) => {
+              const fileExtension = file.name.split('.').pop();
+              const uniqueFileName = `inspiration/${uuidv4()}.${fileExtension}`;
+              const folderName = clientId || 'guest';
+              const filePath = `${folderName}/custom-style/${uniqueFileName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('food-vision-images')
+                .upload(filePath, file);
+              
+              if (uploadError) {
+                throw new Error(`שגיאה בהעלאת תמונת השראה ${file.name}: ${uploadError.message}`);
+              }
+              
+              const { data: publicUrlData } = supabase.storage
+                .from('food-vision-images')
+                .getPublicUrl(filePath);
+              
+              if (!publicUrlData?.publicUrl) {
+                throw new Error(`שגיאה בקבלת URL עבור תמונת השראה ${file.name}`);
+              }
+
+              return publicUrlData.publicUrl;
+            });
+
+            inspirationImageUrls = await Promise.all(inspirationUploadPromises);
+          }
+
+          // Upload branding materials
+          if (formData.customStyle.brandingMaterials && formData.customStyle.brandingMaterials.length > 0) {
+            const brandingUploadPromises = formData.customStyle.brandingMaterials.map(async (file: File) => {
+              const fileExtension = file.name.split('.').pop();
+              const uniqueFileName = `branding/${uuidv4()}.${fileExtension}`;
+              const folderName = clientId || 'guest';
+              const filePath = `${folderName}/custom-style/${uniqueFileName}`;
+              
+              const { error: uploadError } = await supabase.storage
+                .from('food-vision-images')
+                .upload(filePath, file);
+              
+              if (uploadError) {
+                throw new Error(`שגיאה בהעלאת חומר מיתוג ${file.name}: ${uploadError.message}`);
+              }
+              
+              const { data: publicUrlData } = supabase.storage
+                .from('food-vision-images')
+                .getPublicUrl(filePath);
+              
+              if (!publicUrlData?.publicUrl) {
+                throw new Error(`שגיאה בקבלת URL עבור חומר מיתוג ${file.name}`);
+              }
+
+              return publicUrlData.publicUrl;
+            });
+
+            brandingMaterialUrls = await Promise.all(brandingUploadPromises);
+          }
+        }
+
         // Insert item into appropriate table
         const tableNameMap = {
           dish: 'dishes',
@@ -268,7 +334,7 @@ export const useEnhancedFormSubmission = ({
 
         // Handle different table types with proper typing
         if (itemType === 'cocktail') {
-          const { data, error: itemInsertError } = await supabase
+          const { data, error: itemInsertError } = await (supabase as any)
             .from('cocktails')
             .insert(itemData)
             .select()
@@ -279,7 +345,7 @@ export const useEnhancedFormSubmission = ({
           }
           insertedItemData = data;
         } else if (itemType === 'drink') {
-          const { data, error: itemInsertError } = await supabase
+          const { data, error: itemInsertError } = await (supabase as any)
             .from('drinks')
             .insert(itemData)
             .select()
@@ -291,7 +357,7 @@ export const useEnhancedFormSubmission = ({
           insertedItemData = data;
         } else {
           // Default to dishes table
-          const { data, error: itemInsertError } = await supabase
+          const { data, error: itemInsertError } = await (supabase as any)
             .from('dishes')
             .insert(itemData)
             .select()
@@ -303,7 +369,7 @@ export const useEnhancedFormSubmission = ({
           insertedItemData = data;
         }
 
-        // Create submission record
+        // Create submission record with custom style data
         const submissionData = {
           client_id: clientId || null,
           original_item_id: insertedItemData.id,
@@ -312,10 +378,16 @@ export const useEnhancedFormSubmission = ({
           submission_status: 'ממתינה לעיבוד',
           original_image_urls: dish.uploadedImageUrls,
           restaurant_name: formData.restaurantName || null,
-          contact_name: formData.submitterName || null
+          contact_name: formData.submitterName || null,
+          // Include custom style data
+          branding_material_urls: brandingMaterialUrls.length > 0 ? brandingMaterialUrls : null,
+          reference_example_urls: inspirationImageUrls.length > 0 ? inspirationImageUrls : null,
+          description: formData.customStyle?.instructions ? 
+            `${dish.description || ''}${dish.description && formData.customStyle.instructions ? '\n\nהוראות סגנון מותאם אישית:\n' : ''}${formData.customStyle.instructions || ''}` : 
+            dish.description || null,
         };
 
-        const { data: submissionRecord, error: submissionError } = await supabase
+        const { data: submissionRecord, error: submissionError } = await (supabase as any)
           .from('customer_submissions')
           .insert(submissionData)
           .select()

@@ -77,13 +77,14 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
 
         {/* Mobile-Optimized Before/After Example */}
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-8 shadow-lg border-2 border-gray-200">
-          <h4 className="text-xl sm:text-2xl font-bold text-center text-[#333333] mb-4 sm:mb-8">דוגמה לפני ואחרי:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+          {/* Good Example */}
+          <h4 className="text-xl sm:text-2xl font-bold text-center text-[#333333] mb-4 sm:mb-8">דוגמה טובה:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-8">
             <div className="text-center">
               <div className="relative mb-3 sm:mb-4">
                 <img 
                   src="/lovable-uploads/CleanShot 2025-06-22 at 21.29.33@2x.png" 
-                  alt="תמונה לפני עיבוד" 
+                  alt="תמונה לפני עיבוד - דוגמה טובה" 
                   className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
                 />
                 <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
@@ -96,7 +97,38 @@ const ImageUploadDetailsStep: React.FC<ImageUploadDetailsStepProps> = ({ errors,
               <div className="relative mb-3 sm:mb-4">
                 <img 
                   src="/lovable-uploads/בורגר.png" 
-                  alt="תמונה אחרי עיבוד" 
+                  alt="תמונה אחרי עיבוד - דוגמה טובה" 
+                  className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
+                />
+                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-green-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
+                  אחרי
+                </div>
+              </div>
+              <p className="text-sm sm:text-base text-gray-700 font-semibold">התוצאה המקצועית שלנו</p>
+            </div>
+          </div>
+
+          {/* Bad Example */}
+          <h4 className="text-xl sm:text-2xl font-bold text-center text-[#333333] mb-4 sm:mb-8">דוגמה לא טובה:</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+            <div className="text-center">
+              <div className="relative mb-3 sm:mb-4">
+                <img 
+                  src="/lovable-uploads/bad-example-before.jpeg" 
+                  alt="תמונה לפני עיבוד - דוגמה לא טובה" 
+                  className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
+                />
+                <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-red-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
+                  לפני
+                </div>
+              </div>
+              <p className="text-sm sm:text-base text-gray-700 font-semibold">התמונה המקורית שהעלה הלקוח</p>
+            </div>
+            <div className="text-center">
+              <div className="relative mb-3 sm:mb-4">
+                <img 
+                  src="/lovable-uploads/bad-example-after.png" 
+                  alt="תמונה אחרי עיבוד - דוגמה לא טובה" 
                   className="w-full h-auto object-contain rounded-xl shadow-lg bg-white p-2"
                 />
                 <div className="absolute top-2 sm:top-4 right-2 sm:right-4 bg-green-500 text-white px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold shadow-lg">
