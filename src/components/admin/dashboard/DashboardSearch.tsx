@@ -66,7 +66,7 @@ export function DashboardSearch() {
           // Search leads
           supabase
             .from("leads")
-            .select("id, restaurant_name")
+            .select("lead_id, restaurant_name")
             .or(`restaurant_name.ilike.%${debouncedSearchQuery}%,contact_name.ilike.%${debouncedSearchQuery}%,email.ilike.%${debouncedSearchQuery}%`)
             .limit(5),
 
@@ -88,8 +88,8 @@ export function DashboardSearch() {
             name: client.restaurant_name,
           })),
           leads: (leadsResults.data || []).map((lead) => ({
-            id: lead.id,
-            name: lead.restaurant_name,
+          id: lead.lead_id,
+          name: lead.restaurant_name,
           })),
           submissions: (submissionsResults.data || []).map((submission) => ({
             id: submission.submission_id,
