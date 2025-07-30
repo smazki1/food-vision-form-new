@@ -47,6 +47,78 @@ export const PACKAGE_PRICING = {
   deluxe: { dishes: 65, images: 325, price: 1690, commission_rate: 20 }
 } as const;
 
+// Affiliate clients operations (declared first to avoid hoisting issues)
+export const affiliateClientApi = {
+  // Get affiliate's clients
+  async getAffiliateClients(affiliateId: string): Promise<ClientWithAffiliate[]> {
+    const { data, error } = await supabase
+      .from('affiliate_clients')
+      .select(`
+        *,
+        clients:client_id (
+          client_id,
+          restaurant_name,
+          contact_name,
+          email,
+          phone,
+          current_package_id,
+          remaining_servings,
+          payment_status,
+          payment_amount_ils,
+          created_at
+        )
+      `)
+      .eq('affiliate_id', affiliateId)
+      .eq('status', 'active')
+      .order('referred_at', { ascending: false });
+
+    if (error) throw error;
+    
+    // Transform the data to match ClientWithAffiliate interface
+    return (data || []).map(item => ({
+      client_id: item.clients.client_id,
+      name: item.clients.restaurant_name || item.clients.contact_name || 'Unknown',
+      email: item.clients.email,
+      phone: item.clients.phone,
+      status: 'active', // Since we're filtering by active status
+      restaurant_name: item.clients.restaurant_name,
+      contact_name: item.clients.contact_name
+    }));
+  },
+
+  // Link client to affiliate
+  async linkClientToAffiliate(formData: LinkClientToAffiliateForm): Promise<AffiliateClient> {
+    const { data, error } = await supabase
+      .from('affiliate_clients')
+      .insert({
+        affiliate_id: formData.affiliate_id,
+        client_id: formData.client_id,
+        referral_source: formData.referral_source,
+        referral_method: 'name_reference'
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Note: Client table doesn't have affiliate reference fields
+    // Affiliate relationship is tracked in affiliate_clients table only
+
+    return data;
+  },
+
+  // Unlink client from affiliate
+  async unlinkClientFromAffiliate(clientId: string): Promise<void> {
+    await supabase
+      .from('affiliate_clients')
+      .update({ status: 'inactive' })
+      .eq('client_id', clientId);
+
+    // Note: Client table doesn't have affiliate reference fields
+    // Affiliate relationship is tracked in affiliate_clients table only
+  }
+};
+
 // Affiliate CRUD operations
 export const affiliateApi = {
   // Get all affiliates (admin only)
@@ -220,79 +292,13 @@ export const affiliateApi = {
       .eq('affiliate_id', affiliateId);
 
     if (error) throw error;
-  }
-};
-
-// Affiliate clients operations
-export const affiliateClientApi = {
-  // Get affiliate's clients
-  async getAffiliateClients(affiliateId: string): Promise<ClientWithAffiliate[]> {
-    const { data, error } = await supabase
-      .from('affiliate_clients')
-      .select(`
-        *,
-        clients:client_id (
-          client_id,
-          restaurant_name,
-          contact_name,
-          email,
-          phone,
-          current_package_id,
-          remaining_servings,
-          payment_status,
-          payment_amount_ils,
-          created_at
-        )
-      `)
-      .eq('affiliate_id', affiliateId)
-      .eq('status', 'active')
-      .order('referred_at', { ascending: false });
-
-    if (error) throw error;
-    
-    // Transform the data to match ClientWithAffiliate interface
-    return (data || []).map(item => ({
-      client_id: item.clients.client_id,
-      name: item.clients.restaurant_name || item.clients.contact_name || 'Unknown',
-      email: item.clients.email,
-      phone: item.clients.phone,
-      status: 'active', // Since we're filtering by active status
-      restaurant_name: item.clients.restaurant_name,
-      contact_name: item.clients.contact_name
-    }));
   },
+
+  // Get affiliate's clients
+  getAffiliateClients: affiliateClientApi.getAffiliateClients,
 
   // Link client to affiliate
-  async linkClientToAffiliate(formData: LinkClientToAffiliateForm): Promise<AffiliateClient> {
-    const { data, error } = await supabase
-      .from('affiliate_clients')
-      .insert({
-        affiliate_id: formData.affiliate_id,
-        client_id: formData.client_id,
-        referral_source: formData.referral_source,
-        referral_method: 'name_reference'
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Note: Client table doesn't have affiliate reference fields
-    // Affiliate relationship is tracked in affiliate_clients table only
-
-    return data;
-  },
-
-  // Unlink client from affiliate
-  async unlinkClientFromAffiliate(clientId: string): Promise<void> {
-    await supabase
-      .from('affiliate_clients')
-      .update({ status: 'inactive' })
-      .eq('client_id', clientId);
-
-    // Note: Client table doesn't have affiliate reference fields
-    // Affiliate relationship is tracked in affiliate_clients table only
-  }
+  linkClientToAffiliate: affiliateClientApi.linkClientToAffiliate
 };
 
 // Affiliate packages operations

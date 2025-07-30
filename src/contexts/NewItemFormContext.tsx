@@ -21,6 +21,11 @@ export interface NewItemFormData {
   submitterName: string;
   phone: string;
   email?: string;
+  contactEmail?: string; // Alias for email field
+  contactPhone?: string; // Alias for phone field
+  
+  // Business information
+  isNewBusiness?: boolean;
 
   // Multiple Dishes
   dishes: DishData[];
@@ -34,6 +39,11 @@ export interface NewItemFormData {
     brandingMaterials: File[];
     instructions: string;
   };
+
+  // Additional form fields for lead requirements
+  itemsQuantityRange?: string;
+  estimatedImagesNeeded?: string;
+  primaryImageUsage?: string;
 
   // Legacy fields for backward compatibility
   itemName: string;

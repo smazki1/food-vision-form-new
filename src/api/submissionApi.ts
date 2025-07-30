@@ -215,7 +215,12 @@ export async function createSubmission(
     throw error;
   }
 
-  return data as Submission;
+    return {
+      ...data,
+      edit_count: (data as any).edit_count || 0,
+      internal_team_notes: (data as any).internal_team_notes || null,
+      priority: (data as any).priority || null
+    } as Submission;
 }
 
 export async function getUniqueSubmittedDishDetailsForClient(clientId: string): Promise<DishDetailsForTab[]> {

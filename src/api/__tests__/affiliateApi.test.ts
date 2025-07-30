@@ -52,6 +52,12 @@ const mockAffiliate: Affiliate = {
   total_referrals: 0,
   username: null,
   password: null,
+  internal_notes: null,
+  current_package_id: null,
+  remaining_servings: 0,
+  remaining_images: 0,
+  consumed_images: 0,
+  reserved_images: 0,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z'
 };

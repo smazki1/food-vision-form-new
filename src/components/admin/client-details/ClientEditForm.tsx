@@ -39,7 +39,7 @@ export function ClientEditForm({ client, onSubmit, onCancel, isSubmitting }: Cli
       contact_name: client.contact_name,
       phone: client.phone,
       email: client.email,
-      client_status: client.client_status,
+      client_status: client.client_status as "פעיל" | "לא פעיל" | "בהמתנה",
       internal_notes: client.internal_notes || "",
       email_notifications: client.email_notifications || false,
       app_notifications: client.app_notifications || false,
