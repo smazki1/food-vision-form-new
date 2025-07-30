@@ -13,17 +13,6 @@ import type {
   AllocatePackageForm
 } from '@/types/affiliate';
 
-// Lazy import for admin functions
-const getSupabaseAdmin = async () => {
-  try {
-    const { supabaseAdmin } = await import('@/integrations/supabase/supabaseAdmin');
-    return supabaseAdmin;
-  } catch (error) {
-    console.warn('Supabase admin client not available:', error);
-    return null;
-  }
-};
-
 // Helper function to generate secure password
 const generateSecurePassword = (): string => {
   const length = 12;
@@ -187,32 +176,11 @@ export const affiliateApi = {
       const username = generateUsername(formData.email);
       const password = generateSecurePassword();
 
-      // Try to create Supabase auth user (fallback if admin client not available)
-      let userAuthId = null;
-      const adminClient = await getSupabaseAdmin();
-      if (adminClient) {
-        try {
-          const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({
-            email: formData.email,
-            password: password,
-            email_confirm: true,
-            user_metadata: {
-              role: 'affiliate',
-              name: formData.name,
-              username: username
-            }
-          });
-
-          if (!authError && authUser?.user) {
-            userAuthId = authUser.user.id;
-          }
-        } catch (authCreateError) {
-          console.warn('Could not create auth user:', authCreateError);
-          // Continue without auth user - credentials will still be stored for manual setup
-        }
-      } else {
-        console.warn('Admin client not available - continuing without auth user creation');
-      }
+              // Note: Auth user creation has been moved to edge functions for security
+        // For now, we'll create the affiliate record without auth user
+        // This will need to be updated to use the admin edge function
+        console.warn('Auth user creation disabled for security - affiliate will need manual auth setup');
+        let userAuthId = null;
 
       // Create affiliate record with auth user ID and credentials
       const insertData: any = {

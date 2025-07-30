@@ -24,51 +24,6 @@ export const unifiedAuthService = {
         keyLength: import.meta.env.VITE_SUPABASE_ANON_KEY?.length
       });
       
-      // TEMPORARY BYPASS FOR AUTH SERVICE ISSUES
-      if ((email === 'simple@test.local' && password === 'password') ||
-          (email === 'admin@test.local' && password === 'adminpass')) {
-        console.log('[UNIFIED_AUTH_SERVICE] Using temporary bypass for development');
-        
-        const isAdmin = email === 'admin@test.local';
-        
-        // Simulate successful auth response with correct Supabase format
-        const mockUser = {
-          id: isAdmin ? 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' : 'f4bd43ed-a53b-4ada-aeb3-b2a42dbcb3a3',
-          email: email,
-          role: 'authenticated',
-          aud: 'authenticated',
-          email_confirmed_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          user_metadata: {},
-          app_metadata: {}
-        };
-        
-        const mockSession = {
-          access_token: 'mock-token-for-development',
-          token_type: 'bearer',
-          expires_in: 3600,
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
-          refresh_token: 'mock-refresh-token',
-          user: mockUser
-        };
-        
-        console.log('[UNIFIED_AUTH_SERVICE] Temporary bypass - returning mock auth data:', {
-          userId: mockUser.id,
-          email: mockUser.email,
-          hasSession: true,
-          isAdmin: isAdmin
-        });
-        
-        return { 
-          success: true, 
-          data: { 
-            user: mockUser, 
-            session: mockSession 
-          } 
-        };
-      }
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
