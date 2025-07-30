@@ -10,10 +10,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrentUserRole } from "@/hooks/useCurrentUserRole";
 
-// Simple admin authentication for demonstration purposes
-// In a production environment, use Supabase auth with proper role management
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "food-vision-2025";
+// Authentication now handled through Supabase only - no hardcoded credentials
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState("");
@@ -65,19 +62,8 @@ const AdminLogin: React.FC = () => {
       localStorage.removeItem("adminAuthenticated");
       localStorage.removeItem("adminAuthTime");
 
-      // Simple authentication check first
-      if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        console.log("[AdminLogin] Admin credentials match, setting authentication");
-        localStorage.setItem("adminAuthenticated", "true");
-        localStorage.setItem("adminAuthTime", Date.now().toString());
-        
-        toast.success("התחברת בהצלחה");
-        navigate("/admin/dashboard");
-        return;
-      }
-
-      // Try Supabase auth if simple auth fails
-      console.log("[AdminLogin] Trying Supabase authentication");
+      // Use Supabase authentication only
+      console.log("[AdminLogin] Using Supabase authentication");
       const { data, error } = await supabase.auth.signInWithPassword({
         email: username,
         password: password
