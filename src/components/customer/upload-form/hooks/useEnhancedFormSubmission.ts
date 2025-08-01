@@ -7,6 +7,7 @@ import { sanitizePathComponent } from '@/utils/pathSanitization';
 import { compressImagesBatch, formatFileSize } from '@/utils/imageCompression';
 import { NewItemFormData } from '@/contexts/NewItemFormContext';
 import { UploadProgressData, UploadStep } from '../components/UploadProgressModal';
+import { usePublicSubmissions, PublicSubmissionData } from '@/hooks/usePublicSubmissions';
 
 interface UseEnhancedFormSubmissionProps {
   clientId: string | null;
@@ -239,6 +240,156 @@ export const useEnhancedFormSubmission = ({
   const processDatabaseOperations = async (dishesWithUrls: any[]) => {
     updateStepProgress('database', 0, 'שומר נתונים במסד הנתונים...');
     
+    // If no clientId, use public submissions table (no RLS issues)
+    if (!clientId) {
+      console.log('[EnhancedFormSubmission] Using public_submissions for anonymous user');
+      
+      const publicSubmissions: PublicSubmissionData[] = await Promise.all(
+        dishesWithUrls.map(async (dish, dishIndex) => {
+          if (cancelRef.current) throw new Error('Upload cancelled');
+          
+          updateStepProgress('database', 
+            (dishIndex / dishesWithUrls.length) * 50, 
+            `מכין ${dish.itemName}...`
+          );
+
+          // Upload custom style files if they exist
+          let inspirationImageUrls: string[] = [];
+          let brandingMaterialUrls: string[] = [];
+
+          if (formData.customStyle) {
+            // Upload inspiration images
+            if (formData.customStyle.inspirationImages && formData.customStyle.inspirationImages.length > 0) {
+              const inspirationUploadPromises = formData.customStyle.inspirationImages.map(async (file: File) => {
+                const fileExtension = file.name.split('.').pop();
+                const uniqueFileName = `inspiration/${uuidv4()}.${fileExtension}`;
+                const folderName = 'guest';
+                const filePath = `${folderName}/custom-style/${uniqueFileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('food-vision-images')
+                  .upload(filePath, file);
+                
+                if (uploadError) {
+                  throw new Error(`שגיאה בהעלאת תמונת השראה ${file.name}: ${uploadError.message}`);
+                }
+                
+                const { data: publicUrlData } = supabase.storage
+                  .from('food-vision-images')
+                  .getPublicUrl(filePath);
+                
+                if (!publicUrlData?.publicUrl) {
+                  throw new Error(`שגיאה בקבלת URL עבור תמונת השראה ${file.name}`);
+                }
+
+                return publicUrlData.publicUrl;
+              });
+
+              inspirationImageUrls = await Promise.all(inspirationUploadPromises);
+            }
+
+            // Upload branding materials
+            if (formData.customStyle.brandingMaterials && formData.customStyle.brandingMaterials.length > 0) {
+              const brandingUploadPromises = formData.customStyle.brandingMaterials.map(async (file: File) => {
+                const fileExtension = file.name.split('.').pop();
+                const uniqueFileName = `branding/${uuidv4()}.${fileExtension}`;
+                const folderName = 'guest';
+                const filePath = `${folderName}/custom-style/${uniqueFileName}`;
+                
+                const { error: uploadError } = await supabase.storage
+                  .from('food-vision-images')
+                  .upload(filePath, file);
+                
+                if (uploadError) {
+                  throw new Error(`שגיאה בהעלאת חומר מיתוג ${file.name}: ${uploadError.message}`);
+                }
+                
+                const { data: publicUrlData } = supabase.storage
+                  .from('food-vision-images')
+                  .getPublicUrl(filePath);
+                
+                if (!publicUrlData?.publicUrl) {
+                  throw new Error(`שגיאה בקבלת URL עבור חומר מיתוג ${file.name}`);
+                }
+
+                return publicUrlData.publicUrl;
+              });
+
+              brandingMaterialUrls = await Promise.all(brandingUploadPromises);
+            }
+          }
+
+          // Prepare public submission data
+          const submissionData: PublicSubmissionData = {
+            restaurant_name: formData.restaurantName || 'לא צוין',
+            contact_name: formData.submitterName || undefined,
+            contact_email: formData.contactEmail || undefined,
+            contact_phone: formData.contactPhone || undefined,
+            item_type: dish.itemType as 'dish' | 'cocktail' | 'drink',
+            item_name: dish.itemName,
+            description: dish.description || undefined,
+            special_notes: dish.specialNotes || undefined,
+            original_image_urls: dish.uploadedImageUrls,
+            branding_material_urls: brandingMaterialUrls.length > 0 ? brandingMaterialUrls : undefined,
+            reference_example_urls: inspirationImageUrls.length > 0 ? inspirationImageUrls : undefined,
+            submission_data: formData.customStyle?.instructions ? {
+              customStyle: formData.customStyle
+            } : undefined
+          };
+
+          updateStepProgress('database', 
+            ((dishIndex + 1) / dishesWithUrls.length) * 50, 
+            `מכין ${dish.itemName}...`
+          );
+
+          return submissionData;
+        })
+      );
+
+      // Submit all public submissions directly to public_submissions table
+      const results = await Promise.all(
+        publicSubmissions.map(async (submissionData, index) => {
+          updateStepProgress('database', 
+            50 + ((index + 1) / publicSubmissions.length) * 50, 
+            `שומר ${submissionData.item_name}...`
+          );
+
+          // Insert directly into public_submissions table - bypasses RLS completely!
+          const { data: insertedData, error } = await (supabase as any)
+            .from('public_submissions')
+            .insert({
+              restaurant_name: submissionData.restaurant_name,
+              contact_name: submissionData.contact_name || null,
+              contact_email: submissionData.contact_email || null,
+              contact_phone: submissionData.contact_phone || null,
+              item_type: submissionData.item_type,
+              item_name: submissionData.item_name,
+              description: submissionData.description || null,
+              special_notes: submissionData.special_notes || null,
+              original_image_urls: submissionData.original_image_urls || [],
+              branding_material_urls: submissionData.branding_material_urls || [],
+              reference_example_urls: submissionData.reference_example_urls || [],
+              submission_data: submissionData.submission_data || null,
+              status: 'pending'
+            })
+            .select()
+            .single();
+
+          if (error) {
+            console.error('[EnhancedFormSubmission] Error inserting public submission:', error);
+            throw new Error(`שגיאה בשמירת ${submissionData.item_name}: ${error.message}`);
+          }
+
+          console.log('[EnhancedFormSubmission] Public submission saved successfully:', insertedData);
+          return insertedData;
+        })
+      );
+
+      updateStepProgress('database', 100, 'שמירה במסד הנתונים הושלמה');
+      return results;
+    }
+
+    // Original logic for authenticated users
     const createdSubmissions = await Promise.all(
       dishesWithUrls.map(async (dish, dishIndex) => {
         if (cancelRef.current) throw new Error('Upload cancelled');
@@ -314,7 +465,7 @@ export const useEnhancedFormSubmission = ({
           }
         }
 
-        // Insert item into appropriate table
+        // Insert item into appropriate table (for authenticated users only)
         const tableNameMap = {
           dish: 'dishes',
           cocktail: 'cocktails',
@@ -324,6 +475,7 @@ export const useEnhancedFormSubmission = ({
         const itemType = dish.itemType as keyof typeof tableNameMap;
         const tableName = tableNameMap[itemType] || 'dishes';
         const itemData = {
+          client_id: clientId,
           name: dish.itemName,
           description: dish.description || null,
           notes: dish.specialNotes || null,
