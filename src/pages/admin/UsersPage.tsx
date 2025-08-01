@@ -227,7 +227,7 @@ const UsersPage: React.FC = () => {
         // Edge function calls disabled due to JWT validation issues
         // Fallback to database-only approach for now
         console.log('[ADMIN_USERS] Using database fallback due to security constraints');
-        
+
         // Get user data from database tables only
         const [clientData, affiliateData] = await Promise.all([
           supabase.from('clients').select('*'),
@@ -253,7 +253,7 @@ const UsersPage: React.FC = () => {
             });
           });
         }
-
+        
         // Add affiliates as users  
         if (affiliateData.data) {
           affiliateData.data.forEach(affiliate => {
@@ -271,7 +271,7 @@ const UsersPage: React.FC = () => {
             });
           });
         }
-
+        
         console.log('[ADMIN_USERS] Successfully fetched users from database:', usersWithData.length);
         return usersWithData;
         

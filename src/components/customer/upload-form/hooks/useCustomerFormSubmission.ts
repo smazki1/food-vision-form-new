@@ -200,6 +200,7 @@ export const useCustomerFormSubmission = ({
         console.log(`[CustomerFormSubmission] Inserting dish ${dish.id} into ${tableName} table`);
 
         const itemData = {
+          client_id: clientId || null, // Include client_id for RLS policies
           name: dish.itemName,
           description: dish.description || null,
           notes: dish.specialNotes || null,

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-
-// Fetch all users with their roles
+  
+  // Fetch all users with their roles
 export const useUserRoles = () => {
   return useQuery({
     queryKey: ['user-roles'],
@@ -13,7 +13,7 @@ export const useUserRoles = () => {
     refetchOnWindowFocus: false,
   });
 };
-
+  
 // Assign role to user - disabled for security
 export const useAssignRole = () => {
   return {
@@ -23,7 +23,7 @@ export const useAssignRole = () => {
     isPending: false
   };
 };
-
+  
 // Remove role from user - disabled for security
 export const useRemoveRole = () => {
   return {
