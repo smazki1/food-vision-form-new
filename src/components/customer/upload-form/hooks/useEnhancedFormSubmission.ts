@@ -319,13 +319,22 @@ export const useEnhancedFormSubmission = ({
             }
           }
 
+          // Map Hebrew item types to English for database constraint
+          const mapItemType = (hebrewType: string): 'dish' | 'cocktail' | 'drink' => {
+            const type = hebrewType.toLowerCase().trim();
+            if (type === 'קוקטייל' || type === 'cocktail') return 'cocktail';
+            if (type === 'שתיה' || type === 'משקה' || type === 'drink') return 'drink';
+            // Default everything else to 'dish' (מנה, צמיד, כוסות, etc.)
+            return 'dish';
+          };
+
           // Prepare public submission data
           const submissionData: PublicSubmissionData = {
             restaurant_name: formData.restaurantName || 'לא צוין',
             contact_name: formData.submitterName || undefined,
             contact_email: formData.contactEmail || undefined,
             contact_phone: formData.contactPhone || undefined,
-            item_type: dish.itemType as 'dish' | 'cocktail' | 'drink',
+            item_type: mapItemType(dish.itemType),
             item_name: dish.itemName,
             description: dish.description || undefined,
             special_notes: dish.specialNotes || undefined,
@@ -389,7 +398,11 @@ export const useEnhancedFormSubmission = ({
       return results;
     }
 
-    // Original logic for authenticated users
+    // Original logic for authenticated users ONLY
+    if (!clientId) {
+      throw new Error('No clientId available for authenticated user flow');
+    }
+
     const createdSubmissions = await Promise.all(
       dishesWithUrls.map(async (dish, dishIndex) => {
         if (cancelRef.current) throw new Error('Upload cancelled');

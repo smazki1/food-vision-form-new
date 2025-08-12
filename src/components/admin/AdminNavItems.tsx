@@ -12,6 +12,7 @@ import {
   ClipboardList,
   UserCheck,
   CreditCard,
+  Globe,
 } from "lucide-react";
 
 export const adminNavItems = [
@@ -39,6 +40,11 @@ export const adminNavItems = [
     title: "הגשות",
     href: "/admin/submissions",
     icon: FileSpreadsheet,
+  },
+  {
+    title: "הגשות אנונימיות",
+    href: "/admin/public-submissions",
+    icon: Globe,
   },
   {
     title: "שותפים",

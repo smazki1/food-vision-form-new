@@ -48,6 +48,7 @@ const PackagesManagementPage = React.lazy(() => import("@/pages/admin/PackagesMa
 const AffiliateManagementPage = React.lazy(() => import("@/pages/admin/AffiliateManagementPage"));
 const AdminLeadsPage = React.lazy(() => import("@/pages/admin/leads"));
 const SubmissionsPage = React.lazy(() => import("@/pages/admin/SubmissionsPage"));
+const PublicSubmissionsPage = React.lazy(() => import("@/pages/admin/PublicSubmissionsPage"));
 const SubmissionsQueuePage = React.lazy(() => import("@/pages/admin/SubmissionsQueuePage"));
 const LazyAdminSubmissionDetailsPage = React.lazy(() => import("@/pages/admin/SubmissionDetailsPage"));
 const LeadsTestPage = React.lazy(() => import("@/pages/admin/LeadsTestPage"));
@@ -213,6 +214,7 @@ const App = () => (
                 <Route path="affiliates" element={<Suspense fallback={<LoadingSpinner />}><AffiliateManagementPage /></Suspense>} />
                 <Route path="leads" element={<Suspense fallback={<LoadingSpinner />}><AdminLeadsPage /></Suspense>} />
                 <Route path="submissions" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsPage /></Suspense>} />
+                <Route path="public-submissions" element={<Suspense fallback={<LoadingSpinner />}><PublicSubmissionsPage /></Suspense>} />
                 <Route path="submissions-queue" element={<Suspense fallback={<LoadingSpinner />}><SubmissionsQueuePage /></Suspense>} />
                 <Route path="submissions/:submissionId" element={<Suspense fallback={<LoadingSpinner />}><SubmissionDetailsPageAdmin /></Suspense>} />
                 <Route path="analytics" element={<Suspense fallback={<LoadingSpinner />}><AnalyticsDashboard /></Suspense>} />
