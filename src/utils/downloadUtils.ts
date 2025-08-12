@@ -173,3 +173,76 @@ export const downloadLeadSubmissionsAsZip = async (
     throw error;
   }
 }; 
+
+// Download all images for a single submission (both original and processed) as a ZIP
+export const downloadSubmissionImagesAsZip = async (submission: any) => {
+  try {
+    if (!submission) {
+      throw new Error('Submission is required');
+    }
+
+    const originalImages: string[] = submission.original_image_urls || [];
+    const processedImages: string[] = submission.processed_image_urls || [];
+
+    if (originalImages.length === 0 && processedImages.length === 0) {
+      throw new Error('אין תמונות להורדה להגשה זו');
+    }
+
+    const sanitizeFilename = (text: string) =>
+      (text || 'הגשה')
+        .replace(/[\\\/:*?"<>|]/g, ' ') // keep Hebrew, remove illegal filename chars
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80);
+
+    const rawDishName: string = submission.item_name_at_submission || 'הגשה';
+    const dishNameForFile = sanitizeFilename(rawDishName);
+    const zipFileName = `${dishNameForFile}.zip`;
+
+    const zip = new JSZip();
+    const promises: Promise<void>[] = [];
+
+    const addImages = (urls: string[], folder: string) => {
+      if (!urls || urls.length === 0) return;
+      urls.forEach((url, index) => {
+        const p = fetch(url)
+          .then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch image: ${url}`);
+            return response.blob();
+          })
+          .then(blob => {
+            const urlParts = url.split('.');
+            const extension = urlParts.length > 1 ? (urlParts.pop() as string) : 'jpg';
+            const fileName = `${folder}_${index + 1}.${extension}`;
+            const filePath = `${folder}/${fileName}`;
+            zip.file(filePath, blob);
+          })
+          .catch(error => {
+            console.error(`Error downloading image ${url}:`, error);
+          });
+        promises.push(p);
+      });
+    };
+
+    addImages(originalImages, 'original');
+    addImages(processedImages, 'processed');
+
+    await Promise.all(promises);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+    const downloadUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = zipFileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+    return true;
+  } catch (error) {
+    console.error('Error creating submission zip file:', error);
+    throw error;
+  }
+};

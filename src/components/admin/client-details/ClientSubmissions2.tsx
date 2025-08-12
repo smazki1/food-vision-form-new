@@ -19,7 +19,8 @@ import {
   Upload,
   Link,
   Trash2,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { Client } from '@/types/client';
 import { supabase } from '@/integrations/supabase/client';
@@ -34,6 +35,7 @@ import { StatusSelector } from './StatusSelector';
 import { useAdminSubmissionComments, useAdminAddSubmissionComment, useAdminDeleteSubmission } from '@/hooks/useAdminSubmissions';
 import { SubmissionCommentType } from '@/types/submission';
 import { MessageSquare } from 'lucide-react';
+import { downloadSubmissionImagesAsZip } from '@/utils/downloadUtils';
 
 interface ClientSubmissions2Props {
   clientId: string;
@@ -621,6 +623,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
   const [comparisonProcessedIndex, setComparisonProcessedIndex] = useState(0);
   const [activeNotesTab, setActiveNotesTab] = useState("self");
   const [isUpdating, setIsUpdating] = useState(false);
+  const [downloadingSubmissionId, setDownloadingSubmissionId] = useState<string | null>(null);
   
   // Work session form state
   const [workType, setWorkType] = useState("עיצוב");
@@ -1038,6 +1041,27 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
     setConfirmDeleteId(submissionId);
   };
 
+  // Download all images (original + processed) for a single submission
+  const handleDownloadAllClick = async (submission: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!submission) return;
+    const hasImages = (submission.original_image_urls?.length || 0) > 0 || (submission.processed_image_urls?.length || 0) > 0;
+    if (!hasImages) {
+      toast.error('אין תמונות להורדה להגשה זו');
+      return;
+    }
+    try {
+      setDownloadingSubmissionId(submission.submission_id);
+      await downloadSubmissionImagesAsZip(submission);
+      toast.success('ההורדה הוכנה בהצלחה');
+    } catch (err) {
+      console.error(err);
+      toast.error('שגיאה בהכנת ההורדה');
+    } finally {
+      setDownloadingSubmissionId(null);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!confirmDeleteId) return;
     
@@ -1311,16 +1335,30 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                         </div>
                       </div>
                       
-                      {/* Delete button - appears on hover */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => handleDeleteClick(submission.submission_id, e)}
-                        disabled={deleteSubmissionMutation.isPending}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {/* Download-all button - appears on hover */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          title="הורד את כל התמונות"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={(e) => handleDownloadAllClick(submission, e)}
+                          disabled={downloadingSubmissionId === submission.submission_id}
+                        >
+                          <Download className="h-3 w-3" />
+                        </Button>
+
+                        {/* Delete button - appears on hover */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={(e) => handleDeleteClick(submission.submission_id, e)}
+                          disabled={deleteSubmissionMutation.isPending}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
