@@ -707,15 +707,15 @@ export function SubmissionDetailsPage() {
                                   </div>
                   ) : messages.length > 0 ? (
                     messages.map((message) => (
-                      <div key={message.message_id} className="bg-gray-50 p-3 rounded-lg">
+                      <div key={message.id} className="bg-gray-50 p-3 rounded-lg">
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-medium text-sm">{message.sender_type}</span>
                           <span className="text-xs text-muted-foreground">
-                            {formatDate(message.timestamp)}
+                            {formatDate(message.created_at)}
                           </span>
-                                </div>
+                        </div>
                         <p className="text-sm">{message.content}</p>
-                              </div>
+                      </div>
                     ))
                   ) : (
                     <p className="text-muted-foreground text-center py-4">אין הודעות עדיין</p>
