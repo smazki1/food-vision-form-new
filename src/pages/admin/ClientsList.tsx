@@ -19,7 +19,13 @@ const AdminContentLayout = ({ children }: { children: React.ReactNode }) => (
 const ClientsList = () => {
   const { t } = useTranslation();
   const currentUserRoleData = useCurrentUserRole();
+  // Initialize search term from URL query if provided, else empty. Avoid auto-filling.
   const [searchTerm, setSearchTerm] = useState("");
+
+  // On mount, ensure no leftover search term from previous navigation
+  useEffect(() => {
+    setSearchTerm("");
+  }, []);
   const [showArchived, setShowArchived] = useState(false);
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
 
