@@ -85,7 +85,19 @@ const CustomerReviewPage: React.FC = () => {
           .order('uploaded_at', { ascending: false });
 
         if (submissionsData) {
-          setSubmissions(submissionsData);
+          // Sort so non-in-progress appear first, in-progress statuses at the bottom
+          const statusWeight = (s: string) => {
+            if (s === 'בעיבוד' || s === 'ממתינה לעיבוד') return 1;
+            return 0;
+          };
+          const sorted = [...submissionsData].sort((a, b) => {
+            const wa = statusWeight(a.submission_status);
+            const wb = statusWeight(b.submission_status);
+            if (wa !== wb) return wa - wb; // 0 (others) before 1 (in-progress)
+            // Within same bucket keep newest first
+            return new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime();
+          });
+          setSubmissions(sorted);
         }
       } catch (error) {
         console.error('Error fetching data:', error);

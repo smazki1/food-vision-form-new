@@ -58,6 +58,13 @@ export function CustomerSubmissionsList() {
         ? sub.item_name_at_submission.toLowerCase().includes(searchTerm.toLowerCase())
         : true)
     );
+  }).sort((a, b) => {
+    // Non-in-progress first, in-progress last; within buckets, newest first
+    const inProgress = (s: string) => s === 'בעיבוד' || s === 'ממתינה לעיבוד';
+    const wa = inProgress(a.submission_status) ? 1 : 0;
+    const wb = inProgress(b.submission_status) ? 1 : 0;
+    if (wa !== wb) return wa - wb; // 0 before 1
+    return new Date(b.uploaded_at).getTime() - new Date(a.uploaded_at).getTime();
   });
 
   const handleStatusChange = (value: string) => {
