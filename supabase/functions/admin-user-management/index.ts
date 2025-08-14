@@ -4,6 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
 }
 
 serve(async (req) => {
@@ -51,9 +52,13 @@ serve(async (req) => {
       )
     }
 
-    // Check if user is admin
-    const adminEmails = ['admin@foodvision.co.il', 'avi@foodvision.co.il']
-    if (!adminEmails.includes(user.email || '')) {
+    // Check if user is admin via user_roles table (more robust than email allowlist)
+    const { data: roleRow, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (roleError || !roleRow || roleRow.role !== 'admin') {
       return new Response(
         JSON.stringify({ error: 'Insufficient permissions' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -65,21 +70,19 @@ serve(async (req) => {
     const action = url.searchParams.get('action')
 
     switch (method) {
-      case 'GET':
+      case 'GET': {
         if (action === 'list-users') {
           const { data: users, error } = await supabaseAdmin.auth.admin.listUsers()
           if (error) throw error
-          
           return new Response(
             JSON.stringify({ users }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
         break
-
-      case 'POST':
+      }
+      case 'POST': {
         const body = await req.json()
-        
         if (action === 'create-user') {
           const { email, password, userData } = body
           const { data, error } = await supabaseAdmin.auth.admin.createUser({
@@ -89,29 +92,50 @@ serve(async (req) => {
             user_metadata: userData || {}
           })
           if (error) throw error
-          
           return new Response(
             JSON.stringify({ user: data.user }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
-        
         if (action === 'update-user') {
           const { userId, userData } = body
-          const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
-            userId,
-            userData
-          )
-          if (error) throw error
-          
+          if (!userId || typeof userId !== 'string') {
+            return new Response(
+              JSON.stringify({ error: 'Missing or invalid userId' }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
+          // Pre-check that the user exists
+          const { data: existing, error: getErr } = await supabaseAdmin.auth.admin.getUserById(userId)
+          if (getErr) {
+            return new Response(
+              JSON.stringify({ error: getErr.message }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+          if (!existing?.user) {
+            return new Response(
+              JSON.stringify({ error: 'User not found' }),
+              { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
+          const { data, error } = await supabaseAdmin.auth.admin.updateUserById(userId, userData)
+          if (error) {
+            return new Response(
+              JSON.stringify({ error: error.message }),
+              { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
           return new Response(
             JSON.stringify({ user: data.user }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
         break
-
-      case 'DELETE':
+      }
+      case 'DELETE': {
         if (action === 'delete-user') {
           const userId = url.searchParams.get('userId')
           if (!userId) {
@@ -120,16 +144,15 @@ serve(async (req) => {
               { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
           }
-          
           const { error } = await supabaseAdmin.auth.admin.deleteUser(userId)
           if (error) throw error
-          
           return new Response(
             JSON.stringify({ success: true }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
         break
+      }
     }
 
     return new Response(

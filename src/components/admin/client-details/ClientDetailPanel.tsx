@@ -38,6 +38,7 @@ import { ClientActivityNotes } from './ClientActivityNotes';
 import { ClientPaymentStatus } from './ClientPaymentStatus';
 import { ClientCostTracking } from './ClientCostTracking';
 import CustomerReviewPageTab from './CustomerReviewPageTab';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import existing hooks
 import { useClients } from '@/hooks/useClients';
@@ -517,6 +518,14 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
                           </a>
                         </div>
                       )}
+
+                      {/* Admin account manager */}
+                      <div className="mt-6 p-4 border rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="font-semibold">חשבון משתמש ללקוח</span>
+                        </div>
+                        <AdminClientAccountManager client={client} />
+                      </div>
                     </>
                   )}
                 </CardContent>
@@ -561,3 +570,156 @@ export const ClientDetailPanel: React.FC<ClientDetailPanelProps> = ({
 };
 
 export default ClientDetailPanel; 
+
+// Admin-only account manager component
+const AdminClientAccountManager: React.FC<{ client: Client }> = ({ client }) => {
+  const [email, setEmail] = useState(client.email || '');
+  const [role, setRole] = useState<'admin' | 'editor' | 'customer' | 'affiliate'>('customer');
+  const [newPassword, setNewPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [linkedUserId, setLinkedUserId] = useState<string | null>(client.user_auth_id || null);
+
+  useEffect(() => {
+    setEmail(client.email || '');
+    setLinkedUserId(client.user_auth_id || null);
+  }, [client.email, client.user_auth_id]);
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string;
+      if (!supabaseUrl) throw new Error('Missing SUPABASE URL');
+
+      // Treat zero-UUID as invalid and create a new auth user when needed
+      const INVALID_ID = '00000000-0000-0000-0000-000000000000';
+      let userId = linkedUserId && linkedUserId !== INVALID_ID ? linkedUserId : null;
+      if (!userId) {
+        const passwordToUse = newPassword && newPassword.length >= 8 ? newPassword : Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+        const res = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=create-user`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: passwordToUse, userData: { role: 'customer' } })
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || 'Failed to create user');
+        userId = json?.user?.id;
+        if (!userId) throw new Error('Missing created user id');
+
+        // Link to client
+        await (supabase as any)
+          .from('clients')
+          .update({ user_auth_id: userId })
+          .eq('client_id', client.client_id);
+
+        setLinkedUserId(userId);
+      }
+
+      // Update auth user if email/password changed
+      const updates: Record<string, any> = {};
+      if (email && email !== client.email) updates.email = email;
+      if (newPassword && newPassword.length >= 8) updates.password = newPassword;
+      if (Object.keys(updates).length > 0) {
+        const res2 = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=update-user`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, userData: updates })
+        });
+        const json2 = await res2.json().catch(() => ({}));
+        if (res2.status === 404 && (json2?.error || '').toLowerCase().includes('user not found')) {
+          // Recreate and relink, then retry once
+          const pwd = updates.password || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+          const resCreate = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=create-user`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password: pwd, userData: { role: 'customer' } })
+          });
+          const jsonCreate = await resCreate.json().catch(() => ({}));
+          if (!resCreate.ok) throw new Error(jsonCreate?.error || 'Failed to recreate user');
+          userId = jsonCreate?.user?.id;
+          await (supabase as any).from('clients').update({ user_auth_id: userId }).eq('client_id', client.client_id);
+          const resRetry = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=update-user`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, userData: updates })
+          });
+          const jsonRetry = await resRetry.json().catch(() => ({}));
+          if (!resRetry.ok) throw new Error(jsonRetry?.error || 'Failed to update user');
+        } else if (!res2.ok) {
+          throw new Error(json2?.error || 'Failed to update user');
+        }
+      }
+
+      // Upsert role
+      await (supabase as any)
+        .from('user_roles')
+        .upsert({ user_id: userId, role })
+        .select()
+        .maybeSingle();
+
+      // Store password reference if changed
+      if (newPassword && newPassword.length >= 8) {
+        await (supabase as any)
+          .from('user_password_references')
+          .upsert({
+            user_id: userId,
+            password_reference: newPassword,
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      toast.success('פרטי החשבון עודכנו בהצלחה');
+    } catch (e: any) {
+      toast.error(e?.message || 'שגיאה בעדכון חשבון');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
+          <Label>אימייל</Label>
+          <Input dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com" />
+        </div>
+        <div>
+          <Label>תפקיד</Label>
+          <Select value={role} onValueChange={(v: any) => setRole(v)}>
+            <SelectTrigger>
+              <SelectValue placeholder="בחר תפקיד" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="customer">לקוח</SelectItem>
+              <SelectItem value="editor">עורך</SelectItem>
+              <SelectItem value="admin">מנהל</SelectItem>
+              <SelectItem value="affiliate">שותף</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>סיסמה חדשה (אופציונלי)</Label>
+          <Input dir="ltr" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="לפחות 8 תווים" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={handleSave} disabled={loading}>
+          {loading ? 'שומר...' : 'שמור חשבון'}
+        </Button>
+        {linkedUserId && (
+          <Button size="sm" variant="outline" onClick={async () => {
+            await navigator.clipboard.writeText(`Email: ${email}`);
+            toast.success('אימייל הועתק');
+          }}>העתק אימייל</Button>
+        )}
+      </div>
+      {!linkedUserId && (
+        <div className="text-xs text-gray-500">אין משתמש מקושר. שמור כדי ליצור חשבון חדש ולקשר אותו ללקוח.</div>
+      )}
+    </div>
+  );
+};
