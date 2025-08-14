@@ -80,7 +80,7 @@ export const SubmissionsStatusOverview: React.FC<SubmissionsStatusOverviewProps>
 
         <div className="flex justify-center">
           <Button variant="outline" asChild>
-            <Link to="/customer/submissions">
+            <Link to={clientId ? `/customer-review/${clientId}` : `/customer/submissions`}>
               צפו בכל המנות
               <ArrowRight className="mr-2 h-4 w-4" />
             </Link>

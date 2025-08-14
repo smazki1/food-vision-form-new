@@ -34,11 +34,7 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
               {clientProfile?.service_packages?.total_servings || "-"}
             </p>
           </div>
-          <Button asChild>
-            <Link to="/customer/profile">
-              צפו בפרטי החבילה
-            </Link>
-          </Button>
+          {/* Requested: hide the "view package details" button */}
         </div>
         
         {clientProfile?.remaining_servings && clientProfile.remaining_servings < 5 && (
