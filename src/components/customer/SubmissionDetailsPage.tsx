@@ -427,54 +427,64 @@ export function SubmissionDetailsPage() {
       </div>
       
       {/* Lightbox Dialog for selectedImage */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-          <div className="relative max-w-full max-h-full flex items-center justify-center">
-            <img 
-              src={selectedImage} 
-              alt="Selected Preview" 
-              className="max-w-full max-h-full object-contain" 
-            />
-            
-            {/* Close button */}
-            <button
-              className="absolute top-4 right-4 bg-white/90 hover:bg-white text-black rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
-              onClick={closeLightbox}
-            >
-              <span className="text-lg font-bold">✕</span>
-            </button>
-            
-            {/* Navigation arrows */}
-            {lightboxImageType && (() => {
-              const imageUrls = lightboxImageType === 'processed' 
-                ? submission.processed_image_urls 
-                : submission.original_image_urls;
-              
-              return imageUrls && imageUrls.length > 1 && (
-                <>
-                  <button
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
-                    onClick={() => navigateLightboxImage('prev')}
-                  >
-                    <ChevronLeft className="h-6 w-6" />
-                  </button>
-                  <button
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-black rounded-full w-12 h-12 flex items-center justify-center shadow-lg"
-                    onClick={() => navigateLightboxImage('next')}
-                  >
-                    <ChevronRight className="h-6 w-6" />
-                  </button>
-                  
-                  {/* Image counter */}
-                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    {lightboxCurrentIndex + 1} / {imageUrls.length}
-                  </div>
-                </>
-              );
-            })()}
+      {selectedImage && (() => {
+        // swipe support
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const onTouchStart = (e: React.TouchEvent) => { touchStartX = e.changedTouches[0].clientX; };
+        const onTouchEnd = (e: React.TouchEvent) => {
+          touchEndX = e.changedTouches[0].clientX;
+          const delta = touchEndX - touchStartX;
+          if (Math.abs(delta) > 40) {
+            navigateLightboxImage(delta > 0 ? 'prev' : 'next');
+          }
+        };
+        return (
+          <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-0" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img 
+                src={selectedImage} 
+                alt="Selected Preview" 
+                className="max-w-[96vw] max-h-[92vh] object-contain" 
+              />
+              {/* Close button */}
+              <button
+                className="absolute top-3 right-3 bg-black/60 hover:bg-black/70 text-white rounded-full w-9 h-9 flex items-center justify-center shadow-md"
+                onClick={closeLightbox}
+                aria-label="close"
+              >
+                ✕
+              </button>
+              {lightboxImageType && (() => {
+                const imageUrls = lightboxImageType === 'processed' ? submission.processed_image_urls : submission.original_image_urls;
+                return imageUrls && imageUrls.length > 1 && (
+                  <>
+                    {/* tap zones */}
+                    <div className="absolute inset-y-0 left-0 w-1/3" onClick={() => navigateLightboxImage('prev')} />
+                    <div className="absolute inset-y-0 right-0 w-1/3" onClick={() => navigateLightboxImage('next')} />
+                    {/* chevrons */}
+                    <button
+                      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                      aria-hidden
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                      aria-hidden
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded text-xs">
+                      {lightboxCurrentIndex + 1} / {imageUrls.length}
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Fullscreen Comparison Dialog - Single Image View with Navigation */}
       {isComparisonOpen && (
@@ -588,22 +598,20 @@ export function SubmissionDetailsPage() {
                         {/* Navigation arrows for processed images - Mobile optimized */}
                         {submission.processed_image_urls.length > 1 && (
                           <>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                            <button
+                              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                               onClick={() => navigateProcessedImage('prev')}
+                              aria-label="previous"
                             >
                               <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                            </button>
+                            <button
+                              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                               onClick={() => navigateProcessedImage('next')}
+                              aria-label="next"
                             >
                               <ChevronRight className="h-4 w-4" />
-                            </Button>
+                            </button>
                           </>
                         )}
                       
@@ -644,22 +652,20 @@ export function SubmissionDetailsPage() {
                       {/* Navigation arrows for original images */}
                       {submission.original_image_urls.length > 1 && (
                         <>
-                        <Button 
-                          variant="secondary" 
-                            size="sm"
-                            className="absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                          <button 
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             onClick={() => navigateOriginalImage('prev')}
+                            aria-label="previous"
                           >
                             <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 opacity-70 sm:opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 hover:bg-white text-black rounded-full w-8 h-8 sm:w-auto sm:h-auto p-1 sm:p-2"
+                          </button>
+                          <button 
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
                             onClick={() => navigateOriginalImage('next')}
+                            aria-label="next"
                           >
                             <ChevronRight className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </>
                         )}
                       
