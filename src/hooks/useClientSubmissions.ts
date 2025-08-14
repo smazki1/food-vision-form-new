@@ -8,6 +8,30 @@ export const useClientSubmissions = (clientId: string) => {
     queryFn: async () => {
       console.log('[useClientSubmissions] Fetching submissions for client:', clientId);
       
+      // Try admin RPC first (handles RLS, checks is_admin() server-side)
+      try {
+        const { data: rpcData, error: rpcError }: any = await supabase
+          .rpc('admin_get_client_submissions' as any, { p_client_id: clientId });
+        if (!rpcError && Array.isArray(rpcData)) {
+          console.log('[useClientSubmissions] Using admin_get_client_submissions RPC, rows:', rpcData.length);
+          // Fetch client context for display
+          const { data: clientInfo } = await supabase
+            .from('clients')
+            .select('restaurant_name, contact_name, email, phone')
+            .eq('client_id', clientId)
+            .single();
+          const clientData = clientInfo ? {
+            restaurant_name: clientInfo.restaurant_name,
+            contact_name: clientInfo.contact_name,
+            email: clientInfo.email,
+            phone: clientInfo.phone
+          } : null;
+          return (rpcData as any[]).map((s) => ({ ...s, clients: clientData, leads: null })) as EnhancedSubmission[];
+        }
+      } catch (e) {
+        console.warn('[useClientSubmissions] RPC not available or failed, falling back to direct query');
+      }
+
       // Get client data to find original lead ID if exists
       const { data: clientInfo, error: clientInfoError } = await supabase
         .from('clients')

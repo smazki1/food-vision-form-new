@@ -1,9 +1,18 @@
 
 
-  VITE v5.4.19  ready in 475 ms
+  VITE v5.4.19  ready in 265 ms
 
   ➜  Local:   http://localhost:8080/
   ➜  Network: http://192.168.1.161:8080/
   ➜  press h + enter to show help
-npm run dev
-
+9:23:39 AM [vite] hmr update /src/components/admin/client-details/ClientDetail
+9:23:39 AM [vite] hmr update /src/components/admin/client-details/ClientDetailPanel.tsx, /src/index.css
+9:24:11 AM [vite] hmr update /src/components/admin/client-details/ClientDetail
+9:24:11 AM [vite] hmr update /src/components/admin/client-details/ClientDetailPanel.tsx, /src/index.css (x2)
+9:50:07 AM [vite] hmr update /src/components/customer/dashboard/QuickActions.t
+9:50:07 AM [vite] hmr update /src/components/customer/dashboard/QuickActions.tsx, /src/index.css
+9:50:17 AM [vite] hmr update /src/components/customer/dashboard/PackageSummary
+9:50:17 AM [vite] hmr update /src/components/customer/dashboard/PackageSummaryCard.tsx, /src/index.css
+9:50:31 AM [vite] hmr update /src/components/customer/dashboard/SubmissionsSta
+9:50:31 AM [vite] hmr update /src/components/customer/dashboard/SubmissionsStatusOverview.tsx, /src/index.css
+9:51:02 AM [vite] hmr update /src/components/customer/dashboard/SubmissionsSta

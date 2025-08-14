@@ -203,6 +203,29 @@ const UsersPage: React.FC = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{
+    user_id: string;
+    email: string;
+    role: 'admin' | 'editor' | 'customer' | 'affiliate';
+    restaurant_name?: string;
+    contact_name?: string;
+    phone?: string;
+    package_id?: string;
+    remaining_servings?: number;
+    new_password?: string;
+    client_id?: string;
+  }>({
+    user_id: '',
+    email: '',
+    role: 'customer',
+    restaurant_name: '',
+    contact_name: '',
+    phone: '',
+    package_id: '',
+    remaining_servings: 0,
+    new_password: '',
+    client_id: ''
+  });
   const [createForm, setCreateForm] = useState<CreateCustomerForm>({
     email: '',
     password: '',
@@ -238,7 +261,7 @@ const UsersPage: React.FC = () => {
         
         // Add clients as users
         if (clientData.data) {
-          clientData.data.forEach(client => {
+          clientData.data.forEach((client: any) => {
             usersWithData.push({
               id: client.user_auth_id || client.client_id,
               email: client.email || 'לא זמין',
@@ -249,7 +272,8 @@ const UsersPage: React.FC = () => {
               restaurant_name: client.restaurant_name,
               contact_name: client.contact_name,
               phone: client.phone,
-              client_status: client.client_status || 'active'
+              client_status: client.client_status || 'active',
+              client_id: client.client_id
             });
           });
         }
@@ -299,10 +323,88 @@ const UsersPage: React.FC = () => {
     }
   });
 
-  // Create customer mutation - DISABLED for security until edge function JWT issue is resolved
+  // Create customer mutation - uses Edge Function (admin-user-management) with JWT
   const createCustomerMutation = useMutation({
     mutationFn: async (formData: CreateCustomerForm) => {
-      throw new Error('User creation temporarily disabled for security - please use Supabase dashboard for user management');
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string;
+      if (!supabaseUrl) throw new Error('Missing SUPABASE URL');
+
+      // 1) Get current access token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
+      // 2) Create Auth user via Edge Function
+      const createRes = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=create-user`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          userData: { role: 'customer' }
+        })
+      });
+
+      const createJson = await createRes.json();
+      if (!createRes.ok) {
+        throw new Error(createJson?.error || 'Failed to create auth user');
+      }
+
+      const createdUserId: string | undefined = createJson?.user?.id;
+      if (!createdUserId) throw new Error('Missing created user id');
+
+      // 3) Create client record linked to the auth user
+      let remainingServings = formData.remaining_servings ?? 0;
+      let currentPackageId: string | null = formData.package_id || null;
+
+      // If a package was selected but remaining not provided, fetch package details to set remaining_servings
+      if (currentPackageId && remainingServings === 0) {
+        const { data: pkg }: any = await (supabase as any)
+          .from('service_packages')
+          .select('package_id, total_servings')
+          .eq('package_id', currentPackageId)
+          .single();
+        if (pkg && typeof pkg.total_servings === 'number') remainingServings = pkg.total_servings;
+      }
+
+      const { data: clientInsertData, error: clientInsertError } = await (supabase as any)
+        .from('clients')
+        .insert({
+          user_auth_id: createdUserId,
+          restaurant_name: formData.restaurant_name,
+          contact_name: formData.contact_name,
+          email: formData.email,
+          phone: formData.phone || null,
+          current_package_id: currentPackageId,
+          remaining_servings: remainingServings,
+          client_status: 'active'
+        })
+        .select()
+        .single();
+
+      if (clientInsertError) throw new Error(clientInsertError.message);
+
+      // 4) Ensure user role mapping exists
+      await (supabase as any)
+        .from('user_roles')
+        .insert({ user_id: createdUserId, role: 'customer' })
+        .select()
+        .single();
+
+      // 5) Store password reference (for admin view only)
+      await (supabase as any)
+        .from('user_password_references')
+        .upsert({
+          user_id: createdUserId,
+          password_reference: formData.password,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+          updated_at: new Date().toISOString()
+        });
+
+      return { userId: createdUserId, client: clientInsertData };
     },
     onSuccess: () => {
       toast.success('לקוח נוצר בהצלחה');
@@ -338,10 +440,40 @@ const UsersPage: React.FC = () => {
     }
   });
 
-  // Delete user mutation - DISABLED for security
+  // Delete user mutation - uses Edge Function (admin-user-management)
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: string) => {
-      throw new Error('User deletion temporarily disabled for security - please use Supabase dashboard');
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string;
+      if (!supabaseUrl) throw new Error('Missing SUPABASE URL');
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
+      const delRes = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=delete-user&userId=${encodeURIComponent(userId)}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const delJson = await delRes.json().catch(() => ({}));
+      if (!delRes.ok) throw new Error(delJson?.error || 'Failed to delete user');
+
+      // Also remove linked client if exists
+      await (supabase as any)
+        .from('clients')
+        .delete()
+        .eq('user_auth_id', userId);
+
+      await (supabase as any)
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId);
+
+      await (supabase as any)
+        .from('user_password_references')
+        .delete()
+        .eq('user_id', userId);
+
+      return true;
     },
     onSuccess: () => {
       toast.success('משתמש נמחק בהצלחה');
@@ -349,6 +481,106 @@ const UsersPage: React.FC = () => {
     },
     onError: (error: Error) => {
       toast.error(`שגיאה במחיקת משתמש: ${error.message}`);
+    }
+  });
+
+  // Update user mutation - uses Edge Function for auth update + DB updates
+  const updateUserMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedUser) throw new Error('No user selected');
+      const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL as string;
+      if (!supabaseUrl) throw new Error('Missing SUPABASE URL');
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Not authenticated');
+
+      // 1) Auth user update (email/password if provided)
+      const authUpdates: Record<string, any> = {};
+      if (editForm.email && editForm.email !== selectedUser.email) authUpdates.email = editForm.email;
+      if (editForm.new_password && editForm.new_password.trim().length >= 8) authUpdates.password = editForm.new_password;
+      if (Object.keys(authUpdates).length > 0) {
+        const res = await fetch(`${supabaseUrl}/functions/v1/admin-user-management?action=update-user`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId: editForm.user_id, userData: authUpdates })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.error || 'Failed to update auth user');
+      }
+
+      // 2) Role mapping
+      await (supabase as any)
+        .from('user_roles')
+        .upsert({ user_id: editForm.user_id, role: editForm.role })
+        .select()
+        .maybeSingle();
+
+      // 3) Customer client record update
+      if (editForm.role === 'customer') {
+        // If package selected and remaining not provided, fetch package total_servings
+        let remaining = editForm.remaining_servings ?? 0;
+        let pkgId = editForm.package_id || null;
+        if (pkgId && (!remaining || remaining === 0)) {
+          const { data: pkg }: any = await (supabase as any)
+            .from('service_packages')
+            .select('total_servings')
+            .eq('package_id', pkgId)
+            .single();
+          if (pkg && typeof pkg.total_servings === 'number') remaining = pkg.total_servings;
+        }
+
+        const clientPayload: any = {
+          restaurant_name: editForm.restaurant_name || null,
+          contact_name: editForm.contact_name || null,
+          email: editForm.email,
+          phone: editForm.phone || null,
+          current_package_id: pkgId,
+          remaining_servings: remaining
+        };
+
+        if (editForm.client_id) {
+          await (supabase as any)
+            .from('clients')
+            .update(clientPayload)
+            .eq('client_id', editForm.client_id);
+        } else {
+          // create client row if missing
+          await (supabase as any)
+            .from('clients')
+            .insert({
+              user_auth_id: editForm.user_id,
+              ...clientPayload,
+              client_status: 'active'
+            });
+        }
+      }
+
+      // 4) Store new password reference if changed
+      if (editForm.new_password && editForm.new_password.trim().length >= 8) {
+        await (supabase as any)
+          .from('user_password_references')
+          .upsert({
+            user_id: editForm.user_id,
+            password_reference: editForm.new_password,
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+            updated_at: new Date().toISOString()
+          });
+      }
+
+      return true;
+    },
+    onSuccess: () => {
+      toast.success('משתמש עודכן בהצלחה');
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`שגיאה בעדכון משתמש: ${error.message}`);
     }
   });
 
@@ -634,8 +866,8 @@ const UsersPage: React.FC = () => {
               </TableRow>
             </TableHeader>
               <TableBody>
-                {filteredUsers.map(user => (
-                  <TableRow key={user.id}>
+                {filteredUsers.map((user, idx) => (
+                  <TableRow key={user.id || `${user.email}-${idx}`}>
                     <TableCell>
                       <div className="space-y-1">
                         <div className="font-medium">{user.email}</div>
@@ -695,6 +927,18 @@ const UsersPage: React.FC = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => {
                             setSelectedUser(user);
+                              setEditForm({
+                                user_id: user.id,
+                                email: user.email,
+                                role: (user.role as any) || 'customer',
+                                restaurant_name: user.restaurant_name,
+                                contact_name: user.contact_name,
+                                phone: user.phone,
+                                package_id: '',
+                                remaining_servings: user.remaining_servings,
+                                new_password: '',
+                                client_id: user.client_id as any
+                              });
                             setIsEditDialogOpen(true);
                           }}>
                             <Edit className="h-4 w-4 mr-2" />
@@ -754,6 +998,92 @@ const UsersPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>עריכת משתמש</DialogTitle>
+            <DialogDescription>עדכן פרטי משתמש ולקוח</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit_email">אימייל</Label>
+              <Input id="edit_email" type="email" value={editForm.email}
+                onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>תפקיד</Label>
+              <Select value={editForm.role} onValueChange={(v: any) => setEditForm(prev => ({ ...prev, role: v }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="בחר תפקיד" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">מנהל</SelectItem>
+                  <SelectItem value="editor">עורך</SelectItem>
+                  <SelectItem value="customer">לקוח</SelectItem>
+                  <SelectItem value="affiliate">שותף</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {editForm.role === 'customer' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_restaurant">שם מסעדה</Label>
+                  <Input id="edit_restaurant" value={editForm.restaurant_name || ''}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, restaurant_name: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_contact">איש קשר</Label>
+                  <Input id="edit_contact" value={editForm.contact_name || ''}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, contact_name: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_phone">טלפון</Label>
+                  <Input id="edit_phone" value={editForm.phone || ''}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_remaining">מנות נותרות</Label>
+                  <Input id="edit_remaining" type="number" value={editForm.remaining_servings ?? 0}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, remaining_servings: Number(e.target.value) }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit_package">חבילה</Label>
+                  <Select value={editForm.package_id || ''} onValueChange={(v) => setEditForm(prev => ({ ...prev, package_id: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="בחר חבילה (אופציונלי)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {packages.map((pkg: any) => (
+                        <SelectItem key={pkg.package_id} value={pkg.package_id}>
+                          {pkg.package_name} - ₪{pkg.price} ({pkg.total_servings} מנות)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="edit_password">סיסמה חדשה (אופציונלי)</Label>
+              <Input id="edit_password" type="password" value={editForm.new_password || ''}
+                onChange={(e) => setEditForm(prev => ({ ...prev, new_password: e.target.value }))} />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button className="flex-1" onClick={() => updateUserMutation.mutate()}>
+                שמור
+              </Button>
+              <Button className="flex-1" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                ביטול
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

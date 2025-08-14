@@ -10,6 +10,8 @@ interface PackageSummaryCardProps {
 }
 
 export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientProfile }) => {
+  const remaining = clientProfile?.remaining_servings ?? 0;
+  const canUpload = remaining > 0;
   return (
     <Card className="w-full max-w-lg">
       <CardHeader className="pb-3 text-center">
@@ -34,7 +36,15 @@ export const PackageSummaryCard: React.FC<PackageSummaryCardProps> = ({ clientPr
               {clientProfile?.service_packages?.total_servings || "-"}
             </p>
           </div>
-          {/* Requested: hide the "view package details" button */}
+          {/* Upload dishes button (enabled only if package has remaining servings) */}
+          <Button asChild disabled={!canUpload}>
+            <Link to="/customer/upload">
+              העלאת מנות
+            </Link>
+          </Button>
+          {!canUpload && (
+            <p className="text-xs text-muted-foreground mt-1">אין מנות זמינות בחבילה להעלאה</p>
+          )}
         </div>
         
         {clientProfile?.remaining_servings && clientProfile.remaining_servings < 5 && (

@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useSubmission } from "@/hooks/useSubmission";
-import { useMessages } from "@/hooks/useMessages";
-import { useAddSubmissionComment } from "@/hooks/useSubmissions";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Check, Download, Edit, MessageSquare, Send, ChevronLeft, ChevronRight, Maximize } from "lucide-react";
+import { ArrowLeft, Check, Download, Edit, ChevronLeft, ChevronRight, Maximize } from "lucide-react";
 import { formatDate } from "@/utils/formatDate";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ShareDialog } from "./ShareDialog";
+import { ImageComments } from "./ImageComments";
 
 // Status badge variant mapping
 const statusBadgeVariant: Record<string, string> = {
@@ -27,11 +26,8 @@ const statusBadgeVariant: Record<string, string> = {
 export function SubmissionDetailsPage() {
   const { submissionId, clientId } = useParams<{ submissionId: string; clientId?: string }>();
   const { submission, loading: submissionLoading, error: submissionError, updateSubmissionStatus, setMainProcessedImage } = useSubmission(submissionId);
-  const { messages, loading: messagesLoading, sendMessage } = useMessages(submissionId);
-  const addCommentMutation = useAddSubmissionComment();
   
   const [editNote, setEditNote] = useState("");
-  const [newMessage, setNewMessage] = useState("");
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -87,14 +83,6 @@ export function SubmissionDetailsPage() {
     }
 
     try {
-      // Use the new submission_comments system
-      await addCommentMutation.mutateAsync({
-        submissionId: submission.submission_id,
-        commentType: 'client_visible',
-        commentText: editNote,
-        visibility: 'admin'
-      });
-
       // Update submission status to indicate client feedback received
       const statusSuccess = await updateSubmissionStatus("הערות התקבלו");
       
@@ -139,26 +127,6 @@ export function SubmissionDetailsPage() {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-    
-    const sent = await sendMessage(newMessage);
-    
-    if (sent) {
-      setNewMessage("");
-      toast({
-        title: "ההודעה נשלחה",
-        description: "ההודעה שלכם נשלחה לצוות העריכה",
-      });
-    } else {
-      toast({
-        title: "שגיאה בשליחת ההודעה",
-        description: "אירעה שגיאה בעת שליחת ההודעה. אנא נסו שוב מאוחר יותר.",
-        variant: "destructive",
-      });
-    }
-  };
-  
   const handleSetMainImage = async (imageUrl: string) => {
     if (!imageUrl) return;
     
@@ -177,7 +145,7 @@ export function SubmissionDetailsPage() {
       });
     }
   };
-  
+
   const handleDownloadImage = (imageUrl: string) => {
     // Create a temporary anchor element to download the image
     const link = document.createElement('a');
@@ -572,7 +540,7 @@ export function SubmissionDetailsPage() {
             {/* Side by side image comparison - single images with navigation */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full max-w-none">
               {/* Processed Images - Left Side */}
-          <Card>
+              <Card>
                 <CardHeader className="pb-3 sm:pb-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <CardTitle className="text-right text-lg sm:text-xl">תמונות מוכנות</CardTitle>
@@ -582,10 +550,11 @@ export function SubmissionDetailsPage() {
                       </Badge>
                     )}
                   </div>
-            </CardHeader>
+                </CardHeader>
                 <CardContent className="p-3 sm:p-6">
-              {hasProcessedImages ? (
-                                          <div className="relative group">
+                  {hasProcessedImages ? (
+                    <div className="space-y-4">
+                      <div className="relative group">
                         <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                           <img
                             src={submission.processed_image_urls[currentProcessedIndex]}
@@ -614,8 +583,15 @@ export function SubmissionDetailsPage() {
                             </button>
                           </>
                         )}
+                      </div>
                       
-
+                      {/* Image-specific comments */}
+                      <ImageComments
+                        submissionId={submission.submission_id}
+                        imageUrl={submission.processed_image_urls[currentProcessedIndex]}
+                        imageType="processed"
+                        viewMode="customer"
+                      />
                     </div>
                   ) : (
                     <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
@@ -639,38 +615,46 @@ export function SubmissionDetailsPage() {
                 </CardHeader>
                 <CardContent className="p-3 sm:p-6">
                   {submission.original_image_urls && submission.original_image_urls.length > 0 ? (
-                    <div className="relative group">
-                      <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
-                        <img
-                          src={submission.original_image_urls[currentOriginalIndex]}
-                          alt={`${submission.item_name_at_submission} - מקור`}
-                          className="w-full h-full object-cover cursor-pointer"
-                          onClick={() => openLightbox(submission.original_image_urls![currentOriginalIndex], 'original', currentOriginalIndex)}
-                        />
-                      </div>
-                      
-                      {/* Navigation arrows for original images */}
-                      {submission.original_image_urls.length > 1 && (
-                        <>
-                          <button 
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
-                            onClick={() => navigateOriginalImage('prev')}
-                            aria-label="previous"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
-                            onClick={() => navigateOriginalImage('next')}
-                            aria-label="next"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </button>
-                        </>
+                    <div className="space-y-4">
+                      <div className="relative group">
+                        <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
+                          <img
+                            src={submission.original_image_urls[currentOriginalIndex]}
+                            alt={`${submission.item_name_at_submission} - מקור`}
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => openLightbox(submission.original_image_urls![currentOriginalIndex], 'original', currentOriginalIndex)}
+                          />
+                        </div>
+                        
+                        {/* Navigation arrows for original images */}
+                        {submission.original_image_urls.length > 1 && (
+                          <>
+                            <button 
+                              className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                              onClick={() => navigateOriginalImage('prev')}
+                              aria-label="previous"
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <button 
+                              className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                              onClick={() => navigateOriginalImage('next')}
+                              aria-label="next"
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </button>
+                          </>
                         )}
-                      
-
                       </div>
+                      
+                      {/* Image-specific comments */}
+                      <ImageComments
+                        submissionId={submission.submission_id}
+                        imageUrl={submission.original_image_urls[currentOriginalIndex]}
+                        imageType="original"
+                        viewMode="customer"
+                      />
+                    </div>
                   ) : (
                     <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
                       <p className="text-gray-500">אין תמונות מקור</p>
@@ -683,70 +667,17 @@ export function SubmissionDetailsPage() {
             {/* Fullscreen Comparison Button */}
             {hasProcessedImages && submission.original_image_urls && submission.original_image_urls.length > 0 && (
               <div className="flex justify-center px-4 sm:px-0">
-                                    <Button 
+                <Button 
                   onClick={openFullscreenComparison}
-                                        variant="outline" 
+                  variant="outline" 
                   size="lg"
                   className="gap-2 w-full sm:w-auto text-base sm:text-sm py-3 sm:py-2"
-                                      >
+                >
                   <Maximize className="h-5 w-5" />
                   השוואה מלאה
-                                      </Button>
+                </Button>
               </div>
-                                    )}
-                                    
-            {/* Comments Section */}
-            <Card>
-              <CardHeader className="pb-3 sm:pb-6">
-                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                  <MessageSquare className="h-5 w-5" />
-                  הודעות והערות
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-3 sm:p-6">
-                {/* Existing Messages */}
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {messagesLoading ? (
-                    <div className="space-y-2">
-                      <Skeleton className="h-16 w-full" />
-                      <Skeleton className="h-16 w-full" />
-                                  </div>
-                  ) : messages.length > 0 ? (
-                    messages.map((message) => (
-                      <div key={message.id} className="bg-gray-50 p-3 rounded-lg">
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="font-medium text-sm">{message.sender_type}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatDate(message.created_at)}
-                          </span>
-                        </div>
-                        <p className="text-sm">{message.content}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground text-center py-4">אין הודעות עדיין</p>
-                  )}
-                </div>
-
-                {/* New Message Input */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
-                  <Textarea
-                    placeholder="כתבו הודעה או הערה..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    className="flex-1 min-h-[80px]"
-                  />
-                        <Button 
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                    className="self-start sm:self-end w-full sm:w-auto py-3 sm:py-2"
-                        >
-                    <Send className="h-4 w-4 ml-2 sm:ml-0" />
-                    <span className="sm:hidden">שלח הודעה</span>
-                        </Button>
-                      </div>
-            </CardContent>
-          </Card>
+            )}
           </div>
         </TabsContent>
         

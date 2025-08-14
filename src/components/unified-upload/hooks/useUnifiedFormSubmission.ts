@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { uploadImages } from '../utils/imageUploadUtils';
 import { handleAuthenticatedSubmission } from '../services/authenticatedSubmissionService';
-import { handlePublicSubmission } from '../services/publicSubmissionService';
 import { triggerMakeWebhook, MakeWebhookPayload } from '@/lib/triggerMakeWebhook';
 
 interface FormData {
@@ -44,13 +43,14 @@ export const useUnifiedFormSubmission = () => {
         formData.itemType
       );
 
-      // Handle submission based on authentication status
+      // Require authentication for submissions
       if (isAuthenticated && clientId) {
         await handleAuthenticatedSubmission(formData, clientId, uploadedImageUrls);
         navigate('/customer/home');
       } else {
-        await handlePublicSubmission(formData, uploadedImageUrls);
-        navigate('/');
+        toast.info('Please log in to submit');
+        navigate('/customer/auth?redirect=/customer/upload');
+        return false;
       }
       success = true;
       return true;

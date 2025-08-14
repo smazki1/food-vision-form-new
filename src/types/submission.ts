@@ -52,3 +52,34 @@ export type ImageViewMode = 'grid' | 'gallery' | 'comparison';
 
 // Submission comment types
 export type SubmissionCommentType = 'admin_internal' | 'client_visible' | 'editor_note';
+
+// Image comment types
+export type ImageCommentType = 'admin_internal' | 'client_visible' | 'editor_note';
+
+// Image comment interface
+export interface ImageComment {
+  comment_id: string;
+  submission_id: string;
+  image_url: string;
+  image_type: 'original' | 'processed';
+  comment_type: ImageCommentType;
+  comment_text: string;
+  tagged_users: string[] | null;
+  visibility: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy submission comment interface (keeping for backward compatibility)
+export interface SubmissionComment {
+  comment_id: string;
+  submission_id: string;
+  comment_type: SubmissionCommentType;
+  comment_text: string;
+  tagged_users: string[] | null;
+  visibility: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}

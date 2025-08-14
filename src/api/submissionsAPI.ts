@@ -15,7 +15,9 @@ export const submissionsAPI = {
     images: File[];
   }) {
     try {
-      // 1. Upload images
+      // Reject public flow to enforce auth
+      throw new Error('Please log in to submit.');
+      // 1. Upload images (legacy - removed)
       const imageUrls = await Promise.all(
         formData.images.map(async (file) => {
           const fileName = `public-submissions/${Date.now()}-${Math.random().toString(36).substring(2)}.${file.name.split('.').pop()}`;
@@ -32,20 +34,7 @@ export const submissionsAPI = {
         })
       );
 
-      // 2. Save data using correct RPC function name
-      const { data: rpcData, error: rpcError } = await supabase.rpc('public_submit_item_by_restaurant_name', {
-        p_restaurant_name: formData.restaurantName,
-        p_contact_name: formData.contactName,
-        p_item_type: formData.itemType,
-        p_item_name: formData.itemName,
-        p_description: formData.description,
-        p_category: formData.category || '',
-        p_reference_image_urls: imageUrls
-      });
-
-      if (rpcError) throw rpcError;
-
-      return { success: true, submissionId: rpcData };
+      // 2. Legacy RPC removed
     } catch (error: any) {
       console.error('Error in form submission:', error);
       return { success: false, error: error.message };

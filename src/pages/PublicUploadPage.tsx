@@ -1,14 +1,17 @@
 
-import React from 'react';
-import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
-import NewPublicUploadForm from '@/components/public/upload-form/NewPublicUploadForm';
+import React, { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const PublicUploadPage: React.FC = () => {
-  return (
-    <NewItemFormProvider>
-      <NewPublicUploadForm />
-    </NewItemFormProvider>
-  );
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const current = encodeURIComponent(location.pathname + location.search);
+    navigate(`/customer/auth?redirect=/customer/upload&from=${current}`, { replace: true });
+  }, [navigate, location]);
+
+  return null;
 };
 
 export default PublicUploadPage;

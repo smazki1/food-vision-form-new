@@ -73,6 +73,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { ImageComments } from '@/components/customer/ImageComments';
 
 interface SubmissionViewerProps {
   submissionId: string;
@@ -633,6 +634,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                   
                   {/* Original Image Display with Navigation */}
                   {submission.original_image_urls && submission.original_image_urls.length > 0 ? (
+                    <>
                     <div className="relative">
                       <div className="aspect-square bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
                         <img 
@@ -665,6 +667,16 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                         </>
                       )}
                     </div>
+                    {/* Image-specific comments for current original image */}
+                    <div className="mt-4">
+                      <ImageComments
+                        submissionId={submission.submission_id}
+                        imageUrl={submission.original_image_urls[currentOriginalIndex]}
+                        imageType="original"
+                        viewMode={viewMode === 'editor' ? 'editor' : 'admin'}
+                      />
+                    </div>
+                    </>
                   ) : (
                     <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
                       <span className="text-gray-500">אין תמונות מקור</span>
@@ -701,6 +713,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                   
                   {/* Processed Image Display with Navigation */}
                   {submission.processed_image_urls && submission.processed_image_urls.length > 0 ? (
+                    <>
                     <div className="relative group">
                       <div className={`aspect-square bg-white rounded-lg border-2 overflow-hidden ${
                         submission.processed_image_urls[currentProcessedIndex] === submission.main_processed_image_url 
@@ -774,6 +787,16 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({
                         </Badge>
                       )}
                     </div>
+                    {/* Image-specific comments for current processed image */}
+                    <div className="mt-4">
+                      <ImageComments
+                        submissionId={submission.submission_id}
+                        imageUrl={submission.processed_image_urls[currentProcessedIndex]}
+                        imageType="processed"
+                        viewMode={viewMode === 'editor' ? 'editor' : 'admin'}
+                      />
+                    </div>
+                    </>
                   ) : (
                     <div className="aspect-square bg-white rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-4">
                       {viewMode === 'admin' ? (
