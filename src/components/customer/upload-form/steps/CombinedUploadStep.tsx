@@ -9,9 +9,15 @@ import { Label } from '@/components/ui/label';
 import { StepProps } from '../FoodVisionUploadForm';
 import { UploadCloud, Trash2, AlertTriangle, Sparkles, FileImage, ChevronDown, Plus, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUnifiedAuth } from '@/hooks/useUnifiedAuth';
+import { useClientProfile } from '@/hooks/useClientProfile';
+import { useLocation } from 'react-router-dom';
 
 const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clearExternalErrors }) => {
   const { formData, updateFormData, addDish, updateDish, getDish, removeDish } = useNewItemForm();
+  const location = useLocation();
+  const { user } = useUnifiedAuth();
+  const { clientProfile } = useClientProfile(user?.id);
   const errors = externalErrors || {};
   const [activeDishId, setActiveDishId] = useState('1');
   const [expandedDishes, setExpandedDishes] = useState<Set<string>>(new Set(['1']));
@@ -92,6 +98,24 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
       setQualityConfirmed(true);
     }
   }, []);
+
+  // Prefill and hide contact details for customer upload flow
+  const isCustomerUploadRoute = location.pathname.startsWith('/customer/upload');
+  useEffect(() => {
+    if (!isCustomerUploadRoute || !clientProfile) return;
+    const updates: Record<string, any> = {};
+    const profileRestaurant = clientProfile.restaurant_name || '';
+    const profileContact = clientProfile.contact_name || '';
+    if (!formData.restaurantName || formData.restaurantName !== profileRestaurant) {
+      updates.restaurantName = profileRestaurant;
+    }
+    if (!formData.submitterName || formData.submitterName !== profileContact) {
+      updates.submitterName = profileContact;
+    }
+    if (Object.keys(updates).length > 0) {
+      updateFormData(updates);
+    }
+  }, [isCustomerUploadRoute, clientProfile, formData.restaurantName, formData.submitterName, updateFormData]);
 
   const handleAddAnotherDish = () => {
     const newDishId = addDish();
@@ -823,39 +847,41 @@ const CombinedUploadStep: React.FC<StepProps> = ({ errors: externalErrors, clear
         </div>
       )}
 
-      {/* Contact Details Section */}
-      <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
-        <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-          <Sparkles className="w-6 h-6 text-primary ml-2" />
-          פרטי יצירת קשר
-        </h3>
-        
-        <div className="space-y-6">
-          <IconInput
-            id="restaurantName"
-            name="restaurantName"
-            label="שם המסעדה / העסק"
-            value={formData.restaurantName}
-            onChange={handleChange}
-            placeholder="לדוגמה: מסעדת השף הקטן"
-            error={errors?.restaurantName}
-            iconPosition="right"
-            required
-          />
+      {/* Contact Details Section - hidden for customer upload (prefilled from profile) */}
+      {!isCustomerUploadRoute && (
+        <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
+          <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+            <Sparkles className="w-6 h-6 text-primary ml-2" />
+            פרטי יצירת קשר
+          </h3>
+          
+          <div className="space-y-6">
+            <IconInput
+              id="restaurantName"
+              name="restaurantName"
+              label="שם המסעדה / העסק"
+              value={formData.restaurantName}
+              onChange={handleChange}
+              placeholder="לדוגמה: מסעדת השף הקטן"
+              error={errors?.restaurantName}
+              iconPosition="right"
+              required
+            />
 
-          <IconInput
-            id="submitterName"
-            name="submitterName"
-            label="שם איש הקשר"
-            value={formData.submitterName}
-            onChange={handleChange}
-            placeholder="שם מלא של המגיש"
-            error={errors?.submitterName}
-            iconPosition="right"
-            required
-          />
+            <IconInput
+              id="submitterName"
+              name="submitterName"
+              label="שם איש הקשר"
+              value={formData.submitterName}
+              onChange={handleChange}
+              placeholder="שם מלא של המגיש"
+              error={errors?.submitterName}
+              iconPosition="right"
+              required
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

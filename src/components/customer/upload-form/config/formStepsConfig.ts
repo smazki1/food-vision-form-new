@@ -26,11 +26,12 @@ const validateCombinedUpload = (formData: NewItemFormData): Record<string, strin
   const errors: Record<string, string> = {};
   
   // Validate required fields
+  // For authenticated customer flow, these are prefilled/hidden; missing values will be set from profile in the form.
   if (!formData.restaurantName?.trim()) {
-    errors.restaurantName = 'שם המסעדה הוא שדה חובה';
+    // keep non-blocking by not erroring; the form will prefill from profile
   }
   if (!formData.submitterName?.trim()) {
-    errors.submitterName = 'שם איש הקשר הוא שדה חובה';
+    // keep non-blocking by not erroring; the form will prefill from profile
   }
   if (!formData.itemName?.trim()) {
     errors.itemName = 'שם הפריט הוא שדה חובה';
