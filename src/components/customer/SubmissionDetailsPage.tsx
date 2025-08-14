@@ -554,7 +554,20 @@ export function SubmissionDetailsPage() {
                 <CardContent className="p-3 sm:p-6">
                   {hasProcessedImages ? (
                     <div className="space-y-4">
-                      <div className="relative group">
+                      <div
+                        className="relative group"
+                        onTouchStart={(e) => {
+                          const x = e.touches[0].clientX;
+                          (e.currentTarget as any)._sx = x;
+                        }}
+                        onTouchEnd={(e) => {
+                          const sx = (e.currentTarget as any)._sx || 0;
+                          const dx = (e.changedTouches?.[0]?.clientX || 0) - sx;
+                          if (Math.abs(dx) > 40) {
+                            dx > 0 ? navigateProcessedImage('prev') : navigateProcessedImage('next');
+                          }
+                        }}
+                      >
                         <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                           <img
                             src={submission.processed_image_urls[currentProcessedIndex]}
@@ -616,7 +629,20 @@ export function SubmissionDetailsPage() {
                 <CardContent className="p-3 sm:p-6">
                   {submission.original_image_urls && submission.original_image_urls.length > 0 ? (
                     <div className="space-y-4">
-                      <div className="relative group">
+                      <div
+                        className="relative group"
+                        onTouchStart={(e) => {
+                          const x = e.touches[0].clientX;
+                          (e.currentTarget as any)._sx = x;
+                        }}
+                        onTouchEnd={(e) => {
+                          const sx = (e.currentTarget as any)._sx || 0;
+                          const dx = (e.changedTouches?.[0]?.clientX || 0) - sx;
+                          if (Math.abs(dx) > 40) {
+                            dx > 0 ? navigateOriginalImage('prev') : navigateOriginalImage('next');
+                          }
+                        }}
+                      >
                         <div className="aspect-[4/3] sm:aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity">
                           <img
                             src={submission.original_image_urls[currentOriginalIndex]}

@@ -42,7 +42,6 @@ export const useImageComments = (submissionId: string, imageUrl: string) => {
           throw error;
         }
 
-        console.log('[useImageComments] Successfully fetched comments:', data?.length || 0, 'comments');
         return data || [];
       } catch (error) {
         console.error('[useImageComments] Error fetching comments:', error);
@@ -50,6 +49,8 @@ export const useImageComments = (submissionId: string, imageUrl: string) => {
       }
     },
     enabled: !!submissionId && !!imageUrl,
+    staleTime: 10_000,
+    gcTime: 60_000,
   });
 };
 

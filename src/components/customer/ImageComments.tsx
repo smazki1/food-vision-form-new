@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,13 +15,14 @@ interface ImageCommentsProps {
   viewMode?: 'admin' | 'customer' | 'editor';
 }
 
-export const ImageComments: React.FC<ImageCommentsProps> = ({
+const ImageCommentsBase: React.FC<ImageCommentsProps> = ({
   submissionId,
   imageUrl,
   imageType,
   viewMode = 'customer'
 }) => {
   const [newComment, setNewComment] = useState('');
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [editingComment, setEditingComment] = useState<ImageComment | null>(null);
   const [editText, setEditText] = useState('');
 
@@ -43,6 +44,10 @@ export const ImageComments: React.FC<ImageCommentsProps> = ({
         visibility: 'client'
       });
       setNewComment('');
+      // Reset auto-height
+      if (inputRef.current) {
+        inputRef.current.style.height = 'auto';
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
     }
@@ -151,8 +156,22 @@ export const ImageComments: React.FC<ImageCommentsProps> = ({
           <Textarea
             placeholder="כתוב הערה לתמונה זו..."
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => {
+              setNewComment(e.target.value);
+              // Auto-grow
+              if (inputRef.current) {
+                inputRef.current.style.height = 'auto';
+                inputRef.current.style.height = `${Math.min(160, inputRef.current.scrollHeight)}px`;
+              }
+            }}
             className="min-h-[80px] resize-none"
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && newComment.trim()) {
+                e.preventDefault();
+                handleAddComment();
+              }
+            }}
+            ref={inputRef}
           />
           <div className="flex justify-between items-center">
             <Badge variant="outline" className={getCommentTypeColor('client_visible')}>
@@ -165,7 +184,7 @@ export const ImageComments: React.FC<ImageCommentsProps> = ({
               className="gap-2"
             >
               <Send className="h-4 w-4" />
-              הוסף הערה
+              {addCommentMutation.isPending ? 'שולח...' : 'הוסף הערה'}
             </Button>
           </div>
         </div>
@@ -247,3 +266,5 @@ export const ImageComments: React.FC<ImageCommentsProps> = ({
     </Card>
   );
 };
+
+export const ImageComments = React.memo(ImageCommentsBase);
