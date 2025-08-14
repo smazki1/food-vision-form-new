@@ -20,6 +20,7 @@ import {
   ChevronRight,
   X
 } from 'lucide-react';
+import { ImageComments } from '@/components/customer/ImageComments';
 
 interface Submission {
   submission_id: string;
@@ -341,6 +342,7 @@ const EditorSubmissionViewer: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Original Images</h3>
                     {originalImages.length > 0 ? (
+                      <>
                       <div className="space-y-4">
                         <div className="relative">
                           <img
@@ -380,6 +382,16 @@ const EditorSubmissionViewer: React.FC = () => {
                           </div>
                         )}
                       </div>
+                      {/* Image-specific comments for current original image */}
+                      <div className="mt-4">
+                        <ImageComments
+                          submissionId={submission.submission_id}
+                          imageUrl={originalImages[selectedOriginalIndex]}
+                          imageType="original"
+                          viewMode="editor"
+                        />
+                      </div>
+                      </>
                     ) : (
                       <div className="h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                         <span className="text-gray-500">No original images</span>
@@ -471,6 +483,15 @@ const EditorSubmissionViewer: React.FC = () => {
                             {selectedProcessedIndex + 1} / {processedImages.length}
                           </div>
                         )}
+                        {/* Image-specific comments for current processed image */}
+                        <div className="mt-4">
+                          <ImageComments
+                            submissionId={submission.submission_id}
+                            imageUrl={processedImages[selectedProcessedIndex]}
+                            imageType="processed"
+                            viewMode="editor"
+                          />
+                        </div>
                       </div>
                     ) : (
                       <div 
