@@ -36,6 +36,7 @@ import { useAdminSubmissionComments, useAdminAddSubmissionComment, useAdminDelet
 import { SubmissionCommentType } from '@/types/submission';
 import { MessageSquare } from 'lucide-react';
 import { downloadSubmissionImagesAsZip } from '@/utils/downloadUtils';
+import { ImageComments } from '@/components/customer/ImageComments';
 
 interface ClientSubmissions2Props {
   clientId: string;
@@ -1466,6 +1467,17 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                         </div>
                       )}
                     </div>
+                    {/* Image-specific comments for current original image */}
+                    {submissions[selectedSubmission].original_image_urls && submissions[selectedSubmission].original_image_urls.length > 0 && (
+                      <div className="mt-4">
+                        <ImageComments
+                          submissionId={submissions[selectedSubmission].submission_id}
+                          imageUrl={submissions[selectedSubmission].original_image_urls[currentOriginalIndex]}
+                          imageType="original"
+                          viewMode="admin"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Processed Images */}
@@ -1543,7 +1555,7 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                             </div>
                           )}
 
-
+                          
                         </>
                       ) : (
                         <div className="aspect-square bg-green-100 rounded-lg flex items-center justify-center relative">
@@ -1554,6 +1566,17 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                         </div>
                       )}
                     </div>
+                    {/* Image-specific comments for current processed image */}
+                    {submissions[selectedSubmission].processed_image_urls && submissions[selectedSubmission].processed_image_urls.length > 0 && (
+                      <div className="mt-4">
+                        <ImageComments
+                          submissionId={submissions[selectedSubmission].submission_id}
+                          imageUrl={submissions[selectedSubmission].processed_image_urls[currentProcessedIndex]}
+                          imageType="processed"
+                          viewMode="admin"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
