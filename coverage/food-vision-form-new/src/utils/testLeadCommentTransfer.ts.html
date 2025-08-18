@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.77% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/225</span>
+                <span class='fraction'>4/225</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.77% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/225</span>
+                <span class='fraction'>4/225</span>
             </div>
         
             
@@ -352,7 +352,7 @@
 <a name='L287'></a><a href='#L287'>287</a>
 <a name='L288'></a><a href='#L288'>288</a>
 <a name='L289'></a><a href='#L289'>289</a>
-<a name='L290'></a><a href='#L290'>290</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L290'></a><a href='#L290'>290</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -372,9 +372,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -490,9 +490,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -551,7 +551,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -641,7 +641,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { supabase } from '@/integrations/supabase/client';</span></span></span>
+<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { supabase } from '@/integrations/supabase/client';
 &nbsp;
 interface CommentTransferTest {
   leadId: string;
@@ -661,7 +661,7 @@ interface CommentTransferTest {
   error?: string;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export const testLeadCommentTransfer = async (leadId: string): Promise&lt;CommentTransferTest&gt; =&gt; {</span>
+export const testLeadCommentTransfer = <span class="fstat-no" title="function not covered" >async (leadId: string): Promise&lt;CommentTransferTest&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  console.log('=== TESTING LEAD COMMENT TRANSFER ===');</span>
 <span class="cstat-no" title="statement not covered" >  console.log('Lead ID:', leadId);</span>
 &nbsp;
@@ -779,7 +779,7 @@ interface CommentTransferTest {
 <span class="cstat-no" title="statement not covered" >  return result;</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export const debugClientComments = async (clientId: string) =&gt; {</span>
+export const debugClientComments = <span class="fstat-no" title="function not covered" >async (clientId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  console.log('=== DEBUGGING CLIENT COMMENTS ===');</span>
 <span class="cstat-no" title="statement not covered" >  console.log('Client ID:', clientId);</span>
 &nbsp;
@@ -840,7 +840,7 @@ interface CommentTransferTest {
 <span class="cstat-no" title="statement not covered" >  console.log('=== DEBUG COMPLETE ===');</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export const forceCommentSync = async (clientId: string) =&gt; {</span>
+export const forceCommentSync = <span class="fstat-no" title="function not covered" >async (clientId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  console.log('=== FORCING COMMENT SYNC ===');</span>
 <span class="cstat-no" title="statement not covered" >  console.log('Client ID:', clientId);</span>
 &nbsp;
@@ -937,7 +937,7 @@ interface CommentTransferTest {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-22T11:10:36.372Z
+                at 2025-08-18T10:00:14.649Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">46.66% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>7/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">46.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>7/15</span>
             </div>
         
             
@@ -86,17 +86,17 @@
 <a name='L21'></a><a href='#L21'>21</a>
 <a name='L22'></a><a href='#L22'>22</a>
 <a name='L23'></a><a href='#L23'>23</a>
-<a name='L24'></a><a href='#L24'>24</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L24'></a><a href='#L24'>24</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -108,18 +108,18 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >import React from "react";</span>
-<span class="cstat-no" title="statement not covered" >import { useQuery } from "@tanstack/react-query";</span>
-<span class="cstat-no" title="statement not covered" >import { getPackageById } from "@/api/packageApi";</span>
-<span class="cstat-no" title="statement not covered" >import { Skeleton } from "@/components/ui/skeleton";</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getPackageById } from "@/api/packageApi";
+import { Skeleton } from "@/components/ui/skeleton";
 &nbsp;
 interface ClientsPackageNameProps {
   packageId: string | null;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >const ClientsPackageName: React.FC&lt;ClientsPackageNameProps&gt; = ({ packageId }) =&gt; {</span>
+const ClientsPackageName: React.FC&lt;ClientsPackageNameProps&gt; = <span class="fstat-no" title="function not covered" >({ packageId }) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const { data: packageData, isLoading } = useQuery({</span>
 <span class="cstat-no" title="statement not covered" >    queryKey: ["package", packageId],</span>
 <span class="cstat-no" title="statement not covered" >    queryFn: () =&gt; getPackageById(packageId as string),</span>
@@ -131,7 +131,7 @@ interface ClientsPackageNameProps {
 <span class="cstat-no" title="statement not covered" >  return &lt;span&gt;{packageData?.package_name || "לא מוגדר"}&lt;/span&gt;;</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export default ClientsPackageName;</span>
+export default ClientsPackageName;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -139,7 +139,7 @@ interface ClientsPackageNameProps {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-22T11:10:36.372Z
+                at 2025-08-18T10:00:14.649Z
             </div>
         <script src="../../../../../prettify.js"></script>
         <script>

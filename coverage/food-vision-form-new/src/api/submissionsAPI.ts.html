@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/38</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/38</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
@@ -106,21 +106,7 @@
 <a name='L41'></a><a href='#L41'>41</a>
 <a name='L42'></a><a href='#L42'>42</a>
 <a name='L43'></a><a href='#L43'>43</a>
-<a name='L44'></a><a href='#L44'>44</a>
-<a name='L45'></a><a href='#L45'>45</a>
-<a name='L46'></a><a href='#L46'>46</a>
-<a name='L47'></a><a href='#L47'>47</a>
-<a name='L48'></a><a href='#L48'>48</a>
-<a name='L49'></a><a href='#L49'>49</a>
-<a name='L50'></a><a href='#L50'>50</a>
-<a name='L51'></a><a href='#L51'>51</a>
-<a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a>
-<a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L44'></a><a href='#L44'>44</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -144,31 +130,17 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -194,7 +166,9 @@ import { supabase } from '@/integrations/supabase/client';
     images: File[];
 <span class="cstat-no" title="statement not covered" >  }) {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      // 1. Upload images</span>
+<span class="cstat-no" title="statement not covered" >      // Reject public flow to enforce auth</span>
+<span class="cstat-no" title="statement not covered" >      throw new Error('Please log in to submit.');</span>
+<span class="cstat-no" title="statement not covered" >      // 1. Upload images (legacy - removed)</span>
 <span class="cstat-no" title="statement not covered" >      const imageUrls = await Promise.all(</span>
 <span class="cstat-no" title="statement not covered" >        formData.images.map(async (file) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >          const fileName = `public-submissions/${Date.now()}-${Math.random().toString(36).substring(2)}.${file.name.split('.').pop()}`;</span>
@@ -211,23 +185,7 @@ import { supabase } from '@/integrations/supabase/client';
 <span class="cstat-no" title="statement not covered" >        })</span>
       );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      // 2. Save data using correct RPC function name</span>
-<span class="cstat-no" title="statement not covered" >      const { data: rpcData, error: rpcError } = await supabase.rpc('public_submit_item_by_restaurant_name', {</span>
-<span class="cstat-no" title="statement not covered" >        p_restaurant_name: formData.restaurantName,</span>
-<span class="cstat-no" title="statement not covered" >        p_contact_name: formData.contactName,</span>
-<span class="cstat-no" title="statement not covered" >        p_phone: formData.phone,</span>
-<span class="cstat-no" title="statement not covered" >        p_email: formData.email,</span>
-<span class="cstat-no" title="statement not covered" >        p_item_type: formData.itemType,</span>
-<span class="cstat-no" title="statement not covered" >        p_item_name: formData.itemName,</span>
-<span class="cstat-no" title="statement not covered" >        p_description: formData.description,</span>
-<span class="cstat-no" title="statement not covered" >        p_special_notes: formData.specialNotes || '',</span>
-<span class="cstat-no" title="statement not covered" >        p_category: formData.category || '',</span>
-<span class="cstat-no" title="statement not covered" >        p_image_urls: JSON.stringify(imageUrls)</span>
-<span class="cstat-no" title="statement not covered" >      });</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      if (rpcError) throw rpcError;</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      return { success: true, submissionId: rpcData };</span>
+<span class="cstat-no" title="statement not covered" >      // 2. Legacy RPC removed</span>
 <span class="cstat-no" title="statement not covered" >    } catch (error: any) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Error in form submission:', error);</span>
 <span class="cstat-no" title="statement not covered" >      return { success: false, error: error.message };</span>
@@ -241,7 +199,7 @@ import { supabase } from '@/integrations/supabase/client';
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-22T11:10:36.372Z
+                at 2025-08-18T10:00:14.649Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

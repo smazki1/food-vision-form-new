@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.47% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/475</span>
+                <span class='fraction'>7/475</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/0</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>0/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">1.47% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/475</span>
+                <span class='fraction'>7/475</span>
             </div>
         
             
@@ -644,7 +644,7 @@
 <a name='L579'></a><a href='#L579'>579</a>
 <a name='L580'></a><a href='#L580'>580</a>
 <a name='L581'></a><a href='#L581'>581</a>
-<a name='L582'></a><a href='#L582'>582</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L582'></a><a href='#L582'>582</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -667,9 +667,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -829,9 +829,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1098,8 +1098,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1225,7 +1225,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" >import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';</span></span></span>
+<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useState, useCallback, useEffect, useRef } from 'react';
@@ -1248,8 +1248,8 @@ export interface RobustNote {
   entity_type: 'lead' | 'client';
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >// Lead Comments System with Database Persistence</span>
-<span class="cstat-no" title="statement not covered" >export const useRobustLeadComments = (leadId: string) =&gt; {</span>
+// Lead Comments System with Database Persistence
+export const useRobustLeadComments = <span class="fstat-no" title="function not covered" >(leadId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const queryClient = useQueryClient();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  // Fetch comments with proper database query</span>
@@ -1410,8 +1410,8 @@ export interface RobustNote {
 <span class="cstat-no" title="statement not covered" >  };</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >// Enhanced Client Comments System with Lead Synchronization</span>
-<span class="cstat-no" title="statement not covered" >export const useRobustClientComments = (clientId: string) =&gt; {</span>
+// Enhanced Client Comments System with Lead Synchronization
+export const useRobustClientComments = <span class="fstat-no" title="function not covered" >(clientId: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const queryClient = useQueryClient();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  // Fetch comments from client's internal_notes with lead synchronization</span>
@@ -1679,8 +1679,8 @@ export interface RobustNote {
 <span class="cstat-no" title="statement not covered" >  };</span>
 <span class="cstat-no" title="statement not covered" >};</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >// Robust Notes System (for both leads and clients)</span>
-<span class="cstat-no" title="statement not covered" >export const useRobustNotes = (entityId: string, entityType: 'lead' | 'client') =&gt; {</span>
+// Robust Notes System (for both leads and clients)
+export const useRobustNotes = <span class="fstat-no" title="function not covered" >(entityId: string, entityType: 'lead' | 'client') =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  const queryClient = useQueryClient();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  // Fetch notes</span>
@@ -1813,7 +1813,7 @@ export interface RobustNote {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-22T11:10:36.372Z
+                at 2025-08-18T10:00:14.649Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
