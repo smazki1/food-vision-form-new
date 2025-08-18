@@ -149,7 +149,7 @@ const ClientsList = () => {
           <div className="text-sm text-gray-700">בארכיון</div>
         </div>
       </div>
-
+ 
       {/* Controls */}
       <div className="mb-4 sm:mb-6 space-y-3">
         {/* Top row - search and refresh */}
@@ -161,6 +161,13 @@ const ClientsList = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 sm:pl-10 rtl:pr-9 sm:rtl:pr-10 w-full text-sm sm:text-base"
+              type="search"
+              name="clients-search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              inputMode="search"
+              spellCheck={false}
             />
           </div>
           <Button 

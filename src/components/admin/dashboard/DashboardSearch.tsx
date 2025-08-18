@@ -139,6 +139,12 @@ export function DashboardSearch() {
           type="search"
           placeholder='חיפוש... (Ctrl+K)'
           className="pl-8 w-full"
+          name="dashboard-global-search"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          inputMode="search"
+          spellCheck={false}
           onClick={() => setOpen(true)}
           ref={inputRef}
         />
