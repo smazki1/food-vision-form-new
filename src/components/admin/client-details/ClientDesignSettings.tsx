@@ -99,6 +99,42 @@ export const ClientDesignSettings: React.FC<ClientDesignSettingsProps> = ({
         }
       }
 
+      // Fallback: import legacy data from client_design_settings if nothing found
+      if (storedImages.length === 0) {
+        try {
+          const { data: legacySettings, error: legacyErr } = await supabase
+            .from('client_design_settings')
+            .select('id, category, reference_images, style_notes')
+            .eq('client_id', clientId)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false });
+
+          if (!legacyErr && Array.isArray(legacySettings) && legacySettings.length > 0) {
+            const migrated: ReferenceImage[] = [];
+            legacySettings.forEach((setting: any, settingIndex: number) => {
+              const urls: string[] = Array.isArray(setting.reference_images) ? setting.reference_images : [];
+              urls.forEach((url: string, urlIndex: number) => {
+                migrated.push({
+                  id: `${Date.now()}-${settingIndex}-${urlIndex}`,
+                  url,
+                  title: setting.category || '',
+                  notes: setting.style_notes || '',
+                  uploadedAt: new Date().toISOString()
+                });
+              });
+            });
+
+            if (migrated.length > 0) {
+              storedImages = migrated;
+              // Persist migrated data to prevent future disappearance
+              await saveClientDesignData(migrated, storedPrompts);
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn('Legacy design settings fallback failed:', fallbackErr);
+        }
+      }
+
       setReferenceImages(storedImages);
       setFixedPrompts(storedPrompts);
     } catch (error) {
