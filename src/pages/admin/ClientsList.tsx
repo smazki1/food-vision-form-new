@@ -21,10 +21,20 @@ const ClientsList = () => {
   const currentUserRoleData = useCurrentUserRole();
   // Initialize search term from URL query if provided, else empty. Avoid auto-filling.
   const [searchTerm, setSearchTerm] = useState("");
+  // Autofill prevention: keep input readOnly briefly to block browser autofill
+  const [preventAutofill, setPreventAutofill] = useState(true);
 
-  // On mount, ensure no leftover search term from previous navigation
+  // On mount, ensure no leftover search term and clear any late browser autofill
   useEffect(() => {
     setSearchTerm("");
+    const timer = setTimeout(() => {
+      const inputEl = document.querySelector('input[name="clients-search"]') as HTMLInputElement | null;
+      if (inputEl && inputEl.value) {
+        inputEl.value = "";
+      }
+      setPreventAutofill(false);
+    }, 700);
+    return () => clearTimeout(timer);
   }, []);
   const [showArchived, setShowArchived] = useState(false);
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
@@ -156,6 +166,11 @@ const ClientsList = () => {
         <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
           <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 rtl:right-3 rtl:left-auto top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+            {/* Autofill trap fields (hidden) to stop email/password autofill */}
+            <div aria-hidden className="absolute opacity-0 pointer-events-none -z-10 h-0 w-0 overflow-hidden">
+              <input type="text" name="email" autoComplete="username" tabIndex={-1} />
+              <input type="password" name="password" autoComplete="new-password" tabIndex={-1} />
+            </div>
             <Input
               placeholder={t("clientsList.searchPlaceholder", "Search by name, contact, email...")}
               value={searchTerm}
@@ -168,6 +183,7 @@ const ClientsList = () => {
               autoCapitalize="none"
               inputMode="search"
               spellCheck={false}
+              readOnly={preventAutofill}
             />
           </div>
           <Button 
