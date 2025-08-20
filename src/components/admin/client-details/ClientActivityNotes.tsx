@@ -82,6 +82,10 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
     isUpdating: isUpdatingNotes 
   } = useRobustNotes(clientId, 'client');
 
+  // CRITICAL FIX: Disable direct lead activity fetching in client panel to avoid 403 due to RLS
+  // The comments system already works via client-side storage and optional manual sync.
+  const ENABLE_LEAD_ACTIVITY_FETCH = false;
+
   // PERFORMANCE FIX: Initialize local state from server data
   useEffect(() => {
     if (robustNote && localNotesContent !== robustNote.content) {
@@ -97,12 +101,15 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
       if (localReminderDetails !== (client.reminder_details || '')) {
         setLocalReminderDetails(client.reminder_details || '');
       }
-      
-      loadLeadAndCommentsData();
+      // Skip auto-loading lead activity to prevent 403 errors in admin context
+      if (ENABLE_LEAD_ACTIVITY_FETCH) {
+        loadLeadAndCommentsData();
+      }
     }
   }, [client?.client_id]); // Only depend on client ID changes
 
   const loadLeadAndCommentsData = useCallback(async () => {
+    if (!ENABLE_LEAD_ACTIVITY_FETCH) return;
     if (!client?.original_lead_id) return;
     
     try {
@@ -120,6 +127,7 @@ export const ClientActivityNotes: React.FC<ClientActivityNotesProps> = ({
   }, [client?.original_lead_id]);
 
   const loadLeadData = async (leadId: string) => {
+    if (!ENABLE_LEAD_ACTIVITY_FETCH) return;
     try {
       // Load lead activities
       const { data: activities, error: activitiesError } = await supabase

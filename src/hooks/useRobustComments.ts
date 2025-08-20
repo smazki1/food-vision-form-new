@@ -32,6 +32,7 @@ export const useRobustLeadComments = (leadId: string) => {
       console.log('[RobustComments] Fetching lead comments from database:', leadId);
       
       // Get all activities for this lead and filter in JavaScript to avoid Hebrew LIKE issues
+      // SAFE QUERY: tolerate RLS/permission errors and return empty
       const { data: allData, error } = await supabase
         .from('lead_activity_log')
         .select('*')
@@ -51,8 +52,8 @@ export const useRobustLeadComments = (leadId: string) => {
       }
 
       if (error) {
-        console.error('[RobustComments] Database error:', error);
-        throw error;
+        console.warn('[RobustComments] lead_activity_log fetch blocked; continuing without lead comments:', error?.message || error);
+        return [];
       }
 
       // Filter activities that start with "תגובה:" in JavaScript to avoid Hebrew LIKE issues
@@ -301,6 +302,8 @@ export const useRobustClientComments = (clientId: string) => {
 
             return allComments;
           }
+        } else if (leadError) {
+          console.warn('[RobustComments] Skipping lead sync due to RLS/permission error');
         }
       }
 
