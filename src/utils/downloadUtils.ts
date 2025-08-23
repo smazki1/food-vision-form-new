@@ -213,7 +213,7 @@ export const downloadSubmissionImagesAsZip = async (submission: any) => {
           .then(blob => {
             const urlParts = url.split('.');
             const extension = urlParts.length > 1 ? (urlParts.pop() as string) : 'jpg';
-            const fileName = `${folder}_${index + 1}.${extension}`;
+            const fileName = `${dishNameForFile}_${folder}_${index + 1}.${extension}`;
             const filePath = `${folder}/${fileName}`;
             zip.file(filePath, blob);
           })
@@ -280,7 +280,7 @@ export const downloadProcessedImagesAsZip = async (
         .then((blob) => {
           const urlParts = url.split('.');
           const extension = urlParts.length > 1 ? (urlParts.pop() as string) : 'jpg';
-          const fileName = `processed_${index + 1}.${extension}`;
+          const fileName = `${baseName}_processed_${index + 1}.${extension}`;
           const filePath = `processed/${fileName}`;
           zip.file(filePath, blob);
         })
