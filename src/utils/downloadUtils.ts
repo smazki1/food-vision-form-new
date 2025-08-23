@@ -246,3 +246,65 @@ export const downloadSubmissionImagesAsZip = async (submission: any) => {
     throw error;
   }
 };
+
+// Download only processed images for a submission as a ZIP
+export const downloadProcessedImagesAsZip = async (
+  processedImages: string[],
+  dishName?: string
+) => {
+  try {
+    const urls = processedImages || [];
+    if (urls.length === 0) {
+      throw new Error('אין תמונות מוכנות להורדה');
+    }
+
+    const sanitizeFilename = (text: string) =>
+      (text || 'תמונות_מוכנות')
+        .replace(/[\\\/:*?"<>|]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 80);
+
+    const baseName = sanitizeFilename(dishName || 'תמונות_מוכנות');
+    const zipFileName = `${baseName}_processed.zip`;
+
+    const zip = new JSZip();
+    const promises: Promise<void>[] = [];
+
+    urls.forEach((url, index) => {
+      const p = fetch(url)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Failed to fetch image: ${url}`);
+          return response.blob();
+        })
+        .then((blob) => {
+          const urlParts = url.split('.');
+          const extension = urlParts.length > 1 ? (urlParts.pop() as string) : 'jpg';
+          const fileName = `processed_${index + 1}.${extension}`;
+          const filePath = `processed/${fileName}`;
+          zip.file(filePath, blob);
+        })
+        .catch((error) => {
+          console.error(`Error downloading image ${url}:`, error);
+        });
+      promises.push(p);
+    });
+
+    await Promise.all(promises);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    const downloadUrl = URL.createObjectURL(zipBlob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = zipFileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+    return true;
+  } catch (error) {
+    console.error('Error creating processed images zip file:', error);
+    throw error;
+  }
+};

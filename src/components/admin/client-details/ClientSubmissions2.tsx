@@ -35,7 +35,7 @@ import { StatusSelector } from './StatusSelector';
 import { useAdminSubmissionComments, useAdminAddSubmissionComment, useAdminDeleteSubmission } from '@/hooks/useAdminSubmissions';
 import { SubmissionCommentType } from '@/types/submission';
 import { MessageSquare } from 'lucide-react';
-import { downloadSubmissionImagesAsZip } from '@/utils/downloadUtils';
+import { downloadSubmissionImagesAsZip, downloadProcessedImagesAsZip } from '@/utils/downloadUtils';
 import { ImageComments } from '@/components/customer/ImageComments';
 
 interface ClientSubmissions2Props {
@@ -1087,6 +1087,28 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
     }
   };
 
+  // Bulk download only processed images for current submission
+  const handleDownloadProcessedBulk = async () => {
+    const submission = submissions[selectedSubmission];
+    if (!submission || !submission.processed_image_urls?.length) {
+      toast.error('אין תמונות מוכנות להורדה');
+      return;
+    }
+    try {
+      setDownloadingSubmissionId(submission.submission_id);
+      await downloadProcessedImagesAsZip(
+        submission.processed_image_urls,
+        submission.item_name_at_submission
+      );
+      toast.success('ההורדה הוכנה בהצלחה');
+    } catch (err) {
+      console.error(err);
+      toast.error('שגיאה בהכנת ההורדה');
+    } finally {
+      setDownloadingSubmissionId(null);
+    }
+  };
+
   const handleCancelDelete = () => {
     setConfirmDeleteId(null);
   };
@@ -1385,6 +1407,18 @@ export const ClientSubmissions2: React.FC<ClientSubmissions2Props> = ({
                 )}
               </div>
               <div className="flex gap-2">
+                {/* Bulk download processed images (admin) */}
+                {submissions[selectedSubmission]?.processed_image_urls?.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadProcessedBulk}
+                    disabled={downloadingSubmissionId === submissions[selectedSubmission]?.submission_id}
+                  >
+                    <Download className="h-4 w-4 ml-2" />
+                    הורד כל המוכנות
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
