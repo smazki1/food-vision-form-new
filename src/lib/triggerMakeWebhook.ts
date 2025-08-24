@@ -21,6 +21,13 @@ export interface MakeWebhookPayload {
   itemsQuantityRange?: string;
   estimatedImagesNeeded?: string;
   primaryImageUsage?: string;
+  // Extended fields for enhanced customer upload
+  selectedStyle?: string | null;
+  designNotes?: string | null;
+  brandingMaterialUrls?: string[] | null;
+  referenceExampleUrls?: string[] | null;
+  customStyleData?: any;
+  submissionId?: string;
 }
 
 const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/ahd6i5joz58zt3oi4j0ogdb5ek1fcop3';

@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { sanitizePathComponent } from '@/utils/pathSanitization';
 import { useClientAuth } from '@/hooks/useClientAuth';
 import SuccessModal from './components/SuccessModal';
+import { useNavigate } from 'react-router-dom';
 import { triggerMakeWebhook } from '@/lib/triggerMakeWebhook';
 
 const STEPS = [
@@ -25,6 +26,7 @@ const STEPS = [
 const NewPublicUploadForm: React.FC = () => {
   const { formData, updateFormData, resetFormData } = useNewItemForm();
   const { clientId, authenticating } = useClientAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,7 +173,7 @@ const NewPublicUploadForm: React.FC = () => {
           if (submissionError) throw submissionError;
 
           try {
-            triggerMakeWebhook({
+            await triggerMakeWebhook({
               submissionTimestamp: new Date().toISOString(),
               isAuthenticated: true,
               clientId,
@@ -186,15 +188,27 @@ const NewPublicUploadForm: React.FC = () => {
               uploadedImageUrls,
               category: formData.selectedCategory || null,
               ingredients: null,
-              sourceForm: 'enhanced-customer-upload-form'
+              sourceForm: 'enhanced-customer-upload-form',
+              selectedStyle: formData.selectedStyle || null,
+              designNotes: formData.designNotes || null,
+              brandingMaterialUrls: brandingMaterialUrls,
+              referenceExampleUrls: referenceExampleUrls,
+              customStyleData: formData.customStyle ? JSON.stringify(formData.customStyle) : null,
+              submissionId
             });
           } catch (e) {
             console.warn('Webhook send failed (non-blocking):', e);
           }
         }
 
-        // Show success modal
+        // Show success modal, then redirect to review page
         setShowSuccess(true);
+        setTimeout(() => {
+          setShowSuccess(false);
+          if (clientId) {
+            navigate(`/customer-review/${clientId}`);
+          }
+        }, 1800);
         // Clear form after success
         resetFormData();
         console.log('Form submitted successfully');
