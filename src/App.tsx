@@ -136,11 +136,13 @@ class AppErrorBoundary extends React.Component<
   }
 }
 
-// Customer route wrapper
+// Customer route wrapper (ensure role context is available for any customer pages)
 const CustomerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <ClientAuthProvider>
-    {children}
-  </ClientAuthProvider>
+  <CurrentUserRoleProvider>
+    <ClientAuthProvider>
+      {children}
+    </ClientAuthProvider>
+  </CurrentUserRoleProvider>
 );
 
 const App = () => (
