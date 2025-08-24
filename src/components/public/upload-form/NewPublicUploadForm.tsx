@@ -11,16 +11,18 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizePathComponent } from '@/utils/pathSanitization';
+import { useClientAuth } from '@/hooks/useClientAuth';
 
 const STEPS = [
   { id: 1, name: 'העלאת מנות', component: ImageUploadDetailsStep },
   { id: 2, name: 'בחירת קטגוריה', component: CategorySelectionStep },
   { id: 3, name: 'בחירת סגנון', component: StyleSelectionStep },
-  { id: 4, name: 'תשלום וסיכום', component: PaymentSummaryStep }
+  { id: 4, name: 'סיכום ושליחה', component: PaymentSummaryStep }
 ];
 
 const NewPublicUploadForm: React.FC = () => {
   const { formData, updateFormData, resetFormData } = useNewItemForm();
+  const { clientId, authenticating } = useClientAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,18 +37,7 @@ const NewPublicUploadForm: React.FC = () => {
 
     switch (step) {
       case 1:
-        if (!formData.restaurantName?.trim()) {
-          newErrors.restaurantName = 'שם העסק הוא שדה חובה';
-        }
-        if (!formData.submitterName?.trim()) {
-          newErrors.submitterName = 'שם איש הקשר הוא שדה חובה';
-        }
-        if (!formData.phone?.trim()) {
-          newErrors.phone = 'מספר טלפון הוא שדה חובה';
-        }
-        if (!formData.email?.trim()) {
-          newErrors.email = 'מייל הוא שדה חובה';
-        }
+        // Existing customers: contact/business info is taken from the authenticated client
         if (formData.dishes.length === 0) {
           newErrors.dishes = 'יש להעלות לפחות מנה אחת';
         }
@@ -113,6 +104,12 @@ const NewPublicUploadForm: React.FC = () => {
       setIsSubmitting(true);
       try {
         console.log('Submitting public form data:', formData);
+        if (authenticating) {
+          throw new Error('נדרש להתחבר למערכת (טוען פרטי לקוח)');
+        }
+        if (!clientId) {
+          throw new Error('לא נמצא מזהה לקוח פעיל. אנא התחבר/י שוב.');
+        }
         
         // Process first dish silently
         const dish = formData.dishes[0];
@@ -126,7 +123,7 @@ const NewPublicUploadForm: React.FC = () => {
             const fileExtension = file.name.split('.').pop();
             const uniqueFileName = `${uuidv4()}.${fileExtension}`;
             const sanitizedItemType = sanitizePathComponent(dish.itemType);
-            const filePath = `public-uploads/${Date.now()}/${sanitizedItemType}/${uniqueFileName}`;
+            const filePath = `${clientId}/${sanitizedItemType}/${uniqueFileName}`;
             
             console.log(`Uploading file to path: ${filePath}`);
             const { error: uploadError } = await supabase.storage
@@ -151,78 +148,6 @@ const NewPublicUploadForm: React.FC = () => {
 
         console.log('All images uploaded successfully. Total URLs:', uploadedImageUrls.length);
 
-        // Check if client exists or create new one
-        let clientId: string;
-        
-        console.log('Checking for existing client with restaurant name:', formData.restaurantName);
-        // Check existing client
-        const { data: existingClient, error: clientCheckError } = await supabase
-          .from('clients')
-          .select('client_id, current_package_id, remaining_servings, remaining_images')
-          .eq('restaurant_name', formData.restaurantName)
-          .single();
-          
-        if (clientCheckError && clientCheckError.code !== 'PGRST116') {
-          console.error('Error checking existing client:', clientCheckError);
-          throw new Error(`שגיאה בבדיקת לקוח קיים: ${clientCheckError.message}`);
-        }
-          
-        if (existingClient) {
-          clientId = existingClient.client_id;
-          console.log('Using existing client:', clientId);
-          
-          // If existing client doesn't have a package, assign trial package
-          if (!existingClient.current_package_id) {
-            console.log('Assigning trial package to existing client...');
-            const trialPackageId = '28fc2f96-5742-48f3-8c77-c9766752ff6b'; // חבילת ניסיון 249₪
-            
-            const { error: updateError } = await supabase
-              .from('clients')
-              .update({
-                current_package_id: trialPackageId,
-                remaining_servings: 3,
-                remaining_images: 12,
-                payment_amount_ils: 249.00,
-                payment_status: 'paid'
-              })
-              .eq('client_id', clientId);
-              
-            if (updateError) {
-              console.error('Error assigning trial package to existing client:', updateError);
-            } else {
-              console.log('Assigned trial package to existing client:', clientId);
-            }
-          }
-        } else {
-          // Create new client with placeholder user_auth_id and automatic trial package assignment
-          clientId = uuidv4();
-          const placeholderAuthId = uuidv4(); // Placeholder since we don't have auth user
-          const trialPackageId = '28fc2f96-5742-48f3-8c77-c9766752ff6b'; // חבילת ניסיון 249₪
-          
-          console.log('Creating new client with ID:', clientId);
-          const { error: clientError } = await supabase
-            .from('clients')
-            .insert({
-              client_id: clientId,
-              user_auth_id: placeholderAuthId,
-              restaurant_name: formData.restaurantName,
-              contact_name: formData.submitterName,
-              email: formData.email || 'placeholder@email.com', // email is required
-              phone: formData.phone || 'N/A',
-              current_package_id: trialPackageId,
-              remaining_servings: 3,
-              remaining_images: 12,
-              payment_amount_ils: 249.00,
-              payment_status: 'paid'
-            });
-            
-          if (clientError) {
-            console.error('Client creation error:', clientError);
-            throw new Error(`Client creation error: ${clientError.message}`);
-          }
-          console.log('Created new client with trial package:', clientId);
-        }
-
         // Create submission linked to client
         const submissionId = uuidv4();
         console.log('Creating submission with ID:', submissionId);
@@ -234,10 +159,6 @@ const NewPublicUploadForm: React.FC = () => {
           submission_status: 'ממתינה לעיבוד',
           original_image_urls: uploadedImageUrls,
           uploaded_at: new Date().toISOString(),
-          restaurant_name: formData.restaurantName,
-          contact_name: formData.submitterName,
-          email: formData.email || null,
-          phone: formData.phone,
           description: dish.description || null,
           category: formData.selectedCategory || null,
           selected_style: formData.selectedStyle || null,
@@ -256,12 +177,11 @@ const NewPublicUploadForm: React.FC = () => {
         }
 
         console.log('Submission created successfully!');
-        // Don't show success message or redirect to thank-you
-        // Just clear form data silently
+        toast.success('ההגשה נשמרה בהצלחה');
+        // Clear form after success
         resetFormData();
         
-        // Let the payment button handle the redirect
-        console.log('Form submitted successfully, ready for payment redirect');
+        console.log('Form submitted successfully');
         
       } catch (error: any) {
         console.error('Error in handleSubmit:', error);
