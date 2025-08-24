@@ -22,6 +22,7 @@ import ThankYouPage from "@/pages/ThankYouPage";
 import CustomerDashboardPage from "@/pages/customer/CustomerDashboardPage";
 import CustomerHomePage from "@/pages/customer/CustomerHomePage";
 import CustomerUploadPage from "@/pages/customer/CustomerUploadPage";
+import NewClientUploadPage from "@/pages/customer/NewClientUploadPage";
 import CustomerAuthPage from "@/pages/customer/auth/LoginPage";
 import CustomerSubmissionsStatusPage from "@/pages/customer/CustomerSubmissionsStatusPage";
 import { SubmissionDetailsPage as CustomerSubmissionDetailsPage } from "@/components/customer/SubmissionDetailsPage";
