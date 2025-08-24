@@ -12,6 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizePathComponent } from '@/utils/pathSanitization';
 import { useClientAuth } from '@/hooks/useClientAuth';
+import SuccessModal from './components/SuccessModal';
+import { triggerMakeWebhook } from '@/lib/triggerMakeWebhook';
 
 const STEPS = [
   { id: 1, name: 'העלאת מנות', component: ImageUploadDetailsStep },
@@ -26,6 +28,7 @@ const NewPublicUploadForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     resetFormData();
@@ -177,10 +180,33 @@ const NewPublicUploadForm: React.FC = () => {
         }
 
         console.log('Submission created successfully!');
-        toast.success('ההגשה נשמרה בהצלחה');
+        // Fire webhook (non-blocking)
+        try {
+          triggerMakeWebhook({
+            submissionTimestamp: new Date().toISOString(),
+            isAuthenticated: true,
+            clientId,
+            restaurantName: formData.restaurantName || '',
+            submitterName: formData.submitterName,
+            contactEmail: formData.email,
+            contactPhone: formData.phone,
+            itemName: dish.itemName,
+            itemType: dish.itemType,
+            description: dish.description,
+            specialNotes: dish.specialNotes,
+            uploadedImageUrls,
+            category: formData.selectedCategory || null,
+            ingredients: null,
+            sourceForm: 'enhanced-customer-upload-form'
+          });
+        } catch (e) {
+          console.warn('Webhook send failed (non-blocking):', e);
+        }
+
+        // Show success modal
+        setShowSuccess(true);
         // Clear form after success
         resetFormData();
-        
         console.log('Form submitted successfully');
         
       } catch (error: any) {
@@ -295,6 +321,12 @@ const NewPublicUploadForm: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Success Modal after submission */}
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+      />
     </div>
   );
 };

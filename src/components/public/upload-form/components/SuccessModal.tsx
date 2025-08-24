@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { CheckCircle, CreditCard, X } from 'lucide-react';
+import { CheckCircle, X } from 'lucide-react';
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNewSubmission: () => void;
+  onNewSubmission?: () => void;
 }
 
-const PAYMENT_URL = "https://app.icount.co.il/m/c2d28/c12db4pa2u68489a290?utm_source=iCount&utm_medium=paypage&utm_campaign=162";
+// No payment for existing clients
 
 const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmission }) => {
   // Log when the modal state changes
@@ -23,21 +23,15 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
     }
   }, [isOpen]);
 
-  // Auto-redirect to payment after showing thank you message briefly
+  // Auto-close after short delay (optional)
   useEffect(() => {
     if (isOpen) {
       const timer = setTimeout(() => {
-        window.location.href = PAYMENT_URL;
-      }, 4000); // 4 second delay to show thank you message
-
+        onClose();
+      }, 2500);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
-
-  const handlePaymentRedirect = () => {
-    console.log('[SuccessModal] Redirecting to payment');
-    window.location.href = PAYMENT_URL;
-  };
+  }, [isOpen, onClose]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -85,33 +79,18 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
           <DialogDescription asChild>
             <p className="text-xl text-gray-600 leading-relaxed max-w-md mx-auto">
               הפרטים נשלחו בהצלחה.<br />
-              נעביר אותך לדף התשלום כדי להתחיל בתהליך.
+              תודה שבחרתם Food Vision.
             </p>
           </DialogDescription>
 
           {/* Action Buttons */}
           <div className="space-y-4 pt-6">
             <button
-              onClick={handlePaymentRedirect}
-              className="w-full bg-[#F3752B] hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg flex items-center justify-center space-x-3 rtl:space-x-reverse"
-            >
-              <CreditCard className="w-6 h-6" />
-              <span className="text-lg">המשך לתשלום</span>
-            </button>
-            
-            <button
-              onClick={() => {
-                console.log('[SuccessModal] Close button in footer clicked');
-                onClose();
-              }}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-4 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              onClick={() => onClose()}
+              className="w-full bg-[#F3752B] hover:bg-orange-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
               סגור
             </button>
-            
-            <p className="text-sm text-gray-500 mt-2">
-              מועבר אוטומטית תוך 4 שניות...
-            </p>
           </div>
         </div>
       </DialogContent>
