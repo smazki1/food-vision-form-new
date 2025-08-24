@@ -202,28 +202,21 @@ export function useSubmissions() {
       console.log("[useSubmissions] Querying client_packages with package_id:", packageIdToQuery, "for client:", effectiveClientId);
       const { data: clientPackageData, error: clientPackageError } = await supabase
         .from('client_packages')
-        .select(`
-          package_id,
-          start_date,
-          end_date,
-          is_active,
-          total_dishes,
-          service_packages (package_name)
-        `)
+        .select('package_id, start_date, end_date, is_active, total_dishes')
         .eq('client_id', effectiveClientId)
-        .eq('package_id', packageIdToQuery) 
-        .single();
+        .eq('package_id', packageIdToQuery)
+        .maybeSingle();
 
       if (clientPackageError) {
         console.error('[useSubmissions] Error fetching client package details:', clientPackageError);
         // If specific client_package link not found, it could be an old package_id or a general one
         // Try fetching from the 'packages' table directly if it's a general package ID
-        console.log("[useSubmissions] Trying to fetch general package details for package_id:", packageIdToQuery);
+        console.log("[useSubmissions] Fetching package name from service_packages for:", packageIdToQuery);
         const { data: generalPackageData, error: generalPackageError } = await supabase
-            .from('service_packages')
-            .select('package_name, total_servings')
-            .eq('package_id', packageIdToQuery)
-            .single();
+          .from('service_packages')
+          .select('package_name, total_servings')
+          .eq('package_id', packageIdToQuery)
+          .maybeSingle();
         
         if (generalPackageError) {
             console.error('[useSubmissions] Error fetching general package details:', generalPackageError);
@@ -249,21 +242,22 @@ export function useSubmissions() {
       }
 
       if (clientPackageData) {
-        console.log("[useSubmissions] Fetched client-specific package details:", clientPackageData);
-        // Correctly access package name if 'service_packages' is an array or object
-        let packageNameFromData: string | null = 'שם חבילה לא ידוע';
-        const sp = clientPackageData.service_packages; // Alias for brevity
-
-        if (Array.isArray(sp) && sp.length > 0 && sp[0].package_name) {
-          packageNameFromData = sp[0].package_name;
-        } else if (sp && typeof sp === 'object' && 'package_name' in sp && (sp as { package_name: string }).package_name) {
-          // Fallback if it's a single object (Supabase usually returns array for relations)
-          packageNameFromData = (sp as { package_name: string }).package_name;
+        console.log("[useSubmissions] Fetched client_packages row:", clientPackageData);
+        // Now fetch the name from service_packages
+        let packageName = 'שם חבילה לא ידוע';
+        let totalServings: number | null = null;
+        const { data: spData, error: spErr } = await supabase
+          .from('service_packages')
+          .select('package_name, total_servings')
+          .eq('package_id', clientPackageData.package_id)
+          .maybeSingle();
+        if (!spErr && spData) {
+          packageName = spData.package_name || packageName;
+          totalServings = spData.total_servings ?? null;
         }
-
         return {
-          packageName: packageNameFromData,
-          totalSubmissions: clientPackageData.total_dishes,
+          packageName,
+          totalSubmissions: totalServings,
           startDate: clientPackageData.start_date,
           endDate: clientPackageData.end_date,
           isActive: clientPackageData.is_active,

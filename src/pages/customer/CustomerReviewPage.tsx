@@ -50,9 +50,9 @@ const CustomerReviewPage: React.FC = () => {
         let packageName = 'חבילה רגילה';
         if (clientData?.current_package_id) {
           const { data: packageData } = await supabase
-            .from('packages')
+            .from('service_packages')
             .select('package_name')
-            .eq('id', clientData.current_package_id)
+            .eq('package_id', clientData.current_package_id)
             .single();
           
           if (packageData) {
