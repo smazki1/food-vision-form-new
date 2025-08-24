@@ -177,7 +177,7 @@ const NewPublicUploadForm: React.FC = () => {
             design_notes: formData.designNotes || null,
             branding_material_urls: brandingMaterialUrls,
             reference_example_urls: referenceExampleUrls,
-            custom_style_data: customStyleJson ? JSON.stringify(customStyleJson) : null
+            custom_style_data: customStyleJson || null
           };
 
           const { error: submissionError } = await (supabase as any)
