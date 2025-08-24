@@ -123,14 +123,19 @@ const NewPublicUploadForm: React.FC = () => {
             const fileExtension = file.name.split('.').pop();
             const uniqueFileName = `${uuidv4()}.${fileExtension}`;
             const filePath = `${clientId}/${subfolder}/${uniqueFileName}`;
+            console.log('[Upload] Start', { bucket: 'food-vision-images', path: filePath, name: file.name, size: file.size });
             const { error: uploadError } = await supabase.storage
               .from('food-vision-images')
               .upload(filePath, file);
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+              console.error('[Upload] Error', uploadError);
+              throw new Error(`Storage upload failed: ${uploadError.message}`);
+            }
             const { data: publicUrlData } = supabase.storage
               .from('food-vision-images')
               .getPublicUrl(filePath);
             if (publicUrlData?.publicUrl) urls.push(publicUrlData.publicUrl);
+            console.log('[Upload] Success URL', publicUrlData?.publicUrl);
           }
           return urls;
         };
@@ -180,10 +185,16 @@ const NewPublicUploadForm: React.FC = () => {
             custom_style_data: customStyleJson || null
           };
 
-          const { error: submissionError } = await (supabase as any)
+          const { data: inserted, error: submissionError } = await (supabase as any)
             .from('customer_submissions')
-            .insert(submissionData);
-          if (submissionError) throw submissionError;
+            .insert(submissionData)
+            .select('submission_id, client_id, uploaded_at')
+            .single();
+          if (submissionError) {
+            console.error('[DB Insert] Error inserting submission:', submissionError, { submissionData });
+            throw new Error(`Database insert failed: ${submissionError.message}`);
+          }
+          console.log('[DB Insert] Success', inserted);
 
           try {
             await triggerMakeWebhook({
@@ -215,6 +226,7 @@ const NewPublicUploadForm: React.FC = () => {
         }
 
         // Show success modal, then redirect to review page
+        toast.success('ההגשה נשמרה בהצלחה');
         setShowSuccess(true);
         setTimeout(() => {
           setShowSuccess(false);
@@ -228,7 +240,8 @@ const NewPublicUploadForm: React.FC = () => {
         
       } catch (error: any) {
         console.error('Error in handleSubmit:', error);
-        toast.error(`שגיאה: ${error.message || 'אנא נסו שוב'}`);
+        const msg = typeof error?.message === 'string' ? error.message : 'שגיאה בשמירת ההגשה';
+        toast.error(msg);
         setIsSubmitting(false);
       }
     } else {
