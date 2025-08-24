@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
 import { navItems } from "./nav-items";
 import "./App.css";
 import { UnifiedAuthProvider } from "./providers/UnifiedAuthProvider";
@@ -166,6 +166,8 @@ const App = () => (
               {/* Customer routes - wrapped with ClientAuthProvider */}
               <Route path="/customer-login" element={<CustomerLogin />} />
               <Route path="/customer/auth" element={<CustomerAuthPage />} />
+              {/* Legacy redirect: /customer-upload -> /customer/upload */}
+              <Route path="/customer-upload" element={<Navigate to="/customer/upload" replace />} />
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
               <Route path="/customer/upload" element={<CustomerRoute><CustomerUploadPage /></CustomerRoute>} />

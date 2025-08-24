@@ -23,7 +23,7 @@ export interface MakeWebhookPayload {
   primaryImageUsage?: string;
 }
 
-const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/h15kqbjphouh5wvmsnvxopkl7tff8o7u';
+const MAKE_WEBHOOK_URL = 'https://hook.eu2.make.com/ahd6i5joz58zt3oi4j0ogdb5ek1fcop3';
 
 export const triggerMakeWebhook = async (payload: MakeWebhookPayload): Promise<void> => {
   console.log('[triggerMakeWebhook] Sending data to Make.com:', payload);
