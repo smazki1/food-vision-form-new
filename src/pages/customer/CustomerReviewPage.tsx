@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Eye, Package, Image, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,9 +30,47 @@ const CustomerReviewPage: React.FC = () => {
   const [client, setClient] = useState<Client | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Quick-view lightbox state
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const handleViewSubmission = (submissionId: string) => {
     navigate(`/customer-review/${clientId}/submission/${submissionId}`);
+  };
+
+  // Open quick-view lightbox for a submission's images
+  const openQuickView = (submission: Submission) => {
+    const imgs = submission.processed_image_urls && submission.processed_image_urls.length > 0
+      ? submission.processed_image_urls
+      : (submission.original_image_urls || []);
+    if (imgs.length === 0) return;
+    setLightboxImages(imgs);
+    setLightboxIndex(0);
+    setIsLightboxOpen(true);
+  };
+
+  const closeQuickView = () => {
+    setIsLightboxOpen(false);
+    setLightboxImages([]);
+    setLightboxIndex(0);
+  };
+
+  const navigateQuickView = (direction: 'prev' | 'next') => {
+    if (lightboxImages.length <= 1) return;
+    if (direction === 'prev') {
+      setLightboxIndex((prev) => prev === 0 ? lightboxImages.length - 1 : prev - 1);
+    } else {
+      setLightboxIndex((prev) => prev === lightboxImages.length - 1 ? 0 : prev + 1);
+    }
+  };
+
+  // Basic touch-swipe support for mobile
+  let touchStartX = 0;
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 40) navigateQuickView(dx > 0 ? 'prev' : 'next');
   };
 
   useEffect(() => {
@@ -222,6 +261,17 @@ const CustomerReviewPage: React.FC = () => {
                     <span className="text-gray-500">תמונה לא זמינה</span>
                   </div>
                 )}
+
+                {/* Quick view button overlay (mobile-friendly) */}
+                <div className="absolute inset-0 pointer-events-none flex items-start justify-end p-2">
+                  <button
+                    className="pointer-events-auto bg-black/50 text-white text-xs sm:text-sm px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => { e.stopPropagation(); openQuickView(submission); }}
+                    aria-label="תצוגה מהירה"
+                  >
+                    תצוגה מהירה
+                  </button>
+                </div>
               </div>
               
               <CardContent className="p-4">
@@ -275,6 +325,58 @@ const CustomerReviewPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Quick-view Lightbox */}
+      <Dialog open={isLightboxOpen} onOpenChange={(open) => !open && closeQuickView()}>
+        <DialogContent className="max-w-[96vw] sm:max-w-[90vw] p-0 bg-black border-none">
+          <div className="relative w-full max-h-[92vh] flex items-center justify-center select-none" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+            {/* Close button */}
+            <button
+              aria-label="סגור"
+              className="absolute top-3 left-3 z-20 bg-black/60 text-white rounded-full px-3 py-2 text-sm sm:text-base"
+              onClick={closeQuickView}
+            >
+              סגור
+            </button>
+
+            {/* Navigation */}
+            {lightboxImages.length > 1 && (
+              <>
+                <button
+                  aria-label="הקודם"
+                  className="absolute top-1/2 -translate-y-1/2 left-2 z-10 bg-black/50 text-white rounded-full px-3 py-2"
+                  onClick={() => navigateQuickView('prev')}
+                >
+                  ‹
+                </button>
+                <button
+                  aria-label="הבא"
+                  className="absolute top-1/2 -translate-y-1/2 right-2 z-10 bg-black/50 text-white rounded-full px-3 py-2"
+                  onClick={() => navigateQuickView('next')}
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            {/* Counter */}
+            {lightboxImages.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs sm:text-sm px-3 py-1 rounded-full">
+                {lightboxIndex + 1} / {lightboxImages.length}
+              </div>
+            )}
+
+            {/* Image */}
+            {lightboxImages[lightboxIndex] && (
+              <img
+                src={lightboxImages[lightboxIndex]}
+                alt="תמונה"
+                className="w-full h-auto max-h-[92vh] object-contain"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
