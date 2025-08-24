@@ -114,93 +114,83 @@ const NewPublicUploadForm: React.FC = () => {
           throw new Error('לא נמצא מזהה לקוח פעיל. אנא התחבר/י שוב.');
         }
         
-        // Process first dish silently
-        const dish = formData.dishes[0];
-        console.log('Processing dish:', dish);
-        
-        // Upload files first
-        const uploadedImageUrls: string[] = [];
-        if (dish.referenceImages && dish.referenceImages.length > 0) {
-          console.log(`Uploading ${dish.referenceImages.length} images...`);
-          for (const file of dish.referenceImages) {
+        // Process all dishes and create submissions
+        const uploadFiles = async (files: File[], subfolder: string): Promise<string[]> => {
+          const urls: string[] = [];
+          for (const file of files) {
             const fileExtension = file.name.split('.').pop();
             const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-            const sanitizedItemType = sanitizePathComponent(dish.itemType);
-            const filePath = `${clientId}/${sanitizedItemType}/${uniqueFileName}`;
-            
-            console.log(`Uploading file to path: ${filePath}`);
+            const filePath = `${clientId}/${subfolder}/${uniqueFileName}`;
             const { error: uploadError } = await supabase.storage
               .from('food-vision-images')
               .upload(filePath, file);
-              
-            if (uploadError) {
-              console.error('Upload error:', uploadError);
-              throw new Error(`שגיאה בהעלאת קובץ: ${uploadError.message}`);
-            }
-            
+            if (uploadError) throw uploadError;
             const { data: publicUrlData } = supabase.storage
               .from('food-vision-images')
               .getPublicUrl(filePath);
-              
-            if (publicUrlData?.publicUrl) {
-              uploadedImageUrls.push(publicUrlData.publicUrl);
-              console.log('Successfully uploaded image:', publicUrlData.publicUrl);
+            if (publicUrlData?.publicUrl) urls.push(publicUrlData.publicUrl);
+          }
+          return urls;
+        };
+
+        for (const dish of formData.dishes) {
+          const sanitizedItemType = sanitizePathComponent(dish.itemType);
+          const uploadedImageUrls = await uploadFiles(dish.referenceImages || [], `${sanitizedItemType}`);
+          let brandingMaterialUrls: string[] | null = null;
+          let referenceExampleUrls: string[] | null = null;
+          if (formData.customStyle) {
+            if (formData.customStyle.brandingMaterials?.length) {
+              brandingMaterialUrls = await uploadFiles(formData.customStyle.brandingMaterials, 'custom-style/branding');
+            }
+            if (formData.customStyle.inspirationImages?.length) {
+              referenceExampleUrls = await uploadFiles(formData.customStyle.inspirationImages, 'custom-style/inspiration');
             }
           }
-        }
 
-        console.log('All images uploaded successfully. Total URLs:', uploadedImageUrls.length);
-
-        // Create submission linked to client
-        const submissionId = uuidv4();
-        console.log('Creating submission with ID:', submissionId);
-        const submissionData = {
-          submission_id: submissionId,
-          client_id: clientId,
-          item_name_at_submission: dish.itemName,
-          item_type: dish.itemType,
-          submission_status: 'ממתינה לעיבוד',
-          original_image_urls: uploadedImageUrls,
-          uploaded_at: new Date().toISOString(),
-          description: dish.description || null,
-          category: formData.selectedCategory || null,
-          selected_style: formData.selectedStyle || null,
-          design_notes: formData.designNotes || null,
-          custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
-        };
-        
-        console.log('Submission data to insert:', submissionData);
-        const { error: submissionError } = await supabase
-          .from('customer_submissions')
-          .insert(submissionData);
-
-        if (submissionError) {
-          console.error('Submission error:', submissionError);
-          throw new Error(`Database error: ${submissionError.message}`);
-        }
-
-        console.log('Submission created successfully!');
-        // Fire webhook (non-blocking)
-        try {
-          triggerMakeWebhook({
-            submissionTimestamp: new Date().toISOString(),
-            isAuthenticated: true,
-            clientId,
-            restaurantName: formData.restaurantName || '',
-            submitterName: formData.submitterName,
-            contactEmail: formData.email,
-            contactPhone: formData.phone,
-            itemName: dish.itemName,
-            itemType: dish.itemType,
-            description: dish.description,
-            specialNotes: dish.specialNotes,
-            uploadedImageUrls,
+          const submissionId = uuidv4();
+          const submissionData = {
+            submission_id: submissionId,
+            client_id: clientId,
+            item_name_at_submission: dish.itemName,
+            item_type: dish.itemType,
+            submission_status: 'ממתינה לעיבוד',
+            original_image_urls: uploadedImageUrls,
+            uploaded_at: new Date().toISOString(),
+            description: dish.description || null,
             category: formData.selectedCategory || null,
-            ingredients: null,
-            sourceForm: 'enhanced-customer-upload-form'
-          });
-        } catch (e) {
-          console.warn('Webhook send failed (non-blocking):', e);
+            selected_style: formData.selectedStyle || null,
+            design_notes: formData.designNotes || null,
+            branding_material_urls: brandingMaterialUrls,
+            reference_example_urls: referenceExampleUrls,
+            custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
+          } as any;
+
+          const { error: submissionError } = await (supabase as any)
+            .from('customer_submissions')
+            .insert(submissionData);
+          if (submissionError) throw submissionError;
+
+          try {
+            triggerMakeWebhook({
+              submissionTimestamp: new Date().toISOString(),
+              isAuthenticated: true,
+              clientId,
+              restaurantName: formData.restaurantName || '',
+              submitterName: formData.submitterName,
+              contactEmail: formData.email,
+              contactPhone: formData.phone,
+              itemName: dish.itemName,
+              itemType: dish.itemType,
+              description: dish.description,
+              specialNotes: dish.specialNotes,
+              uploadedImageUrls,
+              category: formData.selectedCategory || null,
+              ingredients: null,
+              sourceForm: 'enhanced-customer-upload-form'
+            });
+          } catch (e) {
+            console.warn('Webhook send failed (non-blocking):', e);
+          }
         }
 
         // Show success modal

@@ -24,14 +24,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ isOpen, onClose, onNewSubmi
   }, [isOpen]);
 
   // Auto-close after short delay (optional)
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, onClose]);
+  // Optional auto-close removed to allow redirect control by parent
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
