@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNewItemForm } from '@/contexts/NewItemFormContext';
 import { Button } from '@/components/ui/button';
-import { CreditCard, Loader2 } from 'lucide-react';
+import { CheckCircle, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 interface PaymentSummaryStepProps {
@@ -13,6 +14,7 @@ interface PaymentSummaryStepProps {
 
 const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearErrors, onPrevious, onSubmit }) => {
   const { formData } = useNewItemForm();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedCategory = formData.selectedCategory;
@@ -61,12 +63,10 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
     <div className="space-y-8 sm:space-y-12">
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-4 sm:mb-6 shadow-lg">
-          <CreditCard className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+          <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
         </div>
-        <h1 className="text-2xl sm:text-4xl font-bold text-[#333333] mb-3 sm:mb-4 px-2">סיכום וביצוע תשלום</h1>
-        <p className="text-gray-600 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed px-4">
-          בדקו את הפרטים ובצעו תשלום לביצוע ההזמנה - חבילת הטעימות שלכם/ן כמעט מוכנה!
-        </p>
+        <h1 className="text-2xl sm:text-4xl font-bold text-[#333333] mb-3 sm:mb-4 px-2">סיכום ושליחה</h1>
+        <p className="text-gray-600 text-base sm:text-xl max-w-2xl mx-auto leading-relaxed px-4">בדקו את הפרטים ושלחו את ההגשה. ניתן גם לחזור לדף הלקוח.</p>
       </div>
 
       {/* Mobile-Optimized Order Summary */}
@@ -108,10 +108,10 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
         </div>
       </div>
 
-      {/* Mobile-Optimized Payment Section */}
+      {/* Submit Section */}
       <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 sm:p-8 rounded-2xl border-2 border-green-200 shadow-lg mx-2 sm:mx-0">
         <div className="text-center mb-6 sm:mb-8">
-          <h3 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">מוכנים להתחיל?</h3>
+          <h3 className="text-2xl sm:text-3xl font-bold text-green-800 mb-2">מוכנים לשלוח?</h3>
         </div>
 
         <div className="text-center space-y-4 sm:space-y-6">
@@ -126,8 +126,8 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
                 // Save submission and wait for it to complete
                 if (onSubmit) {
                   await onSubmit();
-                  // Only redirect after successful submission
-                  window.location.href = 'https://app.icount.co.il/m/7f0d1/c12db4pa6u685838e50?utm_source=iCount&utm_medium=paypage&utm_campaign=166';
+                  // After successful submission, navigate to customer's submissions page
+                  navigate('/customer/submissions');
                 }
               } catch (error) {
                 console.error('Submission error:', error);
@@ -139,26 +139,34 @@ const PaymentSummaryStep: React.FC<PaymentSummaryStepProps> = ({ errors, clearEr
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                מעבד את ההזמנה...
+                שולח הגשה...
               </>
             ) : (
-              'כן, אני רוצה את התמונות!'
+              'שלח הגשה'
             )}
           </Button>
           
-          {/* Mobile-Optimized Back Button */}
-          {onPrevious && (
-            <div>
+          {/* Secondary actions */}
+          <div>
+            {onPrevious && (
               <Button
                 onClick={onPrevious}
                 variant="outline"
                 size="lg"
-                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold text-sm sm:text-base touch-manipulation"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold text-sm sm:text-base touch-manipulation mr-2"
               >
                 חזרה לעריכה
               </Button>
-            </div>
-          )}
+            )}
+            <Button
+              onClick={() => navigate('/customer/dashboard')}
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto mt-3 sm:mt-0 px-6 sm:px-8 py-3 sm:py-4 border-2 border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold text-sm sm:text-base touch-manipulation"
+            >
+              חזרה לדף הלקוח
+            </Button>
+          </div>
         </div>
       </div>
     </div>
