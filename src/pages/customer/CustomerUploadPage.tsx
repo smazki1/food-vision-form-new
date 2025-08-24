@@ -1,11 +1,11 @@
 import React from 'react';
 import { NewItemFormProvider } from '@/contexts/NewItemFormContext';
-import ClientUnifiedUploadForm from '@/components/customer/unified-upload-form/ClientUnifiedUploadForm';
+import NewPublicUploadForm from '@/components/public/upload-form/NewPublicUploadForm';
 
 const CustomerUploadPage: React.FC = () => {
   return (
     <NewItemFormProvider>
-      <ClientUnifiedUploadForm />
+      <NewPublicUploadForm />
     </NewItemFormProvider>
   );
 };

@@ -171,6 +171,8 @@ const App = () => (
               <Route path="/customer/dashboard" element={<CustomerRoute><CustomerDashboardPage /></CustomerRoute>} />
               <Route path="/customer/home" element={<CustomerRoute><CustomerHomePage /></CustomerRoute>} />
               <Route path="/customer/upload" element={<CustomerRoute><CustomerUploadPage /></CustomerRoute>} />
+              {/* Backup route to the previous unified form */}
+              <Route path="/customer/upload-legacy" element={<CustomerRoute><NewClientUploadPage /></CustomerRoute>} />
               <Route path="/customer/submissions" element={<CustomerRoute><CustomerSubmissionsPage /></CustomerRoute>} />
               <Route path="/customer/submissions/:submissionId" element={<CustomerRoute><CustomerSubmissionDetailsPage /></CustomerRoute>} />
 
