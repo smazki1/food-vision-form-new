@@ -150,7 +150,19 @@ const NewPublicUploadForm: React.FC = () => {
           }
 
           const submissionId = uuidv4();
-          // Safe insert: include only verified columns to avoid 400/RLS errors
+          // Build optional custom style JSON with extra meta so nothing is lost
+          const customStyleJson = formData.customStyle ? {
+            ...formData.customStyle,
+            itemsQuantityRange: formData.itemsQuantityRange || undefined,
+            estimatedImagesNeeded: formData.estimatedImagesNeeded || undefined,
+            primaryImageUsage: formData.primaryImageUsage || undefined
+          } : (formData.itemsQuantityRange || formData.estimatedImagesNeeded || formData.primaryImageUsage) ? {
+            itemsQuantityRange: formData.itemsQuantityRange || undefined,
+            estimatedImagesNeeded: formData.estimatedImagesNeeded || undefined,
+            primaryImageUsage: formData.primaryImageUsage || undefined
+          } : null;
+
+          // Insert includes verified columns used across the app (admin/customer UIs)
           const submissionData: any = {
             submission_id: submissionId,
             client_id: clientId,
@@ -160,8 +172,12 @@ const NewPublicUploadForm: React.FC = () => {
             original_image_urls: uploadedImageUrls,
             uploaded_at: new Date().toISOString(),
             description: dish.description || null,
+            category: formData.selectedCategory || null,
+            selected_style: formData.selectedStyle || null,
+            design_notes: formData.designNotes || null,
             branding_material_urls: brandingMaterialUrls,
-            reference_example_urls: referenceExampleUrls
+            reference_example_urls: referenceExampleUrls,
+            custom_style_data: customStyleJson ? JSON.stringify(customStyleJson) : null
           };
 
           const { error: submissionError } = await (supabase as any)
