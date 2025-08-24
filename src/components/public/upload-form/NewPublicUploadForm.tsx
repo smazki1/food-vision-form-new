@@ -150,7 +150,8 @@ const NewPublicUploadForm: React.FC = () => {
           }
 
           const submissionId = uuidv4();
-          const submissionData = {
+          // Safe insert: include only verified columns to avoid 400/RLS errors
+          const submissionData: any = {
             submission_id: submissionId,
             client_id: clientId,
             item_name_at_submission: dish.itemName,
@@ -159,13 +160,9 @@ const NewPublicUploadForm: React.FC = () => {
             original_image_urls: uploadedImageUrls,
             uploaded_at: new Date().toISOString(),
             description: dish.description || null,
-            category: formData.selectedCategory || null,
-            selected_style: formData.selectedStyle || null,
-            design_notes: formData.designNotes || null,
             branding_material_urls: brandingMaterialUrls,
-            reference_example_urls: referenceExampleUrls,
-            custom_style_data: formData.customStyle ? JSON.stringify(formData.customStyle) : null
-          } as any;
+            reference_example_urls: referenceExampleUrls
+          };
 
           const { error: submissionError } = await (supabase as any)
             .from('customer_submissions')
