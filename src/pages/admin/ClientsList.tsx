@@ -7,9 +7,12 @@ import { Button } from "@/components/ui/button";
 import { ClientListItemCard } from "@/components/admin/clients/ClientListItemCard";
 import { MobileLoading } from "@/components/ui/mobile-loading";
 import { NewClientDialog } from "@/components/admin/clients/NewClientDialog";
-import { RefreshCw, Search, AlertTriangle, UserPlus, Archive, Users, DollarSign } from "lucide-react";
+import { RefreshCw, Search, AlertTriangle, UserPlus, Archive, Users, DollarSign, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { downloadAllClientsSubmissionsAsZip } from "@/utils/downloadUtils";
+import { toast } from "sonner";
 
 // Basic placeholder for AdminContentLayout
 const AdminContentLayout = ({ children }: { children: React.ReactNode }) => (
@@ -23,6 +26,7 @@ const ClientsList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   // Autofill prevention: keep input readOnly briefly to block browser autofill
   const [preventAutofill, setPreventAutofill] = useState(true);
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
   // On mount, ensure no leftover search term and clear any late browser autofill
   useEffect(() => {
@@ -110,6 +114,20 @@ const ClientsList = () => {
 
   const handleRefresh = () => {
     refreshClients(); 
+  };
+
+  const handleBulkDownload = async () => {
+    setIsBulkDownloading(true);
+    try {
+      toast.info('מתחיל הורדה של כל ההגשות... זה עלול לקחת כמה דקות');
+      const result = await downloadAllClientsSubmissionsAsZip(supabase);
+      toast.success(`הורדה הושלמה! ${result.totalImages} תמונות מ-${result.totalSubmissions} הגשות של ${result.totalClients} לקוחות`);
+    } catch (error: any) {
+      console.error('Bulk download error:', error);
+      toast.error(`שגיאה בהורדה: ${error.message || 'נסה שוב'}`);
+    } finally {
+      setIsBulkDownloading(false);
+    }
   };
   
   // Show loading if we're still determining authentication or if we don't have admin access yet
@@ -227,6 +245,15 @@ const ClientsList = () => {
           </div>
           
           <div className="flex gap-2">
+            <Button
+              onClick={handleBulkDownload}
+              disabled={isBulkDownloading || isClientsLoading || clients.length === 0}
+              variant="outline"
+              className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 border-blue-200"
+            >
+              <Download className={`h-4 w-4 ${isBulkDownloading ? 'animate-pulse' : ''}`} />
+              {isBulkDownloading ? 'מוריד...' : 'הורד הכל'}
+            </Button>
             <Button
               asChild
               variant="outline"
